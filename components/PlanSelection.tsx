@@ -20,7 +20,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack })
       try {
          // Links de checkout Cakto
          const checkoutLinks: Record<PlanType, string> = {
-            'monthly': 'https://pay.cakto.com.br/e2j2mqh_769673',
+            'monthly': 'https://pay.cakto.com.br/5vw2inp_771416',
             'annual': 'https://pay.cakto.com.br/3ce3ypz_769675',
             'pro_monthly': 'https://pay.cakto.com.br/598qhka_769676',
             'pro_annual': 'https://pay.cakto.com.br/392xpbn_769680',
