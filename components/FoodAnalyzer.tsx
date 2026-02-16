@@ -113,26 +113,31 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
     try {
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const rawBase64 = reader.result as string;
-        const compressedBase64 = await compressImage(rawBase64);
-        setPreviewImage(compressedBase64);
-        const apiBase64 = compressedBase64.split(',')[1];
-        const data = await analyzePlate(apiBase64);
-        if (!data || !data.items) {
-          setError("Não foi possível identificar alimentos. Tente novamente.");
+        try {
+          const rawBase64 = reader.result as string;
+          const compressedBase64 = await compressImage(rawBase64);
+          setPreviewImage(compressedBase64);
+          const apiBase64 = compressedBase64.split(',')[1];
+          const data = await analyzePlate(apiBase64);
+
+          if (!data || !data.items) {
+            throw new Error("Não foi possível identificar alimentos.");
+          }
+
+          // SUCCESS: Increment usage here
+          await incrementUsage();
+
+          setResult(data);
+        } catch (err) {
+          setError("Erro ao analisar imagem. Tente novamente.");
+          setPreviewImage(null);
+        } finally {
           setLoading(false);
-          return;
         }
-
-        // SUCCESS: Increment usage here
-        await incrementUsage();
-
-        setResult(data);
-        setLoading(false);
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      setError("Erro ao analisar imagem. Tente novamente.");
+      setError("Erro ao iniciar análise.");
       setLoading(false);
     }
   };

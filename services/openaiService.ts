@@ -4,11 +4,17 @@ import { supabase } from './supabaseService';
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-analyzer`;
 
 const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+        throw new Error('Usuário não autenticado');
+    }
+
     const response = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify(payload)
     });

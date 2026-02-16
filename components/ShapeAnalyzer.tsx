@@ -94,21 +94,26 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     try {
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const rawBase64 = reader.result as string;
-        const compressedBase64 = await compressImage(rawBase64);
-        setCurrentPhoto(compressedBase64);
-        const apiBase64 = compressedBase64.split(',')[1];
-        // FIX: Comma handling
-        const w = weight ? parseFloat(weight.replace(',', '.')) : undefined;
-        const h = height ? parseFloat(height.replace(',', '.')) : undefined;
-        const metrics = { weight: w, height: h };
-        const data = await analyzeShape(apiBase64, metrics);
-        setResult(data);
-        setLoading(false);
+        try {
+          const rawBase64 = reader.result as string;
+          const compressedBase64 = await compressImage(rawBase64);
+          setCurrentPhoto(compressedBase64);
+          const apiBase64 = compressedBase64.split(',')[1];
+          // FIX: Comma handling
+          const w = weight ? parseFloat(weight.replace(',', '.')) : undefined;
+          const h = height ? parseFloat(height.replace(',', '.')) : undefined;
+          const metrics = { weight: w, height: h };
+          const data = await analyzeShape(apiBase64, metrics);
+          setResult(data);
+        } catch (err) {
+          setError("Erro ao analisar imagem. Certifique-se que é uma foto clara do corpo.");
+        } finally {
+          setLoading(false);
+        }
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      setError("Erro ao analisar imagem. Certifique-se que é uma foto clara do corpo.");
+      setError("Erro ao processar arquivo.");
       setLoading(false);
     }
   };
