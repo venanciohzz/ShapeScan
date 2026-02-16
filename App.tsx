@@ -74,7 +74,7 @@ const App: React.FC = () => {
           }
 
           setUser(finalUser);
-          await loadUserData(freshUser.email);
+          await loadUserData(freshUser.id);
 
           // CRITICAL CHECK: Force Quiz if metrics are missing (e.g., user refreshed during onboarding)
           if (!freshUser.weight || !freshUser.height) {
@@ -131,13 +131,13 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem(`water_${user.email}_${new Date().toDateString()}`, waterConsumed.toString());
+      localStorage.setItem(`water_${user.id}_${new Date().toDateString()}`, waterConsumed.toString());
     }
   }, [waterConsumed, user]);
 
   const handleLogin = (user: User, isNew: boolean) => {
     setUser(user);
-    loadUserData(user.email);
+    loadUserData(user.id);
     if (isNew) {
       setCurrentView('quiz');
     } else {
