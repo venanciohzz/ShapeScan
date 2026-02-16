@@ -208,7 +208,7 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
   const isFreeLocked = mode === 'ai' && user.plan === 'free' && (user.freeScansUsed || 0) >= 1 && !result;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-6 md:pt-14 pb-32 text-black dark:text-white min-h-screen flex flex-col relative">
+    <div className="max-w-3xl mx-auto px-6 py-6 md:pt-14 pb-24 text-black dark:text-white min-h-screen flex flex-col relative">
 
       {showLimitModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in">
@@ -282,7 +282,7 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
       </div>
 
       {!result ? (
-        <div className="space-y-6 flex-1 flex flex-col animate-in fade-in duration-500">
+        <div className="space-y-6 md:space-y-8 flex-1 flex flex-col">
           {mode === 'manual' ? (
             <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border-2 border-emerald-600 shadow-sm transition-colors flex flex-col gap-6">
               <div className="space-y-2">
@@ -301,7 +301,7 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
               {error && <p className="text-red-500 font-black text-xs text-center">{error}</p>}
             </div>
           ) : (
-            <div className={`bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-gray-300 dark:border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center transition-colors flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
+            <div className={`bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-gray-300 dark:border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
 
               {/* Free Plan Lock Overlay */}
               {isFreeLocked && (
@@ -315,7 +315,7 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
 
               <div className="text-7xl md:text-8xl mb-6 md:mb-8">🥗</div>
 
-              <label className={`inline-block bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-100 dark:shadow-none transition-all text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-emerald-700 active:scale-95'}`}>
+              <label className={`inline-block cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
                 {isFreeLocked ? 'BLOQUEADO' : 'ABRIR CÂMERA'}
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading || isFreeLocked} />
               </label>
