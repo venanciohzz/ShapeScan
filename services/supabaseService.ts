@@ -249,6 +249,44 @@ export async function deleteFoodLog(userId: string, logId: string): Promise<void
   if (error) throw new Error(error.message);
 }
 
+// ==================== HIDRATAÇÃO ====================
+
+export async function getDailyWater(userId: string): Promise<number> {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('hydration_logs')
+    .select('amount')
+    .eq('user_id', userId)
+    .eq('date', today)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 é "No rows found"
+    console.error('Erro ao buscar hidratação:', error);
+    return 0;
+  }
+
+  return data?.amount || 0;
+}
+
+export async function upsertDailyWater(userId: string, amount: number, dailyGoal: number): Promise<void> {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { error } = await supabase
+    .from('hydration_logs')
+    .upsert({
+      user_id: userId,
+      date: today,
+      amount: amount,
+      daily_goal: dailyGoal
+    }, { onConflict: 'user_id, date' });
+
+  if (error) {
+    console.error('Erro ao salvar hidratação:', error);
+    throw new Error(error.message);
+  }
+}
+
 // ==================== REFEIÇÕES SALVAS ====================
 
 export async function listSavedMeals(userId: string): Promise<SavedMeal[]> {

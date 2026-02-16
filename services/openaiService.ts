@@ -17,9 +17,10 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
             throw new Error(context.error);
         }
 
-        // Se a mensagem for genérica de status code, tentamos ajudar o usuário
+        // Se a mensagem for genérica de status code, tentamos manter a mensagem original para tratamento no frontend
         if (error.message && error.message.includes('Edge Function returned a non-2xx status code')) {
-            throw new Error('Erro ao processar. Pode ser que seu limite diário tenha sido atingido ou haja instabilidade no serviço.');
+            console.warn('Edge Function returned non-2xx:', error);
+            // Não lançamos erro genérico aqui para permitir que o FoodAnalyzer detecte 401/403
         }
 
         // Fallback final

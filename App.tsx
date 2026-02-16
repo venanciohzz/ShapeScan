@@ -27,7 +27,7 @@ const App: React.FC = () => {
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
   const [evolutionRecords, setEvolutionRecords] = useState<EvolutionRecord[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [waterConsumed, setWaterConsumed] = useState<number>(0);
+  const [waterConsumed, setWaterConsumed] = useState<number | null>(null);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('shapescan_theme');
     return saved ? saved === 'dark' : true;
@@ -99,15 +99,14 @@ const App: React.FC = () => {
 
   const loadUserData = async (userId: string) => {
     try {
-      const [logs, evo] = await Promise.all([
+      const [logs, evo, water] = await Promise.all([
         db.logs.list(userId),
         db.evolution.list(userId),
+        db.water.getDaily(userId)
       ]);
       setFoodLogs(logs);
       setEvolutionRecords(evo);
-
-      const savedWater = localStorage.getItem(`water_${userId}_${new Date().toDateString()}`);
-      setWaterConsumed(savedWater ? parseInt(savedWater) : 0);
+      setWaterConsumed(water);
 
     } catch (e) {
       console.error("Erro ao carregar dados do usuário:", e);
@@ -129,10 +128,17 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
+  // Debounce saved to DB to avoid too many requests
   useEffect(() => {
-    if (user) {
-      localStorage.setItem(`water_${user.id}_${new Date().toDateString()}`, waterConsumed.toString());
-    }
+    if (waterConsumed === null) return;
+
+    const timeoutId = setTimeout(() => {
+      if (user) {
+        db.water.upsertDaily(user.id, waterConsumed, user.dailyWaterGoal || 2500);
+      }
+    }, 1000); // Wait 1s after last change
+
+    return () => clearTimeout(timeoutId);
   }, [waterConsumed, user]);
 
   const handleLogin = (user: User, isNew: boolean) => {
@@ -335,7 +341,7 @@ const App: React.FC = () => {
       case 'quiz': return <Quiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />;
       case 'plans': return <PlanSelection user={user} onBack={() => setCurrentView(previousView || 'dashboard')} onSelect={async (plan) => { if (plan === 'free' && user) { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); setCurrentView('dashboard'); } }} />;
       case 'upgrade_pro': return <UpgradePro user={user} onBack={() => setCurrentView(previousView || 'dashboard')} />;
-      case 'dashboard': return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed} setWaterConsumed={setWaterConsumed} />;
+      case 'dashboard': return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} />;
       case 'food_ai': return <FoodAnalyzer mode="ai" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} />;
       case 'food_manual': return <FoodAnalyzer mode="manual" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} />;
       case 'saved_meals': return <SavedMeals user={user!} onAddLog={addFoodLog} onBack={() => setCurrentView('dashboard')} />;
@@ -347,7 +353,7 @@ const App: React.FC = () => {
       case 'calorie_plan': return <CaloriePlan user={user!} onBack={() => setCurrentView('dashboard')} onUpdateGoal={handleUpdateGoal} />;
       case 'water_calc': return <WaterCalculator user={user!} onBack={() => setCurrentView('dashboard')} onUpdateWaterGoal={handleUpdateWaterGoal} />;
       case 'settings': return <Settings user={user!} onUpdateProfile={handleUpdateProfile} onBack={() => setCurrentView('dashboard')} darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} />;
-      default: return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed} setWaterConsumed={setWaterConsumed} />;
+      default: return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} />;
     }
   };
 

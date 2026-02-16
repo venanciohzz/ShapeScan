@@ -15,7 +15,7 @@ interface FoodAnalyzerProps {
   onUpgradePro: () => void;
 }
 
-const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUpgradePro }) => {
+const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUpgradePro }: FoodAnalyzerProps) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FoodAnalysisResult | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -128,8 +128,20 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
           await incrementUsage();
 
           setResult(data);
+          setResult(data);
         } catch (err: any) {
-          setError(`Erro: ${err.message || "Falha na análise"}`);
+          console.error("Erro no scanner:", err);
+          let msg = err.message || "Falha na análise";
+
+          if (msg.includes('401') || msg.includes('jwt')) {
+            msg = "Sessão expirada. Por favor, faça login novamente.";
+          } else if (msg.includes('403') || msg.includes('limit')) {
+            msg = "Limite diário atingido. Faça upgrade para continuar.";
+            setLimitModalType('daily');
+            setShowLimitModal(true);
+          }
+
+          setError(`Erro: ${msg}`);
           setPreviewImage(null);
         } finally {
           setLoading(false);

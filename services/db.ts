@@ -56,6 +56,16 @@ export const db = {
         }
     },
 
+    water: {
+        async getDaily(userId: string): Promise<number> {
+            return await supabaseService.getDailyWater(userId);
+        },
+
+        async upsertDaily(userId: string, amount: number, dailyGoal: number): Promise<void> {
+            await supabaseService.upsertDailyWater(userId, amount, dailyGoal);
+        }
+    },
+
     logs: {
         async list(userId: string): Promise<FoodLog[]> {
             return await supabaseService.listFoodLogs(userId);
