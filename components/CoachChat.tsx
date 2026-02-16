@@ -138,7 +138,7 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
         </div>
 
         {/* Input Area - Flex Item (Natural Order) */}
-        <div className="flex-none px-6 pt-4 pb-8 bg-gradient-to-t from-[#F3F6F8] via-[#F3F6F8] to-transparent dark:from-zinc-950 dark:via-zinc-950">
+        <div className="flex-none px-6 pt-4 pb-32 md:pb-8 bg-gradient-to-t from-[#F3F6F8] via-[#F3F6F8] to-transparent dark:from-zinc-950 dark:via-zinc-950">
           <div className="flex gap-3">
             <input
               type="text"
