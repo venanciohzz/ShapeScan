@@ -50,8 +50,8 @@ export interface User {
   email: string;
   name: string;
   username: string;
-  phone?: string; 
-  photo?: string; 
+  phone?: string;
+  photo?: string;
   isPremium: boolean;
   isAdmin: boolean;
   dailyCalorieGoal: number;
@@ -60,7 +60,7 @@ export interface User {
   dailyProtein?: number;
   dailyCarbs?: number;
   dailyFat?: number;
-  
+
   age?: number;
   height?: number;
   weight?: number;
@@ -119,4 +119,4 @@ export interface ChatMessage {
   content: string;
 }
 
-export type View = 'landing' | 'how_it_works' | 'about' | 'dashboard' | 'food_ai' | 'food_manual' | 'saved_meals' | 'shape' | 'chat' | 'auth' | 'bmi_calc' | 'calorie_calc' | 'calorie_plan' | 'water_calc' | 'upgrade' | 'upgrade_pro' | 'quiz' | 'plans' | 'evolution' | 'settings';
+export type View = 'landing' | 'how_it_works' | 'about' | 'dashboard' | 'food_ai' | 'food_manual' | 'saved_meals' | 'shape' | 'chat' | 'auth' | 'bmi_calc' | 'calorie_calc' | 'calorie_plan' | 'water_calc' | 'upgrade' | 'upgrade_pro' | 'quiz' | 'plans' | 'evolution' | 'settings' | 'admin';

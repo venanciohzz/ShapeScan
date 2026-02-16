@@ -581,3 +581,73 @@ function mapEvolutionRecordFromDB(dbRecord: any): EvolutionRecord {
     macroSuggestions: dbRecord.macro_suggestions,
   };
 }
+
+// ==================== ADMIN ====================
+
+export async function getAllUsers(): Promise<User[]> {
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const { data: plans } = await supabase
+    .from('user_plans')
+    .select('user_id, plan_id, active')
+    .eq('active', true);
+
+  const planMap = new Map();
+  plans?.forEach((p: any) => planMap.set(p.user_id, p.plan_id));
+
+  return profiles.map((p: any) =>
+    mapProfileToUser(p, planMap.get(p.id), planMap.get(p.id) !== 'free', p.is_admin)
+  );
+}
+
+export async function getRevenueStats() {
+  const { data: payments, error } = await supabase
+    .from('payments')
+    .select('amount, status');
+
+  if (error) throw new Error(error.message);
+
+  const totalRevenue = payments
+    .filter((p: any) => p.status === 'approved')
+    .reduce((acc: number, curr: any) => acc + (Number(curr.amount) || 0), 0);
+
+  const { count: totalUsers } = await supabase
+    .from('profiles')
+    .select('*', { count: 'exact', head: true });
+
+  const { count: activeSubs } = await supabase
+    .from('user_plans')
+    .select('*', { count: 'exact', head: true })
+    .eq('active', true)
+    .neq('plan_id', 'free');
+
+  return {
+    totalRevenue,
+    totalUsers: totalUsers || 0,
+    activeSubs: activeSubs || 0
+  };
+}
+
+export async function adminUpdateUserPlan(userId: string, planId: string): Promise<void> {
+  // 1. Desativar planos anteriores
+  await supabase
+    .from('user_plans')
+    .update({ active: false })
+    .eq('user_id', userId);
+
+  // 2. Inserir novo plano
+  const { error } = await supabase
+    .from('user_plans')
+    .insert({
+      user_id: userId,
+      plan_id: planId,
+      active: true
+    });
+
+  if (error) throw new Error(error.message);
+}

@@ -143,5 +143,19 @@ export const db = {
         async saveHistory(userId: string, messages: ChatMessage[]) {
             // Chat history não está sendo persistido no Supabase ainda
         }
+    },
+
+    admin: {
+        async getAllUsers(): Promise<User[]> {
+            return await supabaseService.getAllUsers();
+        },
+
+        async getStats() {
+            return await supabaseService.getRevenueStats();
+        },
+
+        async updateUserPlan(userId: string, planId: string): Promise<void> {
+            await supabaseService.adminUpdateUserPlan(userId, planId);
+        }
     }
 };

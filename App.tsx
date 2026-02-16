@@ -19,6 +19,7 @@ import UpgradePro from './components/UpgradePro';
 import Evolution from './components/Evolution';
 import Settings from './components/Settings';
 import SavedMeals from './components/SavedMeals';
+import AdminDashboard from './components/AdminDashboard';
 import { db } from './services/db';
 
 const App: React.FC = () => {
@@ -357,7 +358,8 @@ const App: React.FC = () => {
       case 'calorie_calc': return <DailyCalorieCalculator onBack={() => setCurrentView('dashboard')} />;
       case 'calorie_plan': return <CaloriePlan user={user!} onBack={() => setCurrentView('dashboard')} onUpdateGoal={handleUpdateGoal} />;
       case 'water_calc': return <WaterCalculator user={user!} onBack={() => setCurrentView('dashboard')} onUpdateWaterGoal={handleUpdateWaterGoal} />;
-      case 'settings': return <Settings user={user!} onUpdateProfile={handleUpdateProfile} onBack={() => setCurrentView('dashboard')} darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} />;
+      case 'settings': return <Settings user={user!} onUpdateProfile={handleUpdateProfile} onBack={() => setCurrentView('dashboard')} darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} onGoToAdmin={() => setCurrentView('admin')} />;
+      case 'admin': return <AdminDashboard user={user!} onBack={() => setCurrentView('settings')} />;
       default: return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} />;
     }
   };
