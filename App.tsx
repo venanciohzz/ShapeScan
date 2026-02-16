@@ -36,6 +36,11 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('landing');
   const [previousView, setPreviousView] = useState<View>('dashboard');
 
+  // Scroll to top on view change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentView]);
+
   useEffect(() => {
     const initSession = async () => {
       try {
