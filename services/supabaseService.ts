@@ -620,16 +620,19 @@ export async function getRevenueStats() {
     .from('profiles')
     .select('*', { count: 'exact', head: true });
 
-  const { count: activeSubs } = await supabase
+  const { data: activePlans } = await supabase
     .from('user_plans')
-    .select('*', { count: 'exact', head: true })
+    .select('user_id')
     .eq('active', true)
     .neq('plan_id', 'free');
+
+  // Count unique users with active paid plans
+  const uniqueActiveSubs = new Set(activePlans?.map((p: any) => p.user_id)).size;
 
   return {
     totalRevenue,
     totalUsers: totalUsers || 0,
-    activeSubs: activeSubs || 0
+    activeSubs: uniqueActiveSubs
   };
 }
 
