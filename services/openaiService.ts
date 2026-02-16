@@ -17,17 +17,24 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
 
 const extractJson = (text: string): string => {
     try {
+        // Tenta encontrar JSON dentro de blocos de código markdown
         const markdownMatch = text.match(/```(?:json|JSON)?\s*([\s\S]*?)\s*```/);
-        if (markdownMatch && markdownMatch[1]) return markdownMatch[1];
+        if (markdownMatch && markdownMatch[1]) {
+            return markdownMatch[1].trim();
+        }
 
+        // Tenta encontrar o primeiro { e o último }
         const firstBrace = text.indexOf('{');
         const lastBrace = text.lastIndexOf('}');
+
         if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
             return text.substring(firstBrace, lastBrace + 1);
         }
 
+        // Se não encontrar nada estruturado, tenta limpar o texto
         return text.replace(/```json|```JSON|```/g, '').trim();
     } catch (e) {
+        console.warn('Erro ao extrair JSON:', e);
         return text;
     }
 };
@@ -156,84 +163,91 @@ export const analyzeShape = async (base64Image: string, metrics?: { weight?: num
         : '';
 
     try {
-        const prompt = `Analise este físico de forma TÉCNICA, DETALHADA e HONESTA como um preparador físico profissional. ${metricsInfo}
+        const prompt = `Realize uma análise técnica de composição corporal baseada nesta imagem. ${metricsInfo}
 
-ANÁLISE COMPLETA:
+OBJETIVO DA ANÁLISE:
+Fornecer uma avaliação objetiva e construtiva sobre o físico apresentado, focando em métricas visuais estimadas e sugestões de aprimoramento físico.
 
-1. **BF% (Percentual de Gordura)**
-   - Estime o BF% com precisão (ex: "8-10%")
-   - Se peso fornecido, calcule massa gorda em kg (ex: "~6.1 kg - 7.7 kg de gordura")
+PARÂMETROS DA ANÁLISE:
 
-2. **Biotipo**
-   - Classifique: Ectomorfo, Mesomorfo, Endomorfo ou misto
+1. **Estimativa de BF% (Percentual de Gordura Corporal)**
+   - Forneça uma faixa estimada (ex: "10-12%").
+   - Se o peso foi informado, estime a massa gorda em kg.
 
-3. **NOTAS 0-10** (seja criterioso e honesto):
-   - **GORDURA**: 0 = Shredded/Seco, 10 = Obesidade. Quanto MENOR o BF, MENOR a nota.
-   - **MUSCULATURA**: 0 = Sem massa muscular, 10 = Fisiculturista Pro
-   - **DEFINIÇÃO**: 0 = Retido/Inchado, 10 = Fibras aparentes
+2. **Classificação de Biotipo Predominante**
+   - Ectomorfo, Mesomorfo, Endomorfo ou combinação.
 
-4. **Contextos das Notas** (explique cada nota):
-   - fatContext: Por que deu essa nota de gordura?
-   - muscleContext: Por que deu essa nota de musculatura?
-   - definitionContext: Por que deu essa nota de definição?
+3. **AVALIAÇÃO VISUAL (Escala 0-10)**:
+   - **Nível de Gordura Corporal**: (0 = Extremamente Baixo/Competição, 5 = Médio/Atlético, 10 = Muito Alto).
+   - **Volume Muscular**: (0 = Baixo Desenvolvimento, 5 = Atlético, 10 = Fisiculturista Pro).
+   - **Definição Muscular**: (0 = Baixa/Retida, 5 = Visível, 10 = Extrema/Vascularizada).
 
-5. **Análise Detalhada** (seja MUITO detalhado):
-   - Descreva o físico como um todo
-   - Fale sobre V-taper, simetria, proporções
-   - Mencione densidade muscular, maturidade dos feixes
-   - Comente sobre vascularização, separação muscular
-   - Use termos técnicos mas acessíveis
+4. **Contextualização das Notas**:
+   - fatContext: Justificativa visual para a nota de gordura.
+   - muscleContext: Justificativa visual para a nota de volume muscular.
+   - definitionContext: Justificativa visual para a nota de definição.
 
-6. **Pontos a Melhorar** (seja DIRETO e HONESTO):
-   - Liste defeitos e pontos fracos SEM MEDO
-   - Seja específico: "Peitoral superior fraco", "Acúmulo de gordura nos flancos"
-   - Indique onde focar o treino
+5. **Análise Corporal Detalhada**:
+   - Descreva a estrutura física observada.
+   - Comente sobre simetria e proporções.
+   - Analise grupos musculares visíveis.
 
-7. **Sugestão de Macros** (baseada no objetivo aparente):
-   - Calcule proteína, carbo e gordura em g/kg
-   - Explique o objetivo (cutting, bulking, manutenção)
-   - Seja específico com os números
+6. **Áreas para Desenvolvimento (Pontos de Melhoria)**:
+   - Identifique grupos musculares que poderiam ser mais desenvolvidos para melhor harmonia física.
+   - Sugira focos de treinamento específicos.
 
-8. **Papo do Coach** (seja MOTIVADOR e HUMANIZADO):
-   - Use emojis 💪🔥
-   - Seja aquele coach gente boa mas sincero
-   - Dê um conselho prático e motivacional
-   - Use gírias de academia com moderação
+7. **Sugestão de Protocolo Nutricional (Estimativa)**:
+   - Sugira uma divisão de macros (Proteína, Carbo, Gordura em g/kg) alinhada ao estado atual e um objetivo provável (ex: ganhar massa ou reduzir gordura).
 
-9. **Proporções** (avalie cada grupo muscular):
-   - Braços: desenvolvimento, separação, simetria
-   - Peitoral (chest): volume, separação, desenvolvimento superior/inferior
-   - Abdômen (abs): definição, simetria, cortes
-   - Pernas (legs): volume, separação, definição
+8. **Feedback do Treinador (Personal AI)**:
+   - Mensagem motivadora e positiva. Use emojis 💪🔥.
+   - Dê uma dica prática de treino ou mentalidade.
+
+9. **Avaliação por Segmento**:
+   - Braços: Desenvolvimento e definição.
+   - Peitoral/Tronco: Volume e formato.
+   - Abdômen/Core: Definição e linha de cintura.
+   - Pernas: Volume e proporção em relação ao tronco.
+
+IMPORTANTE: Mantenha um tom profissional, respeitoso e analítico. Evite linguagem ofensiva ou diagnósticos médicos.
 
 Retorne APENAS um JSON válido no seguinte formato:
 {
-  "bfPercentage": "8-10% (~6.1 kg - 7.7 kg de gordura)",
+  "bfPercentage": "string",
   "biotype": "string",
   "fatDistribution": "string",
   "muscleMass": "string",
   "definition": "string",
   "fatMassWeight": "string",
-  "detailedAnalysis": "string (MUITO detalhado, técnico, com emojis)",
-  "pointsToImprove": "string (direto e honesto)",
-  "macroSuggestions": "string (específico com números)",
-  "coachAdvice": "string (motivador com emojis 💪🔥)",
+  "detailedAnalysis": "string (análise técnica e completa com emojis)",
+  "pointsToImprove": "string (focos de desenvolvimento)",
+  "macroSuggestions": "string (sugestão de protocolo)",
+  "coachAdvice": "string (mensagem motivadora)",
   "fatScore": number,
   "muscleScore": number,
   "definitionScore": number,
-  "fatContext": "string (explicação da nota)",
-  "muscleContext": "string (explicação da nota)",
-  "definitionContext": "string (explicação da nota)",
+  "fatContext": "string",
+  "muscleContext": "string",
+  "definitionContext": "string",
   "proportions": {
-    "arms": "string (avaliação detalhada)",
-    "chest": "string (avaliação detalhada)",
-    "abs": "string (avaliação detalhada)",
-    "legs": "string (avaliação detalhada)"
+    "arms": "string",
+    "chest": "string",
+    "abs": "string",
+    "legs": "string"
   }
 }`;
 
         const text = await callAIAnalyzer({ image: base64Image, prompt, type: 'shape' });
-        const data = JSON.parse(extractJson(text));
+
+        let data;
+        try {
+            data = JSON.parse(extractJson(text));
+        } catch (parseError) {
+            console.error("JSON Parse Error in Shape Analysis:", parseError);
+            console.log("Raw text received:", text);
+            // Throw a more user-friendly error or return a fallback
+            throw new Error(`Erro ao interpretar a análise da IA. O modelo pode ter recusado a imagem. Resposta bruta: ${text.substring(0, 50)}...`);
+        }
 
         return {
             ...data,
