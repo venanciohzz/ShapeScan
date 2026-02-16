@@ -181,8 +181,8 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
           <div ref={scrollRef} className="h-4" />
         </div>
 
-        {/* Input Area - Flex Item with better spacing */}
-        <div className="flex-none px-4 pt-4 pb-8 md:pb-8 bg-gradient-to-t from-[#F3F6F8] via-[#F3F6F8] to-transparent dark:from-zinc-950 dark:via-zinc-950">
+        {/* Input Area - Fixed Bottom with Safe Area */}
+        <div className="flex-none px-4 pt-4 pb-8 md:pb-8 bg-[#F3F6F8] dark:bg-zinc-950 z-30 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
           <div className="flex items-end gap-2 max-w-2xl mx-auto">
             {/* Mic Button */}
             <button
@@ -209,10 +209,10 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
                 placeholder="Digite ou grave um áudio..."
                 rows={1}
                 className="w-full px-5 py-4 pl-5 pr-12 rounded-[1.5rem] border-2 border-emerald-500/20 bg-white dark:bg-zinc-900 focus:border-emerald-500 outline-none shadow-sm font-bold text-gray-900 dark:text-white placeholder:text-gray-400 text-sm md:text-base resize-none overflow-hidden min-h-[56px] max-h-[120px]"
-                style={{ height: 'auto', minHeight: '56px' }}
+                style={{ height: '56px', minHeight: '56px' }}
                 onInput={(e) => {
                   const target = e.target as HTMLTextAreaElement;
-                  target.style.height = 'auto'; // Reset height
+                  target.style.height = '56px'; // Reset height
                   target.style.height = `${Math.min(target.scrollHeight, 120)}px`; // Set new height capped at 120px
                 }}
               />
