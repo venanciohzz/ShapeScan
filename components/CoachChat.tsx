@@ -182,7 +182,7 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
         </div>
 
         {/* Input Area - Fixed Bottom with Safe Area */}
-        <div className="flex-none px-4 pt-4 pb-8 md:pb-8 bg-[#F3F6F8] dark:bg-zinc-950 z-30 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
+        <div className="flex-none px-4 pt-4 pb-32 md:pb-8 bg-[#F3F6F8] dark:bg-zinc-950 z-30 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
           <div className="flex items-end gap-2 max-w-2xl mx-auto">
             {/* Mic Button */}
             <button
