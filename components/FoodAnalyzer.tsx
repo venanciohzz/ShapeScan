@@ -314,7 +314,7 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
               )}
 
               <div className="text-7xl md:text-8xl mb-6 md:mb-8">🥗</div>
-              <h2 className="text-2xl font-black mb-3 italic text-black dark:text-white">Análise Visual</h2>
+
               <label className={`inline-block bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-100 dark:shadow-none transition-all text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-emerald-700 active:scale-95'}`}>
                 {isFreeLocked ? 'BLOQUEADO' : 'ABRIR CÂMERA'}
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading || isFreeLocked} />
