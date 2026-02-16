@@ -288,8 +288,8 @@ ${conversationContext}`;
     try {
         const text = await callAIAnalyzer({ prompt, systemPrompt, type: 'chat' });
         return text;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error in chat:", error);
-        return "Desculpa mano, deu um bug aqui. Tenta de novo! 💪";
+        return `Erro detalhado: ${error.message || JSON.stringify(error)}`;
     }
 };

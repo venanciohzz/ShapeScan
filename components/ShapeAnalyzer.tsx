@@ -105,8 +105,8 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           const metrics = { weight: w, height: h };
           const data = await analyzeShape(apiBase64, metrics);
           setResult(data);
-        } catch (err) {
-          setError("Erro ao analisar imagem. Certifique-se que é uma foto clara do corpo.");
+        } catch (err: any) {
+          setError(`Erro: ${err.message || "Falha na análise"}`);
         } finally {
           setLoading(false);
         }

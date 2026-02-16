@@ -128,8 +128,8 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
           await incrementUsage();
 
           setResult(data);
-        } catch (err) {
-          setError("Erro ao analisar imagem. Tente novamente.");
+        } catch (err: any) {
+          setError(`Erro: ${err.message || "Falha na análise"}`);
           setPreviewImage(null);
         } finally {
           setLoading(false);
