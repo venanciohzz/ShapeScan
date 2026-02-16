@@ -38,13 +38,14 @@ Clique em **"Environment Variables"** e adicione as seguintes variáveis:
 |------|-------|----------------|
 | `VITE_SUPABASE_URL` | Sua URL do Supabase | Painel do Supabase → Settings → API |
 | `VITE_SUPABASE_ANON_KEY` | Sua chave anon do Supabase | Painel do Supabase → Settings → API |
-| `VITE_OPENAI_API_KEY` | Sua chave da API OpenAI | https://platform.openai.com/api-keys |
+
+> **Nota**: A chave da OpenAI já está configurada como secret no Supabase (`openai-api-key`), então não precisa ser adicionada aqui! 🔒
 
 **Como adicionar:**
 1. Digite o **nome** da variável (ex: `VITE_SUPABASE_URL`)
 2. Cole o **valor** correspondente
 3. Clique em **"Add"**
-4. Repita para todas as 3 variáveis
+4. Repita para as 2 variáveis
 
 ### 5. Fazer Deploy
 
