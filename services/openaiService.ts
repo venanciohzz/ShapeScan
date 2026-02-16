@@ -3,7 +3,7 @@ import { supabase } from './supabaseService';
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-analyzer`;
 
-const callAIAnalyzer = async (payload: any): Promise<string> => {
+const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
     const response = await fetch(EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
@@ -88,7 +88,7 @@ PRECISÃO:
 
 Retorne sempre JSON válido.`;
 
-        const text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt });
+        const text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'food' });
         const data = JSON.parse(extractJson(text));
 
         return {
@@ -135,7 +135,7 @@ DIRETRIZES CRÍTICAS:
 
 Retorne sempre JSON válido.`;
 
-        const text = await callAIAnalyzer({ prompt, systemPrompt });
+        const text = await callAIAnalyzer({ prompt, systemPrompt, type: 'food' });
         const data = JSON.parse(extractJson(text));
 
         return {
@@ -239,7 +239,7 @@ Retorne APENAS um JSON válido no seguinte formato:
   }
 }`;
 
-        const text = await callAIAnalyzer({ image: base64Image, prompt });
+        const text = await callAIAnalyzer({ image: base64Image, prompt, type: 'shape' });
         const data = JSON.parse(extractJson(text));
 
         return {
@@ -293,7 +293,7 @@ ${conversationContext}`;
     const prompt = message;
 
     try {
-        const text = await callAIAnalyzer({ prompt, systemPrompt });
+        const text = await callAIAnalyzer({ prompt, systemPrompt, type: 'chat' });
         return text;
     } catch (error) {
         console.error("Error in chat:", error);

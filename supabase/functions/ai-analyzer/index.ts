@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -6,56 +7,104 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-    // 1. Handle CORS preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
 
     try {
-        // 2. Load API Key
-        const apiKey = Deno.env.get('OPENAI_API_KEY');
-        if (!apiKey) {
-            throw new Error('OPENAI_API_KEY is not set in Supabase secrets.');
+        // 1. VALIDAR AUTH
+        const authHeader = req.headers.get('Authorization');
+        if (!authHeader) {
+            return new Response(JSON.stringify({ error: 'Missing Authorization header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
-        // 3. Parse Request Body
-        const { image, prompt, systemPrompt } = await req.json();
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-        // 4. Construct Messages for OpenAI
-        const messages = [];
+        // Cliente para validar usuário
+        const supabase = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        // System Prompt
-        if (systemPrompt) {
-            messages.push({ role: 'system', content: systemPrompt });
+        if (authError || !user) {
+            return new Response(JSON.stringify({ error: 'Unauthorized: User not found' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
-        // User Message
-        const userContent = [];
+        // 2. PARSE REQUEST
+        const { image, prompt, systemPrompt, type } = await req.json();
 
-        // Add text prompt
-        if (prompt) {
-            userContent.push({ type: 'text', text: prompt });
-        }
+        // Default type to 'chat' if missing for backward compatibility, but backend enforces limits
+        const requestType = type || 'chat';
 
-        // Add image if provided (VISION SUPPORT for GPT-4o-mini)
-        if (image) {
-            // Ensure proper data URI format
-            const imageUrl = image.startsWith('data:')
-                ? image
-                : `data:image/jpeg;base64,${image}`;
+        // 3. VERIFICAR PLANO E LIMITES (Usando Service Role para acessar tabelas protegidas se necessário)
+        const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-            userContent.push({
-                type: 'image_url',
-                image_url: {
-                    url: imageUrl,
-                    detail: 'low' // 'low' is cheaper (85 tokens) and usually sufficient for food/body shape. 'high' or 'auto' for more detail.
-                }
+        // Buscar plano do usuário
+        const { data: planData } = await adminClient
+            .from('user_plans')
+            .select('plan_id')
+            .eq('user_id', user.id)
+            .eq('active', true)
+            .single();
+
+        // Fallback para 'free' se não tiver plano ativo ou erro
+        const userPlan = planData?.plan_id || 'free';
+
+        // DEFINIR LIMITES
+        const LIMITS = {
+            free: { food: 6, shape: 2, chat: 20 },      // Free/Padrão
+            monthly: { food: 6, shape: 2, chat: 20 },   // Standard
+            annual: { food: 6, shape: 2, chat: 20 },    // Standard
+            pro_monthly: { food: 12, shape: 4, chat: 50 }, // Pro
+            pro_annual: { food: 12, shape: 4, chat: 50 },  // Pro
+            lifetime: { food: 100, shape: 100, chat: 100 } // Lifetime (Exemplo)
+        };
+
+        const planLimits = LIMITS[userPlan as keyof typeof LIMITS] || LIMITS.free;
+        const limit = planLimits[requestType as keyof typeof planLimits] || 0;
+
+        // Verificar uso hoje
+        const today = new Date().toISOString().split('T')[0];
+
+        // Upsert inicial para garantir que a linha existe e pegar o valor atual (Atomic Increment simulado)
+        // OBS: Postgres tem UPSERT. Vamos fazer um select primeiro para checar o limite.
+        const { data: usageData, error: usageError } = await adminClient
+            .from('daily_usage')
+            .select('count')
+            .eq('user_id', user.id)
+            .eq('date', today)
+            .eq('type', requestType)
+            .single();
+
+        const currentCount = usageData?.count || 0;
+
+        // BLOQUEAR SE EXCEDEU (Exceto Admin se quiser implementar check de admin)
+        if (currentCount >= limit) {
+            return new Response(JSON.stringify({
+                error: `Limite diário atingido para ${requestType}.`,
+                limit_reached: true,
+                plan: userPlan
+            }), {
+                status: 403,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
 
+        // 4. EXECUTAR IA (OpenAI)
+        const apiKey = Deno.env.get('OPENAI_API_KEY');
+        if (!apiKey) throw new Error('OPENAI_API_KEY missing');
+
+        const messages = [];
+        if (systemPrompt) messages.push({ role: 'system', content: systemPrompt });
+
+        const userContent = [];
+        if (prompt) userContent.push({ type: 'text', text: prompt });
+        if (image) {
+            const imageUrl = image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`;
+            userContent.push({ type: 'image_url', image_url: { url: imageUrl, detail: 'low' } });
+        }
         messages.push({ role: 'user', content: userContent });
 
-        // 5. Call OpenAI API via Fetch (no external dependencies needed)
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -63,7 +112,7 @@ Deno.serve(async (req) => {
                 'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
-                model: 'gpt-4o-mini', // Cost-effective model
+                model: 'gpt-4o-mini',
                 messages: messages,
                 max_tokens: 1000,
                 temperature: 0.7
@@ -71,15 +120,22 @@ Deno.serve(async (req) => {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            console.error('OpenAI API Error:', error);
-            throw new Error(`OpenAI API Error: ${error.error?.message || 'Unknown error'}`);
+            const err = await response.json();
+            throw new Error(err.error?.message || 'Erro na OpenAI');
         }
 
         const data = await response.json();
         const reply = data.choices[0]?.message?.content || '';
 
-        // 6. Return Response
+        // 5. INCREMENTAR USO (Somente após sucesso)
+        // Usando RPC ou Upsert simples. Upsert é mais seguro aqui.
+        await adminClient.from('daily_usage').upsert({
+            user_id: user.id,
+            date: today,
+            type: requestType,
+            count: currentCount + 1
+        }, { onConflict: 'user_id,date,type' });
+
         return new Response(JSON.stringify({ text: reply }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
