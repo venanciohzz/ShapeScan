@@ -68,6 +68,42 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
+  // Speech Recognition Setup
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Basic markdown/asterisk cleanup function for displayed messages
+    // This runs when messages change to ensure we clean up incoming AI responses
+  }, [messages]);
+
+  const startListening = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.lang = 'pt-BR';
+      recognitionRef.current.interimResults = false;
+
+      recognitionRef.current.onstart = () => setIsListening(true);
+      recognitionRef.current.onend = () => setIsListening(false);
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(prev => (prev ? prev + ' ' + transcript : transcript));
+      };
+
+      recognitionRef.current.start();
+    } else {
+      alert('Seu navegador não suporta reconhecimento de voz.');
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
@@ -85,7 +121,11 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
         logsSummary: logs.slice(0, 5),
         lastEvolution
       });
-      setMessages(prev => [...prev, { role: 'assistant', content: response || "Puts, me perdi aqui. Manda de novo? 🙏" }]);
+
+      // Clean up markdown asterisks from response immediately
+      const cleanResponse = response ? response.replace(/\*\*/g, '').replace(/__/g, '') : "Puts, me perdi aqui. Manda de novo? 🙏";
+
+      setMessages(prev => [...prev, { role: 'assistant', content: cleanResponse }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: 'assistant', content: "Erro na conexão. Tenta de novo já já! 🔥" }]);
     } finally {
@@ -94,9 +134,13 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
   };
 
   const handleBack = () => {
-    // We do NOT clear messages here anymore, so state persists in App.tsx while navigating
     onBack();
   }
+
+  // Helper to render message content without asterisks (double check)
+  const renderMessageContent = (content: string) => {
+    return content.replace(/\*\*/g, '').replace(/__/g, '');
+  };
 
   return (
     <div className="fixed inset-0 z-40 bg-[#F3F6F8] dark:bg-zinc-950 flex justify-center h-[100dvh] w-full">
@@ -120,8 +164,8 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 scrollbar-hide overscroll-contain">
           {messages.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[88%] p-5 rounded-3xl shadow-sm ${msg.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-white dark:bg-zinc-800 border-2 border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-200 rounded-tl-none font-medium'}`}>
-                <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+              <div className={`max-w-[88%] p-5 rounded-3xl shadow-sm ${msg.role === 'user' ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-white dark:bg-zinc-800 border-2 border-gray-100 dark:border-zinc-700 text-gray-800 dark:text-zinc-200 rounded-tl-none font-bold'}`}>
+                <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{renderMessageContent(msg.content)}</p>
               </div>
             </div>
           ))}
@@ -137,18 +181,48 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
           <div ref={scrollRef} className="h-4" />
         </div>
 
-        {/* Input Area - Flex Item (Natural Order) */}
-        <div className="flex-none px-6 pt-4 pb-32 md:pb-8 bg-gradient-to-t from-[#F3F6F8] via-[#F3F6F8] to-transparent dark:from-zinc-950 dark:via-zinc-950">
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Mande sua dúvida aqui... 💪"
-              className="flex-1 px-6 py-5 rounded-[2rem] border-2 border-emerald-600 bg-white dark:bg-zinc-900 focus:border-emerald-700 outline-none shadow-lg font-bold text-black dark:text-white placeholder:text-gray-400 text-sm md:text-base"
-            />
-            <button onClick={handleSend} disabled={!input.trim() || loading} className="bg-emerald-600 text-white w-16 h-16 rounded-[2rem] flex items-center justify-center font-black shadow-xl hover:bg-emerald-700 transition-all group shrink-0">
+        {/* Input Area - Flex Item with better spacing */}
+        <div className="flex-none px-4 pt-4 pb-8 md:pb-8 bg-gradient-to-t from-[#F3F6F8] via-[#F3F6F8] to-transparent dark:from-zinc-950 dark:via-zinc-950">
+          <div className="flex items-end gap-2 max-w-2xl mx-auto">
+            {/* Mic Button */}
+            <button
+              onClick={isListening ? stopListening : startListening}
+              className={`w-14 h-14 rounded-[1.5rem] flex items-center justify-center transition-all shrink-0 shadow-lg ${isListening ? 'bg-red-500 text-white animate-pulse shadow-red-500/30' : 'bg-white dark:bg-zinc-800 text-emerald-600 border-2 border-emerald-100 dark:border-zinc-700 hover:border-emerald-500'}`}
+            >
+              {isListening ? (
+                <span className="text-2xl">⏹️</span>
+              ) : (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+              )}
+            </button>
+
+            <div className="flex-1 relative">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Digite ou grave um áudio..."
+                rows={1}
+                className="w-full px-5 py-4 pl-5 pr-12 rounded-[1.5rem] border-2 border-emerald-500/20 bg-white dark:bg-zinc-900 focus:border-emerald-500 outline-none shadow-sm font-bold text-gray-900 dark:text-white placeholder:text-gray-400 text-sm md:text-base resize-none overflow-hidden min-h-[56px] max-h-[120px]"
+                style={{ height: 'auto', minHeight: '56px' }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = 'auto'; // Reset height
+                  target.style.height = `${Math.min(target.scrollHeight, 120)}px`; // Set new height capped at 120px
+                }}
+              />
+            </div>
+
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || loading}
+              className="bg-emerald-600 text-white w-14 h-14 rounded-[1.5rem] flex items-center justify-center font-black shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 transition-all group shrink-0 active:scale-95 disabled:opacity-50 disabled:shadow-none"
+            >
               <svg className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
