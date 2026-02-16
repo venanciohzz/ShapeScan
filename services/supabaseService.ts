@@ -13,66 +13,48 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
 // ==================== AUTENTICAÇÃO ====================
 
 export async function signUp(email: string, password: string, userData: Omit<User, 'id' | 'createdAt'>): Promise<User> {
-  // 1. Criar usuário no Supabase Auth
+  // 1. Criar usuário no Supabase Auth com metadados
+  // A trigger handle_new_user cuidará de criar profile, user_plans e user_usage
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      data: {
+        name: userData.name,
+        username: userData.username,
+        phone: userData.phone,
+        age: userData.age,
+        height: userData.height,
+        weight: userData.weight,
+        gender: userData.gender,
+        goal: userData.goal,
+        activityLevel: userData.activityLevel,
+        dailyCalorieGoal: userData.dailyCalorieGoal,
+        dailyWaterGoal: userData.dailyWaterGoal,
+        dailyProtein: userData.dailyProtein,
+        dailyCarbs: userData.dailyCarbs,
+        dailyFat: userData.dailyFat,
+        freeScansUsed: 0,
+        photo: userData.photo,
+      }
+    }
   });
 
   if (authError) throw new Error(authError.message);
   if (!authData.user) throw new Error('Falha ao criar usuário');
 
-  // 2. Criar perfil na tabela profiles
-  const profile = {
+  // Retornar objeto User construído com os dados enviados (já que o profile pode levar uns ms para ser criado)
+  return {
     id: authData.user.id,
-    email: userData.email,
-    name: userData.name,
-    username: userData.username,
-    phone: userData.phone,
-    age: userData.age,
-    height: userData.height,
-    weight: userData.weight,
-    gender: userData.gender,
-    goal: userData.goal,
-    activityLevel: userData.activityLevel,
-    dailyCalorieGoal: userData.dailyCalorieGoal,
-    dailyWaterGoal: userData.dailyWaterGoal,
-    dailyProtein: userData.dailyProtein,
-    dailyCarbs: userData.dailyCarbs,
-    dailyFat: userData.dailyFat,
-    freeScansUsed: 0,
-    photo: userData.photo,
-  };
-
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .insert(profile);
-
-  if (profileError) throw new Error(profileError.message);
-
-  // 3. Criar plano free para o usuário
-  const { error: planError } = await supabase
-    .from('user_plans')
-    .insert({
-      user_id: authData.user.id,
-      plan_id: 'free',
-      active: true,
-    });
-
-  if (planError) throw new Error(planError.message);
-
-  // 4. Criar registro de uso
-  const { error: usageError } = await supabase
-    .from('user_usage')
-    .insert({
-      user_id: authData.user.id,
-      daily_food_scans: 0,
-      daily_shape_scans: 0,
-    });
-
-  if (usageError) throw new Error(usageError.message);
-
-  return mapProfileToUser(profile);
+    email: email,
+    createdAt: new Date().getTime(),
+    isPremium: false,
+    isAdmin: false,
+    plan: 'free',
+    ...userData,
+    dailyCalorieGoal: userData.dailyCalorieGoal || 2000,
+    freeScansUsed: 0
+  } as User;
 }
 
 export async function signIn(email: string, password: string): Promise<User> {
