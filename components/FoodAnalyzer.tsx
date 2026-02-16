@@ -1,0 +1,391 @@
+
+import React, { useState, useEffect } from 'react';
+import { User, FoodLog, FoodAnalysisResult, FoodItem } from '../types';
+import { analyzePlate, getManualFoodMacros } from '../services/openaiService';
+import { compressImage } from '../utils/security';
+import { db } from '../services/db';
+
+interface FoodAnalyzerProps {
+  user: User;
+  onAdd: (log: Omit<FoodLog, 'id' | 'timestamp'>) => void;
+  onBack: () => void;
+  mode: 'ai' | 'manual';
+  onUpdateUser: (user: User) => void;
+  onUpgrade: () => void;
+  onUpgradePro: () => void;
+}
+
+const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUpgradePro }) => {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<FoodAnalysisResult | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [manualName, setManualName] = useState('');
+  const [error, setError] = useState('');
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitModalType, setLimitModalType] = useState<'free' | 'daily'>('daily');
+  const [scanStep, setScanStep] = useState(0);
+
+  // Check if free user is already locked out on mount
+  useEffect(() => {
+    if (mode === 'ai' && user.plan === 'free' && (user.freeScansUsed || 0) >= 1) {
+      // Keep internal state
+    }
+  }, [mode, user]);
+
+  const scanMessages = ["Digitalizando padrões...", "Extraindo vetores...", "Calculando densidade...", "Gerando relatório..."];
+
+  useEffect(() => {
+    let interval: any;
+    if (loading) {
+      setScanStep(0);
+      interval = setInterval(() => {
+        setScanStep(prev => (prev < scanMessages.length - 1 ? prev + 1 : prev));
+      }, 1500);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  const getDailyLimit = () => {
+    if (user.isAdmin) return 999;
+    switch (user.plan) {
+      case 'pro_monthly':
+      case 'pro_annual': return 12; // Pro Plan Limit
+      case 'monthly':
+      case 'annual':
+      case 'lifetime': return 6; // Standard Plan Limit
+      default: return 0; // Free limit handled separately
+    }
+  };
+
+  const checkUsageLimit = () => {
+    if (user.isAdmin) return true;
+
+    // 1. Check Free Plan Lifetime Limit
+    if (user.plan === 'free') {
+      if ((user.freeScansUsed || 0) >= 1) {
+        setLimitModalType('free');
+        setShowLimitModal(true);
+        return false;
+      }
+      return true; // Allow, will increment after success
+    }
+
+    // 2. Check Paid Plan Daily Limit
+    const limit = getDailyLimit();
+    const today = new Date().toDateString();
+    const usageKey = `food_scan_usage_${user.email}_${today}`;
+    const currentUsage = parseInt(localStorage.getItem(usageKey) || '0');
+
+    if (currentUsage >= limit) {
+      setLimitModalType('daily');
+      setShowLimitModal(true);
+      return false;
+    }
+    return true;
+  };
+
+  const incrementUsage = async () => {
+    if (user.isAdmin) return;
+
+    if (user.plan === 'free') {
+      // Increment lifetime counter in DB
+      const newCount = (user.freeScansUsed || 0) + 1;
+      const updatedUser = await db.users.update(user.email, { freeScansUsed: newCount });
+      onUpdateUser(updatedUser);
+    } else {
+      // Increment daily counter in LocalStorage
+      const today = new Date().toDateString();
+      const usageKey = `food_scan_usage_${user.email}_${today}`;
+      const currentUsage = parseInt(localStorage.getItem(usageKey) || '0');
+      localStorage.setItem(usageKey, (currentUsage + 1).toString());
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!checkUsageLimit()) return;
+
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setError('');
+    setPreviewImage(null);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const rawBase64 = reader.result as string;
+        const compressedBase64 = await compressImage(rawBase64);
+        setPreviewImage(compressedBase64);
+        const apiBase64 = compressedBase64.split(',')[1];
+        const data = await analyzePlate(apiBase64);
+        if (!data || !data.items) {
+          setError("Não foi possível identificar alimentos. Tente novamente.");
+          setLoading(false);
+          return;
+        }
+
+        // SUCCESS: Increment usage here
+        await incrementUsage();
+
+        setResult(data);
+        setLoading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setError("Erro ao analisar imagem. Tente novamente.");
+      setLoading(false);
+    }
+  };
+
+  const handleManualAdd = async () => {
+    if (!manualName) {
+      setError("Descreva o alimento com detalhes (Ex: Arroz Branco 150g).");
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const analysis = await getManualFoodMacros(manualName);
+      const items = analysis?.items || [];
+      if (items.length === 0) throw new Error("Não foi possível calcular os macros.");
+      setResult(analysis);
+    } catch (err) {
+      setError("Erro ao consultar a IA. Tente descrever de outra forma.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmAdd = async (saveAsSavedMeal: boolean = false) => {
+    if (!result) return;
+
+    console.log('🍽️ confirmAdd chamado - saveAsSavedMeal:', saveAsSavedMeal);
+
+    const items = result.items || [];
+    const foodItems: FoodItem[] = items.map(it => ({
+      id: Math.random().toString(36).substr(2, 9),
+      name: it.name,
+      calories: Number(it.calories.toFixed(1)),
+      weight: Number(it.weight.toFixed(1))
+    }));
+
+    const mealName = manualName || (foodItems.length > 1 ? "Refeição Completa" : (foodItems[0]?.name || "Refeição"));
+    const mealData = {
+      name: mealName,
+      items: foodItems,
+      calories: Number(result.totalCalories.toFixed(1)),
+      protein: Number(result.totalProtein.toFixed(1)),
+      carbs: Number(result.totalCarbs.toFixed(1)),
+      fat: Number(result.totalFat.toFixed(1)),
+      weight: Number(result.totalWeight.toFixed(1))
+    };
+
+    console.log('🍽️ Dados da refeição:', mealData);
+
+    try {
+      if (saveAsSavedMeal) {
+        console.log('💾 Salvando como refeição favorita - user.id:', user.id);
+        await db.savedMeals.add(user.id, mealData);
+        alert("Refeição salva nos favoritos!");
+      } else {
+        console.log('✅ Adicionando à meta diária');
+        onAdd(mealData);
+        alert("Adicionado à meta diária! ✅");
+        onBack();
+      }
+    } catch (error) {
+      console.error('❌ Erro em confirmAdd:', error);
+      alert('Erro ao salvar: ' + (error as Error).message);
+    }
+  };
+
+  // Logic to show lock state if user is free and used limit
+  const isFreeLocked = mode === 'ai' && user.plan === 'free' && (user.freeScansUsed || 0) >= 1 && !result;
+
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-6 md:pt-14 pb-32 text-black dark:text-white min-h-screen flex flex-col relative">
+
+      {showLimitModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2rem] p-8 border-2 border-emerald-500/50 shadow-2xl text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500"></div>
+            <div className="text-4xl mb-4">
+              {limitModalType === 'daily' ? '🛑' : '🔒'}
+            </div>
+            <h3 className="text-xl font-black mb-4">
+              {limitModalType === 'daily' ? 'Limite diário atingido' : 'Limite Gratuito Atingido'}
+            </h3>
+            <p className="text-gray-600 dark:text-zinc-300 mb-6 font-medium text-sm leading-relaxed">
+              {limitModalType === 'daily'
+                ? (
+                  <>
+                    Você utilizou todas as análises disponíveis hoje no Plano Standard. Novas análises serão liberadas após a meia-noite.
+                    <br /><br />
+                    <span className="font-bold">Precisa de mais?</span> O Plano Pro oferece o dobro de scanners para acompanhar sua evolução com mais liberdade.
+                  </>
+                )
+                : "Você já utilizou sua análise gratuita. Escolha um plano para continuar usando o Scanner Inteligente."
+              }
+            </p>
+            <button
+              onClick={() => {
+                setShowLimitModal(false);
+                if (limitModalType === 'daily') onUpgradePro(); else onUpgrade();
+              }}
+              className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black uppercase tracking-widest text-xs mb-3 shadow-lg shadow-emerald-500/20 hover:bg-emerald-500 transition-all"
+            >
+              {limitModalType === 'daily' ? "Fazer Upgrade para Pro" : "Desbloquear mais análises"}
+            </button>
+            <button onClick={() => { setShowLimitModal(false); onBack(); }} className="w-full py-4 bg-transparent text-gray-400 font-bold uppercase tracking-widest text-[10px] hover:text-gray-600 dark:hover:text-zinc-200">
+              Voltar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="fixed inset-0 z-[100] bg-[#09090b]/95 backdrop-blur-3xl flex flex-col items-center justify-center animate-in fade-in duration-500">
+          <div className="absolute inset-0 grid-bg opacity-10 animate-pulse"></div>
+          <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center mb-12">
+            {previewImage && (
+              <div className="absolute inset-4 rounded-3xl overflow-hidden border-2 border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.3)] z-10">
+                <img src={previewImage} alt="Scanning" className="w-full h-full object-cover opacity-80" />
+                <div className="absolute top-0 left-0 w-full h-[2px] bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,1)] animate-[scan-line_1.5s_linear_infinite] z-20"></div>
+              </div>
+            )}
+            <div className="absolute inset-0 border border-emerald-500/20 rounded-[2.5rem] animate-[pulse_2s_infinite]"></div>
+            <div className="absolute -inset-4 border border-dashed border-emerald-500/10 rounded-[3rem] animate-[spin_20s_linear_infinite]"></div>
+          </div>
+          <div className="z-10 text-center space-y-3">
+            <h2 className="text-xl md:text-2xl font-light text-white tracking-wide">{scanMessages[scanStep]}</h2>
+            <div className="w-64 h-0.5 bg-zinc-800 mt-6 mx-auto rounded-full overflow-hidden relative">
+              <div className="absolute inset-y-0 left-0 bg-emerald-500 w-1/3 animate-[loading_2s_ease-in-out_infinite]"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm hover:scale-105 transition-all active:scale-95 mb-6 text-black dark:text-white">
+        <span className="text-lg pb-0.5">←</span>
+      </button>
+
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter">
+          {mode === 'manual' ? 'Registro Manual' : 'Scanner de Prato'}
+        </h1>
+        {mode === 'ai' && <span className="text-[10px] bg-emerald-600 text-white px-3 py-1 rounded-full font-black tracking-widest shadow-sm">AI PREMIUM</span>}
+      </div>
+
+      {!result ? (
+        <div className="space-y-6 flex-1 flex flex-col animate-in fade-in duration-500">
+          {mode === 'manual' ? (
+            <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border-2 border-emerald-600 shadow-sm transition-colors flex flex-col gap-6">
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-2">O que você comeu?</label>
+                <p className="text-xs text-gray-500 dark:text-zinc-500 font-medium mb-3">
+                  Inclua o tipo específico e a quantidade na descrição.
+                </p>
+                <textarea
+                  value={manualName}
+                  onChange={(e) => setManualName(e.target.value)}
+                  placeholder="Ex: 150g Arroz Branco, 1 concha Feijão Carioca, 2 Ovos Fritos..."
+                  className="w-full p-5 rounded-2xl border-2 border-emerald-500 bg-gray-50 dark:bg-zinc-950 font-bold text-black dark:text-white outline-none focus:border-emerald-600 shadow-inner text-base md:text-lg min-h-[120px] resize-none"
+                />
+              </div>
+              <button onClick={handleManualAdd} disabled={loading} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-emerald-700 transition-all active:scale-95">CALCULAR MACROS</button>
+              {error && <p className="text-red-500 font-black text-xs text-center">{error}</p>}
+            </div>
+          ) : (
+            <div className={`bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-gray-300 dark:border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center transition-colors flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
+
+              {/* Free Plan Lock Overlay */}
+              {isFreeLocked && (
+                <div className="absolute inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-8 text-center">
+                  <div className="bg-zinc-900 text-white p-4 rounded-full mb-4 shadow-xl">🔒</div>
+                  <h3 className="text-xl font-black text-black dark:text-white mb-2">Scanner Bloqueado</h3>
+                  <p className="text-sm font-medium text-gray-600 dark:text-zinc-400 mb-6">Você já utilizou sua análise gratuita.</p>
+                  <button onClick={onUpgrade} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest shadow-lg hover:bg-emerald-500 transition-all">Desbloquear Agora</button>
+                </div>
+              )}
+
+              <div className="text-7xl md:text-8xl mb-6 md:mb-8">🥗</div>
+              <h2 className="text-2xl font-black mb-3 italic text-black dark:text-white">Análise Visual</h2>
+              <label className={`inline-block bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-100 dark:shadow-none transition-all text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-emerald-700 active:scale-95'}`}>
+                {isFreeLocked ? 'BLOQUEADO' : 'ABRIR CÂMERA'}
+                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading || isFreeLocked} />
+              </label>
+              {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-50 dark:bg-red-900/30 p-4 rounded-xl border-2 border-red-100 dark:border-red-900/50 w-full">{error}</p>}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-6 pb-4 animate-in fade-in duration-500">
+          <div className="bg-white dark:bg-zinc-900 p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border-4 border-emerald-600 shadow-2xl relative transition-colors">
+            <div className="flex justify-between items-start mb-6 md:mb-10">
+              <div>
+                <p className="text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2">Total Calórico</p>
+                <p className="text-5xl md:text-8xl font-black italic tracking-tighter leading-none text-black dark:text-white">{result.totalCalories.toFixed(1)}</p>
+              </div>
+              <div className="text-right flex flex-col items-end gap-3">
+                {previewImage && (
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-lg">
+                    <img src={previewImage} alt="Analisado" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-3 border-t-2 border-emerald-50 dark:border-zinc-800 pt-6">
+              <MacroRow label="Proteínas" value={result.totalProtein.toFixed(1)} unit="g" color="text-emerald-600" />
+              <MacroRow label="Carboidratos" value={result.totalCarbs.toFixed(1)} unit="g" color="text-blue-500" />
+              <MacroRow label="Gorduras" value={result.totalFat.toFixed(1)} unit="g" color="text-yellow-500" />
+            </div>
+
+            <div className="mt-6 pt-6 border-t-2 border-emerald-50 dark:border-zinc-800">
+              <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Itens Identificados</p>
+              <div className="space-y-2">
+                {result.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-zinc-800 p-3 rounded-xl border border-gray-100 dark:border-zinc-700">
+                    <div>
+                      <p className="font-bold text-sm text-gray-900 dark:text-white leading-tight capitalize">{item.name}</p>
+                      <p className="text-[10px] font-bold text-gray-500 dark:text-zinc-400 mt-0.5">{item.weight}g</p>
+                    </div>
+                    <p className="font-black text-emerald-600 text-xs">{item.calories} kcal</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 bg-black text-white p-6 rounded-3xl border-4 border-emerald-500 shadow-xl shadow-emerald-100 dark:shadow-none">
+              <p className="text-emerald-400 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Coach IA Diz:</p>
+              <p className="text-sm md:text-base font-bold italic leading-relaxed">"{result.reasoning}"</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-4">
+            {/* Unlock Button for Free Users after they use their scan */}
+            {user.plan === 'free' && mode === 'ai' && (
+              <button onClick={onUpgrade} className="w-full py-5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:brightness-110 shadow-2xl active:scale-95 animate-pulse">
+                🔓 Desbloquear mais análises
+              </button>
+            )}
+
+            <button onClick={() => confirmAdd(false)} className="w-full bg-emerald-600 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-2xl active:scale-95">Adicionar ao Dia ✅</button>
+            {mode === 'manual' && (
+              <button onClick={() => confirmAdd(true)} className="w-full py-5 bg-cyan-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-cyan-700 shadow-2xl active:scale-95">Salvar Refeição 💾</button>
+            )}
+            <button onClick={() => { setResult(null); setPreviewImage(null); }} className="w-full py-4 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-700 text-black dark:text-white rounded-2xl font-black uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-zinc-800">Cancelar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const MacroRow = ({ label, value, unit, color }: { label: string, value: number | string, unit: string, color: string }) => (
+  <div className="flex justify-between items-center">
+    <p className={`text-xs md:text-sm font-black uppercase tracking-widest ${color}`}>{label}</p>
+    <p className={`text-xl md:text-2xl font-black ${color}`}>{value}<span className="text-xs text-gray-400 ml-1">{unit}</span></p>
+  </div>
+);
+
+export default FoodAnalyzer;

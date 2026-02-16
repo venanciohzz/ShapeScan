@@ -1,0 +1,7 @@
+{
+  "name": "ShapeScan",
+  "description": "Análise inteligente de shape e alimentação com IA. Evolua seu físico com dados reais e orientação profissional.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
