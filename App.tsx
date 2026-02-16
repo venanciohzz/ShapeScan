@@ -160,44 +160,62 @@ const App: React.FC = () => {
     setCurrentView('landing');
   };
 
+  /* estado novo */
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
+
+  // ... (código existente)
+
   const handleQuizComplete = async (metrics: Partial<User>) => {
-    if (!user) return;
-    const { age, height, weight, gender, goal, activityLevel } = metrics;
-    const activityFactor = parseFloat(activityLevel || '1.2');
-    let bmr = 0;
-    if (gender === 'male') {
-      bmr = 10 * (weight || 0) + 6.25 * (height || 0) - 5 * (age || 0) + 5;
-    } else {
-      bmr = 10 * (weight || 0) + 6.25 * (height || 0) - 5 * (age || 0) - 161;
+    if (!user) {
+      alert("Erro: Usuário não identificado. Tente fazer login novamente.");
+      return;
     }
-    let tdee = bmr * activityFactor;
-    let calorieGoal = tdee;
-    if (goal === 'lose') calorieGoal -= 500;
-    if (goal === 'gain') calorieGoal += 300;
-    const waterGoal = Math.round((weight || 70) * 35);
 
-    // Macro Calculation
-    const w = weight || 70;
-    const protein = Math.round(w * 2);
-    const fat = Math.round(w * 0.8);
-    const pCal = protein * 4;
-    const fCal = fat * 9;
-    const carbs = Math.max(0, Math.round((calorieGoal - pCal - fCal) / 4));
+    setIsQuizLoading(true);
+    try {
+      const { age, height, weight, gender, goal, activityLevel } = metrics;
+      const activityFactor = parseFloat(activityLevel || '1.2');
+      let bmr = 0;
+      if (gender === 'male') {
+        bmr = 10 * (weight || 0) + 6.25 * (height || 0) - 5 * (age || 0) + 5;
+      } else {
+        bmr = 10 * (weight || 0) + 6.25 * (height || 0) - 5 * (age || 0) - 161;
+      }
+      let tdee = bmr * activityFactor;
+      let calorieGoal = tdee;
+      if (goal === 'lose') calorieGoal -= 500;
+      if (goal === 'gain') calorieGoal += 300;
+      const waterGoal = Math.round((weight || 70) * 35);
 
-    const updates = {
-      ...metrics,
-      dailyCalorieGoal: Math.round(calorieGoal),
-      dailyWaterGoal: waterGoal,
-      dailyProtein: protein,
-      dailyCarbs: carbs,
-      dailyFat: fat,
-      plan: (user.isAdmin ? 'lifetime' : 'free') as any,
-      freeScansUsed: user.freeScansUsed || 0
-    };
+      // Macro Calculation
+      const w = weight || 70;
+      const protein = Math.round(w * 2);
+      const fat = Math.round(w * 0.8);
+      const pCal = protein * 4;
+      const fCal = fat * 9;
+      const carbs = Math.max(0, Math.round((calorieGoal - pCal - fCal) / 4));
 
-    const updatedUser = await db.users.update(user.email, updates);
-    setUser(updatedUser);
-    setCurrentView('plans');
+      const updates: any = {
+        ...metrics,
+        dailyCalorieGoal: Math.round(calorieGoal),
+        dailyWaterGoal: waterGoal,
+        dailyProtein: protein,
+        dailyCarbs: carbs,
+        dailyFat: fat,
+        // Remover atualização de plano aqui, pois é controlada pela tabela user_plans
+        // plan: (user.isAdmin ? 'lifetime' : 'free') as any, // REMOVIDO PARA EVITAR ERRO
+        freeScansUsed: user.freeScansUsed || 0
+      };
+
+      const updatedUser = await db.users.update(user.email, updates);
+      setUser(updatedUser);
+      setCurrentView('plans');
+    } catch (error: any) {
+      console.error("Erro no Quiz:", error);
+      alert("Erro ao salvar dados: " + (error.message || "Tente novamente."));
+    } finally {
+      setIsQuizLoading(false);
+    }
   };
 
   const handleUpdateGoal = async (newGoal: number, metrics: Partial<User>) => {
@@ -314,7 +332,7 @@ const App: React.FC = () => {
       case 'how_it_works': return <HowItWorks onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('register'); setCurrentView('auth'); }} />;
       case 'about': return <About onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('register'); setCurrentView('auth'); }} />;
       case 'auth': return <Auth initialMode={authMode} onLogin={handleLogin} onBack={() => setCurrentView('landing')} />;
-      case 'quiz': return <Quiz onComplete={handleQuizComplete} />;
+      case 'quiz': return <Quiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />;
       case 'plans': return <PlanSelection user={user} onBack={() => setCurrentView(previousView || 'dashboard')} onSelect={async (plan) => { if (plan === 'free' && user) { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); setCurrentView('dashboard'); } }} />;
       case 'upgrade_pro': return <UpgradePro user={user} onBack={() => setCurrentView(previousView || 'dashboard')} />;
       case 'dashboard': return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed} setWaterConsumed={setWaterConsumed} />;
@@ -322,8 +340,8 @@ const App: React.FC = () => {
       case 'food_manual': return <FoodAnalyzer mode="manual" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} />;
       case 'saved_meals': return <SavedMeals user={user!} onAddLog={addFoodLog} onBack={() => setCurrentView('dashboard')} />;
       case 'shape': return <ShapeAnalyzer user={user!} onBack={() => setCurrentView('dashboard')} onSaveToEvolution={(data) => addEvolutionRecord({ ...data, date: Date.now() })} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} />;
-      case 'chat': return <CoachChat user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} />;
-      case 'evolution': return <Evolution user={user!} records={evolutionRecords} onBack={() => setCurrentView('dashboard')} onAdd={addEvolutionRecord} onDelete={deleteEvolutionRecord} onEdit={editEvolutionRecord} />;
+      case 'chat': return <CoachChat user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} onUpgrade={() => setCurrentView('plans')} />;
+      case 'evolution': return <Evolution user={user!} records={evolutionRecords} onBack={() => setCurrentView('dashboard')} onAdd={addEvolutionRecord} onDelete={deleteEvolutionRecord} onEdit={editEvolutionRecord} onUpgrade={() => setCurrentView('plans')} />;
       case 'bmi_calc': return <BMICalculator onBack={() => setCurrentView('dashboard')} />;
       case 'calorie_calc': return <DailyCalorieCalculator onBack={() => setCurrentView('dashboard')} />;
       case 'calorie_plan': return <CaloriePlan user={user!} onBack={() => setCurrentView('dashboard')} onUpdateGoal={handleUpdateGoal} />;

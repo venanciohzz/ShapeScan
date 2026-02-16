@@ -10,12 +10,41 @@ interface CoachChatProps {
   onBack: () => void;
   messages: ChatMessage[];
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  onUpgrade: () => void;
 }
 
-const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, messages, setMessages }) => {
+const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, messages, setMessages, onUpgrade }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // PREMIUM LOCK
+  if (!user.isPremium && user.plan !== 'lifetime') {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#F3F6F8] dark:bg-zinc-950 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-[2.5rem] p-8 md:p-12 shadow-2xl border border-emerald-500/20 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600"></div>
+
+          <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-4xl">💎</span>
+          </div>
+
+          <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-2 tracking-tighter">Personal AI</h2>
+          <p className="text-gray-500 dark:text-zinc-400 font-medium mb-8">
+            Converse com sua inteligência artificial personalizada para tirar dúvidas sobre dieta, treino e receber motivação diária.
+          </p>
+
+          <button onClick={onUpgrade} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-500 hover:-translate-y-1 transition-all mb-4">
+            Desbloquear Agora
+          </button>
+
+          <button onClick={onBack} className="text-gray-400 font-bold text-xs uppercase tracking-widest hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            Voltar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Initial Message with Context Logic
   useEffect(() => {
