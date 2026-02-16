@@ -301,7 +301,7 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
               {error && <p className="text-red-500 font-black text-xs text-center">{error}</p>}
             </div>
           ) : (
-            <div className={`bg-white dark:bg-zinc-900 p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-gray-300 dark:border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center transition-colors flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
+            <div className={`bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-gray-300 dark:border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center transition-colors flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
 
               {/* Free Plan Lock Overlay */}
               {isFreeLocked && (
@@ -313,7 +313,7 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
                 </div>
               )}
 
-              <div className="text-6xl md:text-7xl mb-6 md:mb-8">🥗</div>
+              <div className="text-7xl md:text-8xl mb-6 md:mb-8">🥗</div>
               <h2 className="text-2xl font-black mb-3 italic text-black dark:text-white">Análise Visual</h2>
               <label className={`inline-block bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-emerald-100 dark:shadow-none transition-all text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-emerald-700 active:scale-95'}`}>
                 {isFreeLocked ? 'BLOQUEADO' : 'ABRIR CÂMERA'}
