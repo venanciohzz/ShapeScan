@@ -208,7 +208,7 @@ const FoodAnalyzer: React.FC<FoodAnalyzerProps> = ({ user, onAdd, onBack, mode, 
   const isFreeLocked = mode === 'ai' && user.plan === 'free' && (user.freeScansUsed || 0) >= 1 && !result;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-6 md:pt-14 pb-24 text-black dark:text-white min-h-screen flex flex-col relative">
+    <div className="max-w-5xl mx-auto px-4 py-6 md:pt-14 pb-24 text-black dark:text-white min-h-screen flex flex-col relative">
 
       {showLimitModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in">
