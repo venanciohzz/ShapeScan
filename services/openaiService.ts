@@ -9,7 +9,21 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
     });
 
     if (error) {
-        throw new Error(error.message || 'Erro na análise de IA');
+        console.error('AI Service Error:', error);
+
+        // Tenta acessar o corpo da resposta de erro (algumas versões do supabase guardam em 'context')
+        const context = (error as any).context;
+        if (context && context.error) {
+            throw new Error(context.error);
+        }
+
+        // Se a mensagem for genérica de status code, tentamos ajudar o usuário
+        if (error.message && error.message.includes('Edge Function returned a non-2xx status code')) {
+            throw new Error('Erro ao processar. Pode ser que seu limite diário tenha sido atingido ou haja instabilidade no serviço.');
+        }
+
+        // Fallback final
+        throw new Error(error.message || 'Erro desconhecido na análise de IA');
     }
 
     return data.text;

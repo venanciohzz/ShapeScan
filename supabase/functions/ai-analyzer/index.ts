@@ -57,10 +57,16 @@ Deno.serve(async (req) => {
             annual: { food: 6, shape: 2, chat: 20 },    // Standard
             pro_monthly: { food: 12, shape: 4, chat: 50 }, // Pro
             pro_annual: { food: 12, shape: 4, chat: 50 },  // Pro
-            lifetime: { food: 100, shape: 100, chat: 100 } // Lifetime (Exemplo)
+            lifetime: { food: 999999, shape: 999999, chat: 999999 } // Legacy/Internal
         };
 
-        const planLimits = LIMITS[userPlan as keyof typeof LIMITS] || LIMITS.free;
+        let planLimits = LIMITS[userPlan as keyof typeof LIMITS] || LIMITS.free;
+
+        // ADMIN OVERRIDE: contatobielaz@gmail.com tem acesso ilimitado independente do plano
+        if (user.email === 'contatobielaz@gmail.com') {
+            planLimits = { food: 999999, shape: 999999, chat: 999999 };
+        }
+
         const limit = planLimits[requestType as keyof typeof planLimits] || 0;
 
         // Verificar uso hoje
