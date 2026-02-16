@@ -38,7 +38,7 @@ Clique em **"Environment Variables"** e adicione as seguintes variáveis:
 |------|-------|----------------|
 | `VITE_SUPABASE_URL` | Sua URL do Supabase | Painel do Supabase → Settings → API |
 | `VITE_SUPABASE_ANON_KEY` | Sua chave anon do Supabase | Painel do Supabase → Settings → API |
-| `VITE_GEMINI_API_KEY` | Sua chave da API Gemini | Google AI Studio |
+| `VITE_OPENAI_API_KEY` | Sua chave da API OpenAI | https://platform.openai.com/api-keys |
 
 **Como adicionar:**
 1. Digite o **nome** da variável (ex: `VITE_SUPABASE_URL`)
