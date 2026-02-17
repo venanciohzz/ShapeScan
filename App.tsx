@@ -376,7 +376,7 @@ const App: React.FC = () => {
   const showMobileNav = user && !hideNavViews.includes(currentView);
 
   return (
-    <div className="relative min-h-[100dvh] bg-[#F3F6F8] dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-500 overflow-x-hidden">
+    <div className="relative min-h-[100dvh] w-full max-w-full bg-[#F3F6F8] dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-500 overflow-x-hidden">
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-emerald-50/20 dark:from-zinc-950 dark:via-zinc-900 dark:to-black transition-colors duration-500" />
         <div className="absolute inset-0 grid-bg opacity-40 dark:opacity-20 mix-blend-multiply dark:mix-blend-normal" />

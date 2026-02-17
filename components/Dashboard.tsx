@@ -106,7 +106,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
    };
 
    return (
-      <div className="max-w-3xl mx-auto px-6 py-8 md:pt-24 pb-8 md:pb-12 text-gray-900 dark:text-white">
+      <div className="max-w-3xl mx-auto px-3 py-4 md:px-4 md:py-6 md:pt-24 pb-20 md:pb-12 text-gray-900 dark:text-white">
 
          {logToDelete && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
@@ -125,33 +125,40 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
             </div>
          )}
 
-         <div className="flex justify-between items-center mb-8 gap-4">
-            <div className="flex items-center gap-4 min-w-0 flex-1">
-               <div className="w-14 h-14 rounded-full bg-white dark:bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
-                  {user.photo ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" /> : <span className="text-2xl">👤</span>}
+         <div className="flex justify-between items-center mb-6 md:mb-8 gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+               <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white dark:bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center shrink-0 overflow-hidden shadow-sm">
+                  {user.photo ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" /> : <span className="text-xl md:text-2xl">👤</span>}
                </div>
                <div className="flex flex-col min-w-0">
-                  <h1 className="text-2xl font-black leading-tight tracking-tight text-gray-900 dark:text-white truncate">Olá, {user.name.split(' ')[0]} 👋</h1>
-                  <p className="text-emerald-600 font-bold uppercase text-[10px] tracking-widest truncate">{user.username.startsWith('@') ? user.username : `@${user.username}`}</p>
+                  <h1 className="text-lg md:text-2xl font-black leading-tight tracking-tight text-gray-900 dark:text-white truncate">Olá, {user.name.split(' ')[0]} 👋</h1>
+                  <p className="text-emerald-600 font-bold uppercase text-[9px] md:text-[10px] tracking-widest truncate">{user.username.startsWith('@') ? user.username : `@${user.username}`}</p>
                </div>
             </div>
-            <button onClick={onLogout} className="glass-card px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-500/10 hover:text-red-500 transition-colors text-gray-500 dark:text-gray-400 shrink-0">Sair</button>
+            <button onClick={onLogout} className="glass-card px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-500/10 hover:text-red-500 transition-colors text-gray-500 dark:text-gray-400 shrink-0">Sair</button>
          </div>
 
          {/* CALORIE CARD */}
-         <div className={`rounded-[2.5rem] p-8 md:p-10 shadow-2xl mb-6 relative overflow-hidden group hover:scale-[1.01] transition-transform duration-500 border ${isOverLimit ? 'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-orange-500/30 border-orange-400/50' : 'bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-emerald-500/30 border-emerald-400/50'}`}>
+         {/* CALORIE CARD */}
+         {/* CALORIE CARD - EMERGENCY FIX */}
+         <div className={`rounded-[2rem] p-5 md:p-10 shadow-2xl mb-4 md:mb-6 relative overflow-hidden group hover:scale-[1.01] transition-transform duration-500 border ${isOverLimit ? 'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-orange-500/30 border-orange-400/50' : 'bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-emerald-500/30 border-emerald-400/50'}`}>
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-2xl -ml-10 -mb-10 pointer-events-none"></div>
-            <div className="relative z-10">
-               <div className="flex justify-between items-start mb-2">
-                  <p className="text-white/90 text-[10px] font-black uppercase tracking-widest opacity-80">{isOverLimit ? 'Meta Excedida' : 'Meta Diária'}</p>
-                  <span className="text-white font-black text-3xl drop-shadow-sm">{realPercent.toFixed(0)}%</span>
+
+            {/* Mobile: Vertical Stack / Desktop: Original Layout */}
+            <div className="relative z-10 flex flex-col md:block items-center md:items-stretch text-center md:text-left w-full">
+
+               <div className="flex flex-col md:flex-row justify-between items-center md:items-start mb-2 md:mb-2 w-full">
+                  <p className="text-white/90 text-[10px] font-black uppercase tracking-widest opacity-80 mb-1 md:mb-0">{isOverLimit ? 'Meta Excedida' : 'Meta Diária'}</p>
+                  <span className="text-white font-black text-3xl md:text-3xl drop-shadow-sm">{realPercent.toFixed(0)}%</span>
                </div>
-               <div className="flex items-baseline gap-2 mb-8 flex-wrap">
-                  <span className="text-6xl md:text-7xl font-black text-white tracking-tighter leading-none">{formatValue(consumed)}</span>
-                  <span className="text-white/80 font-bold text-sm tracking-wide">/ {safeGoal} kcal</span>
+
+               <div className="flex flex-col md:flex-row items-center md:items-baseline gap-0 md:gap-2 mb-4 md:mb-8 w-full justify-center md:justify-start">
+                  <span className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-none break-all">{formatValue(consumed)}</span>
+                  <span className="text-white/80 font-bold text-xs md:text-sm tracking-wide mt-1 md:mt-0">/ {safeGoal} kcal</span>
                </div>
-               <div className="w-full bg-black/20 h-4 md:h-5 rounded-full overflow-hidden backdrop-blur-sm border border-black/5">
+
+               <div className="w-full bg-black/20 h-3 md:h-5 rounded-full overflow-hidden backdrop-blur-sm border border-black/5">
                   <div className="h-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(255,255,255,0.5)] relative bg-white" style={{ width: `${visualPercent}%` }}>
                      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/50 opacity-50"></div>
                   </div>
@@ -159,9 +166,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
             </div>
          </div>
 
-         {/* HYDRATION CARD */}
+         {/* HYDRATION CARD - EMERGENCY FIX */}
          <div className={`
-          p-6 md:p-8 rounded-[2rem] mb-8 relative overflow-hidden transition-all duration-500
+          p-5 md:p-8 rounded-[2rem] mb-6 md:mb-8 relative overflow-hidden transition-all duration-500
           ${isWaterGoalMet
                ? 'bg-gradient-to-br from-blue-600 to-cyan-500 shadow-2xl shadow-cyan-500/40 border border-cyan-400/50 scale-[1.02]'
                : 'glass-panel border-l-4 border-l-cyan-500 hover:shadow-cyan-500/10'
@@ -175,21 +182,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                </>
             )}
 
-            <div className="flex justify-between items-start mb-4 relative z-10">
-               <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors ${isWaterGoalMet ? 'bg-white/20 text-white backdrop-blur-md shadow-inner' : 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600'}`}>
+            <div className="flex flex-col md:flex-row justify-between items-center md:items-start mb-4 md:mb-4 relative z-10 text-center md:text-left w-full">
+               <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 w-full">
+                  <div className={`w-10 h-10 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xl md:text-xl transition-colors mb-1 md:mb-0 ${isWaterGoalMet ? 'bg-white/20 text-white backdrop-blur-md shadow-inner' : 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600'}`}>
                      💧
                   </div>
-                  <div>
-                     <h3 className={`font-black text-lg leading-none ${isWaterGoalMet ? 'text-white' : 'text-gray-900 dark:text-white'}`}>Hidratação</h3>
+                  <div className="w-full md:w-auto flex flex-col items-center md:items-start">
+                     <h3 className={`font-black text-lg md:text-lg leading-none mb-0.5 md:mb-0 ${isWaterGoalMet ? 'text-white' : 'text-gray-900 dark:text-white'}`}>Hidratação</h3>
                      {manualWaterEdit ? (
-                        <div className="flex items-center gap-2 mt-1">
-                           <input type="number" value={waterConsumed} onChange={(e) => setWaterConsumed(parseInt(e.target.value) || 0)} className="w-20 bg-gray-100 dark:bg-zinc-800 rounded px-2 py-0.5 text-xs font-bold outline-none border border-cyan-500" autoFocus onBlur={() => setManualWaterEdit(false)} />
+                        <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
+                           <input type="number" value={waterConsumed} onChange={(e) => setWaterConsumed(parseInt(e.target.value) || 0)} className="w-16 bg-gray-100 dark:bg-zinc-800 rounded px-2 py-0.5 text-xs font-bold outline-none border border-cyan-500" autoFocus onBlur={() => setManualWaterEdit(false)} />
                            <span className="text-[10px] font-bold text-gray-400">/ {waterGoal} ml</span>
                         </div>
                      ) : (
                         <p
-                           className={`text-xs font-bold uppercase tracking-widest mt-1 cursor-pointer transition-colors ${isWaterGoalMet ? 'text-cyan-100 hover:text-white' : 'text-gray-400 dark:text-zinc-500 hover:text-cyan-500'}`}
+                           className={`text-xs md:text-xs font-bold uppercase tracking-widest mt-0.5 cursor-pointer transition-colors ${isWaterGoalMet ? 'text-cyan-100 hover:text-white' : 'text-gray-400 dark:text-zinc-500 hover:text-cyan-500'}`}
                            onClick={() => setManualWaterEdit(true)}
                         >
                            {waterConsumed} / {waterGoal} ml
@@ -198,13 +205,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                   </div>
                </div>
                {isWaterGoalMet && (
-                  <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-                     <span className="text-[10px] font-black text-white uppercase tracking-widest">Meta Batida! 🎉</span>
+                  <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/20 mt-2 md:mt-0">
+                     <span className="text-[9px] font-black text-white uppercase tracking-widest">Meta Batida! 🎉</span>
                   </div>
                )}
             </div>
 
-            <div className={`w-full h-4 md:h-5 rounded-full overflow-hidden mb-6 border transition-colors ${isWaterGoalMet ? 'bg-black/20 border-white/10' : 'bg-gray-100 dark:bg-zinc-800 border-black/5 dark:border-white/5'}`}>
+            <div className={`w-full h-3 md:h-5 rounded-full overflow-hidden mb-4 border transition-colors ${isWaterGoalMet ? 'bg-black/20 border-white/10' : 'bg-gray-100 dark:bg-zinc-800 border-black/5 dark:border-white/5'}`}>
                <div
                   className={`h-full transition-all duration-1000 ease-out relative rounded-full ${isWaterGoalMet ? 'bg-white shadow-[0_0_20px_rgba(255,255,255,0.7)]' : 'bg-gradient-to-r from-cyan-400 to-blue-500'}`}
                   style={{ width: `${waterPercent}%` }}
@@ -213,21 +220,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                </div>
             </div>
 
-            <div className="flex gap-2 relative z-10">
+            <div className="flex gap-2 relative z-10 w-full">
                <button
                   onClick={() => addWater(250)}
-                  className={`flex-1 py-3 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg flex items-center justify-center gap-1 ${isWaterGoalMet ? 'bg-white text-blue-600 hover:bg-cyan-50 shadow-black/20' : 'bg-cyan-500 text-white hover:bg-cyan-600 shadow-cyan-500/20'}`}
+                  className={`flex-1 py-3 md:py-3 rounded-xl md:rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 ${isWaterGoalMet ? 'bg-white text-blue-600 hover:bg-cyan-50 shadow-black/20' : 'bg-cyan-500 text-white hover:bg-cyan-600 shadow-cyan-500/20'}`}
                >
-                  + 250ml
+                  <span className="text-lg md:text-base">+</span> 250ml
                </button>
                <button
                   onClick={() => setShowWaterShortcuts(!showWaterShortcuts)}
-                  className={`w-12 flex items-center justify-center rounded-xl border-2 transition-all ${isWaterGoalMet
+                  className={`w-12 md:w-12 flex items-center justify-center rounded-xl md:rounded-xl border-2 transition-all ${isWaterGoalMet
                      ? 'border-white/30 text-white hover:bg-white/10 bg-white/10'
                      : (showWaterShortcuts ? 'bg-cyan-100 dark:bg-cyan-900/30 border-cyan-500 text-cyan-600' : 'border-gray-100 dark:border-zinc-800 text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800')
                      }`}
                >
-                  <svg className={`w-4 h-4 transition-transform duration-300 ${showWaterShortcuts ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                  <svg className={`w-5 h-5 md:w-4 md:h-4 transition-transform duration-300 ${showWaterShortcuts ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
                </button>
             </div>
 
@@ -270,7 +277,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
             )}
          </div>
 
-         <div className="grid grid-cols-3 gap-2 md:gap-4 mb-10">
+         <div className="grid grid-cols-3 gap-1.5 md:gap-4 mb-6 md:mb-10">
             <MacroCard label="Prot" value={formatValue(protein)} unit="g" fullLabel="Proteínas" goal={user.dailyProtein} color="emerald" />
             <MacroCard label="Carb" value={formatValue(carbs)} unit="g" fullLabel="Carboidratos" goal={user.dailyCarbs} color="blue" />
             <MacroCard label="Gord" value={formatValue(fat)} unit="g" fullLabel="Gorduras" goal={user.dailyFat} color="yellow" />
@@ -285,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
          </div>
 
          <h2 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-4 ml-1">Ferramentas Gratuitas</h2>
-         <div className="grid grid-cols-2 gap-4 mb-12">
+         <div className="grid grid-cols-2 gap-2 mb-12">
             <ActionButton onClick={() => onNavigate('food_manual')} icon="✍️" title="Add Manual" />
             <ActionButton onClick={() => onNavigate('saved_meals')} icon="💾" title="Refeições Salvas" />
             <ActionButton onClick={() => onNavigate('water_calc')} icon="💧" title="Meta de Água" />
@@ -301,7 +308,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
          <div className="space-y-4 pb-8">
             {todayLogs.length > 0 ? (
                todayLogs.map(log => (
-                  <div key={log.id} className="glass-panel p-5 rounded-3xl flex justify-between items-center group hover:border-emerald-500/50 transition-colors">
+                  <div key={log.id} className="glass-panel p-5 rounded-3xl flex justify-between items-center group hover:border-emerald-500/50 transition-colors min-w-0">
                      <div className="flex-1 min-w-0 pr-3">
                         <p className="font-bold text-gray-900 dark:text-white leading-tight truncate text-base">{log.name}</p>
                         <p className="text-xs font-bold text-emerald-600 mt-1 truncate">{formatValue(log.protein)}P • {formatValue(log.carbs)}C • {formatValue(log.fat)}G</p>
@@ -387,27 +394,35 @@ const MacroCard = ({ label, value, unit, fullLabel, goal, color = 'emerald' }: a
    const textColor = textColors[color] || textColors.emerald;
 
    return (
-      <div className="glass-panel p-3 md:p-5 rounded-3xl flex flex-col items-center justify-center hover:-translate-y-1 transition-transform duration-300 group shadow-premium hover:shadow-premium-hover h-full min-h-[120px] md:min-h-[140px]">
-         {/* Ring with Glow Effect on Hover */}
-         <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full border-[3px] md:border-[4px] flex items-center justify-center mb-2 md:mb-3 transition-all shadow-lg ${ringColor}`}>
-            <span className="text-base md:text-xl font-black text-gray-900 dark:text-white tracking-tighter">{Math.round(value)}</span>
+      <div className="glass-panel p-2 md:p-5 rounded-3xl flex flex-col items-center justify-center hover:-translate-y-1 transition-transform duration-300 group shadow-premium hover:shadow-premium-hover h-full min-h-[90px] md:min-h-[140px] min-w-0">
+
+         {/* Desktop Ring / Mobile Minimal Dot */}
+         <div className={`
+            hidden md:flex w-16 h-16 rounded-full border-[4px] items-center justify-center mb-3 transition-all shadow-lg ${ringColor}
+         `}>
+            <span className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">{Math.round(value)}</span>
          </div>
 
-         {/* Label - Fixed Side-by-Side on Mobile */}
+         {/* Mobile: Big Value, No Ring */}
+         <div className="md:hidden flex flex-col items-center mb-0.5">
+            <span className={`text-2xl font-black ${textColor[0] === 't' ? textColor : 'text-gray-900 dark:text-white'} tracking-tighter`}>{Math.round(value)}</span>
+         </div>
+
+         {/* Label */}
          <div className="flex flex-col items-center">
             <p className="text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-0.5 md:hidden text-center whitespace-nowrap">{label}</p>
             <p className="text-xs font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1 hidden md:block">{fullLabel}</p>
 
             {/* Goal Display */}
             {hasGoal ? (
-               <div className="flex items-baseline gap-0.5 md:gap-1 bg-gray-50 dark:bg-white/5 px-2 py-0.5 md:px-3 md:py-1 rounded-lg border border-gray-100 dark:border-white/5">
-                  <span className="text-xs md:text-sm font-black text-gray-900 dark:text-white">{value}</span>
-                  <span className="text-[8px] md:text-[10px] font-bold text-gray-400 dark:text-zinc-500">/ {goal}{unit}</span>
+               <div className="flex items-baseline gap-0.5 md:gap-1 bg-gray-50 dark:bg-white/5 px-2 py-0.5 rounded-lg border border-gray-100 dark:border-white/5">
+                  <span className="text-[10px] md:text-sm font-black text-gray-900 dark:text-white">{value}</span>
+                  <span className="text-[9px] md:text-[10px] font-bold text-gray-400 dark:text-zinc-500">/ {goal}{unit}</span>
                </div>
             ) : (
                <div className="flex items-center gap-1">
-                  <span className="text-xs md:text-sm font-black text-gray-900 dark:text-white">{value}</span>
-                  <span className={`text-[10px] md:text-xs font-bold ${textColor}`}>{unit}</span>
+                  <span className="text-[10px] md:text-sm font-black text-gray-900 dark:text-white">{value}</span>
+                  <span className={`text-[9px] md:text-xs font-bold ${textColor}`}>{unit}</span>
                </div>
             )}
          </div>
@@ -416,14 +431,17 @@ const MacroCard = ({ label, value, unit, fullLabel, goal, color = 'emerald' }: a
 };
 
 const ActionButton = ({ onClick, icon, title, subtitle, premium }: any) => (
-   <button onClick={onClick} className="glass-panel p-5 md:p-6 rounded-[2rem] text-left hover:bg-white/80 dark:hover:bg-zinc-800/80 hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group border border-transparent hover:border-emerald-500/30 shadow-premium hover:shadow-premium-hover h-full flex flex-col justify-between">
-      <div className="flex justify-between items-start mb-3">
-         <span className="text-3xl md:text-4xl group-hover:scale-110 transition-transform duration-300 filter drop-shadow-lg">{icon}</span>
-         {premium && <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Pro</span>}
+   <button onClick={onClick} className="glass-panel w-full p-2 md:p-6 rounded-2xl md:rounded-[2rem] text-center md:text-left hover:bg-white/80 dark:hover:bg-zinc-800/80 hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group border border-transparent hover:border-emerald-500/30 shadow-premium hover:shadow-premium-hover h-full flex flex-col items-center md:items-start justify-center md:justify-between min-w-0">
+
+      {/* Icon Wrapper */}
+      <div className="relative mb-1 md:mb-3 flex justify-center w-full md:w-auto md:block">
+         <span className="text-2xl md:text-4xl group-hover:scale-110 transition-transform duration-300 filter drop-shadow-lg block">{icon}</span>
+         {premium && <span className="absolute -top-1 -right-2 md:static md:ml-2 bg-emerald-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tighter shadow-sm">Pro</span>}
       </div>
-      <div>
-         <h3 className="font-black text-sm md:text-base leading-tight text-gray-900 dark:text-white mb-0.5">{title}</h3>
-         {subtitle && <p className="text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-tight truncate">{subtitle}</p>}
+
+      <div className="min-w-0 w-full flex flex-col items-center md:items-start">
+         <h3 className="font-black text-[10px] md:text-base leading-tight text-gray-900 dark:text-white mb-0.5 w-full truncate">{title}</h3>
+         {subtitle && <p className="text-[9px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-tight w-full truncate">{subtitle}</p>}
       </div>
    </button>
 );
