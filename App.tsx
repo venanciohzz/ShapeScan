@@ -174,6 +174,7 @@ const App: React.FC = () => {
 
   /* estado novo */
   const [isQuizLoading, setIsQuizLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   // ... (código existente)
 
@@ -338,7 +339,7 @@ const App: React.FC = () => {
     );
   }
 
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  // Toast state moved up
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
