@@ -7,8 +7,40 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
 body {
-   overflow-x: hidden;
-   width: 100%;
-   position: relative;
+  overflow-x: hidden;
+  width: 100vw;
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+@keyframes scan-y {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+.animate-scan-y {
+  animation: scan-y 3s linear infinite;
+}
+
+.text-shadow-glow {
+  text-shadow: 0 0 10px currentColor;
 }
