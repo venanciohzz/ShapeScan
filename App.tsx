@@ -40,6 +40,9 @@ const App: React.FC = () => {
   // Scroll to top on view change
   useEffect(() => {
     window.scrollTo(0, 0);
+    // Reinforce scroll to top for mobile browsers after render
+    const timer = setTimeout(() => window.scrollTo(0, 0), 100);
+    return () => clearTimeout(timer);
   }, [currentView]);
 
   useEffect(() => {

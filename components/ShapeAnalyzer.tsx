@@ -41,8 +41,9 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
   const [height, setHeight] = useState<string>('');
   const [showLimitModal, setShowLimitModal] = useState(false);
 
-  // IMMEDIATELY Redirect Free Users (No free shape scans)
+  // Reforce scroll to top when entering this view
   useEffect(() => {
+    window.scrollTo(0, 0);
     if (user.plan === 'free' && !user.isAdmin) {
       onUpgrade();
     }
@@ -142,7 +143,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
   // But to avoid flicker of content:
   if (user.plan === 'free' && !user.isAdmin) {
     return (
-      <div className="flex h-screen items-center justify-center bg-black">
+      <div className="flex h-screen items-center justify-center bg-[#F3F6F8] dark:bg-zinc-950">
         <div className="animate-spin w-8 h-8 border-2 border-emerald-500 rounded-full border-t-transparent"></div>
       </div>
     );
@@ -173,7 +174,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
       )}
 
       {loading && (
-        <div className="fixed inset-0 z-[100] bg-[#09090b]/95 backdrop-blur-3xl flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col items-center justify-center animate-in fade-in duration-500">
           <div className="absolute inset-0 grid-bg opacity-10 animate-pulse"></div>
           <div className="relative w-64 h-80 md:w-80 md:h-96 flex items-center justify-center mb-12">
             {currentPhoto && (
