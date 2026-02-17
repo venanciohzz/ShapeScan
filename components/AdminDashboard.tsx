@@ -7,9 +7,10 @@ import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit } from
 interface AdminDashboardProps {
     user: User;
     onBack: () => void;
+    onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToast }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [stats, setStats] = useState({ totalRevenue: 0, totalUsers: 0, activeSubs: 0 });
     const [loading, setLoading] = useState(true);
@@ -33,7 +34,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack }) => {
             setStats(statsData);
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
-            alert('Erro ao carregar dados do admin');
+            onShowToast('Erro ao carregar dados do admin', 'error');
         } finally {
             setLoading(false);
         }
@@ -50,9 +51,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack }) => {
             await db.admin.updateUserPlan(userId, selectedPlan);
             setEditingUser(null);
             loadData(); // Reload to show updates
+            onShowToast('Plano atualizado com sucesso!', 'success');
         } catch (error) {
             console.error('Erro ao atualizar plano:', error);
-            alert('Erro ao atualizar plano');
+            onShowToast('Erro ao atualizar plano', 'error');
         }
     };
 
@@ -179,7 +181,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack }) => {
                                                 </select>
                                             ) : (
                                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.plan === 'free' ? 'bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-gray-400' :
-                                                        'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-500 border border-emerald-500/20'
+                                                    'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-500 border border-emerald-500/20'
                                                     }`}>
                                                     {user.plan === 'free' ? 'Gratuito' :
                                                         user.plan === 'monthly' ? 'Padrão Mensal' :

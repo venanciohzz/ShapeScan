@@ -13,9 +13,10 @@ interface FoodAnalyzerProps {
   onUpdateUser: (user: User) => void;
   onUpgrade: () => void;
   onUpgradePro: () => void;
+  onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUpgradePro }: FoodAnalyzerProps) => {
+const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUpgradePro, onShowToast }: FoodAnalyzerProps) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<FoodAnalysisResult | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -141,7 +142,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             setShowLimitModal(true);
           }
 
-          setError(`Erro: ${msg}`);
+          onShowToast(`Erro: ${msg}`, 'error');
           setPreviewImage(null);
         } finally {
           setLoading(false);
@@ -149,14 +150,14 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      setError("Erro ao iniciar análise.");
+      onShowToast("Erro ao iniciar análise.", 'error');
       setLoading(false);
     }
   };
 
   const handleManualAdd = async () => {
     if (!manualName) {
-      setError("Descreva o alimento com detalhes (Ex: Arroz Branco 150g).");
+      onShowToast("Descreva o alimento com detalhes (Ex: Arroz Branco 150g).", 'error');
       return;
     }
     setLoading(true);
@@ -167,7 +168,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       if (items.length === 0) throw new Error("Não foi possível calcular os macros.");
       setResult(analysis);
     } catch (err) {
-      setError("Erro ao consultar a IA. Tente descrever de outra forma.");
+      onShowToast("Erro ao consultar a IA. Tente descrever de outra forma.", 'error');
     } finally {
       setLoading(false);
     }
@@ -203,16 +204,16 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       if (saveAsSavedMeal) {
         console.log('💾 Salvando como refeição favorita - user.id:', user.id);
         await db.savedMeals.add(user.id, mealData);
-        alert("Refeição salva nos favoritos!");
+        onShowToast("Refeição salva nos favoritos!", 'success');
       } else {
         console.log('✅ Adicionando à meta diária');
         onAdd(mealData);
-        alert("Adicionado à meta diária! ✅");
+        onShowToast("Adicionado à meta diária! ✅", 'success');
         onBack();
       }
     } catch (error) {
       console.error('❌ Erro em confirmAdd:', error);
-      alert('Erro ao salvar: ' + (error as Error).message);
+      onShowToast('Erro ao salvar: ' + (error as Error).message, 'error');
     }
   };
 

@@ -7,14 +7,15 @@ interface PlanSelectionProps {
    user?: User | null;
    onSelect: (plan: 'free' | 'monthly' | 'annual' | 'lifetime' | 'pro_monthly' | 'pro_annual') => void;
    onBack?: () => void;
+   onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack }) => {
+const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, onShowToast }) => {
    const [loadingPlan, setLoadingPlan] = useState<PlanType | null>(null);
    const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
    const handleSubscribe = async (plan: PlanType) => {
-      if (!user) { alert("Erro: Usuário não identificado."); return; }
+      if (!user) { onShowToast("Erro: Usuário não identificado.", 'error'); return; }
       setLoadingPlan(plan);
 
       try {
@@ -31,7 +32,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack })
          const checkoutUrl = checkoutLinks[plan];
 
          if (!checkoutUrl) {
-            alert("Plano não disponível.");
+            onShowToast("Plano não disponível.", 'error');
             setLoadingPlan(null);
             return;
          }

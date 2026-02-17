@@ -7,9 +7,10 @@ interface SavedMealsProps {
   user: User;
   onAddLog: (log: Omit<FoodLog, 'id' | 'timestamp'>) => void;
   onBack: () => void;
+  onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const SavedMeals: React.FC<SavedMealsProps> = ({ user, onAddLog, onBack }) => {
+const SavedMeals: React.FC<SavedMealsProps> = ({ user, onAddLog, onBack, onShowToast }) => {
   const [meals, setMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,6 +26,7 @@ const SavedMeals: React.FC<SavedMealsProps> = ({ user, onAddLog, onBack }) => {
   const handleDelete = async (id: string) => {
     await db.savedMeals.delete(user.id, id);
     setMeals(prev => prev.filter(m => m.id !== id));
+    onShowToast("Refeição excluída.", 'info');
   };
 
   const handleAddToDay = (meal: SavedMeal) => {
@@ -44,7 +46,8 @@ const SavedMeals: React.FC<SavedMealsProps> = ({ user, onAddLog, onBack }) => {
       fat: meal.fat,
       weight: meal.weight
     });
-    alert("Refeição adicionada ao dia! ✅");
+    onShowToast("Refeição adicionada ao dia! ✅", 'success');
+    onBack();
   };
 
   return (

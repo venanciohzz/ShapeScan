@@ -11,9 +11,10 @@ interface DashboardProps {
    onEditLog: (log: FoodLog) => void;
    waterConsumed: number;
    setWaterConsumed: (amount: number) => void;
+   onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout, onDeleteLog, onEditLog, waterConsumed, setWaterConsumed }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout, onDeleteLog, onEditLog, waterConsumed, setWaterConsumed, onShowToast }) => {
    const [editingLog, setEditingLog] = useState<FoodLog | null>(null);
    const [logToDelete, setLogToDelete] = useState<string | null>(null);
    const [showWaterShortcuts, setShowWaterShortcuts] = useState(false);
@@ -36,7 +37,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
    const waterPercent = Math.min((waterConsumed / waterGoal) * 100, 100);
    const isWaterGoalMet = waterConsumed >= waterGoal;
 
-   const addWater = (amount: number) => setWaterConsumed(waterConsumed + amount);
+   const addWater = (amount: number) => {
+      setWaterConsumed(waterConsumed + amount);
+      onShowToast(`${amount}ml adicionados! 💧`, 'success');
+   };
 
    const formatValue = (val: number) => Number(val.toFixed(1));
 
@@ -219,8 +223,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                <button
                   onClick={() => setShowWaterShortcuts(!showWaterShortcuts)}
                   className={`w-12 flex items-center justify-center rounded-xl border-2 transition-all ${isWaterGoalMet
-                        ? 'border-white/30 text-white hover:bg-white/10 bg-white/10'
-                        : (showWaterShortcuts ? 'bg-cyan-100 dark:bg-cyan-900/30 border-cyan-500 text-cyan-600' : 'border-gray-100 dark:border-zinc-800 text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800')
+                     ? 'border-white/30 text-white hover:bg-white/10 bg-white/10'
+                     : (showWaterShortcuts ? 'bg-cyan-100 dark:bg-cyan-900/30 border-cyan-500 text-cyan-600' : 'border-gray-100 dark:border-zinc-800 text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800')
                      }`}
                >
                   <svg className={`w-4 h-4 transition-transform duration-300 ${showWaterShortcuts ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
@@ -234,8 +238,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                         key={amount}
                         onClick={() => { addWater(amount); setShowWaterShortcuts(false); }}
                         className={`py-2 rounded-lg text-[10px] font-black transition-colors border ${isWaterGoalMet
-                              ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-                              : 'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 border-transparent hover:border-cyan-200 hover:text-cyan-600'
+                           ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                           : 'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 border-transparent hover:border-cyan-200 hover:text-cyan-600'
                            }`}
                      >
                         +{amount < 1000 ? `${amount}ml` : `${amount / 1000}L`}
@@ -246,8 +250,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                         key={amount}
                         onClick={() => { addWater(amount); setShowWaterShortcuts(false); }}
                         className={`py-2 rounded-lg text-[10px] font-black transition-colors border ${isWaterGoalMet
-                              ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-                              : 'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 border-transparent hover:border-cyan-200 hover:text-cyan-600'
+                           ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                           : 'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 border-transparent hover:border-cyan-200 hover:text-cyan-600'
                            }`}
                      >
                         +{amount / 1000}L
@@ -256,8 +260,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                   <button
                      onClick={() => { setWaterConsumed(0); setShowWaterShortcuts(false); }}
                      className={`py-2 rounded-lg text-[10px] font-black transition-colors ${isWaterGoalMet
-                           ? 'bg-red-500/20 text-white hover:bg-red-500/40'
-                           : 'bg-red-50 dark:bg-red-900/10 text-red-500 hover:bg-red-100'
+                        ? 'bg-red-500/20 text-white hover:bg-red-500/40'
+                        : 'bg-red-50 dark:bg-red-900/10 text-red-500 hover:bg-red-100'
                         }`}
                   >
                      Reset

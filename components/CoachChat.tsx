@@ -11,9 +11,10 @@ interface CoachChatProps {
   messages: ChatMessage[];
   setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
   onUpgrade: () => void;
+  onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, messages, setMessages, onUpgrade }) => {
+const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, messages, setMessages, onUpgrade, onShowToast }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -94,7 +95,7 @@ const CoachChat: React.FC<CoachChatProps> = ({ user, logs, evolution, onBack, me
 
       recognitionRef.current.start();
     } else {
-      alert('Seu navegador não suporta reconhecimento de voz.');
+      onShowToast('Seu navegador não suporta reconhecimento de voz.', 'error');
     }
   };
 

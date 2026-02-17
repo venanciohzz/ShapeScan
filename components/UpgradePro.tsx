@@ -6,9 +6,10 @@ import { User } from '../types';
 interface UpgradeProProps {
    user?: User | null;
    onBack: () => void;
+   onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack }) => {
+const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) => {
    const [loading, setLoading] = useState<PlanType | null>(null);
 
    const handleSubscribe = async (plan: PlanType) => {
@@ -25,7 +26,7 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack }) => {
          const checkoutUrl = checkoutLinks[plan];
 
          if (!checkoutUrl) {
-            alert("Plano não disponível.");
+            onShowToast("Plano não disponível.", 'error');
             setLoading(null);
             return;
          }

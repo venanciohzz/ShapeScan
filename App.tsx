@@ -338,6 +338,13 @@ const App: React.FC = () => {
     );
   }
 
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'landing': return <LandingPage onStart={() => { setAuthMode('register'); setCurrentView('auth'); }} onLogin={() => { setAuthMode('login'); setCurrentView('auth'); }} onHowItWorks={() => setCurrentView('how_it_works')} onAbout={() => setCurrentView('about')} />;
@@ -345,22 +352,22 @@ const App: React.FC = () => {
       case 'about': return <About onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('register'); setCurrentView('auth'); }} />;
       case 'auth': return <Auth initialMode={authMode} onLogin={handleLogin} onBack={() => setCurrentView('landing')} />;
       case 'quiz': return <Quiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />;
-      case 'plans': return <PlanSelection user={user} onBack={() => setCurrentView(previousView || 'dashboard')} onSelect={async (plan) => { if (plan === 'free' && user) { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); setCurrentView('dashboard'); } }} />;
-      case 'upgrade_pro': return <UpgradePro user={user} onBack={() => setCurrentView(previousView || 'dashboard')} />;
-      case 'dashboard': return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} />;
-      case 'food_ai': return <FoodAnalyzer mode="ai" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} />;
-      case 'food_manual': return <FoodAnalyzer mode="manual" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} />;
-      case 'saved_meals': return <SavedMeals user={user!} onAddLog={addFoodLog} onBack={() => setCurrentView('dashboard')} />;
+      case 'plans': return <PlanSelection user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onSelect={async (plan) => { if (plan === 'free' && user) { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); setCurrentView('dashboard'); } }} onShowToast={showToast} />;
+      case 'upgrade_pro': return <UpgradePro user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onShowToast={showToast} />;
+      case 'dashboard': return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />;
+      case 'food_ai': return <FoodAnalyzer mode="ai" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
+      case 'food_manual': return <FoodAnalyzer mode="manual" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
+      case 'saved_meals': return <SavedMeals user={user!} onAddLog={addFoodLog} onBack={() => setCurrentView('dashboard')} onShowToast={showToast} />;
       case 'shape': return <ShapeAnalyzer user={user!} onBack={() => setCurrentView('dashboard')} onSaveToEvolution={(data) => addEvolutionRecord({ ...data, date: Date.now() })} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} />;
-      case 'chat': return <CoachChat user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} onUpgrade={() => setCurrentView('plans')} />;
+      case 'chat': return <CoachChat user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} onUpgrade={() => setCurrentView('plans')} onShowToast={showToast} />;
       case 'evolution': return <Evolution user={user!} records={evolutionRecords} onBack={() => setCurrentView('dashboard')} onAdd={addEvolutionRecord} onDelete={deleteEvolutionRecord} onEdit={editEvolutionRecord} onUpgrade={() => setCurrentView('plans')} />;
       case 'bmi_calc': return <BMICalculator onBack={() => setCurrentView('dashboard')} />;
       case 'calorie_calc': return <DailyCalorieCalculator onBack={() => setCurrentView('dashboard')} />;
       case 'calorie_plan': return <CaloriePlan user={user!} onBack={() => setCurrentView('dashboard')} onUpdateGoal={handleUpdateGoal} />;
       case 'water_calc': return <WaterCalculator user={user!} onBack={() => setCurrentView('dashboard')} onUpdateWaterGoal={handleUpdateWaterGoal} />;
       case 'settings': return <Settings user={user!} onUpdateProfile={handleUpdateProfile} onBack={() => setCurrentView('dashboard')} darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} onGoToAdmin={() => setCurrentView('admin')} />;
-      case 'admin': return <AdminDashboard user={user!} onBack={() => setCurrentView('settings')} />;
-      default: return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} />;
+      case 'admin': return <AdminDashboard user={user!} onBack={() => setCurrentView('settings')} onShowToast={showToast} />;
+      default: return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />;
     }
   };
 
@@ -368,15 +375,33 @@ const App: React.FC = () => {
   const showMobileNav = user && !hideNavViews.includes(currentView);
 
   return (
-    <div className="relative min-h-[100dvh] bg-[#F3F6F8] dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-500">
+    <div className="relative min-h-[100dvh] bg-[#F3F6F8] dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-500 overflow-x-hidden">
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-emerald-50/20 dark:from-zinc-950 dark:via-zinc-900 dark:to-black transition-colors duration-500" />
         <div className="absolute inset-0 grid-bg opacity-40 dark:opacity-20 mix-blend-multiply dark:mix-blend-normal" />
       </div>
-      <div className={`relative z-10 min-h-[100dvh] flex flex-col ${showMobileNav ? 'pb-32 md:pb-0' : ''}`}>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      <div className={`relative z-10 min-h-[100dvh] flex flex-col ${showMobileNav ? 'pb-32 md:pb-0' : ''} overflow-x-hidden`}>
         {renderView()}
       </div>
       {showMobileNav && <Navigation currentView={currentView} onNavigate={navigateWithPremiumCheck} />}
+    </div>
+  );
+};
+
+const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 'error' | 'info', onClose: () => void }) => {
+  const bg = type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+  const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+
+  return (
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-top-5 duration-300 w-full max-w-sm px-4">
+      <div className={`${bg} text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md bg-opacity-90 border border-white/20`}>
+        <span className="text-xl">{icon}</span>
+        <p className="font-bold text-sm tracking-wide flex-1">{message}</p>
+        <button onClick={onClose} className="opacity-70 hover:opacity-100 font-bold">✕</button>
+      </div>
     </div>
   );
 };
