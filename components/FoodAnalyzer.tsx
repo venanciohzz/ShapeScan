@@ -59,10 +59,10 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
     }
   };
 
-  const checkUsageLimit = () => {
+  const checkUsageLimit = async () => {
     if (user.isAdmin) return true;
 
-    // 1. Check Free Plan Lifetime Limit
+    // 1. Check Free Plan Lifetime Limit (1 scan trial)
     if (user.plan === 'free') {
       if ((user.freeScansUsed || 0) >= 1) {
         setLimitModalType('free');
@@ -74,9 +74,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 
     // 2. Check Paid Plan Daily Limit
     const limit = getDailyLimit();
-    const today = new Date().toDateString();
-    const usageKey = `food_scan_usage_${user.email}_${today}`;
-    const currentUsage = parseInt(localStorage.getItem(usageKey) || '0');
+    const currentUsage = await db.usage.getDaily(user.id, 'food');
 
     if (currentUsage >= limit) {
       setLimitModalType('daily');
@@ -90,27 +88,31 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
     if (user.isAdmin) return;
 
     if (user.plan === 'free') {
-      // Increment lifetime counter in DB
-      const newCount = (user.freeScansUsed || 0) + 1;
-      const updatedUser = await db.users.update(user.email, { freeScansUsed: newCount });
-      onUpdateUser(updatedUser);
+      // Increment lifetime counter in DB (Trial)
+      const newCount = await db.usage.incrementTrial(user.id);
+      onUpdateUser({ ...user, freeScansUsed: newCount });
     } else {
-      // Increment daily counter in LocalStorage
-      const today = new Date().toDateString();
-      const usageKey = `food_scan_usage_${user.email}_${today}`;
-      const currentUsage = parseInt(localStorage.getItem(usageKey) || '0');
-      localStorage.setItem(usageKey, (currentUsage + 1).toString());
+      // Increment daily counter in DB
+      await db.usage.incrementDaily(user.id, 'food');
     }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!checkUsageLimit()) return;
-
-    const file = e.target.files?.[0];
-    if (!file) return;
-
     setLoading(true);
     setError('');
+
+    // Check limits (now async)
+    const canContinue = await checkUsageLimit();
+    if (!canContinue) {
+      setLoading(false);
+      return;
+    }
+
+    const file = e.target.files?.[0];
+    if (!file) {
+      setLoading(false);
+      return;
+    }
     setPreviewImage(null);
     try {
       const reader = new FileReader();
@@ -263,22 +265,23 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       )}
 
       {loading && (
-        <div className="fixed inset-0 z-[100] bg-[#09090b]/95 backdrop-blur-3xl flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col items-center justify-center animate-in fade-in duration-500">
           <div className="absolute inset-0 grid-bg opacity-10 animate-pulse"></div>
-          <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center mb-12">
+          <div className="relative w-64 h-80 md:w-80 md:h-96 flex items-center justify-center mb-12">
             {previewImage && (
-              <div className="absolute inset-4 rounded-3xl overflow-hidden border-2 border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.3)] z-10">
-                <img src={previewImage} alt="Scanning" className="w-full h-full object-cover opacity-80" />
-                <div className="absolute top-0 left-0 w-full h-[2px] bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,1)] animate-[scan-line_1.5s_linear_infinite] z-20"></div>
+              <div className="absolute inset-2 rounded-3xl overflow-hidden border-2 border-emerald-500/50 shadow-[0_0_40px_rgba(16,185,129,0.3)] z-10">
+                <img src={previewImage} alt="Scanning" className="w-full h-full object-cover opacity-70" />
+                <div className="absolute top-0 left-0 w-full h-[3px] bg-emerald-400 shadow-[0_0_30px_rgba(52,211,153,1)] animate-[scan-line_2.5s_ease-in-out_infinite] z-20"></div>
               </div>
             )}
-            <div className="absolute inset-0 border border-emerald-500/20 rounded-[2.5rem] animate-[pulse_2s_infinite]"></div>
-            <div className="absolute -inset-4 border border-dashed border-emerald-500/10 rounded-[3rem] animate-[spin_20s_linear_infinite]"></div>
           </div>
-          <div className="z-10 text-center space-y-3">
-            <h2 className="text-xl md:text-2xl font-light text-white tracking-wide">{scanMessages[scanStep]}</h2>
-            <div className="w-64 h-0.5 bg-zinc-800 mt-6 mx-auto rounded-full overflow-hidden relative">
-              <div className="absolute inset-y-0 left-0 bg-emerald-500 w-1/3 animate-[loading_2s_ease-in-out_infinite]"></div>
+          <div className="z-10 text-center space-y-4 px-6">
+            <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tight animate-pulse">{scanMessages[scanStep]}</h2>
+            <div className="w-48 h-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden mx-auto border border-emerald-500/20">
+              <div
+                className="h-full bg-emerald-500 transition-all duration-500 ease-out"
+                style={{ width: `${((scanStep + 1) / scanMessages.length) * 100}%` }}
+              ></div>
             </div>
           </div>
         </div>
@@ -414,16 +417,29 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
   );
 };
 
-const MacroRow = ({ label, value, unit, color }: { label: string, value: number | string, unit: string, color: string }) => (
-  <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border-2 border-emerald-500/10 mb-3 transition-colors">
-    <div className="flex justify-between items-center">
-      <h4 className={`font-black uppercase tracking-tight text-xs md:text-sm ${color}`}>{label}</h4>
-      <p className={`font-black text-lg md:text-2xl ${color}`}>{value} <span className="text-gray-400 dark:text-zinc-600 text-[10px]">{unit}</span></p>
+const MacroRow = ({ label, value, unit, color, goal = 100 }: { label: string, value: number | string, unit: string, color: string, goal?: number }) => {
+  const percentage = Math.min(100, (Number(value) / goal) * 100);
+  const colorMap: Record<string, string> = {
+    'text-emerald-500': 'from-emerald-600 to-emerald-400',
+    'text-blue-500': 'from-blue-600 to-blue-400',
+    'text-yellow-500': 'from-yellow-600 to-yellow-400'
+  };
+  const gradientClass = colorMap[color] || 'from-emerald-500 to-cyan-500';
+
+  return (
+    <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border-2 border-emerald-500/10 mb-3 transition-colors shadow-sm">
+      <div className="flex justify-between items-center mb-2">
+        <h4 className={`font-black uppercase tracking-tight text-xs md:text-sm ${color}`}>{label}</h4>
+        <p className={`font-black text-lg md:text-2xl ${color}`}>{value} <span className="text-gray-400 dark:text-zinc-600 text-[10px]">{unit}</span></p>
+      </div>
+      <div className="w-full h-3 md:h-4 bg-gray-100 dark:bg-zinc-800 rounded-full border-2 border-emerald-500/20 overflow-hidden relative">
+        <div
+          className={`h-full transition-all duration-1000 ease-out bg-gradient-to-r ${gradientClass}`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
     </div>
-    <div className={`w-full h-3 md:h-4 bg-gray-100 dark:bg-zinc-800 rounded-full border-2 overflow-hidden relative mt-2 ${color.replace('text-', 'border-')}`}>
-      <div className={`h-full transition-all duration-1000 ease-out bg-current ${color.replace('text-', 'bg-')}`} style={{ width: `${Math.min(100, (Number(value) / 100) * 100)}%` }} />
-    </div>
-  </div>
-);
+  );
+};
 
 export default FoodAnalyzer;

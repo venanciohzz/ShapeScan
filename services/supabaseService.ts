@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient, User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { User, FoodLog, EvolutionRecord, SavedMeal } from '../types';
+import { getTrackingDateString } from './dateUtils';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -45,13 +46,13 @@ export async function signUp(email: string, password: string, userData: Omit<Use
 
   // Retornar objeto User construído com os dados enviados (já que o profile pode levar uns ms para ser criado)
   return {
+    ...userData,
     id: authData.user.id,
     email: email,
     createdAt: new Date().getTime(),
     isPremium: false,
     isAdmin: false,
     plan: 'free',
-    ...userData,
     dailyCalorieGoal: userData.dailyCalorieGoal || 2000,
     freeScansUsed: 0
   } as User;
@@ -135,18 +136,24 @@ export async function getProfile(userId: string): Promise<User> {
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Perfil não encontrado');
 
-  // Buscar plano do usuário
-  const { data: planData } = await supabase
+  // Buscar plano do usuário - Usamos .limit(1) em vez de .single() para evitar travar o login
+  // caso existam registros duplicados (estabilidade crítica).
+  const { data: plans } = await supabase
     .from('user_plans')
     .select('plan_id, active')
     .eq('user_id', userId)
     .eq('active', true)
-    .single();
+    .order('created_at', { ascending: false })
+    .limit(1);
 
-  const isPremium = planData?.plan_id !== 'free';
+  const planData = plans?.[0];
+
+  // Priorizar dados da tabela user_plans, mas usar os novos campos da profile como redundância/cache
+  const planId = planData?.plan_id || data.plan || 'free';
+  const isPremium = planData ? (planData.plan_id !== 'free') : (data.is_premium || false);
   const isAdmin = data.is_admin || false;
 
-  return mapProfileToUser(data, planData?.plan_id, isPremium, isAdmin);
+  return mapProfileToUser(data, planId, isPremium, isAdmin);
 }
 
 export async function updateProfile(userId: string, updates: Partial<User>): Promise<User> {
@@ -252,7 +259,7 @@ export async function deleteFoodLog(userId: string, logId: string): Promise<void
 // ==================== HIDRATAÇÃO ====================
 
 export async function getDailyWater(userId: string): Promise<number> {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTrackingDateString();
 
   const { data, error } = await supabase
     .from('hydration_logs')
@@ -270,7 +277,7 @@ export async function getDailyWater(userId: string): Promise<number> {
 }
 
 export async function upsertDailyWater(userId: string, amount: number, dailyGoal: number): Promise<void> {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTrackingDateString();
 
   const { error } = await supabase
     .from('hydration_logs')
@@ -451,9 +458,9 @@ export async function migrateUserData(oldId: string, newId: string): Promise<voi
     .update({ user_id: newId })
     .eq('user_id', oldId);
 
-  // 6. Atualizar user_usage
+  // 6. Atualizar daily_usage
   await supabase
-    .from('user_usage')
+    .from('daily_usage')
     .update({ user_id: newId })
     .eq('user_id', oldId);
 
@@ -466,46 +473,60 @@ export async function migrateUserData(oldId: string, newId: string): Promise<voi
 
 // ==================== USO (LIMITES) ====================
 
-export async function getUserUsage(userId: string) {
+/**
+ * Busca o uso diário de um recurso específico
+ */
+export async function getDailyUsage(userId: string, type: 'food' | 'shape'): Promise<number> {
+  const today = getTrackingDateString();
+
   const { data, error } = await supabase
-    .from('user_usage')
-    .select('*')
+    .from('daily_usage')
+    .select('count')
     .eq('user_id', userId)
+    .eq('date', today)
+    .eq('type', type)
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error && error.code !== 'PGRST116') {
+    console.error('Erro ao buscar uso diário:', error);
+    return 0;
+  }
 
-  return data;
+  return data?.count || 0;
 }
 
-export async function incrementUsage(userId: string, type: 'food' | 'shape'): Promise<void> {
-  const usage = await getUserUsage(userId);
-  const today = new Date().toISOString().split('T')[0];
+/**
+ * Incrementa o uso diário de um recurso usando RPC para atomicidade
+ */
+export async function incrementDailyUsage(userId: string, type: 'food' | 'shape'): Promise<void> {
+  const today = getTrackingDateString();
 
-  // Reset se for um novo dia
-  if (usage.last_reset !== today) {
-    const { error } = await supabase
-      .from('user_usage')
-      .update({
-        daily_food_scans: type === 'food' ? 1 : 0,
-        daily_shape_scans: type === 'shape' ? 1 : 0,
-        last_reset: today,
-      })
-      .eq('user_id', userId);
+  const { error } = await supabase.rpc('increment_daily_usage', {
+    target_user_id: userId,
+    target_type: type,
+    target_date: today
+  });
 
-    if (error) throw new Error(error.message);
-  } else {
-    // Incrementar contador apropriado
-    const field = type === 'food' ? 'daily_food_scans' : 'daily_shape_scans';
-    const { error } = await supabase
-      .from('user_usage')
-      .update({
-        [field]: usage[field] + 1,
-      })
-      .eq('user_id', userId);
-
-    if (error) throw new Error(error.message);
+  if (error) {
+    console.error('Erro ao incrementar uso via RPC:', error);
+    throw new Error(error.message);
   }
+}
+
+/**
+ * Incrementa o contador de trial (scans gratuitos) do usuário via RPC
+ */
+export async function incrementFreeScanTrial(userId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('increment_free_scans', {
+    target_user_id: userId
+  });
+
+  if (error) {
+    console.error('Erro ao incrementar trial via RPC:', error);
+    throw new Error(error.message);
+  }
+
+  return data;
 }
 
 // ==================== HELPERS DE MAPEAMENTO ====================
@@ -518,8 +539,8 @@ function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAd
     username: profile.username,
     phone: profile.phone,
     photo: profile.photo,
-    isPremium: isPremium ?? false,
-    isAdmin: isAdmin ?? false,
+    isPremium: isPremium ?? profile.is_premium ?? false,
+    isAdmin: isAdmin ?? profile.is_admin ?? false,
     dailyCalorieGoal: profile.dailyCalorieGoal || profile.daily_calorie_goal || 2000,
     dailyWaterGoal: profile.dailyWaterGoal || profile.daily_water_goal,
     dailyProtein: profile.dailyProtein || profile.daily_protein,
@@ -531,7 +552,7 @@ function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAd
     gender: profile.gender,
     goal: profile.goal,
     activityLevel: profile.activityLevel || profile.activity_level,
-    plan: plan as any || 'free',
+    plan: (plan || profile.plan || 'free') as any,
     freeScansUsed: profile.freeScansUsed || profile.free_scans_used || 0,
     createdAt: new Date(profile.created_at).getTime(),
   };

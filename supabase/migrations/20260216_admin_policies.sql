@@ -41,8 +41,8 @@ create policy "Admin can insert user_plans"
   for insert
   with check ( is_admin() );
 
--- 4. User Usage: Admin can probably view usage
-create policy "Admin can view all usage"
-  on public.user_usage
+-- 4. Daily Usage: Admin can view usage
+create policy "Admin can view all daily_usage"
+  on public.daily_usage
   for select
   using ( is_admin() );

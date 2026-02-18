@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { PlanType } from '../services/paymentService';
+import { PlanType, getCheckoutUrl } from '../services/paymentConfig';
 import { User } from '../types';
 
 interface PlanSelectionProps {
@@ -19,17 +19,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
       setLoadingPlan(plan);
 
       try {
-         // Links de checkout Cakto
-         const checkoutLinks: Record<PlanType, string> = {
-            'monthly': 'https://pay.cakto.com.br/5vw2inp_771416',
-            'annual': 'https://pay.cakto.com.br/3ce3ypz_769675',
-            'pro_monthly': 'https://pay.cakto.com.br/598qhka_769676',
-            'pro_annual': 'https://pay.cakto.com.br/392xpbn_769680',
-            'free': '',
-            'lifetime': '',
-         };
-
-         const checkoutUrl = checkoutLinks[plan];
+         const checkoutUrl = getCheckoutUrl(plan, user.email, user.id);
 
          if (!checkoutUrl) {
             onShowToast("Plano não disponível.", 'error');
@@ -37,12 +27,8 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
             return;
          }
 
-         // Adicionar email do usuário como query param
-         const url = new URL(checkoutUrl);
-         url.searchParams.append('email', user.email);
-
          // Redirecionar para checkout Cakto
-         window.location.href = url.toString();
+         window.location.href = checkoutUrl;
 
       } catch (error) {
          console.error("Erro:", error);

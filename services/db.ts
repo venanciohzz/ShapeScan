@@ -74,12 +74,8 @@ export const db = {
         async add(userId: string, log: Omit<FoodLog, 'id' | 'timestamp'>): Promise<FoodLog> {
             const newLog = await supabaseService.addFoodLog(userId, log);
 
-            // Incrementar contador de uso
-            const session = await supabaseService.getSession();
-            if (session && !session.isPremium) {
-                await supabaseService.incrementUsage(userId, 'food');
-            }
-
+            // O incremento agora é feito explicitamente no componente 
+            // para permitir controle fino de trial vs diário
             return newLog;
         },
 
@@ -116,12 +112,6 @@ export const db = {
             const { photo, ...cleanRecord } = record;
             const newRecord = await supabaseService.addEvolutionRecord(userId, cleanRecord);
 
-            // Incrementar contador de uso
-            const session = await supabaseService.getSession();
-            if (session && !session.isPremium) {
-                await supabaseService.incrementUsage(userId, 'shape');
-            }
-
             return newRecord;
         },
 
@@ -156,6 +146,20 @@ export const db = {
 
         async updateUserPlan(userId: string, planId: string): Promise<void> {
             await supabaseService.adminUpdateUserPlan(userId, planId);
+        }
+    },
+
+    usage: {
+        async getDaily(userId: string, type: 'food' | 'shape'): Promise<number> {
+            return await supabaseService.getDailyUsage(userId, type);
+        },
+
+        async incrementDaily(userId: string, type: 'food' | 'shape'): Promise<void> {
+            await supabaseService.incrementDailyUsage(userId, type);
+        },
+
+        async incrementTrial(userId: string): Promise<number> {
+            return await supabaseService.incrementFreeScanTrial(userId);
         }
     }
 };

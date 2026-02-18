@@ -34,29 +34,78 @@ Deno.serve(async (req) => {
                 const productName = data.product?.name;
 
                 const amount = data.amount;
-                const orderId = data.id;
+                const orderId = data.id; // ID único da transação na Cakto
                 const subscriptionId = data.subscription?.id;
                 const paymentMethod = data.paymentMethod;
                 const installments = data.installments || 1;
                 const paidAt = data.paidAt;
 
+                // Extrair UUID do usuário do parâmetro 'src' (passado via link de checkout)
+                const userIdFromTracking = data.tracking?.src;
+
                 console.log('Processing purchase:', {
                     customerEmail,
-                    customerName,
+                    userIdFromTracking,
                     productShortId,
-                    amount
+                    orderId
                 });
 
-                if (!customerEmail) {
-                    return new Response(JSON.stringify({ error: 'Customer email required' }), {
+                if (!customerEmail && !userIdFromTracking) {
+                    return new Response(JSON.stringify({ error: 'Customer identification required' }), {
                         status: 400,
                         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                     });
                 }
 
-                // Mapear product short_id para plan_id
+                // 1. Verificar IDEMPOTÊNCIA (evitar duplicados)
+                const { data: existingPayment } = await supabase
+                    .from('payments')
+                    .select('id')
+                    .eq('metadata->>order_id', orderId)
+                    .single();
+
+                if (existingPayment) {
+                    console.log('Payment already processed (idempotency):', orderId);
+                    return new Response(JSON.stringify({ success: true, message: 'Already processed' }), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                        status: 200,
+                    });
+                }
+
+                // 2. Identificar Usuário (Prioridade: UUID via src -> fallback: Email)
+                let userId = null;
+
+                if (userIdFromTracking) {
+                    const { data: profileById } = await supabase
+                        .from('profiles')
+                        .select('id')
+                        .eq('id', userIdFromTracking)
+                        .single();
+
+                    if (profileById) userId = profileById.id;
+                }
+
+                if (!userId && customerEmail) {
+                    const { data: profileByEmail } = await supabase
+                        .from('profiles')
+                        .select('id')
+                        .eq('email', customerEmail)
+                        .single();
+
+                    if (profileByEmail) userId = profileByEmail.id;
+                }
+
+                if (!userId) {
+                    console.error('User not found for identification:', { email: customerEmail, uuid: userIdFromTracking });
+                    return new Response(JSON.stringify({ error: 'User not found' }), {
+                        status: 404,
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                    });
+                }
+
+                // Mapear product short_id para plan_id (Consolidado com PAYMENT_CONFIG)
                 const planMapping: Record<string, string> = {
-                    'e2j2mqh': 'monthly',
+                    '5vw2inp': 'monthly',
                     '3ce3ypz': 'annual',
                     '598qhka': 'pro_monthly',
                     '392xpbn': 'pro_annual',
@@ -64,29 +113,13 @@ Deno.serve(async (req) => {
 
                 const planId = planMapping[productShortId] || 'monthly';
 
-                // Buscar usuário por email
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('id')
-                    .eq('email', customerEmail)
-                    .single();
-
-                if (!profile) {
-                    console.error('User not found:', customerEmail);
-                    return new Response(JSON.stringify({ error: 'User not found' }), {
-                        status: 404,
-                        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                    });
-                }
-
-                const userId = profile.id;
-
-                // Salvar dados do pagamento
+                // 3. Salvar dados do pagamento
                 await supabase.from('payments').insert({
                     user_id: userId,
                     plan_id: planId,
                     amount: amount,
                     status: 'approved',
+                    provider: 'cakto', // Padronizado
                     metadata: {
                         customer: {
                             name: customerName,
@@ -103,11 +136,12 @@ Deno.serve(async (req) => {
                         payment_method: paymentMethod,
                         installments: installments,
                         paid_at: paidAt,
+                        tracking_src: userIdFromTracking,
                         raw_data: data,
                     }
                 });
 
-                // Atualizar plano do usuário
+                // 4. Atualizar plano do usuário
                 await supabase.from('user_plans').upsert({
                     user_id: userId,
                     plan_id: planId,
@@ -116,37 +150,57 @@ Deno.serve(async (req) => {
                     onConflict: 'user_id'
                 });
 
-                console.log('Payment processed for:', customerEmail, 'Plan:', planId);
-                console.log('Customer data saved:', { customerName, customerPhone });
+                console.log('Payment processed successfully for user:', userId, 'Plan:', planId);
                 break;
             }
 
+            case 'subscription_canceled':
             case 'purchase_refunded':
             case 'purchase_chargeback': {
                 const customerEmail = data.customer?.email;
-                const orderId = data.id;
+                const orderId = data.id || data.purchase?.id; // Alguns eventos podem vir com estrutura diferente
 
-                // Atualizar status do pagamento
-                await supabase
+                console.log(`Processing ${eventType}:`, { orderId, customerEmail });
+
+                // 1. Identificar o pagamento e o usuário pelo order_id (MUITO mais robusto que e-mail)
+                const { data: payment } = await supabase
                     .from('payments')
-                    .update({ status: 'refunded' })
-                    .eq('metadata->>order_id', orderId);
-
-                // Desativar plano
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('id')
-                    .eq('email', customerEmail)
+                    .select('user_id, plan_id')
+                    .eq('metadata->>order_id', orderId)
                     .single();
 
-                if (profile) {
-                    await supabase
-                        .from('user_plans')
-                        .update({ active: false, plan_id: 'free' })
-                        .eq('user_id', profile.id);
+                let userId = payment?.user_id;
+
+                // 2. Fallback para e-mail se não achar pelo order_id
+                if (!userId && customerEmail) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('id')
+                        .eq('email', customerEmail)
+                        .single();
+                    if (profile) userId = profile.id;
                 }
 
-                console.log('Payment refunded:', orderId);
+                if (!userId) {
+                    console.error(`User not found for ${eventType}:`, { orderId, email: customerEmail });
+                    break;
+                }
+
+                // 3. Atualizar status do pagamento se for reembolso/chargeback
+                if (eventType !== 'subscription_canceled') {
+                    await supabase
+                        .from('payments')
+                        .update({ status: eventType === 'purchase_refunded' ? 'refunded' : 'chargeback' })
+                        .eq('metadata->>order_id', orderId);
+                }
+
+                // 4. Desativar plano (Trigger cuidará de atualizar a profile.is_premium)
+                await supabase
+                    .from('user_plans')
+                    .update({ active: false, plan_id: 'free' })
+                    .eq('user_id', userId);
+
+                console.log(`Successfully processed ${eventType} for user:`, userId);
                 break;
             }
 

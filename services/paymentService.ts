@@ -1,7 +1,8 @@
 
 import { User } from '../types';
+import { PAYMENT_CONFIG, PlanType, getCheckoutUrl } from './paymentConfig';
 
-export type PlanType = 'monthly' | 'annual' | 'lifetime' | 'pro_monthly' | 'pro_annual';
+export type { PlanType };
 
 interface CheckoutSessionRequest {
   email: string;
@@ -13,55 +14,19 @@ interface CheckoutSessionResponse {
   checkoutUrl: string;
 }
 
-// Configuração dos Planos (Preços e IDs)
-const PLANS = {
-  monthly: {
-    id: 'plan_standard_monthly_br',
-    name: 'Standard Mensal',
-    price: 29.90,
-    gatewayUrl: 'https://pay.kiwify.com.br/placeholder-std-monthly' 
-  },
-  annual: {
-    id: 'plan_standard_annual_br',
-    name: 'Standard Anual',
-    price: 247.00, 
-    gatewayUrl: 'https://pay.kiwify.com.br/placeholder-std-annual' 
-  },
-  pro_monthly: {
-    id: 'plan_pro_monthly_br',
-    name: 'Pro Mensal',
-    price: 44.90,
-    gatewayUrl: 'https://pay.kiwify.com.br/placeholder-pro-monthly'
-  },
-  pro_annual: {
-    id: 'plan_pro_annual_br',
-    name: 'Pro Anual',
-    price: 347.00,
-    gatewayUrl: 'https://pay.kiwify.com.br/placeholder-pro-annual'
-  },
-  // Legacy/Admin support
-  lifetime: {
-    id: 'plan_lifetime_admin',
-    name: 'Vitalício Admin',
-    price: 0,
-    gatewayUrl: '#'
-  }
-};
-
 /**
- * LÓGICA DE INTEGRAÇÃO COM SUPABASE E GATEWAY
+ * LÓGICA DE INTEGRAÇÃO COM GATEWAY CAKTO
  */
 export const createCheckoutSession = async ({ email, userId, plan }: CheckoutSessionRequest): Promise<CheckoutSessionResponse> => {
   console.log(`[PaymentService] Iniciando checkout para: ${email} | Plano: ${plan}`);
-  
-  // Simulação de delay de rede (API Call)
-  await new Promise(resolve => setTimeout(resolve, 1500));
 
-  // MOCK: Como não temos backend aqui, vamos simular que o Gateway retornou uma URL
-  const currentBaseUrl = window.location.origin;
-  const mockCheckoutUrl = `${currentBaseUrl}?payment_success=true&plan=${plan}&ref=${userId}`;
+  const checkoutUrl = getCheckoutUrl(plan, email, userId);
+
+  if (!checkoutUrl) {
+    throw new Error("Link de checkout não configurado para este plano.");
+  }
 
   return {
-    checkoutUrl: mockCheckoutUrl
+    checkoutUrl: checkoutUrl
   };
 };

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { User, ShapeAnalysisResult } from '../types';
 import { analyzeShape } from '../services/openaiService';
 import { compressImage } from '../utils/security';
+import { db } from '../services/db';
 
 interface ShapeAnalyzerProps {
   user: User;
@@ -61,7 +62,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     }
   };
 
-  const checkUsageLimit = () => {
+  const checkUsageLimit = async () => {
     if (user.isAdmin) return true;
 
     if (user.plan === 'free') {
@@ -70,27 +71,37 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     }
 
     const limit = getDailyLimit();
-    const today = new Date().toDateString();
-    const usageKey = `shape_scan_usage_${user.email}_${today}`;
-    const currentUsage = parseInt(localStorage.getItem(usageKey) || '0');
+    const currentUsage = await db.usage.getDaily(user.id, 'shape');
 
     if (currentUsage >= limit) {
       setShowLimitModal(true);
       return false;
     }
-    localStorage.setItem(usageKey, (currentUsage + 1).toString());
     return true;
   };
 
+  const incrementUsage = async () => {
+    if (user.isAdmin) return;
+    await db.usage.incrementDaily(user.id, 'shape');
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Check limits for everyone (except admin)
-    if (!checkUsageLimit()) return;
-
-    const file = e.target.files?.[0];
-    if (!file) return;
-
     setLoading(true);
     setError('');
+
+    // Check limits (now async)
+    const canContinue = await checkUsageLimit();
+    if (!canContinue) {
+      setLoading(false);
+      return;
+    }
+
+    const file = e.target.files?.[0];
+    if (!file) {
+      setLoading(false);
+      return;
+    }
+
     setSavedSuccess(false);
     try {
       const reader = new FileReader();
@@ -106,6 +117,9 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           const metrics = { weight: w, height: h };
           const data = await analyzeShape(apiBase64, metrics);
           setResult(data);
+
+          // Increment usage after success
+          await incrementUsage();
         } catch (err: any) {
           setError(`Erro: ${err.message || "Falha na análise"}`);
         } finally {
