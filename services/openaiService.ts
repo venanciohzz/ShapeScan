@@ -60,9 +60,11 @@ const safeParseFloat = (val: any): number => {
     return isNaN(parsed) ? 0 : parsed;
 };
 
-export const analyzePlate = async (base64Image: string): Promise<FoodAnalysisResult> => {
+export const analyzePlate = async (base64Image: string, userDescription?: string): Promise<FoodAnalysisResult> => {
     try {
-        const prompt = `Analise esta foto de comida de forma DETALHADA e PRECISA.
+        const descriptionContext = userDescription ? `O usuário descreveu a refeição como: "${userDescription}". Use esta informação para auxiliar na identificação, mas priorize o que é visível na imagem.` : '';
+
+        const prompt = `Analise esta foto de comida de forma DETALHADA e PRECISA. ${descriptionContext}
 
 INSTRUÇÕES:
 1. Identifique CADA item visível no prato

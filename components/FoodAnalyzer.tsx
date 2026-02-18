@@ -25,6 +25,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [limitModalType, setLimitModalType] = useState<'free' | 'daily'>('daily');
   const [scanStep, setScanStep] = useState(0);
+  const [mealDescription, setMealDescription] = useState('');
 
   // Check if free user is already locked out on mount
   useEffect(() => {
@@ -119,7 +120,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
           const compressedBase64 = await compressImage(rawBase64);
           setPreviewImage(compressedBase64);
           const apiBase64 = compressedBase64.split(',')[1];
-          const data = await analyzePlate(apiBase64);
+          const data = await analyzePlate(apiBase64, mealDescription);
 
           if (!data || !data.items) {
             throw new Error("Não foi possível identificar alimentos.");
@@ -221,7 +222,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
   const isFreeLocked = mode === 'ai' && user.plan === 'free' && (user.freeScansUsed || 0) >= 1 && !result;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 md:pt-14 pb-24 text-black dark:text-white min-h-screen flex flex-col relative">
+    <div className="max-w-3xl mx-auto px-6 py-6 md:pt-14 pb-24 text-black dark:text-white min-h-screen flex flex-col relative">
 
       {showLimitModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in">
@@ -287,11 +288,9 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
         <span className="text-lg pb-0.5">←</span>
       </button>
 
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter">
-          {mode === 'manual' ? 'Registro Manual' : 'Scanner de Prato'}
-        </h1>
-        {mode === 'ai' && <span className="text-[10px] bg-emerald-600 text-white px-3 py-1 rounded-full font-black tracking-widest shadow-sm">AI PREMIUM</span>}
+      <div className="flex items-center justify-between mb-2 gap-4">
+        <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter">{mode === 'manual' ? 'Registro Manual' : 'Scanner de Prato'}</h1>
+        {mode === 'ai' && <span className="flex-shrink-0 text-[10px] bg-emerald-600 text-white px-3 py-1 rounded-full font-black tracking-widest shadow-sm">AI PREMIUM</span>}
       </div>
 
       {!result ? (
@@ -314,25 +313,38 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
               {error && <p className="text-red-500 font-black text-xs text-center">{error}</p>}
             </div>
           ) : (
-            <div className={`bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-gray-300 dark:border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
+            <div className="space-y-6 md:space-y-8 flex-1 flex flex-col">
+              <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-2 border-emerald-600 shadow-sm space-y-4 transition-colors">
+                <h3 className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest mb-2">Descreva sua refeição (Opcional)</h3>
+                <textarea
+                  value={mealDescription}
+                  onChange={(e) => setMealDescription(e.target.value)}
+                  placeholder="Ex: Arroz, feijão e um bife de frango grelhado..."
+                  className="w-full p-4 rounded-xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 font-bold text-black dark:text-white outline-none focus:border-emerald-600 text-sm min-h-[80px] resize-none"
+                />
+                <p className="text-[9px] text-gray-500 font-bold italic">* Isso ajuda a IA a ser ainda mais precisa!</p>
+              </div>
 
-              {/* Free Plan Lock Overlay */}
-              {isFreeLocked && (
-                <div className="absolute inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-8 text-center">
-                  <div className="bg-zinc-900 text-white p-4 rounded-full mb-4 shadow-xl">🔒</div>
-                  <h3 className="text-xl font-black text-black dark:text-white mb-2">Scanner Bloqueado</h3>
-                  <p className="text-sm font-medium text-gray-600 dark:text-zinc-400 mb-6">Você já utilizou sua análise gratuita.</p>
-                  <button onClick={onUpgrade} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest shadow-lg hover:bg-emerald-500 transition-all">Desbloquear Agora</button>
-                </div>
-              )}
+              <div className={`bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-gray-300 dark:border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
 
-              <div className="text-7xl md:text-8xl mb-6 md:mb-8">🥗</div>
+                {/* Free Plan Lock Overlay */}
+                {isFreeLocked && (
+                  <div className="absolute inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-8 text-center">
+                    <div className="bg-zinc-900 text-white p-4 rounded-full mb-4 shadow-xl">🔒</div>
+                    <h3 className="text-xl font-black text-black dark:text-white mb-2">Scanner Bloqueado</h3>
+                    <p className="text-sm font-medium text-gray-600 dark:text-zinc-400 mb-6">Você já utilizou sua análise gratuita.</p>
+                    <button onClick={onUpgrade} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest shadow-lg hover:bg-emerald-500 transition-all">Desbloquear Agora</button>
+                  </div>
+                )}
 
-              <label className={`inline-block cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
-                {isFreeLocked ? 'BLOQUEADO' : 'ABRIR CÂMERA'}
-                <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading || isFreeLocked} />
-              </label>
-              {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-50 dark:bg-red-900/30 p-4 rounded-xl border-2 border-red-100 dark:border-red-900/50 w-full">{error}</p>}
+                <div className="text-7xl md:text-8xl mb-6 md:mb-8">🥗</div>
+
+                <label className={`inline-block cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
+                  {isFreeLocked ? 'BLOQUEADO' : 'ABRIR CÂMERA'}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading || isFreeLocked} />
+                </label>
+                {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-50 dark:bg-red-900/30 p-4 rounded-xl border-2 border-red-100 dark:border-red-900/50 w-full">{error}</p>}
+              </div>
             </div>
           )}
         </div>
@@ -352,8 +364,8 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                 )}
               </div>
             </div>
-            <div className="space-y-3 border-t-2 border-emerald-50 dark:border-zinc-800 pt-6">
-              <MacroRow label="Proteínas" value={result.totalProtein.toFixed(1)} unit="g" color="text-emerald-600" />
+            <div className="space-y-4 border-t-2 border-emerald-50 dark:border-zinc-800 pt-6">
+              <MacroRow label="Proteínas" value={result.totalProtein.toFixed(1)} unit="g" color="text-emerald-500" />
               <MacroRow label="Carboidratos" value={result.totalCarbs.toFixed(1)} unit="g" color="text-blue-500" />
               <MacroRow label="Gorduras" value={result.totalFat.toFixed(1)} unit="g" color="text-yellow-500" />
             </div>
@@ -379,20 +391,23 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 pt-4">
-            {/* Unlock Button for Free Users after they use their scan */}
-            {user.plan === 'free' && mode === 'ai' && (
-              <button onClick={onUpgrade} className="w-full py-5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:brightness-110 shadow-2xl active:scale-95 animate-pulse">
-                🔓 Desbloquear mais análises
-              </button>
-            )}
+          <div className="fixed md:static bottom-0 left-0 right-0 p-6 pt-8 pb-10 md:p-0 bg-gradient-to-t from-white via-white to-transparent dark:from-zinc-950 dark:via-zinc-950 z-50 md:bg-none">
+            <div className="max-w-3xl mx-auto flex flex-col gap-3">
+              {/* Unlock Button for Free Users after they use their scan */}
+              {user.plan === 'free' && mode === 'ai' && (
+                <button onClick={onUpgrade} className="w-full py-5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:brightness-110 shadow-2xl active:scale-95 animate-pulse">
+                  🔓 Desbloquear mais análises
+                </button>
+              )}
 
-            <button onClick={() => confirmAdd(false)} className="w-full bg-emerald-600 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-2xl active:scale-95">Adicionar ao Dia ✅</button>
-            {mode === 'manual' && (
-              <button onClick={() => confirmAdd(true)} className="w-full py-5 bg-cyan-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-cyan-700 shadow-2xl active:scale-95">Salvar Refeição 💾</button>
-            )}
-            <button onClick={() => { setResult(null); setPreviewImage(null); }} className="w-full py-4 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-700 text-black dark:text-white rounded-2xl font-black uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-zinc-800">Cancelar</button>
+              <button onClick={() => confirmAdd(false)} className="w-full bg-emerald-600 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-2xl active:scale-95 text-lg">Adicionar ao Dia ✅</button>
+              {mode === 'manual' && (
+                <button onClick={() => confirmAdd(true)} className="w-full py-5 bg-cyan-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-cyan-700 shadow-2xl active:scale-95">Salvar Refeição 💾</button>
+              )}
+              <button onClick={() => { setResult(null); setPreviewImage(null); }} className="w-full py-4 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-700 text-black dark:text-white rounded-2xl font-black uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all text-xs">Refazer Análise</button>
+            </div>
           </div>
+          <div className="h-32 md:h-0"></div>
         </div>
       )}
     </div>
@@ -400,9 +415,14 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 };
 
 const MacroRow = ({ label, value, unit, color }: { label: string, value: number | string, unit: string, color: string }) => (
-  <div className="flex justify-between items-center">
-    <p className={`text-xs md:text-sm font-black uppercase tracking-widest ${color}`}>{label}</p>
-    <p className={`text-xl md:text-2xl font-black ${color}`}>{value}<span className="text-xs text-gray-400 ml-1">{unit}</span></p>
+  <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border-2 border-emerald-500/10 mb-3 transition-colors">
+    <div className="flex justify-between items-center">
+      <h4 className={`font-black uppercase tracking-tight text-xs md:text-sm ${color}`}>{label}</h4>
+      <p className={`font-black text-lg md:text-2xl ${color}`}>{value} <span className="text-gray-400 dark:text-zinc-600 text-[10px]">{unit}</span></p>
+    </div>
+    <div className={`w-full h-3 md:h-4 bg-gray-100 dark:bg-zinc-800 rounded-full border-2 overflow-hidden relative mt-2 ${color.replace('text-', 'border-')}`}>
+      <div className={`h-full transition-all duration-1000 ease-out bg-current ${color.replace('text-', 'bg-')}`} style={{ width: `${Math.min(100, (Number(value) / 100) * 100)}%` }} />
+    </div>
   </div>
 );
 
