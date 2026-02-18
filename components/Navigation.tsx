@@ -41,7 +41,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
                 </div>
 
                 {/* Active Dot Indicator */}
-                <div className={`h-1 w-1 rounded-full bg-emerald-500 transition-all duration-300 ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`} />
+                <div className={`h-1.5 w-1.5 rounded-full bg-emerald-500 transition-all duration-300 ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`} />
               </button>
             )
           })}
@@ -63,8 +63,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
                 key={tab.id}
                 onClick={() => onNavigate(tab.id as View)}
                 className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 active:scale-95 ${isActive
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
-                    : 'text-gray-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                  : 'text-gray-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                   }`}
               >
                 <span className="text-lg">{tab.icon}</span>

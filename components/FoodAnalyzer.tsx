@@ -357,7 +357,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             <div className="flex justify-between items-start mb-6 md:mb-10">
               <div>
                 <p className="text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2">Total Calórico</p>
-                <p className="text-5xl md:text-8xl font-black italic tracking-tighter leading-none text-black dark:text-white">{result.totalCalories.toFixed(1)}</p>
+                <p className="text-4xl md:text-8xl font-black italic tracking-tighter leading-none text-black dark:text-white">{result.totalCalories.toFixed(1)}</p>
               </div>
               <div className="text-right flex flex-col items-end gap-3">
                 {previewImage && (
@@ -410,7 +410,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
               <button onClick={() => { setResult(null); setPreviewImage(null); }} className="w-full py-4 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-700 text-black dark:text-white rounded-2xl font-black uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all text-xs">Refazer Análise</button>
             </div>
           </div>
-          <div className="h-32 md:h-0"></div>
+          <div className="h-40 md:h-0"></div>
         </div>
       )}
     </div>

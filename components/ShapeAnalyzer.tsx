@@ -233,7 +233,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
             <div className="flex justify-between items-start mb-6 md:mb-10">
               <div>
                 <p className="text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2">Estimativa de BF</p>
-                <p className="text-6xl md:text-8xl font-black italic tracking-tighter leading-none text-black dark:text-white">
+                <p className="text-5xl md:text-8xl font-black italic tracking-tighter leading-none text-black dark:text-white">
                   {result.bfPercentage.split('(')[0].trim()}
                 </p>
                 {result.bfPercentage.includes('(') && (

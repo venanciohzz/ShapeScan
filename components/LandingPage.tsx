@@ -180,7 +180,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <div className="space-y-6 lg:space-y-8 relative z-20">
 
-            <h1 className="text-[2.6rem] leading-[1.05] sm:text-5xl lg:text-7xl font-black tracking-tighter text-white sm:leading-[1.1]">
+            <h1 className="text-4xl leading-[1.1] sm:text-5xl lg:text-7xl font-black tracking-tighter text-white sm:leading-[1.1]">
               O Futuro da sua <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200">Evolução Física.</span>
             </h1>
@@ -206,7 +206,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             <div className="absolute inset-0 bg-emerald-500/20 rounded-[3rem] blur-[80px] animate-pulse-glow" />
 
             {/* Main Interface Card - Minimized rotation on mobile to fix overflow */}
-            <div className="relative bg-zinc-900 border border-white/10 rounded-[2.5rem] p-2 shadow-2xl animate-float transform transition-transform duration-700 ease-out lg:rotate-y-[-5deg] lg:rotate-x-[5deg] group-hover:rotate-0">
+            <div className="relative bg-zinc-900 border border-white/10 rounded-[2.5rem] p-2 shadow-2xl animate-float transform transition-transform duration-700 ease-out rotate-0 lg:rotate-y-[-5deg] lg:rotate-x-[5deg] group-hover:rotate-0">
               <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-[2.5rem] pointer-events-none" />
 
               {/* Screen Content */}
@@ -371,12 +371,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   className="rounded-[2.5rem] w-full object-cover transition-all duration-700"
                 />
 
-                <div className="absolute top-8 -right-2 sm:right-[-20px] glass-panel p-3 sm:p-4 rounded-xl border-l-2 border-emerald-500 animate-float delay-200">
+                <div className="absolute top-8 -right-1 sm:right-[-20px] glass-panel p-3 sm:p-4 rounded-xl border-l-2 border-emerald-500 animate-float delay-200">
                   <p className="text-[10px] text-zinc-400 font-bold uppercase">BF Estimado</p>
                   <p className="text-xl sm:text-2xl font-black text-white">12.4%</p>
                 </div>
 
-                <div className="absolute bottom-20 -left-2 sm:left-[-20px] glass-panel p-3 sm:p-4 rounded-xl border-r-2 border-emerald-500 animate-float">
+                <div className="absolute bottom-20 -left-1 sm:left-[-20px] glass-panel p-3 sm:p-4 rounded-xl border-r-2 border-emerald-500 animate-float">
                   <p className="text-[10px] text-zinc-400 font-bold uppercase">Maturidade Muscular</p>
                   <div className="w-20 sm:w-24 h-2 bg-zinc-800 rounded-full mt-2 overflow-hidden">
                     <div className="h-full bg-emerald-500 w-[80%]"></div>

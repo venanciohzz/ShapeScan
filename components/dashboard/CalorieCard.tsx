@@ -56,7 +56,7 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
                         <div className="absolute -inset-10 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
                         <span className="text-gray-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2">Energia Consumida</span>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-7xl md:text-8xl font-black text-white tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.1)] leading-none">
+                            <span className="text-5xl md:text-8xl font-black text-white tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.1)] leading-none">
                                 {formatValue(consumed)}
                             </span>
                             <span className="text-gray-500 text-lg font-bold">kcal</span>
@@ -83,10 +83,10 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
                                     <div
                                         key={i}
                                         className={`h-1.5 w-4 md:w-5 rounded-sm transition-all duration-500 ${visualPercent > i * (100 / 12)
-                                                ? isOverLimit
-                                                    ? 'bg-red-500 shadow-[0_0_5px_red]'
-                                                    : 'bg-emerald-500 shadow-[0_0_5px_#10b981]'
-                                                : 'bg-white/5'
+                                            ? isOverLimit
+                                                ? 'bg-red-500 shadow-[0_0_5px_red]'
+                                                : 'bg-emerald-500 shadow-[0_0_5px_#10b981]'
+                                            : 'bg-white/5'
                                             }`}
                                     ></div>
                                 ))}

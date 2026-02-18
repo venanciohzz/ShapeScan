@@ -65,7 +65,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-                        <div className="flex justify-between text-[8px] font-black text-gray-400 uppercase tracking-tighter">
+                        <div className="flex justify-between text-xs font-black text-gray-400 uppercase tracking-tighter">
                             <span>Consumido</span>
                             <span>
                                 Meta: {goal}
