@@ -342,10 +342,19 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 
                 <div className="text-7xl md:text-8xl mb-6 md:mb-8">🥗</div>
 
-                <label className={`inline-block cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
-                  {isFreeLocked ? 'BLOQUEADO' : 'ABRIR CÂMERA'}
-                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading || isFreeLocked} />
-                </label>
+                <div className="flex flex-col gap-4 w-full md:w-auto">
+                  <label className={`inline-flex items-center justify-center gap-3 cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
+                    <span className="text-2xl">📸</span>
+                    {isFreeLocked ? 'CÂMERA BLOQUEADA' : 'ABRIR CÂMERA'}
+                    {!isFreeLocked && <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading} />}
+                  </label>
+
+                  <label className={`inline-flex items-center justify-center gap-3 cursor-pointer bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-2 border-emerald-600 px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-50 dark:hover:bg-zinc-700 shadow-lg active:scale-95 text-base md:text-lg w-full ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
+                    <span className="text-2xl">🖼️</span>
+                    {isFreeLocked ? 'GALERIA BLOQUEADA' : 'ESCOLHER DA GALERIA'}
+                    {!isFreeLocked && <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading} />}
+                  </label>
+                </div>
                 {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-50 dark:bg-red-900/30 p-4 rounded-xl border-2 border-red-100 dark:border-red-900/50 w-full">{error}</p>}
               </div>
             </div>
