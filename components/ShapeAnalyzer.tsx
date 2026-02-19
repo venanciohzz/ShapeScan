@@ -222,7 +222,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
             <div className="text-7xl md:text-8xl mb-6 md:mb-8">🤳</div>
             <label className="inline-block cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full md:w-auto">
               ENVIAR FOTO
-              <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading} />
+              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading} />
             </label>
             {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-50 dark:bg-red-900/30 p-4 rounded-xl border-2 border-red-100 dark:border-red-900/50 w-full">{error}</p>}
           </div>

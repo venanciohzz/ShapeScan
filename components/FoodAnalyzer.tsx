@@ -344,7 +344,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 
                 <label className={`inline-block cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full md:w-auto ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
                   {isFreeLocked ? 'BLOQUEADO' : 'ABRIR CÂMERA'}
-                  <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading || isFreeLocked} />
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading || isFreeLocked} />
                 </label>
                 {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-50 dark:bg-red-900/30 p-4 rounded-xl border-2 border-red-100 dark:border-red-900/50 w-full">{error}</p>}
               </div>
