@@ -492,7 +492,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                   Salvar Favorito 💾
                 </button>
                 <button
-                  onClick={() => { setResult(null); setPreviewImage(null); }}
+                  onClick={() => { setResult(null); setPreviewImage(null); setMealDescription(''); }}
                   className="py-4 bg-transparent border-2 border-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest hover:text-white hover:border-zinc-600 active:scale-95 transition-all text-[10px]"
                 >
                   Refazer Scan 🔄

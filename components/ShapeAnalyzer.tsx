@@ -11,15 +11,15 @@ interface ShapeAnalyzerProps {
   onSaveToEvolution: (data: any) => void;
   onUpgrade: () => void;
   onUpgradePro: () => void;
+  onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 // Remoção de Thermometer não utilizado (substituído por PremiumScoreBar)
 
-const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvolution, onUpgrade, onUpgradePro }) => {
+const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvolution, onUpgrade, onUpgradePro, onShowToast }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ShapeAnalysisResult | null>(null);
   const [currentPhoto, setCurrentPhoto] = useState<string | null>(null);
-  const [error, setError] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [weight, setWeight] = useState<string>('');
   const [height, setHeight] = useState<string>('');
@@ -115,16 +115,21 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     }));
 
     // 2. Linha do Tempo Realista (Cap 1-2% BF em 60 dias se BF < 12%)
-    if (data.bf_timeline && data.bf_timeline.length >= 2) {
-      const startBF = data.bf_timeline[0].bf;
-      const endBF = data.bf_timeline[1].bf;
-      const diff = startBF - endBF;
+    if (!data.bf_timeline || data.bf_timeline.length < 2) {
+      data.bf_timeline = [
+        { day: 0, bf: bfValue },
+        { day: 60, bf: Math.max(bfValue - 2, 8) }
+      ];
+    }
 
-      if (bfValue <= 12 && diff > 2) {
-        data.bf_timeline[1].bf = Math.max(startBF - 2, 8); // Não passa de 2% de queda
-      } else if (diff > 6) {
-        data.bf_timeline[1].bf = startBF - 5; // Proteção contra quedas absurdas
-      }
+    const startBF = data.bf_timeline[0].bf;
+    const endBF = data.bf_timeline[1].bf;
+    const diff = startBF - endBF;
+
+    if (bfValue <= 12 && diff > 2) {
+      data.bf_timeline[1].bf = Math.max(startBF - 2, 8); // Não passa de 2% de queda
+    } else if (diff > 5) {
+      data.bf_timeline[1].bf = startBF - 5; // Proteção contra quedas absurdas
     }
 
     return data;
@@ -132,7 +137,6 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setLoading(true);
-    setError('');
 
     // Check limits (now async)
     const canContinue = await checkUsageLimit();
@@ -169,14 +173,14 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           // Increment usage after success
           await incrementUsage();
         } catch (err: any) {
-          setError(`Erro: ${err.message || "Falha na análise"}`);
+          onShowToast(err.message || "Falha na análise", 'error');
         } finally {
           setLoading(false);
         }
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      setError("Erro ao processar arquivo.");
+      onShowToast("Erro ao processar arquivo.", 'error');
       setLoading(false);
     }
   };
@@ -245,7 +249,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               </div>
             )}
           </div>
-          <h2 className="text-xl md:text-2xl font-light text-white tracking-wide">Mapeando geometria corporal...</h2>
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight animate-pulse">Mapeando geometria corporal...</h2>
         </div>
       )}
 
@@ -280,7 +284,6 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading} />
               </label>
             </div>
-            {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-50 dark:bg-red-900/30 p-4 rounded-xl border-2 border-red-100 dark:border-red-900/50 w-full">{error}</p>}
           </div>
         </div>
       ) : (
@@ -352,7 +355,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                   </div>
                   <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                     <p className="text-[9px] text-zinc-500 font-black uppercase mb-1">Peso Atual</p>
-                    <p className="text-2xl font-black text-white opacity-50 italic">{result.weight_metrics.current_weight}kg</p>
+                    <p className="text-2xl font-black text-white italic">{result.weight_metrics.current_weight}kg</p>
                   </div>
                   <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                     <p className="text-[9px] text-zinc-500 font-black uppercase mb-1">IMC</p>
@@ -659,10 +662,10 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 </div>
               )}
               <button
-                onClick={() => { setResult(null); setSavedSuccess(false); setCurrentPhoto(null); window.scrollTo(0, 0); }}
+                onClick={() => { setResult(null); setSavedSuccess(false); setCurrentPhoto(null); setWeight(''); setHeight(''); window.scrollTo(0, 0); }}
                 className="w-full py-4 bg-transparent border-2 border-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest hover:text-white hover:border-zinc-600 active:scale-95 transition-all text-xs"
               >
-                Nova Análise 🔄
+                Refazer Análise 🔄
               </button>
             </div>
           </div>
