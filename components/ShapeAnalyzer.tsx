@@ -240,6 +240,22 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                   <span className="inline-block px-4 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border border-emerald-500/20">
                     {result.bf_classification} • BF de {result.body_fat_range}
                   </span>
+                  {result.bf_confidence && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${result.bf_confidence.toLowerCase().includes('alta') ? 'bg-emerald-500 animate-pulse' :
+                            result.bf_confidence.toLowerCase().includes('moderada') ? 'bg-amber-500' :
+                              'bg-zinc-500'
+                          }`}></span>
+                        <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Confiança {result.bf_confidence}</span>
+                      </div>
+                      {result.bf_visual_justification && (
+                        <p className="text-[8px] text-zinc-500 font-bold leading-tight italic px-2">
+                          "{result.bf_visual_justification}"
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

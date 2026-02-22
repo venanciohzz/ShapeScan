@@ -102,6 +102,8 @@ export interface ShapeAnalysisResult {
   };
   body_fat_range: string;
   bf_classification: string;
+  bf_confidence: string; // New: Baixa/Moderada/Alta
+  bf_visual_justification: string; // New: Sinais reais detectados
   shape_score: number;
   muscle_score: number;
   definition_score: number;

@@ -233,39 +233,51 @@ export const analyzeShape = async (base64Image: string, metrics?: { weight?: num
 Você deve agir como: Treinador e Consultor especializado em Biologia e Estética.
 Sua missão é realizar um DIAGNÓSTICO GENÉTICO ESTIMADO antes de sugerir qualquer plano.
 
-🎯 ETAPA 1: DIAGNÓSTICO ESTRUTURAL (PROPORÇÃO E GENÉTICA)
-Analise a geometria corporal e classifique o "Tipo Estrutural Predominante".
+🎯 ETAPA 1: DIAGNÓSTICO ESTRUTURAL E BIOTIPO
+Analise a geometria corporal e classifique o "Tipo Estrutural Predominante" (Ecto/Meso/Endo e variações).
 - Nome: Técnico e direto.
 - Significado: Tradução simples.
-- Vantagem Estrutural: Maior trunfo do físico.
-- Desafio Estrutural: Maior barreira genética.
-- Resposta Genética: Responde melhor a volume moderado ou alta intensidade?
-- Tendência de Depósito: Região de maior acúmulo de gordura.
-- Estratégia de Contorno: Como "vencer" a limitação óssea visualmente.
+- Vantagem/Desafio: Trunfo e barreira genética.
+- Estratégia Tática: Como vencer a limitação visualmente.
 
-🎯 ETAPA 2: COMPOSIÇÃO CORPORAL (SE HOUVER PESO/ALTURA)
-Se o peso/altura forem informados, você DEVE calcular:
-1. Massa Gorda (kg) = Peso * BF_estimado%
-2. Massa Magra (kg) = Peso - Massa Gorda
-3. IMC = Peso / (Altura/100)^2
-4. Peso Alvo (Manter Massa Magra):
-   - Alvo 15% BF = Massa Magra / 0.85
-   - Alvo 12% BF = Massa Magra / 0.88
-   - Alvo 10% BF = Massa Magra / 0.90
+🎯 ETAPA 2: ESTIMATIVA DE BF% BASEADA EM SINAIS VISUAIS REAIS (RIGOROSO)
+NUNCA puxe para a média de 18-22% se houver definição. Use estes critérios cruzados:
 
-🎯 ETAPA 3: DIRETRIZES TÉCNICAS E CRONOGRAMA
-- NUNCA repita informação. PROIBIDO frases motivacionais.
-- Prioridade Mensurável: Depende do Objetivo (lose/gain/recomp) + BF atual.
-  - Se BF > 22% e objetivo secar: Meta 6-10% redução em fases.
-  - Se BF 18-22%: Meta 4-6% em 60-90 dias.
-  - Se BF < 15%: Foco em ganho de massa.
-- Linha do Tempo: Gere pontos de BF para gráfico (Dia 0 = BF Atual, Dia 60 = BF Alvo Realista). Considere que a perda inicial é mais rápida.
+1. DEFINIÇÃO ABDOMINAL:
+   - 6 gomos secos/profundos → 8–12%
+   - 4 gomos visíveis → 10–14%
+   - Linha central visível (sem gomos) → 14–17%
+   - Abdômen liso (sem divisão) → 18–22%
+   - Abdômen arredondado → 22%+
 
-🎯 ETAPA 4: PROTOCOLO NUTRICIONAL PROFUNDO
-- Estratégia Calórica: % Déficit (15-20%) ou Superávit (10-15%).
-- Proteína: 2.0-2.2g/kg (Explicar importância para preservação/construção).
-- Distribuição: Frequência proteica (3-5 refeições).
-- Alertas (4 a 6 itens): Específicos (ex: sono, falha na progressão, gordura líquida, ajuste platô).
+2. SEPARAÇÃO MUSCULAR (OMBRO/BRAÇO):
+   - Separação clara e cortes profundos → < 12–14%
+   - Leve separação → 14–17%
+   - Sem separação/Roliço → 18%+
+
+3. VASCULARIZAÇÃO:
+   - Veias aparentes braços/ombros → < 12–14%
+   - Veias discretas → 14–16%
+   - Ausente → 17%+
+
+4. REGIÃO INFERIOR (UMBIGO PARA BAIXO):
+   - Pele fina e seca (sem gordura) → geralmente < 12%
+   - Leve retenção → 14–17%
+   - Gordura visível → 18%+
+
+REGRAS DE OURO:
+- FÍSICO SECO (ESTRIAÇÕES/SEPARAÇÃO AVANÇADA): Nunca retorne acima de 14%.
+- CRUZAMENTO DE SINAIS: Se houver 6 gomos + vascularização, a faixa DEVE ser 8-12% (Confiança Alta).
+- CONFIDÊNCIA: Classifique a confiança com base na nitidez da foto e clareza dos sinais.
+
+🎯 ETAPA 3: COMPOSIÇÃO E PROJEÇÕES
+(Se houver Peso/Altura): Calcule Massa Magra, Gorda, IMC e Peso Alvo (15%, 12%, 10% BF).
+
+🎯 ETAPA 4: ESTRATÉGIA E PROTOCOLOS
+- Prioridade Mensurável (60 dias).
+- Protocolo Nutricional Profundo (Macros específicos, déficit/superávit).
+- Linha do Tempo (Gráfico Dia 0 vs Dia 60).
+- Alertas Inteligentes (4 a 6 itens táticos).
 
 ${metricsInfo}
 
@@ -293,6 +305,8 @@ ${metricsInfo}
   },
   "body_fat_range": "string",
   "bf_classification": "string",
+  "bf_confidence": "Baixa | Moderada | Alta",
+  "bf_visual_justification": "string (ex: definição abdominal completa de 6 gomos e vascularização no ombro)",
   "shape_score": number,
   "muscle_score": number,
   "definition_score": number,
