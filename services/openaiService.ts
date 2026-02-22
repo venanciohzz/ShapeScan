@@ -268,9 +268,14 @@ Se houver os 3 sinais abaixo simultâneos, o BF é OBRIGATORIAMENTE entre 7% e 9
 - NUNCA subestime a secura de quem tem separação muscular profunda.
 
 🎯 ETAPA 3: COERÊNCIA DE NOTAS (QUALIDADE FÍSICA)
-- Definição: Visibilidade muscular. Se BF < 12%, nota DEVE ser ≥ 8/10. Se físico extremamente seco, nota 9 ou 10.
-- Musculatura: Volume e densidade visível. Não reduza nota se houver boa separação e preenchimento.
-- Proporção: Relação ombro/cintura e simetria geral.
+- Definição: Se BF < 12%, nota DEVE ser ≥ 8/10. Se extremamemte seco, 9 ou 10.
+- Musculatura: Volume e densidade visível.
+- Nível de Gordura (fat_score): ESCALA INVERTIDA (Menor = Mais Seco).
+  - Se BF ≤ 10%: Nota DEVE ser entre 1.0 e 2.0.
+  - Se BF 11-14%: Nota DEVE ser entre 2.5 e 4.5.
+  - Se BF 15-19%: Nota DEVE ser entre 5.0 e 6.5.
+  - Se BF ≥ 20%: Nota DEVE ser ≥ 7.0.
+⚠️ ERRO CRÍTICO: Não dê nota alta de gordura (ex: 7.0) para quem você estimou 10% de BF.
 
 🎯 ETAPA 4: MATEMÁTICA E COERÊNCIA ESTRATÉGICA (V10)
 - Fórmulas: Massa Magra = Peso * (1-BF%); Peso Alvo = Massa Magra / (1-BF_alvo%).
