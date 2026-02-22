@@ -13,24 +13,7 @@ interface ShapeAnalyzerProps {
   onUpgradePro: () => void;
 }
 
-const Thermometer = ({ label, score, context, invertColors }: { label: string, score: number, context: string, invertColors?: boolean }) => {
-  const percentage = (score / 10) * 100;
-  const gradientClass = invertColors
-    ? "bg-gradient-to-r from-emerald-500 via-yellow-400 to-red-500"
-    : "bg-gradient-to-r from-red-500 via-yellow-400 to-emerald-500";
-  return (
-    <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border-2 border-emerald-500/10 mb-3 transition-colors">
-      <div className="flex justify-between items-center mb-2">
-        <h4 className="font-black text-black dark:text-white text-xs md:text-sm uppercase tracking-tight">{label}</h4>
-        <p className="font-black text-black dark:text-white text-base md:text-lg">{score} <span className="text-gray-400 dark:text-zinc-600 text-[10px]">/ 10</span></p>
-      </div>
-      <div className="w-full h-3 md:h-4 bg-gray-100 dark:bg-zinc-800 rounded-full border-2 border-emerald-600 overflow-hidden relative">
-        <div className={`h-full transition-all duration-1000 ease-out ${gradientClass}`} style={{ width: `${percentage}%` }} />
-      </div>
-      <p className="mt-2 text-[10px] md:text-[11px] font-black text-gray-600 dark:text-zinc-400 italic leading-snug">{context}</p>
-    </div>
-  );
-};
+// Remoção de Thermometer não utilizado (substituído por PremiumScoreBar)
 
 const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvolution, onUpgrade, onUpgradePro }) => {
   const [loading, setLoading] = useState(false);
@@ -112,11 +95,11 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           setCurrentPhoto(compressedBase64);
           const apiBase64 = compressedBase64.split(',')[1];
           // FIX: Comma handling
-          const w = weight ? parseFloat(weight.replace(',', '.')) : undefined;
-          const h = height ? parseFloat(height.replace(',', '.')) : undefined;
-          const metrics = { weight: w, height: h };
-          const data = await analyzeShape(apiBase64, metrics);
-          setResult(data);
+          const w = weight ? parseFloat(weight.replace(',', '.')) : user.weight;
+          const h = height ? parseFloat(height.replace(',', '.')) : user.height;
+          const metrics = { weight: w, height: h, goal: user.goal };
+          const analysis = await analyzeShape(apiBase64, metrics);
+          setResult(analysis);
 
           // Increment usage after success
           await incrementUsage();
@@ -135,18 +118,17 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
   const handleSave = () => {
     if (!result) return;
-    // FIX: Comma handling for saving
-    const w = weight ? parseFloat(weight.replace(',', '.')) : undefined;
-    const h = height ? parseFloat(height.replace(',', '.')) : undefined;
+    const w = weight ? parseFloat(weight.replace(',', '.')) : user.weight;
+    const h = height ? parseFloat(height.replace(',', '.')) : user.height;
 
-    // Don't save photo to evolution to save space, only analysis text
+    // Map new result structure to evolution record
     onSaveToEvolution({
-      bf: result.bfPercentage,
+      bf: result.body_fat_range,
       photo: undefined,
-      notes: result.detailedAnalysis,
-      detailedAnalysis: result.detailedAnalysis,
-      pointsToImprove: result.pointsToImprove,
-      macroSuggestions: result.macroSuggestions,
+      notes: result.coach_comment,
+      detailedAnalysis: `${result.structural_analysis.name} | ${result.bf_classification}\n\nSignificado: ${result.structural_analysis.meaning}\n\nVantagem: ${result.structural_analysis.structural_advantage}\n\nDesafio: ${result.structural_analysis.structural_challenge}\n\nFoco 60 Dias: ${result.execution_strategy.primary_focus_next_60_days}\n\nEstratégia: ${result.execution_strategy.training_focus.join(', ')}\n\nNutrição: ${result.nutritional_protocol.caloric_strategy} | ${result.nutritional_protocol.protein_target}`,
+      pointsToImprove: result.execution_strategy.common_mistakes.join('\n'),
+      macroSuggestions: result.execution_strategy.nutrition_focus,
       weight: w,
       height: h
     });
@@ -167,8 +149,8 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     <div className="max-w-3xl mx-auto px-6 py-6 md:pt-14 pb-24 text-black dark:text-white min-h-screen flex flex-col relative">
 
       {showLimitModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2rem] p-8 border-2 border-emerald-500/50 shadow-2xl text-center relative overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-in fade-in">
+          <div className="bg-zinc-950 w-full max-w-sm rounded-[2rem] p-8 border-2 border-emerald-500/50 shadow-2xl text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500"></div>
             <div className="text-4xl mb-4">🛑</div>
             <h3 className="text-xl font-black mb-4">Limite diário atingido</h3>
@@ -188,7 +170,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
       )}
 
       {loading && (
-        <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center animate-in fade-in duration-500">
           <div className="absolute inset-0 grid-bg opacity-10 animate-pulse"></div>
           <div className="relative w-64 h-80 md:w-80 md:h-96 flex items-center justify-center mb-12">
             {currentPhoto && (
@@ -211,14 +193,14 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
       {!result ? (
         <div className="space-y-6 md:space-y-8 flex-1 flex flex-col">
-          <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-2 border-emerald-600 shadow-sm space-y-4 transition-colors">
+          <div className="bg-zinc-900 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-2 border-emerald-500/20 shadow-sm space-y-4 transition-colors">
             <h3 className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest mb-2">Dados Adicionais</h3>
             <div className="grid grid-cols-2 gap-4">
               <div><label className="block text-[8px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-1">Peso (kg)</label><input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} placeholder="Ex: 82,5" className="w-full p-3 md:p-4 rounded-xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 font-black text-black dark:text-white outline-none focus:border-emerald-600 text-base" /></div>
               <div><label className="block text-[8px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-1">Altura (m)</label><input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} placeholder="Ex: 1,80" className="w-full p-3 md:p-4 rounded-xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 font-black text-black dark:text-white outline-none focus:border-emerald-600 text-base" /></div>
             </div>
           </div>
-          <div className="bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 border-emerald-600 shadow-sm text-center flex-1 flex flex-col justify-center items-center">
+          <div className="bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 border-emerald-500/20 shadow-sm text-center flex-1 flex flex-col justify-center items-center">
             <div className="text-7xl md:text-8xl mb-6 md:mb-8">🤳</div>
             <div className="flex flex-col gap-4 w-full md:w-auto">
               <label className="inline-flex items-center justify-center gap-3 cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full">
@@ -227,7 +209,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading} />
               </label>
 
-              <label className="inline-flex items-center justify-center gap-3 cursor-pointer bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-2 border-emerald-600 px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-50 dark:hover:bg-zinc-700 shadow-lg active:scale-95 text-base md:text-lg w-full">
+              <label className="inline-flex items-center justify-center gap-3 cursor-pointer bg-transparent text-emerald-500 border-2 border-emerald-500/30 px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-500/10 shadow-lg active:scale-95 text-base md:text-lg w-full">
                 <span className="text-2xl">🖼️</span>
                 GALERIA DE FOTOS
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading} />
@@ -237,85 +219,377 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           </div>
         </div>
       ) : (
-        <div className="space-y-6 pb-4 animate-in fade-in duration-500">
-          <div className="bg-white dark:bg-zinc-900 p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border-4 border-emerald-600 shadow-2xl relative transition-colors">
-            <div className="flex justify-between items-start mb-6 md:mb-10">
-              <div>
-                <p className="text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2">Estimativa de BF</p>
-                <p className="text-5xl md:text-8xl font-black italic tracking-tighter leading-none text-black dark:text-white">
-                  {result.bfPercentage.split('(')[0].trim()}
-                </p>
-                {result.bfPercentage.includes('(') && (
-                  <p className="mt-3 font-black text-emerald-600 uppercase text-[10px] md:text-xs tracking-wide">
-                    {result.bfPercentage.match(/\((.*?)\)/)?.[1] || ''}
+        <div className="space-y-8 pb-32 animate-in slide-in-from-bottom-6 duration-700">
+          {/* 1️⃣ DIAGNÓSTICO: BANNER E BIOTIPO */}
+          <div className="bg-zinc-900 border-2 border-emerald-500/30 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[80px] rounded-full"></div>
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+              <div className="space-y-2 text-center md:text-left">
+                <div className="flex items-baseline gap-1 justify-center md:justify-start">
+                  <h2 className="text-7xl md:text-9xl font-black italic tracking-tighter text-white leading-none">
+                    {result.shape_score.toFixed(1)}
+                  </h2>
+                  <span className="text-2xl md:text-4xl text-zinc-500 font-black italic tracking-tighter">/10</span>
+                </div>
+                <p className="text-[9px] text-zinc-500 font-bold max-w-[200px] leading-tight mt-1">Este score considera proporção estrutural, definição e desenvolvimento muscular atual.</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 text-center flex-1 md:max-w-xs">
+                <p className="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">Biotipo Predominante</p>
+                <p className="text-lg md:text-xl font-black text-emerald-500 italic tracking-tighter mb-2">{result.structural_analysis.name}</p>
+                <div className="flex flex-col gap-2">
+                  <span className="inline-block px-4 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border border-emerald-500/20">
+                    {result.bf_classification} • BF de {result.body_fat_range}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 📊 PERFORMANCE GERAL */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <PremiumScoreBar label="Musculatura" score={result.muscle_score} color="emerald" />
+            <PremiumScoreBar label="Definição" score={result.definition_score} color="emerald" />
+            <PremiumScoreBar label="Nível Gordura" score={result.fat_score} color="zinc" invert />
+          </div>
+
+          {/* 🧬 COMPOSIÇÃO E PROJEÇÃO (SE HOUVER DADOS) */}
+          {result.weight_metrics && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-zinc-900 border-2 border-zinc-800 p-8 rounded-[2.5rem] space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">⚖️</span>
+                  <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Composição Corporal Estimada</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <p className="text-[9px] text-zinc-500 font-black uppercase mb-1">Massa Magra</p>
+                    <p className="text-2xl font-black text-white italic">{result.weight_metrics.lean_mass_kg.toFixed(1)}kg</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <p className="text-[9px] text-zinc-500 font-black uppercase mb-1">Massa Gorda</p>
+                    <p className="text-2xl font-black text-emerald-500 italic">{result.weight_metrics.fat_mass_kg.toFixed(1)}kg</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <p className="text-[9px] text-zinc-500 font-black uppercase mb-1">Peso Atual</p>
+                    <p className="text-2xl font-black text-white opacity-50 italic">{result.weight_metrics.current_weight}kg</p>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <p className="text-[9px] text-zinc-500 font-black uppercase mb-1">IMC</p>
+                    <p className="text-2xl font-black text-white italic">{result.weight_metrics.bmi.toFixed(1)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-zinc-900 border-2 border-zinc-800 p-8 rounded-[2.5rem] space-y-6">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🎯</span>
+                  <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Pesos Alvo por BF (%)</h3>
+                </div>
+                <div className="space-y-3">
+                  <TargetWeightRow label="Atlético (15%)" target={result.target_projections?.weight_at_15_bf} />
+                  <TargetWeightRow label="Elite (12%)" target={result.target_projections?.weight_at_12_bf} />
+                  <TargetWeightRow label="Competição (10%)" target={result.target_projections?.weight_at_10_bf} />
+                </div>
+                <p className="text-[8px] text-zinc-600 font-bold leading-tight">Cálculo baseado na manutenção total da massa magra atual.</p>
+              </div>
+            </div>
+          )}
+
+          {/* 🦴 DIAGNÓSTICO GENÉTICO TÁTICO */}
+          <div className="bg-zinc-900 border-2 border-zinc-800 p-8 md:p-10 rounded-[2.5rem] space-y-8">
+            <div className="flex items-center gap-3">
+              <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
+              <h3 className="text-xl font-black text-white italic tracking-tight">Análise Genética Tática</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <span>🔎</span> O que isso significa
                   </p>
-                )}
-              </div>
-              {currentPhoto && <div className="w-20 h-24 md:w-24 md:h-28 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-lg"><img src={currentPhoto} alt="Analisado" className="w-full h-full object-cover" /></div>}
-            </div>
-
-            <div className="space-y-4 border-t-2 border-emerald-50 dark:border-zinc-800 pt-6">
-              <Thermometer label="Gordura Corporal" score={result.fatScore} context={result.fatContext} invertColors />
-              <Thermometer label="Musculatura" score={result.muscleScore} context={result.muscleContext} />
-              <Thermometer label="Definição" score={result.definitionScore} context={result.definitionContext} />
-
-              <div className="mt-8 space-y-6">
-                <div className="bg-red-50 dark:bg-red-900/20 p-5 rounded-2xl border-l-4 border-red-500">
-                  <h3 className="text-red-500 font-black uppercase text-xs tracking-widest mb-2">Pontos de Atenção ⚠️</h3>
-                  <p className="text-gray-900 dark:text-white text-sm font-medium leading-relaxed">{result.pointsToImprove}</p>
+                  <p className="text-sm text-zinc-300 font-medium leading-relaxed">{result.structural_analysis.meaning}</p>
                 </div>
-
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-2xl border-l-4 border-blue-500">
-                  <h3 className="text-blue-500 font-black uppercase text-xs tracking-widest mb-2">Sugestão de Dieta 🍽️</h3>
-                  <p className="text-gray-900 dark:text-white text-sm font-medium leading-relaxed">{result.macroSuggestions}</p>
+                <div className="space-y-2">
+                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <span>🎯</span> Principal vantagem estrutural
+                  </p>
+                  <p className="text-sm text-zinc-300 font-medium leading-relaxed">{result.structural_analysis.structural_advantage}</p>
                 </div>
-
-                <AnalysisSection title="Análise Detalhada" content={result.detailedAnalysis} />
+                <div className="space-y-2">
+                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <span>⚠️</span> Principal desafio estrutural
+                  </p>
+                  <p className="text-sm text-zinc-300 font-medium leading-relaxed">{result.structural_analysis.structural_challenge}</p>
+                </div>
               </div>
 
-              <div className="bg-black text-white p-6 md:p-8 rounded-3xl border-4 border-emerald-500 shadow-xl shadow-emerald-100 dark:shadow-none">
-                <p className="text-emerald-400 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Papo do Coach 💪</p>
-                <p className="text-base md:text-lg font-black italic leading-tight italic">"{result.coachAdvice}"</p>
+              <div className="space-y-6 p-6 bg-white/5 rounded-[2rem] border border-white/5">
+                <div className="space-y-1">
+                  <p className="text-zinc-500 text-[8px] font-black uppercase tracking-widest">Resposta Genética</p>
+                  <p className="text-sm text-white font-bold">{result.structural_analysis.genetic_responsiveness}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-zinc-500 text-[8px] font-black uppercase tracking-widest">Tendência de Depósito</p>
+                  <p className="text-sm text-white font-bold">{result.structural_analysis.fat_storage_tendency}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-emerald-500/70 text-[8px] font-black uppercase tracking-widest">Estratégia de Contorno</p>
+                  <p className="text-sm text-emerald-500 font-bold italic">{result.structural_analysis.structural_limitation_strategy}</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <PropCard label="Tronco" value={result.proportions.chest} />
-            <PropCard label="Braços" value={result.proportions.arms} />
-            <PropCard label="Abs/Cintura" value={result.proportions.abs} />
-            <PropCard label="Pernas" value={result.proportions.legs} />
+          {/* 🗺️ MAPEAMENTO REGIONAL */}
+          <div className="space-y-4">
+            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] px-2">Análise por Região</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <SimplePropCard label="Tronco" value={result.regional_analysis.trunk} />
+              <SimplePropCard label="Braços" value={result.regional_analysis.arms} />
+              <SimplePropCard label="Abs/Cintura" value={result.regional_analysis.abs_waist} />
+              <SimplePropCard label="Pernas" value={result.regional_analysis.legs} />
+            </div>
           </div>
 
-          <div className="fixed md:static bottom-0 left-0 right-0 p-6 pt-8 pb-10 md:p-0 bg-gradient-to-t from-white via-white to-transparent dark:from-zinc-950 dark:via-zinc-950 z-50 md:bg-none">
-            <div className="max-w-3xl mx-auto flex flex-col gap-3">
+          {/* 🔬 INSIGHT ESTRATÉGICO (PROFESSIONAL) */}
+          <div className="bg-zinc-900 border-2 border-zinc-800 p-8 md:p-10 rounded-[2.5rem] relative overflow-hidden space-y-10">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500"></div>
+            <div className="relative z-10 space-y-8">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="not-italic text-sm">🔬</span>
+                  <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.3em]">Diagnóstico Estético</p>
+                </div>
+                <p className="text-white text-2xl md:text-3xl font-black italic italic leading-tight tracking-tighter">
+                  "{result.coach_insight.aesthetic_diagnosis}"
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="not-italic text-xs">🎯</span>
+                    <p className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em]">Alavanca Principal</p>
+                  </div>
+                  <p className="text-white text-sm font-bold leading-snug">{result.coach_insight.main_leverage}</p>
+                </div>
+
+                <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="not-italic text-xs">📊</span>
+                    <p className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em]">Estratégia Inteligente</p>
+                  </div>
+                  <p className="text-white text-sm font-bold leading-snug">{result.coach_insight.smart_strategy}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 🎯 PRIORIDADE: FOCO PRINCIPAL 60 DIAS */}
+          <div className="bg-zinc-900 border-2 border-emerald-500/20 p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[60px] rounded-full"></div>
+            <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Prioridade Estratégica: Próximos 60 Dias</p>
+            <p className="text-white text-2xl md:text-3xl font-black italic tracking-tighter leading-tight">
+              "{result.execution_strategy.primary_focus_next_60_days}"
+            </p>
+            <div className="mt-6 flex items-center gap-2">
+              <span className="w-12 h-1 bg-emerald-500 rounded-full"></span>
+              <span className="text-[10px] font-black text-emerald-500/50 uppercase tracking-widest">Direcionamento Quantificável</span>
+            </div>
+          </div>
+
+          {/* 🍽️ PROTOCOLO NUTRICIONAL PROFUNDO */}
+          <div className="bg-zinc-900 border-2 border-zinc-800 p-8 md:p-10 rounded-[2.5rem] space-y-8">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🍲</span>
+              <h3 className="text-xl font-black text-white italic tracking-tight">Protocolo Nutricional Profundo</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                <p className="text-emerald-500 text-[8px] font-black uppercase tracking-widest">Estratégia Calórica</p>
+                <p className="text-sm text-white font-bold">{result.nutritional_protocol.caloric_strategy}</p>
+              </div>
+              <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                <p className="text-emerald-500 text-[8px] font-black uppercase tracking-widest">Proteína (Alvo)</p>
+                <p className="text-sm text-white font-bold">{result.nutritional_protocol.protein_target}</p>
+              </div>
+              <div className="p-5 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                <p className="text-emerald-500 text-[8px] font-black uppercase tracking-widest">Distribuição</p>
+                <p className="text-sm text-white font-bold">{result.nutritional_protocol.distribution}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Diretrizes de Controle Prático</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {result.nutritional_protocol.practical_guidelines.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 bg-white/5 p-4 rounded-xl border border-white/5">
+                    <span className="text-emerald-500 text-xs">✓</span>
+                    <p className="text-xs text-zinc-300 font-medium">{item}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 🏋️‍♂️ PROTOCOLO DE TREINO TÁTICO */}
+          <div className="bg-zinc-900 border-2 border-zinc-800 p-8 md:p-10 rounded-[2.5rem] space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🏋️‍♂️</span>
+              <h3 className="text-xl font-black text-white italic tracking-tight">Protocolo de Treino Tático</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {result.execution_strategy.training_focus.map((step, idx) => (
+                <div key={idx} className="flex gap-4 bg-zinc-800/50 p-5 rounded-2xl border border-white/5 items-start">
+                  <span className="text-emerald-500 font-black italic text-xl">{idx + 1}</span>
+                  <p className="text-sm text-zinc-200 font-bold leading-snug">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ⏳ CRONOGRAMA E GRÁFICO DE BF */}
+          <div className="bg-zinc-900 border-2 border-zinc-800 p-8 md:p-10 rounded-[2.5rem] space-y-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">⏳</span>
+                <h3 className="text-xl font-black text-white italic tracking-tight">Linha do Tempo Realista</h3>
+              </div>
+              <p className="text-2xl font-black text-emerald-500 italic tracking-tighter">{result.execution_strategy.time_expectation}</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+              <div className="space-y-6">
+                <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+                  A perda tende a ser mais rápida nas primeiras semanas devido à redução de retenção hídrica inicial e adaptação metabólica.
+                </p>
+                <div className="flex gap-8">
+                  <div>
+                    <p className="text-[9px] text-zinc-500 font-black uppercase mb-1">Dia 0</p>
+                    <p className="text-3xl font-black text-white">{result.bf_timeline[0].bf}%</p>
+                  </div>
+                  <div className="flex items-center text-zinc-700">
+                    <span className="text-xl">→</span>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-zinc-500 font-black uppercase mb-1">Dia 60</p>
+                    <p className="text-3xl font-black text-emerald-500">{result.bf_timeline[1].bf}%</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* GRÁFICO SVG SIMPLES */}
+              <div className="h-32 w-full relative">
+                <svg viewBox="0 0 100 40" className="w-full h-full overflow-visible">
+                  {/* Grid Lines */}
+                  {[0, 10, 20, 30, 40].map(y => (
+                    <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="white" strokeOpacity="0.05" strokeWidth="0.5" />
+                  ))}
+                  {/* Curve - Simple Bezier for Day 0 to Day 60 */}
+                  <path
+                    d={`M 0 10 Q 30 35 100 38`} // Simple illustrative curve
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  {/* Points */}
+                  <circle cx="0" cy="10" r="1.5" fill="#10b981" />
+                  <circle cx="100" cy="38" r="1.5" fill="#10b981" />
+                  {/* Labels */}
+                  <text x="0" y="5" fontSize="3" fill="#6b7280" fontWeight="bold">Dia 0</text>
+                  <text x="90" y="33" fontSize="3" fill="#10b981" fontWeight="bold">Dia 60</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* ⚠️ ALERTAS INTELIGENTES */}
+          <div className="bg-red-500/5 border-2 border-red-500/20 p-8 md:p-10 rounded-[2.5rem] space-y-6">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">⚠️</span>
+              <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest">Alertas de Platô e Riscos</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {result.execution_strategy.common_mistakes.map((error, idx) => (
+                <div key={idx} className="flex gap-3 bg-black/40 p-4 rounded-xl border border-red-500/10 items-start">
+                  <span className="text-red-500 font-bold mt-0.5">✕</span>
+                  <p className="text-[11px] text-zinc-400 font-bold leading-snug">{error}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* FINAL COACH COMMENT */}
+          <div className="pt-8 border-t border-zinc-800 text-center">
+            <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest italic">{result.coach_comment}</p>
+          </div>
+
+          {/* 🔘 BOTÕES DE DESFECHO */}
+          <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-[80] md:static md:bg-none md:p-0">
+            <div className="max-w-2xl mx-auto flex flex-col gap-3">
               {!savedSuccess ? (
-                <button onClick={handleSave} className="w-full bg-emerald-600 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-2xl transition-all text-lg">Salvar na Evolução 📈</button>
+                <button
+                  onClick={handleSave}
+                  className="w-full bg-emerald-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-[0_10px_40px_rgba(16,185,129,0.3)] active:scale-95 transition-all text-lg"
+                >
+                  Salvar na Evolução 📈
+                </button>
               ) : (
-                <div className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 p-5 rounded-[2rem] border-2 border-emerald-600 font-black text-center text-sm animate-in zoom-in duration-500">REGISTRO SALVO! (Apenas Texto)</div>
+                <div className="bg-emerald-500/10 border-2 border-emerald-500 text-emerald-500 py-6 rounded-[2rem] font-black text-center text-sm uppercase tracking-widest animate-in zoom-in">
+                  Registro Salvo com Sucesso! ✅
+                </div>
               )}
-              <button onClick={() => { setResult(null); setSavedSuccess(false); setCurrentPhoto(null); }} className="w-full py-4 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-700 text-black dark:text-white rounded-2xl font-black uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all text-xs">Refazer Análise</button>
+              <button
+                onClick={() => { setResult(null); setSavedSuccess(false); setCurrentPhoto(null); window.scrollTo(0, 0); }}
+                className="w-full py-4 bg-transparent border-2 border-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest hover:text-white hover:border-zinc-600 active:scale-95 transition-all text-xs"
+              >
+                Nova Análise 🔄
+              </button>
             </div>
           </div>
-          <div className="h-32 md:h-0"></div>
         </div>
       )}
     </div>
   );
 };
 
-const AnalysisSection = ({ title, content }: { title: string, content: string }) => (
-  <div>
-    <h3 className="text-[10px] font-black uppercase tracking-widest mb-2 text-black dark:text-white">{title}</h3>
-    <p className="text-black dark:text-white text-sm font-medium leading-relaxed">{content}</p>
+// --- COMPONENTES AUXILIARES PREMIUM ---
+
+const TargetWeightRow = ({ label, target }: { label: string, target?: number }) => (
+  <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{label}</p>
+    <p className="text-sm font-black text-white italic">{target ? `${target.toFixed(1)}kg` : '---'}</p>
   </div>
 );
 
-const PropCard = ({ label, value }: any) => (
-  <div className="bg-white dark:bg-zinc-900 p-4 md:p-6 rounded-2xl border-2 border-emerald-600 shadow-sm flex flex-col items-center text-center transition-colors">
-    <p className="text-[8px] md:text-[9px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1">{label}</p>
-    <p className="font-black leading-tight text-xs md:text-sm text-black dark:text-white">{value}</p>
+const SimplePropCard = ({ label, value }: { label: string, value: string }) => (
+  <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-1">
+    <p className="text-zinc-500 text-[8px] font-bold uppercase tracking-widest">{label}</p>
+    <p className="text-[11px] text-white font-black italic leading-tight">{value}</p>
   </div>
 );
+
+const PremiumScoreBar = ({ label, score, color, invert = false }: { label: string, score: number, color: 'emerald' | 'zinc', invert?: boolean }) => {
+  const percentage = Math.min(Math.max(score * 10, 0), 100);
+  const colorClass = color === 'emerald' ? 'bg-emerald-500' : 'bg-zinc-500';
+
+  return (
+    <div className="space-y-2 p-6 bg-zinc-900 border border-zinc-800 rounded-3xl">
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{label}</span>
+        <span className={`text-lg font-black italic ${invert ? 'text-zinc-400' : 'text-white'}`}>{score.toFixed(1)}<span className="text-[8px] opacity-30 italic">/10</span></span>
+      </div>
+      <div className="h-2 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+        <div
+          className={`h-full ${colorClass} transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(16,185,129,0.3)]`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+    </div>
+  );
+};
 
 export default ShapeAnalyzer;

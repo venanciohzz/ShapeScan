@@ -187,10 +187,13 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       id: Math.random().toString(36).substr(2, 9),
       name: it.name,
       calories: Number(it.calories.toFixed(1)),
-      weight: Number(it.weight.toFixed(1))
+      weight: Number(it.weight.toFixed(1)),
+      protein: Number((it.protein || 0).toFixed(1)),
+      carbs: Number((it.carbs || 0).toFixed(1)),
+      fat: Number((it.fat || 0).toFixed(1))
     }));
 
-    const mealName = manualName || (foodItems.length > 1 ? "Refeição Completa" : (foodItems[0]?.name || "Refeição"));
+    const mealName = result.mealName || manualName || (foodItems.length > 1 ? "Refeição Completa" : (foodItems[0]?.name || "Refeição"));
     const mealData = {
       name: mealName,
       items: foodItems,
@@ -224,11 +227,11 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
   const isFreeLocked = mode === 'ai' && user.plan === 'free' && (user.freeScansUsed || 0) >= 1 && !result;
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-6 md:pt-14 pb-24 text-black dark:text-white min-h-screen flex flex-col relative">
+    <div className="max-w-3xl mx-auto px-6 py-6 md:pt-14 pb-24 text-black dark:text-white min-h-screen flex flex-col relative bg-black">
 
       {showLimitModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-[2rem] p-8 border-2 border-emerald-500/50 shadow-2xl text-center relative overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-in fade-in">
+          <div className="bg-zinc-950 w-full max-w-sm rounded-[2rem] p-8 border-2 border-emerald-500/50 shadow-2xl text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500"></div>
             <div className="text-4xl mb-4">
               {limitModalType === 'daily' ? '🛑' : '🔒'}
@@ -265,7 +268,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       )}
 
       {loading && (
-        <div className="fixed inset-0 z-[100] bg-white dark:bg-zinc-900 flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center animate-in fade-in duration-500">
           <div className="absolute inset-0 grid-bg opacity-10 animate-pulse"></div>
           <div className="relative w-64 h-80 md:w-80 md:h-96 flex items-center justify-center mb-12">
             {previewImage && (
@@ -276,8 +279,8 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             )}
           </div>
           <div className="z-10 text-center space-y-4 px-6">
-            <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tight animate-pulse">{scanMessages[scanStep]}</h2>
-            <div className="w-48 h-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden mx-auto border border-emerald-500/20">
+            <h2 className="text-xl md:text-2xl font-black text-white tracking-tight animate-pulse">{scanMessages[scanStep]}</h2>
+            <div className="w-48 h-1.5 bg-zinc-900 rounded-full overflow-hidden mx-auto border border-white/5">
               <div
                 className="h-full bg-emerald-500 transition-all duration-500 ease-out"
                 style={{ width: `${((scanStep + 1) / scanMessages.length) * 100}%` }}
@@ -287,29 +290,31 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
         </div>
       )}
 
-      <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm hover:scale-105 transition-all active:scale-95 mb-6 text-black dark:text-white">
+      <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/10 shadow-sm hover:scale-105 transition-all active:scale-95 mb-6 text-white">
         <span className="text-lg pb-0.5">←</span>
       </button>
 
-      <div className="flex items-center justify-between mb-2 gap-4">
-        <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter">{mode === 'manual' ? 'Registro Manual' : 'Scanner de Prato'}</h1>
-        {mode === 'ai' && <span className="flex-shrink-0 text-[10px] bg-emerald-600 text-white px-3 py-1 rounded-full font-black tracking-widest shadow-sm">AI PREMIUM</span>}
-      </div>
+      {!result && (
+        <div className="flex items-center justify-between mb-2 gap-4">
+          <h1 className="text-3xl md:text-4xl font-black italic tracking-tighter text-white">{mode === 'manual' ? 'Registro Manual' : 'Scanner de Prato'}</h1>
+          {mode === 'ai' && <span className="flex-shrink-0 text-[10px] bg-emerald-600 text-white px-3 py-1 rounded-full font-black tracking-widest shadow-sm">AI PREMIUM</span>}
+        </div>
+      )}
 
       {!result ? (
         <div className="space-y-6 md:space-y-8 flex-1 flex flex-col">
           {mode === 'manual' ? (
-            <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border-2 border-emerald-600 shadow-sm transition-colors flex flex-col gap-6">
+            <div className="bg-zinc-900 p-6 md:p-8 rounded-[2rem] border-2 border-emerald-600 shadow-sm transition-colors flex flex-col gap-6">
               <div className="space-y-2">
-                <label className="block text-[10px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-2">O que você comeu?</label>
-                <p className="text-xs text-gray-500 dark:text-zinc-500 font-medium mb-3">
+                <label className="block text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-2">O que você comeu?</label>
+                <p className="text-xs text-zinc-500 font-medium mb-3">
                   Inclua o tipo específico e a quantidade na descrição.
                 </p>
                 <textarea
                   value={manualName}
                   onChange={(e) => setManualName(e.target.value)}
                   placeholder="Ex: 150g Arroz Branco, 1 concha Feijão Carioca, 2 Ovos Fritos..."
-                  className="w-full p-5 rounded-2xl border-2 border-emerald-500 bg-gray-50 dark:bg-zinc-950 font-bold text-black dark:text-white outline-none focus:border-emerald-600 shadow-inner text-base md:text-lg min-h-[120px] resize-none"
+                  className="w-full p-5 rounded-2xl border-2 border-emerald-500 bg-zinc-950 font-bold text-white outline-none focus:border-emerald-600 shadow-inner text-base md:text-lg min-h-[120px] resize-none"
                 />
               </div>
               <button onClick={handleManualAdd} disabled={loading} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-emerald-700 transition-all active:scale-95">CALCULAR MACROS</button>
@@ -317,25 +322,25 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             </div>
           ) : (
             <div className="space-y-6 md:space-y-8 flex-1 flex flex-col">
-              <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-2 border-emerald-600 shadow-sm space-y-4 transition-colors">
-                <h3 className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest mb-2">Descreva sua refeição (Opcional)</h3>
+              <div className="bg-zinc-900 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-2 border-emerald-600 shadow-sm space-y-4 transition-colors">
+                <h3 className="text-[10px] font-black text-white uppercase tracking-widest mb-2">Descreva sua refeição (Opcional)</h3>
                 <textarea
                   value={mealDescription}
                   onChange={(e) => setMealDescription(e.target.value)}
                   placeholder="Ex: Arroz, feijão e um bife de frango grelhado..."
-                  className="w-full p-4 rounded-xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 font-bold text-black dark:text-white outline-none focus:border-emerald-600 text-sm min-h-[80px] resize-none"
+                  className="w-full p-4 rounded-xl border-2 border-emerald-500 bg-zinc-800 font-bold text-white outline-none focus:border-emerald-600 text-sm min-h-[80px] resize-none"
                 />
                 <p className="text-[9px] text-gray-500 font-bold italic">* Isso ajuda a IA a ser ainda mais precisa!</p>
               </div>
 
-              <div className={`bg-white dark:bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-gray-300 dark:border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
+              <div className={`bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 ${isFreeLocked ? 'border-zinc-800 opacity-80' : 'border-emerald-600'} shadow-sm text-center flex-1 flex flex-col justify-center items-center relative overflow-hidden`}>
 
                 {/* Free Plan Lock Overlay */}
                 {isFreeLocked && (
-                  <div className="absolute inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-8 text-center">
+                  <div className="absolute inset-0 bg-zinc-950/60 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-8 text-center">
                     <div className="bg-zinc-900 text-white p-4 rounded-full mb-4 shadow-xl">🔒</div>
-                    <h3 className="text-xl font-black text-black dark:text-white mb-2">Scanner Bloqueado</h3>
-                    <p className="text-sm font-medium text-gray-600 dark:text-zinc-400 mb-6">Você já utilizou sua análise gratuita.</p>
+                    <h3 className="text-xl font-black text-white mb-2">Scanner Bloqueado</h3>
+                    <p className="text-sm font-medium text-zinc-400 mb-6">Você já utilizou sua análise gratuita.</p>
                     <button onClick={onUpgrade} className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest shadow-lg hover:bg-emerald-500 transition-all">Desbloquear Agora</button>
                   </div>
                 )}
@@ -349,106 +354,147 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                     {!isFreeLocked && <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading} />}
                   </label>
 
-                  <label className={`inline-flex items-center justify-center gap-3 cursor-pointer bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 border-2 border-emerald-600 px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-50 dark:hover:bg-zinc-700 shadow-lg active:scale-95 text-base md:text-lg w-full ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
+                  <label className={`inline-flex items-center justify-center gap-3 cursor-pointer bg-zinc-800 text-emerald-400 border-2 border-emerald-600 px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-zinc-700 shadow-lg active:scale-95 text-base md:text-lg w-full ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
                     <span className="text-2xl">🖼️</span>
                     {isFreeLocked ? 'GALERIA BLOQUEADA' : 'ESCOLHER DA GALERIA'}
                     {!isFreeLocked && <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading} />}
                   </label>
                 </div>
-                {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-50 dark:bg-red-900/30 p-4 rounded-xl border-2 border-red-100 dark:border-red-900/50 w-full">{error}</p>}
+                {error && <p className="mt-6 text-red-500 font-black text-xs bg-red-900/30 p-4 rounded-xl border-2 border-red-900/50 w-full">{error}</p>}
               </div>
             </div>
           )}
         </div>
       ) : (
-        <div className="space-y-6 pb-4 animate-in fade-in duration-500">
-          <div className="bg-white dark:bg-zinc-900 p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border-4 border-emerald-600 shadow-2xl relative transition-colors">
-            <div className="flex justify-between items-start mb-6 md:mb-10">
-              <div>
-                <p className="text-emerald-600 text-[9px] md:text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2">Total Calórico</p>
-                <p className="text-4xl md:text-8xl font-black italic tracking-tighter leading-none text-black dark:text-white">{result.totalCalories.toFixed(1)}</p>
-              </div>
-              <div className="text-right flex flex-col items-end gap-3">
-                {previewImage && (
-                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2 border-emerald-500 shadow-lg">
-                    <img src={previewImage} alt="Analisado" className="w-full h-full object-cover" />
-                  </div>
-                )}
-              </div>
+        <div className="space-y-8 animate-in slide-in-from-bottom-6 duration-500 pb-20">
+          {/* 1️⃣ FOTO NO TOPO */}
+          {previewImage && (
+            <div className="w-full aspect-square md:aspect-video rounded-[2rem] overflow-hidden border-2 border-zinc-800 shadow-2xl">
+              <img src={previewImage} alt="Refeição Analisada" className="w-full h-full object-cover" />
             </div>
-            <div className="space-y-4 border-t-2 border-emerald-50 dark:border-zinc-800 pt-6">
-              <MacroRow label="Proteínas" value={result.totalProtein.toFixed(1)} unit="g" color="text-emerald-500" />
-              <MacroRow label="Carboidratos" value={result.totalCarbs.toFixed(1)} unit="g" color="text-blue-500" />
-              <MacroRow label="Gorduras" value={result.totalFat.toFixed(1)} unit="g" color="text-yellow-500" />
+          )}
+
+          <div className="space-y-6">
+            <div className="text-center md:text-left">
+              {/* 2️⃣ NOME DO PRATO */}
+              <h2 className="text-3xl md:text-5xl font-black italic tracking-tighter text-white leading-tight mb-2 uppercase">
+                {result.mealName}
+              </h2>
+
+              <div className="flex flex-col md:flex-row md:items-end gap-2 md:gap-4">
+                {/* 3️⃣ CALORIAS TOTAIS */}
+                <span className="text-5xl md:text-7xl font-black text-emerald-500 italic tracking-tighter leading-none">
+                  {result.totalCalories.toFixed(0)} <span className="text-2xl md:text-3xl text-zinc-500 not-italic">kcal</span>
+                </span>
+              </div>
             </div>
 
-            <div className="mt-6 pt-6 border-t-2 border-emerald-50 dark:border-zinc-800">
-              <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-3">Itens Identificados</p>
-              <div className="space-y-2">
+            {/* 4️⃣ MACROS TOTAIS */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl text-center">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Proteína</p>
+                <p className="text-2xl font-black text-white">{result.totalProtein.toFixed(1)}g</p>
+              </div>
+              <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl text-center">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Carbos</p>
+                <p className="text-2xl font-black text-white">{result.totalCarbs.toFixed(1)}g</p>
+              </div>
+              <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-2xl text-center">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Gorduras</p>
+                <p className="text-2xl font-black text-white">{result.totalFat.toFixed(1)}g</p>
+              </div>
+            </div>
+
+            {/* 5️⃣ INDICADOR DE QUALIDADE NUTRICIONAL */}
+            <div className="bg-zinc-900 border-2 border-zinc-800 p-6 rounded-[2rem] space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-white uppercase tracking-widest">Índice Shape</span>
+                <span className="text-xl font-black text-emerald-500">{result.score}/10</span>
+              </div>
+              <div className="h-4 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
+                <div
+                  className="h-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-1000 ease-out"
+                  style={{ width: `${(result.score / 10) * 100}%` }}
+                />
+              </div>
+              {/* 🤖 SOBRE O COACH AI */}
+              <div className="pt-2">
+                <p className="text-sm font-bold text-zinc-300 italic leading-relaxed">
+                  <span className="text-emerald-500">Coach:</span> "{result.reasoning}"
+                </p>
+              </div>
+            </div>
+
+            {/* 6️⃣ LISTA DE INGREDIENTES DETALHADA */}
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] px-2">Análise de Ingredientes</h3>
+              <div className="space-y-3">
                 {result.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center bg-gray-50 dark:bg-zinc-800 p-3 rounded-xl border border-gray-100 dark:border-zinc-700">
-                    <div>
-                      <p className="font-bold text-sm text-gray-900 dark:text-white leading-tight capitalize">{item.name}</p>
-                      <p className="text-[10px] font-bold text-gray-500 dark:text-zinc-400 mt-0.5">{item.weight}g</p>
+                  <div key={idx} className="bg-zinc-900/80 backdrop-blur-sm p-5 rounded-2xl border border-zinc-800/50 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <span className="font-bold text-white text-base capitalize block">{item.name}</span>
+                        {item.confidence && (
+                          <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${item.confidence.toLowerCase().includes('alta') ? 'bg-emerald-500/10 text-emerald-500' :
+                            item.confidence.toLowerCase().includes('moderada') ? 'bg-amber-500/10 text-amber-500' :
+                              'bg-zinc-500/10 text-zinc-400'
+                            }`}>
+                            Confiança {item.confidence}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-black text-white text-lg leading-none">{item.weight.toFixed(0)}<span className="text-[10px] text-zinc-500 not-italic ml-0.5">g</span></p>
+                        <p className="font-black text-emerald-500 text-[10px] mt-1">{item.calories.toFixed(0)} kcal</p>
+                      </div>
                     </div>
-                    <p className="font-black text-emerald-600 text-xs">{item.calories} kcal</p>
+                    {item.observation && (
+                      <p className="text-[10px] text-zinc-400 font-medium leading-relaxed bg-white/5 p-2 rounded-lg border border-white/5">
+                        <span className="text-zinc-500">Nota visual:</span> {item.observation}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="mt-6 bg-black text-white p-6 rounded-3xl border-4 border-emerald-500 shadow-xl shadow-emerald-100 dark:shadow-none">
-              <p className="text-emerald-400 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Coach IA Diz:</p>
-              <p className="text-sm md:text-base font-bold italic leading-relaxed">"{result.reasoning}"</p>
+            {/* 7️⃣ AVISO DE MARGEM DE ERRO */}
+            <div className="bg-zinc-900/40 p-4 rounded-2xl border border-dashed border-zinc-800 text-center">
+              <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                ⚠️ Aviso: Estimativa com margem de erro de ±20% devido à ausência de balança.
+              </p>
             </div>
-          </div>
 
-          <div className="fixed md:static bottom-0 left-0 right-0 p-6 pt-8 pb-10 md:p-0 bg-gradient-to-t from-white via-white to-transparent dark:from-zinc-950 dark:via-zinc-950 z-50 md:bg-none">
-            <div className="max-w-3xl mx-auto flex flex-col gap-3">
-              {/* Unlock Button for Free Users after they use their scan */}
-              {user.plan === 'free' && mode === 'ai' && (
-                <button onClick={onUpgrade} className="w-full py-5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:brightness-110 shadow-2xl active:scale-95 animate-pulse">
-                  🔓 Desbloquear mais análises
+            {/* 8️⃣ BOTÃO FINAL */}
+            <div className="pt-6 space-y-3">
+              <button
+                onClick={() => confirmAdd(false)}
+                className="w-full bg-emerald-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-[0_10px_40px_rgba(16,185,129,0.2)] active:scale-95 transition-all text-lg"
+              >
+                Adicionar ao meu dia ✅
+              </button>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => confirmAdd(true)}
+                  className="py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-zinc-700 active:scale-95 transition-all text-[10px]"
+                >
+                  Salvar Favorito 💾
                 </button>
-              )}
-
-              <button onClick={() => confirmAdd(false)} className="w-full bg-emerald-600 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-2xl active:scale-95 text-lg">Adicionar ao Dia ✅</button>
-              {mode === 'manual' && (
-                <button onClick={() => confirmAdd(true)} className="w-full py-5 bg-cyan-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-cyan-700 shadow-2xl active:scale-95">Salvar Refeição 💾</button>
-              )}
-              <button onClick={() => { setResult(null); setPreviewImage(null); }} className="w-full py-4 bg-white dark:bg-zinc-900 border-2 border-black dark:border-zinc-700 text-black dark:text-white rounded-2xl font-black uppercase tracking-widest hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all text-xs">Refazer Análise</button>
+                <button
+                  onClick={() => { setResult(null); setPreviewImage(null); }}
+                  className="py-4 bg-transparent border-2 border-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest hover:text-white hover:border-zinc-600 active:scale-95 transition-all text-[10px]"
+                >
+                  Refazer Scan 🔄
+                </button>
+              </div>
             </div>
           </div>
-          <div className="h-40 md:h-0"></div>
         </div>
       )}
     </div>
   );
 };
 
-const MacroRow = ({ label, value, unit, color, goal = 100 }: { label: string, value: number | string, unit: string, color: string, goal?: number }) => {
-  const percentage = Math.min(100, (Number(value) / goal) * 100);
-  const colorMap: Record<string, string> = {
-    'text-emerald-500': 'from-emerald-600 to-emerald-400',
-    'text-blue-500': 'from-blue-600 to-blue-400',
-    'text-yellow-500': 'from-yellow-600 to-yellow-400'
-  };
-  const gradientClass = colorMap[color] || 'from-emerald-500 to-cyan-500';
-
-  return (
-    <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border-2 border-emerald-500/10 mb-3 transition-colors shadow-sm">
-      <div className="flex justify-between items-center mb-2">
-        <h4 className={`font-black uppercase tracking-tight text-xs md:text-sm ${color}`}>{label}</h4>
-        <p className={`font-black text-lg md:text-2xl ${color}`}>{value} <span className="text-gray-400 dark:text-zinc-600 text-[10px]">{unit}</span></p>
-      </div>
-      <div className="w-full h-3 md:h-4 bg-gray-100 dark:bg-zinc-800 rounded-full border-2 border-emerald-500/20 overflow-hidden relative">
-        <div
-          className={`h-full transition-all duration-1000 ease-out bg-gradient-to-r ${gradientClass}`}
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-    </div>
-  );
-};
-
 export default FoodAnalyzer;
+

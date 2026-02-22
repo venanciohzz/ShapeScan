@@ -4,6 +4,9 @@ export interface FoodItem {
   name: string;
   calories: number;
   weight: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
 }
 
 export interface SavedMeal {
@@ -77,37 +80,74 @@ export interface User {
 }
 
 export interface ShapeAnalysisResult {
-  bfPercentage: string;
-  biotype: string;
-  fatDistribution: string;
-  muscleMass: string;
-  definition: string;
-  fatMassWeight?: string;
-  detailedAnalysis: string;
-  pointsToImprove: string; // New
-  macroSuggestions: string; // New
-  coachAdvice: string;
-  fatScore: number;
-  muscleScore: number;
-  definitionScore: number;
-  fatContext: string;
-  muscleContext: string;
-  definitionContext: string;
-  proportions: {
+  structural_analysis: {
+    name: string;
+    meaning: string;
+    structural_advantage: string;
+    structural_challenge: string;
+    genetic_responsiveness: string; // New: Volume vs Intensity
+    fat_storage_tendency: string; // New: Regional storage
+    structural_limitation_strategy: string; // New: Tactical bypass
+  };
+  weight_metrics?: {
+    bmi: number;
+    lean_mass_kg: number;
+    fat_mass_kg: number;
+    current_weight: number;
+  };
+  target_projections?: {
+    weight_at_15_bf: number;
+    weight_at_12_bf: number;
+    weight_at_10_bf: number;
+  };
+  body_fat_range: string;
+  bf_classification: string;
+  shape_score: number;
+  muscle_score: number;
+  definition_score: number;
+  fat_score: number;
+  regional_analysis: {
+    trunk: string;
     arms: string;
-    chest: string;
-    abs: string;
+    abs_waist: string;
     legs: string;
+  };
+  structural_potential: string;
+  future_projection: string;
+  bf_timeline: { day: number; bf: number }[]; // For the line chart
+  estimated_time_frame: string;
+  strategic_plan: string[];
+  diet_recommendation: string;
+  nutritional_protocol: {
+    caloric_strategy: string; // e.g., "Déficit de 20%"
+    protein_target: string; // e.g., "2.2g/kg (180g)"
+    distribution: string; // e.g., "4-5 refeições"
+    practical_guidelines: string[];
+  };
+  coach_insight: {
+    aesthetic_diagnosis: string;
+    main_leverage: string;
+    smart_strategy: string;
+  };
+  coach_comment: string; // Keep as fallback/summary
+  execution_strategy: {
+    training_focus: string[];
+    nutrition_focus: string;
+    time_expectation: string;
+    common_mistakes: string[]; // 4 to 6 items
+    primary_focus_next_60_days: string;
   };
 }
 
 export interface FoodAnalysisResult {
+  mealName: string;
   items: FoodAnalysisItem[];
   totalCalories: number;
   totalProtein: number;
   totalCarbs: number;
   totalFat: number;
   totalWeight: number;
+  score: number;
   reasoning: string;
 }
 
@@ -115,7 +155,12 @@ export interface FoodAnalysisItem {
   name: string;
   weight: number;
   calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
   weightUnit?: string;
+  confidence?: string; // New: Baixa/Moderada/Alta
+  observation?: string; // New: Justificativa visual
 }
 
 export interface ChatMessage {
