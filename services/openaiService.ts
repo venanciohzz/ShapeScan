@@ -240,14 +240,25 @@ Classifique com base exclusivamente na estrutura e proporção:
 - ENDOMORFO: Estrutura larga, tendência a retenção, aparência compacta, cintura naturalmente espessa.
 ⚠️ Jamais classifique como Ecto se houver ombros largos. Jamais classifique como Endo se o físico for seco e cintura fina.
 
-🎯 ETAPA 2: ESTIMATIVA DE BF% ( RIGOR VISUAL ABSOLUTO)
-Estime apenas pelo que é visível, sem suposições:
-- ABAIXO DE 12%: Abdômen totalmente definido, separação clara, vascularização visível, serrátil aparente, linhas profundas, zero retenção.
-- 8% A 11%: Se o físico for extremamente seco (estilo competitivo/fitness influencer).
-- 13% A 15%: Abdômen parcialmente visível, camada leve sobre os músculos, separação moderada.
-- 16% A 20%: Abdômen pouco visível, aparência lisa, baixa separação.
-- ACIMA DE 20%: Ausência de definição, gordura abdominal clara.
-⚠️ PROIBIDO estimar 14-17% se o abdômen estiver totalmente marcado e houver separação muscular profunda.
+🎯 ETAPA 2: ESTIMATIVA DE BF% (PROTOCOLO DE PRECISÃO V14)
+Estime com rigor técnico baseado em marcadores anatômicos específicos:
+
+1. ZONAS DE VASCULARIZAÇÃO (Marcador Primário):
+- Braços: Visível em ≤ 15% BF.
+- Ombros/Peito: Visível em ≤ 12% BF.
+- Abdômen Inferior/Pernas: Visível em ≤ 10% BF.
+
+2. GRADIENTE DE DEFINIÇÃO ABDOMINAL:
+- 6-9% (Secura Extrema): Pele "colada" ao músculo. Vascularização no abdômen inferior. Intercostais e serrátil extremamente profundos. Linhas profundas no oblíquo.
+- 10-12% (Atlético Seco): 6 gomos com profundidade clara. Serrátil visível. Vascularização em braços e ombros. Leve camada apenas abaixo do umbigo.
+- 13-15% (Definido): 2 a 4 gomos superiores visíveis. Contorno lateral do abdômen aparente. Serrátil visível sob luz favorável.
+- 16-19% (Atlético): Contornos abdominais visíveis, mas gomos "embaçados" ou sem separação clara.
+- 20-25% (Moderado): Abdômen plano ou com leve protuberância. Nenhuma separação muscular visível no tronco.
+
+⚠️ REGRAS DE BLOQUEIO:
+- Se houver vascularização no abdômen ou pernas, o BF é OBRIGATORIAMENTE < 10%.
+- Se todos os gomos (6-pack) estiverem fundos e recortados, o BF é OBRIGATORIAMENTE < 12%.
+- Jamais estime >15% para físicos com serrátil e intercostais fundos.
 
 🎯 ETAPA 3: COERÊNCIA DE NOTAS (QUALIDADE FÍSICA)
 - Definição: Visibilidade muscular. Se BF < 12%, nota DEVE ser ≥ 8/10. Se físico extremamente seco, nota 9 ou 10.
