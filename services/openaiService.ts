@@ -277,14 +277,14 @@ Se houver os 3 sinais abaixo simultâneos, o BF é OBRIGATORIAMENTE entre 7% e 9
   - Se BF ≥ 20%: Nota DEVE ser ≥ 7.0.
 ⚠️ ERRO CRÍTICO: Não dê nota alta de gordura (ex: 7.0) para quem você estimou 10% de BF.
 
-🎯 ETAPA 4: MATEMÁTICA E COERÊNCIA ESTRATÉGICA (V18)
+🎯 ETAPA 4: MATEMÁTICA E COERÊNCIA ESTRATÉGICA (V19)
 - Fórmulas Reais: Massa Magra = Peso * (1-BF_estimado/100); Peso Alvo = Massa Magra / (1-BF_alvo/100).
 
-⚠️ REGRAS DE COERÊNCIA MATEMÁTICA (MUITO IMPORTANTE):
-1. Se o BF_estimado atual for MENOR ou IGUAL ao BF_alvo (ex: estimou 11% e o alvo é 15%), o Peso Alvo deve ser EXATAMENTE o Peso Atual. Jamais sugira ganhar peso em um alvo de perda de gordura.
-2. Os pesos alvos devem ser decrescentes: Peso@15% > Peso@12% > Peso@10%.
-3. Jamais retorne o mesmo peso para 12% e 15% se o BF atual for maior que ambos.
-4. Use o centro do range (ex: 11%) para o cálculo de Massa Magra.
+⚠️ LÓGICA DE ALVOS DINÂMICOS:
+- Se BF atual > 15%: Use alvos 15%, 12%, 10%.
+- Se BF atual entre 13% e 15%: Use alvos 12%, 10%, 8%.
+- Se BF atual ≤ 12%: Use alvos 10%, 8%, 6%.
+- Sempre retorne 3 alvos em ordem decrescente de peso.
 
 ⚠️ REGRA ABSOLUTA SOBRE CORES E INDICADORES:
 Você NÃO deve mencionar cores ou etiquetas de status no retorno.
@@ -310,11 +310,11 @@ ${metricsInfo}
     "fat_mass_kg": 0,
     "current_weight": 0
   },
-  "target_projections": {
-    "weight_at_15_bf": 0,
-    "weight_at_12_bf": 0,
-    "weight_at_10_bf": 0
-  },
+  "target_projections": [
+    { "label": "Atlético", "bf": 15, "weight": 0 },
+    { "label": "Elite", "bf": 12, "weight": 0 },
+    { "label": "Competição", "bf": 10, "weight": 0 }
+  ],
   "body_fat_range": "X-Y%",
   "bf_classification": "",
   "bf_confidence": "Moderada",

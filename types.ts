@@ -96,10 +96,10 @@ export interface ShapeAnalysisResult {
     current_weight: number;
   };
   target_projections?: {
-    weight_at_15_bf: number;
-    weight_at_12_bf: number;
-    weight_at_10_bf: number;
-  };
+    label: string;
+    bf: number;
+    weight: number;
+  }[];
   body_fat_range: string;
   bf_classification: string;
   bf_confidence: string; // New: Baixa/Moderada/Alta

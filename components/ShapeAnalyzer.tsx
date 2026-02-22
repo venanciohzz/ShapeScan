@@ -91,16 +91,12 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
     const leanMass = currentWeight * (1 - bfValue / 100);
 
-    // 1. Bloqueio de Contradição de BF & Fórmulas de Peso Alvo
-    if (data.target_projections) {
-      if (bfValue < 15) data.target_projections.weight_at_15_bf = currentWeight;
-      else data.target_projections.weight_at_15_bf = leanMass / 0.85;
-
-      if (bfValue < 12) data.target_projections.weight_at_12_bf = currentWeight;
-      else data.target_projections.weight_at_12_bf = leanMass / 0.88;
-
-      if (bfValue < 10) data.target_projections.weight_at_10_bf = currentWeight;
-      else data.target_projections.weight_at_10_bf = leanMass / 0.90;
+    // 1. Bloqueio de Contradição de BF & Fórmulas de Peso Alvo (V19 confia na IA dinâmica)
+    if (data.target_projections && Array.isArray(data.target_projections)) {
+      data.target_projections = data.target_projections.map(proj => ({
+        ...proj,
+        weight: bfValue < proj.bf ? currentWeight : proj.weight
+      }));
     }
 
     // 2. Linha do Tempo Realista (Cap 1-2% BF em 60 dias se BF < 12%)
@@ -356,9 +352,19 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                   <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Pesos Alvo por BF (%)</h3>
                 </div>
                 <div className="space-y-3">
-                  <TargetWeightRow label="Atlético (15%)" target={result.target_projections?.weight_at_15_bf} />
-                  <TargetWeightRow label="Elite (12%)" target={result.target_projections?.weight_at_12_bf} />
-                  <TargetWeightRow label="Competição (10%)" target={result.target_projections?.weight_at_10_bf} />
+                  {result.target_projections && Array.isArray(result.target_projections) ? (
+                    result.target_projections.map((proj, idx) => (
+                      <TargetWeightRow
+                        key={idx}
+                        label={`${proj.label} (${proj.bf}%)`}
+                        target={proj.weight}
+                      />
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-zinc-600 text-[10px] font-black uppercase">
+                      Calculando Alvos...
+                    </div>
+                  )}
                 </div>
                 <p className="text-[8px] text-zinc-600 font-bold leading-tight">Cálculo baseado na manutenção total da massa magra atual.</p>
               </div>
