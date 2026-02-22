@@ -670,20 +670,32 @@ const SimplePropCard = ({ label, value }: { label: string, value: string }) => (
 const PremiumScoreBar = ({ label, score, isFatScore = false }: { label: string, score: number, isFatScore?: boolean }) => {
   const percentage = Math.min(Math.max(score * 10, 0), 100);
 
-  // Logic for colors based on score
-  // 1-3 = verde, 4-6 = amarelo, 7-10 = vermelho
-  let colorClass = 'bg-emerald-500';
-  if (score >= 4 && score <= 6) {
-    colorClass = 'bg-amber-500';
-  } else if (score >= 7) {
-    colorClass = 'bg-red-500';
+  // Logic for colors based on score direction
+  let colorClass = 'bg-zinc-500';
+  let isPositive = false;
+
+  if (isFatScore) {
+    // Fat: Lower is better (Green 0-3.5, Yellow 3.6-6.5, Red 6.6-10)
+    if (score <= 3.5) colorClass = 'bg-emerald-500';
+    else if (score <= 6.5) colorClass = 'bg-amber-500';
+    else colorClass = 'bg-red-500';
+    isPositive = score <= 3.5;
+  } else {
+    // Muscle/Definition: Higher is better (Green 7-10, Yellow 4-6.9, Red 0-3.9)
+    if (score >= 7) colorClass = 'bg-emerald-500';
+    else if (score >= 4) colorClass = 'bg-amber-500';
+    else colorClass = 'bg-red-500';
+    isPositive = score >= 7;
   }
 
   return (
     <div className="space-y-2 p-6 bg-zinc-900 border border-zinc-800 rounded-3xl">
       <div className="flex justify-between items-center">
         <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{label}</span>
-        <span className={`text-lg font-black italic ${isFatScore && score > 6 ? 'text-red-500' : 'text-white'}`}>{score.toFixed(1)}<span className="text-[8px] opacity-30 italic">/10</span></span>
+        <span className={`text-lg font-black italic ${isPositive ? 'text-emerald-500' : (colorClass === 'bg-red-500' ? 'text-red-500' : 'text-white')}`}>
+          {score.toFixed(1)}
+          <span className="text-[8px] opacity-30 italic ml-0.5">/10</span>
+        </span>
       </div>
       <div className="h-2 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
         <div
