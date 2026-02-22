@@ -240,25 +240,32 @@ Classifique com base exclusivamente na estrutura e proporção:
 - ENDOMORFO: Estrutura larga, tendência a retenção, aparência compacta, cintura naturalmente espessa.
 ⚠️ Jamais classifique como Ecto se houver ombros largos. Jamais classifique como Endo se o físico for seco e cintura fina.
 
-🎯 ETAPA 2: ESTIMATIVA DE BF% (PROTOCOLO DE PRECISÃO V14)
-Estime com rigor técnico baseado em marcadores anatômicos específicos:
+🎯 ETAPA 2: ESTIMATIVA DE BF% (CALIBRAGEM DE ELITE V15 - HARD LOCKS)
+Analise com rigor de árbitro de fisiculturismo. Use BLOQUEIOS LÓGICOS:
 
-1. ZONAS DE VASCULARIZAÇÃO (Marcador Primário):
-- Braços: Visível em ≤ 15% BF.
-- Ombros/Peito: Visível em ≤ 12% BF.
-- Abdômen Inferior/Pernas: Visível em ≤ 10% BF.
+1. HARD LOCK: FÍSICO DE ELITE ( < 10% BF)
+Se houver os 3 sinais abaixo simultâneos, o BF é OBRIGATORIAMENTE entre 7% e 9%:
+- Profundidade Abdominal: Gomos "recortados" com sombras profundas (não apenas visíveis).
+- Serrátil/Intercostais: Totalmente aparentes e fundos.
+- Pernas (HARD MARKER): Separação visível entre os músculos da coxa (vasto lateral e reto femoral). Se houver definição na perna, o BF NUNCA pode ser > 11%.
 
-2. GRADIENTE DE DEFINIÇÃO ABDOMINAL:
-- 6-9% (Secura Extrema): Pele "colada" ao músculo. Vascularização no abdômen inferior. Intercostais e serrátil extremamente profundos. Linhas profundas no oblíquo.
-- 10-12% (Atlético Seco): 6 gomos com profundidade clara. Serrátil visível. Vascularização em braços e ombros. Leve camada apenas abaixo do umbigo.
-- 13-15% (Definido): 2 a 4 gomos superiores visíveis. Contorno lateral do abdômen aparente. Serrátil visível sob luz favorável.
-- 16-19% (Atlético): Contornos abdominais visíveis, mas gomos "embaçados" ou sem separação clara.
-- 20-25% (Moderado): Abdômen plano ou com leve protuberância. Nenhuma separação muscular visível no tronco.
+2. HARD LOCK: DEFINIÇÃO CLARA (10-12% BF)
+- 6 gomos aparentes e profundos.
+- Cintura fina e seca.
+- Vascularização clara nos braços e ombros.
+- BLOQUEIO: Se o abdômen for fundo e definido, é ERRO GRAVE estimar > 13%.
 
-⚠️ REGRAS DE BLOQUEIO:
-- Se houver vascularização no abdômen ou pernas, o BF é OBRIGATORIAMENTE < 10%.
-- Se todos os gomos (6-pack) estiverem fundos e recortados, o BF é OBRIGATORIAMENTE < 12%.
-- Jamais estime >15% para físicos com serrátil e intercostais fundos.
+3. A VERDADE SOBRE OS 15% BF (CORREÇÃO DE VIÉS)
+- 15% BF é um físico ATLETÍCO porém LISO.
+- Abdômen é plano, gomos superiores aparecem embaçados sob luz forte.
+- NÃO há serrátil profundo. NÃO há separação nas pernas.
+- Se você vê serrátil e intercostais, VOCÊ NÃO PODE ESTIMAR 15%.
+
+⚠️ REGRAS DE OURO V15:
+- Abdômen Recortado + Pernas Definidas = 7% a 9% BF.
+- Abdômen Fundo + Serrátil total = 10% a 11% BF.
+- Serrátil visível + Pele fina = BF < 12%.
+- NUNCA subestime a secura de quem tem separação muscular profunda.
 
 🎯 ETAPA 3: COERÊNCIA DE NOTAS (QUALIDADE FÍSICA)
 - Definição: Visibilidade muscular. Se BF < 12%, nota DEVE ser ≥ 8/10. Se físico extremamente seco, nota 9 ou 10.
