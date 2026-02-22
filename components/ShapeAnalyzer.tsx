@@ -89,15 +89,30 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
       bfValue = nums.length > 1 ? (nums[0] + nums[1]) / 2 : nums[0];
     }
 
-    const leanMass = currentWeight * (1 - bfValue / 100);
+    // 1. GERAÇÃO DINÂMICA DE ALVOS (V21 - Frontend Driven)
+    const leanMassTarget = currentWeight * (1 - bfValue / 100);
 
-    // 1. Bloqueio de Contradição de BF & Fórmulas de Peso Alvo (V19 confia na IA dinâmica)
-    if (data.target_projections && Array.isArray(data.target_projections)) {
-      data.target_projections = data.target_projections.map(proj => ({
-        ...proj,
-        weight: bfValue < proj.bf ? currentWeight : proj.weight
-      }));
+    // Decidir patamares com base no BF atual
+    let targets: { label: string, bf: number }[] = [];
+    if (bfValue > 12) {
+      targets = [
+        { label: "Atlético", bf: 15 },
+        { label: "Elite", bf: 12 },
+        { label: "Competição", bf: 10 }
+      ];
+    } else {
+      targets = [
+        { label: "Elite", bf: 10 },
+        { label: "Pró", bf: 8 },
+        { label: "Competição", bf: 6 }
+      ];
     }
+
+    data.target_projections = targets.map(t => ({
+      label: t.label,
+      bf: t.bf,
+      weight: bfValue <= t.bf ? currentWeight : leanMassTarget / (1 - t.bf / 100)
+    }));
 
     // 2. Linha do Tempo Realista (Cap 1-2% BF em 60 dias se BF < 12%)
     if (data.bf_timeline && data.bf_timeline.length >= 2) {
