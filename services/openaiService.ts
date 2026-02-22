@@ -283,73 +283,73 @@ Você NÃO deve mencionar cores ou etiquetas de status no retorno.
 
 ${metricsInfo}
 
-📊 RETORNO OBRIGATÓRIO EM JSON:
+📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
 {
   "structural_analysis": {
-    "name": "string",
-    "meaning": "string",
-    "strength": "string",
-    "improvement": "string",
-    "genetic_responsiveness": "string",
-    "fat_storage_tendency": "string",
-    "structural_limitation_strategy": "string"
+    "name": "",
+    "meaning": "",
+    "strength": "",
+    "improvement": "",
+    "genetic_responsiveness": "",
+    "fat_storage_tendency": "",
+    "structural_limitation_strategy": ""
   },
   "weight_metrics": {
-    "bmi": number,
-    "lean_mass_kg": number,
-    "fat_mass_kg": number,
-    "current_weight": number
+    "bmi": 0,
+    "lean_mass_kg": 0,
+    "fat_mass_kg": 0,
+    "current_weight": 0
   },
   "target_projections": {
-    "weight_at_15_bf": number,
-    "weight_at_12_bf": number,
-    "weight_at_10_bf": number
+    "weight_at_15_bf": 0,
+    "weight_at_12_bf": 0,
+    "weight_at_10_bf": 0
   },
-  "body_fat_range": "string",
-  "bf_classification": "string",
-  "bf_confidence": "Baixa | Moderada | Alta",
-  "bf_visual_justification": "string (ex: definição abdominal completa de 6 gomos e vascularização no ombro)",
-  "shape_score": number,
-  "muscle_score": number,
-  "definition_score": number,
-  "fat_score": number,
+  "body_fat_range": "X-Y%",
+  "bf_classification": "",
+  "bf_confidence": "Moderada",
+  "bf_visual_justification": "",
+  "shape_score": 0,
+  "muscle_score": 0,
+  "definition_score": 0,
+  "fat_score": 0,
   "regional_analysis": {
-    "trunk": { "strength": "string", "improvement": "string", "strategy": "string" },
-    "arms": { "strength": "string", "improvement": "string", "strategy": "string" },
-    "abs_waist": { "strength": "string", "improvement": "string", "strategy": "string" },
-    "legs": { "strength": "string", "improvement": "string", "strategy": "string" }
+    "trunk": { "strength": "", "improvement": "", "strategy": "" },
+    "arms": { "strength": "", "improvement": "", "strategy": "" },
+    "abs_waist": { "strength": "", "improvement": "", "strategy": "" },
+    "legs": { "strength": "", "improvement": "", "strategy": "" }
   },
-  "structural_potential": "string",
-  "future_projection": "string",
+  "structural_potential": "",
+  "future_projection": "",
   "bf_timeline": [
-    {"day": 0, "bf": number},
-    {"day": 60, "bf": number}
+    {"day": 0, "bf": 0},
+    {"day": 60, "bf": 0}
   ],
-  "estimated_time_frame": "string",
-  "strategic_plan": ["string"],
-  "diet_recommendation": "string",
+  "estimated_time_frame": "",
+  "strategic_plan": [""],
+  "diet_recommendation": "",
   "nutritional_protocol": {
-    "caloric_strategy": "string",
-    "protein_target": "string",
-    "distribution": "string",
-    "practical_guidelines": ["string"]
+    "caloric_strategy": "",
+    "protein_target": "",
+    "distribution": "",
+    "practical_guidelines": [""]
   },
   "coach_insight": {
-    "aesthetic_diagnosis": "string",
-    "main_leverage": "string",
-    "smart_strategy": "string"
+    "aesthetic_diagnosis": "",
+    "main_leverage": "",
+    "smart_strategy": ""
   },
-  "coach_comment": "string (sumário executivo)",
+  "coach_comment": "",
   "execution_strategy": {
-    "training_focus": ["string"],
-    "nutrition_focus": "string",
-    "time_expectation": "string",
-    "common_mistakes": ["string (mínimo 4)", "string", "string", "string"],
-    "primary_focus_next_60_days": "string"
+    "training_focus": [""],
+    "nutrition_focus": "",
+    "time_expectation": "",
+    "common_mistakes": ["", "", "", ""],
+    "primary_focus_next_60_days": ""
   }
 }
 
-❗ IMPORTANTE: Não retorne texto fora do JSON.`;
+❗ IMPORTANTE: Não retorne texto fora do JSON. SEJA CONCISO em todas as descrições para garantir que o JSON não seja truncado.`;
 
     const text = await callAIAnalyzer({ image: base64Image, prompt, type: 'shape' });
     const data = JSON.parse(extractJson(text));
