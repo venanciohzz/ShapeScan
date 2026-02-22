@@ -80,6 +80,45 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     await db.usage.incrementDaily(user.id, 'shape');
   };
 
+  const validateAndCoherenceResult = (data: ShapeAnalysisResult, currentWeight: number): ShapeAnalysisResult => {
+    // Extrair BF numérico médio para cálculos (ex: "14-16%" -> 15)
+    const bfMatch = data.body_fat_range.match(/(\d+)/g);
+    let bfValue = 20;
+    if (bfMatch) {
+      const nums = bfMatch.map(Number);
+      bfValue = nums.length > 1 ? (nums[0] + nums[1]) / 2 : nums[0];
+    }
+
+    const leanMass = currentWeight * (1 - bfValue / 100);
+
+    // 1. Bloqueio de Contradição de BF & Fórmulas de Peso Alvo
+    if (data.target_projections) {
+      if (bfValue < 15) data.target_projections.weight_at_15_bf = currentWeight;
+      else data.target_projections.weight_at_15_bf = leanMass / 0.85;
+
+      if (bfValue < 12) data.target_projections.weight_at_12_bf = currentWeight;
+      else data.target_projections.weight_at_12_bf = leanMass / 0.88;
+
+      if (bfValue < 10) data.target_projections.weight_at_10_bf = currentWeight;
+      else data.target_projections.weight_at_10_bf = leanMass / 0.90;
+    }
+
+    // 2. Linha do Tempo Realista (Cap 1-2% BF em 60 dias se BF < 12%)
+    if (data.bf_timeline && data.bf_timeline.length >= 2) {
+      const startBF = data.bf_timeline[0].bf;
+      const endBF = data.bf_timeline[1].bf;
+      const diff = startBF - endBF;
+
+      if (bfValue <= 12 && diff > 2) {
+        data.bf_timeline[1].bf = Math.max(startBF - 2, 8); // Não passa de 2% de queda
+      } else if (diff > 6) {
+        data.bf_timeline[1].bf = startBF - 5; // Proteção contra quedas absurdas
+      }
+    }
+
+    return data;
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setLoading(true);
     setError('');
@@ -107,11 +146,14 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           setCurrentPhoto(compressedBase64);
           const apiBase64 = compressedBase64.split(',')[1];
           // FIX: Comma handling
-          const w = weight ? parseFloat(weight.replace(',', '.')) : user.weight;
-          const h = height ? parseFloat(height.replace(',', '.')) : user.height;
+          const w = (weight ? parseFloat(weight.replace(',', '.')) : user.weight) || 75;
+          const h = (height ? parseFloat(height.replace(',', '.')) : user.height) || 1.75;
           const metrics = { weight: w, height: h, goal: user.goal };
           const analysis = await analyzeShape(apiBase64, metrics);
-          setResult(analysis);
+
+          // Validação de Coerência Final (Camada de Segurança)
+          const validAnalysis = validateAndCoherenceResult(analysis, w);
+          setResult(validAnalysis);
 
           // Increment usage after success
           await incrementUsage();
@@ -631,9 +673,9 @@ const PremiumScoreBar = ({ label, score, isFatScore = false }: { label: string, 
   // Logic for colors based on score
   // 1-3 = verde, 4-6 = amarelo, 7-10 = vermelho
   let colorClass = 'bg-emerald-500';
-  if (score > 3 && score <= 6) {
+  if (score >= 4 && score <= 6) {
     colorClass = 'bg-amber-500';
-  } else if (score > 6) {
+  } else if (score >= 7) {
     colorClass = 'bg-red-500';
   }
 
