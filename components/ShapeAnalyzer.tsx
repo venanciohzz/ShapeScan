@@ -137,8 +137,8 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     onSaveToEvolution({
       bf: result.body_fat_range,
       photo: undefined,
-      notes: result.coach_comment,
-      detailedAnalysis: `${result.structural_analysis.name} | ${result.bf_classification}\n\nSignificado: ${result.structural_analysis.meaning}\n\nVantagem: ${result.structural_analysis.structural_advantage}\n\nDesafio: ${result.structural_analysis.structural_challenge}\n\nFoco 60 Dias: ${result.execution_strategy.primary_focus_next_60_days}\n\nEstratégia: ${result.execution_strategy.training_focus.join(', ')}\n\nNutrição: ${result.nutritional_protocol.caloric_strategy} | ${result.nutritional_protocol.protein_target}`,
+      notes: `${result.coach_comment}\n\nANÁLISE REGIONAL:\nTronco: ${result.regional_analysis.trunk.strength} | ${result.regional_analysis.trunk.improvement}\nBraços: ${result.regional_analysis.arms.strength} | ${result.regional_analysis.arms.improvement}\nAbdômen: ${result.regional_analysis.abs_waist.strength} | ${result.regional_analysis.abs_waist.improvement}\nPernas: ${result.regional_analysis.legs.strength} | ${result.regional_analysis.legs.improvement}`,
+      detailedAnalysis: `${result.structural_analysis.name} | ${result.bf_classification}\n\nSignificado: ${result.structural_analysis.meaning}\n\nVantagem: ${result.structural_analysis.strength}\n\nDesafio: ${result.structural_analysis.improvement}\n\nFoco 60 Dias: ${result.execution_strategy.primary_focus_next_60_days}\n\nEstratégia: ${result.execution_strategy.training_focus.join(', ')}\n\nNutrição: ${result.nutritional_protocol.caloric_strategy} | ${result.nutritional_protocol.protein_target}`,
       pointsToImprove: result.execution_strategy.common_mistakes.join('\n'),
       macroSuggestions: result.execution_strategy.nutrition_focus,
       weight: w,
@@ -275,9 +275,9 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
           {/* 📊 PERFORMANCE GERAL */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <PremiumScoreBar label="Musculatura" score={result.muscle_score} color="emerald" />
-            <PremiumScoreBar label="Definição" score={result.definition_score} color="emerald" />
-            <PremiumScoreBar label="Nível Gordura" score={result.fat_score} color="zinc" invert />
+            <PremiumScoreBar label="Musculatura" score={result.muscle_score} />
+            <PremiumScoreBar label="Definição" score={result.definition_score} />
+            <PremiumScoreBar label="Nível Gordura" score={result.fat_score} isFatScore />
           </div>
 
           {/* 🧬 COMPOSIÇÃO E PROJEÇÃO (SE HOUVER DADOS) */}
@@ -342,13 +342,13 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                   <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                     <span>🎯</span> Principal vantagem estrutural
                   </p>
-                  <p className="text-sm text-zinc-300 font-medium leading-relaxed">{result.structural_analysis.structural_advantage}</p>
+                  <p className="text-sm text-zinc-300 font-medium leading-relaxed">{result.structural_analysis.strength}</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                     <span>⚠️</span> Principal desafio estrutural
                   </p>
-                  <p className="text-sm text-zinc-300 font-medium leading-relaxed">{result.structural_analysis.structural_challenge}</p>
+                  <p className="text-sm text-zinc-300 font-medium leading-relaxed">{result.structural_analysis.improvement}</p>
                 </div>
               </div>
 
@@ -369,16 +369,6 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
             </div>
           </div>
 
-          {/* 🗺️ MAPEAMENTO REGIONAL */}
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] px-2">Análise por Região</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <SimplePropCard label="Tronco" value={result.regional_analysis.trunk} />
-              <SimplePropCard label="Braços" value={result.regional_analysis.arms} />
-              <SimplePropCard label="Abs/Cintura" value={result.regional_analysis.abs_waist} />
-              <SimplePropCard label="Pernas" value={result.regional_analysis.legs} />
-            </div>
-          </div>
 
           {/* 🔬 INSIGHT ESTRATÉGICO (PROFESSIONAL) */}
           <div className="bg-zinc-900 border-2 border-zinc-800 p-8 md:p-10 rounded-[2.5rem] relative overflow-hidden space-y-10">
@@ -397,18 +387,18 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="not-italic text-xs">🎯</span>
-                    <p className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em]">Alavanca Principal</p>
+                    <span className="not-italic text-xs">💪</span>
+                    <p className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em]">Vantagem Estrutural</p>
                   </div>
-                  <p className="text-white text-sm font-bold leading-snug">{result.coach_insight.main_leverage}</p>
+                  <p className="text-white text-sm font-bold leading-snug">{result.structural_analysis.strength}</p>
                 </div>
 
                 <div className="p-6 bg-white/5 rounded-3xl border border-white/5 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="not-italic text-xs">📊</span>
-                    <p className="text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em]">Estratégia Inteligente</p>
+                    <span className="not-italic text-xs">📉</span>
+                    <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Desafio Estrutural</p>
                   </div>
-                  <p className="text-white text-sm font-bold leading-snug">{result.coach_insight.smart_strategy}</p>
+                  <p className="text-white text-sm font-bold leading-snug">{result.structural_analysis.improvement}</p>
                 </div>
               </div>
             </div>
@@ -473,6 +463,41 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div key={idx} className="flex gap-4 bg-zinc-800/50 p-5 rounded-2xl border border-white/5 items-start">
                   <span className="text-emerald-500 font-black italic text-xl">{idx + 1}</span>
                   <p className="text-sm text-zinc-200 font-bold leading-snug">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 📍 ANÁLISE POR REGIÃO (DETALHADA) */}
+          <div className="bg-zinc-900 border-2 border-zinc-800 p-8 md:p-10 rounded-[2.5rem] space-y-8">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">📍</span>
+              <h3 className="text-xl font-black text-white italic tracking-tight">Análise por Região</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { label: 'Tronco / Peitoral', data: result.regional_analysis.trunk },
+                { label: 'Braços / Ombros', data: result.regional_analysis.arms },
+                { label: 'Abdômen / Cintura', data: result.regional_analysis.abs_waist },
+                { label: 'Pernas / Membros Inferiores', data: result.regional_analysis.legs }
+              ].map((region, idx) => (
+                <div key={idx} className="bg-white/5 rounded-3xl p-6 border border-white/5 space-y-4">
+                  <p className="text-emerald-500 text-[9px] font-black uppercase tracking-[0.2em] border-b border-white/5 pb-2">{region.label}</p>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">📌 Ponto Forte</p>
+                      <p className="text-xs text-white font-medium leading-relaxed">{region.data.strength}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">📌 Ponto de Melhoria</p>
+                      <p className="text-xs text-zinc-300 font-medium leading-relaxed">{region.data.improvement}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">📌 Potencial Estratégico</p>
+                      <p className="text-xs text-emerald-500/80 font-bold leading-relaxed italic">{region.data.strategy}</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -600,15 +625,23 @@ const SimplePropCard = ({ label, value }: { label: string, value: string }) => (
   </div>
 );
 
-const PremiumScoreBar = ({ label, score, color, invert = false }: { label: string, score: number, color: 'emerald' | 'zinc', invert?: boolean }) => {
+const PremiumScoreBar = ({ label, score, isFatScore = false }: { label: string, score: number, isFatScore?: boolean }) => {
   const percentage = Math.min(Math.max(score * 10, 0), 100);
-  const colorClass = color === 'emerald' ? 'bg-emerald-500' : 'bg-zinc-500';
+
+  // Logic for colors based on score
+  // 1-3 = verde, 4-6 = amarelo, 7-10 = vermelho
+  let colorClass = 'bg-emerald-500';
+  if (score > 3 && score <= 6) {
+    colorClass = 'bg-amber-500';
+  } else if (score > 6) {
+    colorClass = 'bg-red-500';
+  }
 
   return (
     <div className="space-y-2 p-6 bg-zinc-900 border border-zinc-800 rounded-3xl">
       <div className="flex justify-between items-center">
         <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{label}</span>
-        <span className={`text-lg font-black italic ${invert ? 'text-zinc-400' : 'text-white'}`}>{score.toFixed(1)}<span className="text-[8px] opacity-30 italic">/10</span></span>
+        <span className={`text-lg font-black italic ${isFatScore && score > 6 ? 'text-red-500' : 'text-white'}`}>{score.toFixed(1)}<span className="text-[8px] opacity-30 italic">/10</span></span>
       </div>
       <div className="h-2 bg-zinc-800 rounded-full overflow-hidden border border-white/5">
         <div

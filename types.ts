@@ -83,11 +83,11 @@ export interface ShapeAnalysisResult {
   structural_analysis: {
     name: string;
     meaning: string;
-    structural_advantage: string;
-    structural_challenge: string;
-    genetic_responsiveness: string; // New: Volume vs Intensity
-    fat_storage_tendency: string; // New: Regional storage
-    structural_limitation_strategy: string; // New: Tactical bypass
+    strength: string;
+    improvement: string;
+    genetic_responsiveness: string;
+    fat_storage_tendency: string;
+    structural_limitation_strategy: string;
   };
   weight_metrics?: {
     bmi: number;
@@ -109,10 +109,10 @@ export interface ShapeAnalysisResult {
   definition_score: number;
   fat_score: number;
   regional_analysis: {
-    trunk: string;
-    arms: string;
-    abs_waist: string;
-    legs: string;
+    trunk: { strength: string; improvement: string; strategy: string };
+    arms: { strength: string; improvement: string; strategy: string };
+    abs_waist: { strength: string; improvement: string; strategy: string };
+    legs: { strength: string; improvement: string; strategy: string };
   };
   structural_potential: string;
   future_projection: string;
