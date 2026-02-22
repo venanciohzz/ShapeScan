@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { FoodAnalysisResult, ShapeAnalysisResult } from '../types';
 import { supabase } from './supabaseService';
 
@@ -106,28 +107,30 @@ Para cada ingrediente, você deve fornecer:
 ⚠️ AVISO OBRIGATÓRIO:
 Ao final do "analysis_comment", você DEVE incluir: "Estimativa com margem de erro de ±20% devido à ausência de balança."
 
-📊 RETORNO OBRIGATÓRIO EM JSON:
+📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
 {
-  "dish_name": "string",
-  "total_calories": number,
-  "total_protein_g": number,
-  "total_carbs_g": number,
-  "total_fat_g": number,
-  "nutrition_score": number,
+  "dish_name": "",
+  "total_calories": 0,
+  "total_protein_g": 0,
+  "total_carbs_g": 0,
+  "total_fat_g": 0,
+  "nutrition_score": 0,
   "ingredients": [
     {
-      "name": "string",
-      "estimated_weight_g": number,
-      "calories": number,
-      "protein_g": number,
-      "carbs_g": number,
-      "fat_g": number,
-      "confidence": "Baixa | Moderada | Alta",
-      "observation": "string (ex explicativo)"
+      "name": "",
+      "estimated_weight_g": 0,
+      "calories": 0,
+      "protein_g": 0,
+      "carbs_g": 0,
+      "fat_g": 0,
+      "confidence": "Alta",
+      "observation": ""
     }
   ],
-  "analysis_comment": "string (incluindo o aviso de margem de erro)"
-}`;
+  "analysis_comment": ""
+}
+
+❗ IMPORTANTE: Não retorne texto fora do JSON. SEJA CONCISO em todas as descrições para garantir que o JSON não seja truncado.`;
 
     const systemPrompt = `Você é um nutricionista brasileiro especialista em estimativa visual de alimentos. Retorne APENAS o JSON solicitado.`;
 
@@ -164,26 +167,28 @@ export const getManualFoodMacros = async (foodDescription: string): Promise<Food
   try {
     const prompt = `Analise a refeição: "${foodDescription}". Identifique itens, pesos, calorias e macros exatos seguindo o formato JSON da ANÁLISE NUTRICIONAL AVANÇADA.
 
-Retorne APENAS um JSON válido no seguinte formato:
+📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
 {
-  "dish_name": "string",
-  "total_calories": number,
-  "total_protein_g": number,
-  "total_carbs_g": number,
-  "total_fat_g": number,
-  "nutrition_score": number,
+  "dish_name": "",
+  "total_calories": 0,
+  "total_protein_g": 0,
+  "total_carbs_g": 0,
+  "total_fat_g": 0,
+  "nutrition_score": 0,
   "ingredients": [
     {
-      "name": "string",
-      "estimated_weight_g": number,
-      "calories": number,
-      "protein_g": number,
-      "carbs_g": number,
-      "fat_g": number
+      "name": "",
+      "estimated_weight_g": 0,
+      "calories": 0,
+      "protein_g": 0,
+      "carbs_g": 0,
+      "fat_g": 0
     }
   ],
-  "analysis_comment": "string"
-}`;
+  "analysis_comment": ""
+}
+
+❗ IMPORTANTE: SEJA CONCISO para evitar truncamento.`;
 
     const systemPrompt = `Você é um Nutricionista Esportivo Brasileiro especialista em tabelas nutricionais e suplementação (Whey, Creatina, etc).
 

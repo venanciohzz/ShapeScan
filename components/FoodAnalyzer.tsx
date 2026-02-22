@@ -142,8 +142,6 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 
           // SUCCESS: Increment usage here
           await incrementUsage();
-
-          setResult(data);
           setResult(data);
         } catch (err: any) {
           console.error("Erro no scanner:", err);

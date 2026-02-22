@@ -81,8 +81,8 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
   };
 
   const validateAndCoherenceResult = (data: ShapeAnalysisResult, currentWeight: number): ShapeAnalysisResult => {
-    // Extrair BF numérico médio para cálculos (ex: "14-16%" -> 15)
-    const bfMatch = data.body_fat_range.match(/(\d+)/g);
+    // Extrair BF numérico médio para cálculos (ex: "7.5%" -> 7.5 ou "14-16%" -> 15)
+    const bfMatch = data.body_fat_range.match(/(\d+(?:\.\d+)?)/g);
     let bfValue = 20;
     if (bfMatch) {
       const nums = bfMatch.map(Number);
