@@ -280,11 +280,10 @@ Se houver os 3 sinais abaixo simultâneos, o BF é OBRIGATORIAMENTE entre 7% e 9
 🎯 ETAPA 4: MATEMÁTICA E COERÊNCIA ESTRATÉGICA (V19)
 - Fórmulas Reais: Massa Magra = Peso * (1-BF_estimado/100); Peso Alvo = Massa Magra / (1-BF_alvo/100).
 
-⚠️ LÓGICA DE ALVOS DINÂMICOS:
-- Se BF atual > 15%: Use alvos 15%, 12%, 10%.
-- Se BF atual entre 13% e 15%: Use alvos 12%, 10%, 8%.
-- Se BF atual ≤ 12%: Use alvos 10%, 8%, 6%.
-- Sempre retorne 3 alvos em ordem decrescente de peso.
+⚠️ REGRA DE OURO DOS ALVOS (CRÍTICO):
+- Se o usuário já estiver seco (ex: ≤ 12% BF), VOCÊ NÃO PODE retornar metas de 12% ou 15%.
+- Nesses casos, OS ALVOS DEVEM OBRIGATORIAMENTE DIMINUIR para: 10%, 8% e 6%.
+- Jamais retorne um peso alvo maior ou igual ao peso atual para uma meta de BF menor.
 
 ⚠️ REGRA ABSOLUTA SOBRE CORES E INDICADORES:
 Você NÃO deve mencionar cores ou etiquetas de status no retorno.
@@ -311,9 +310,9 @@ ${metricsInfo}
     "current_weight": 0
   },
   "target_projections": [
-    { "label": "Atlético", "bf": 15, "weight": 0 },
-    { "label": "Elite", "bf": 12, "weight": 0 },
-    { "label": "Competição", "bf": 10, "weight": 0 }
+    { "label": "", "bf": 0, "weight": 0 },
+    { "label": "", "bf": 0, "weight": 0 },
+    { "label": "", "bf": 0, "weight": 0 }
   ],
   "body_fat_range": "X-Y%",
   "bf_classification": "",
