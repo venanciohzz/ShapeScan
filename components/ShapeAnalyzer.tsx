@@ -33,6 +33,18 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     }
   }, [user]);
 
+  // Scroll Lock during loading
+  useEffect(() => {
+    if (loading) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [loading]);
+
   const getDailyLimit = () => {
     if (user.isAdmin) return 999;
     switch (user.plan) {
@@ -170,7 +182,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
       )}
 
       {loading && (
-        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center animate-in fade-in duration-500 touch-none overscroll-none">
           <div className="absolute inset-0 grid-bg opacity-10 animate-pulse"></div>
           <div className="relative w-64 h-80 md:w-80 md:h-96 flex items-center justify-center mb-12">
             {currentPhoto && (
@@ -244,8 +256,8 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-center gap-1.5">
                         <span className={`w-1.5 h-1.5 rounded-full ${result.bf_confidence.toLowerCase().includes('alta') ? 'bg-emerald-500 animate-pulse' :
-                            result.bf_confidence.toLowerCase().includes('moderada') ? 'bg-amber-500' :
-                              'bg-zinc-500'
+                          result.bf_confidence.toLowerCase().includes('moderada') ? 'bg-amber-500' :
+                            'bg-zinc-500'
                           }`}></span>
                         <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Confiança {result.bf_confidence}</span>
                       </div>
