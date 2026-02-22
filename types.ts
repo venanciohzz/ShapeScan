@@ -69,6 +69,10 @@ export interface User {
   activityLevel?: string;
   plan?: 'free' | 'monthly' | 'annual' | 'lifetime' | 'pro_monthly' | 'pro_annual'; // Updated Plan Types
   freeScansUsed?: number; // Tracks total food scans for free users (Limit 1)
+  velocity?: number | null;
+  impediments?: string[];
+  conquests?: string[];
+  targetWeight?: number | null;
   createdAt?: number;
 }
 

@@ -174,6 +174,10 @@ export async function updateProfile(userId: string, updates: Partial<User>): Pro
     dailyFat: updates.dailyFat,
     freeScansUsed: updates.freeScansUsed,
     photo: updates.photo,
+    velocity: updates.velocity,
+    impediments: updates.impediments,
+    conquests: updates.conquests,
+    targetWeight: updates.targetWeight,
   };
 
   // Remover campos undefined
@@ -554,6 +558,10 @@ function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAd
     activityLevel: profile.activityLevel || profile.activity_level,
     plan: (plan || profile.plan || 'free') as any,
     freeScansUsed: profile.freeScansUsed || profile.free_scans_used || 0,
+    velocity: profile.velocity,
+    impediments: profile.impediments || [],
+    conquests: profile.conquests || [],
+    targetWeight: profile.targetWeight || profile.target_weight,
     createdAt: new Date(profile.created_at).getTime(),
   };
 }

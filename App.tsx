@@ -13,7 +13,7 @@ import Navigation from './components/Navigation';
 import { BMICalculator, DailyCalorieCalculator } from './components/Calculators';
 import CaloriePlan from './components/CaloriePlan';
 import WaterCalculator from './components/WaterCalculator';
-import Quiz from './components/Quiz';
+import OnboardingQuiz from './components/onboarding/OnboardingQuiz';
 import PlanSelection from './components/PlanSelection';
 import UpgradePro from './components/UpgradePro';
 import Evolution from './components/Evolution';
@@ -225,6 +225,7 @@ const App: React.FC = () => {
 
       const updatedUser = await db.users.update(user.email, updates);
       setUser(updatedUser);
+      // Redirecionar para visualização de planos interna
       setCurrentView('plans');
     } catch (error: any) {
       console.error("Erro no Quiz:", error);
@@ -355,7 +356,7 @@ const App: React.FC = () => {
       case 'how_it_works': return <HowItWorks onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('register'); setCurrentView('auth'); }} />;
       case 'about': return <About onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('register'); setCurrentView('auth'); }} />;
       case 'auth': return <Auth initialMode={authMode} onLogin={handleLogin} onBack={() => setCurrentView('landing')} />;
-      case 'quiz': return <Quiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />;
+      case 'quiz': return <OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />;
       case 'plans': return <PlanSelection user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onSelect={async (plan) => { if (plan === 'free' && user) { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); setCurrentView('dashboard'); } }} onShowToast={showToast} />;
       case 'upgrade_pro': return <UpgradePro user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onShowToast={showToast} />;
       case 'dashboard': return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />;
