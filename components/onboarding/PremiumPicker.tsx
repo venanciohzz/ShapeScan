@@ -7,6 +7,7 @@ interface PremiumPickerProps {
     onChange: (value: number | string) => void;
     unit?: string;
     itemHeight?: number;
+    formatOption?: (value: number | string) => string;
 }
 
 const VISIBLE = 5; // number of visible items
@@ -17,6 +18,7 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
     onChange,
     unit = "",
     itemHeight = 52,
+    formatOption,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [localIndex, setLocalIndex] = useState(() => Math.max(0, options.indexOf(value)));
@@ -27,12 +29,17 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
     useEffect(() => {
         const idx = options.indexOf(value);
         if (idx === -1) return;
+        // Always update localIndex, even when idx=0 (January bug fix)
         setLocalIndex(idx);
         const container = containerRef.current;
         if (!container) return;
         isSnapping.current = true;
-        container.scrollTop = idx * itemHeight;
-        setTimeout(() => { isSnapping.current = false; }, 60);
+        // Force scroll even if already at 0
+        container.scrollTop = idx * itemHeight + 0.001;
+        requestAnimationFrame(() => {
+            if (container) container.scrollTop = idx * itemHeight;
+            setTimeout(() => { isSnapping.current = false; }, 60);
+        });
     }, [value, options, itemHeight]);
 
     const handleScroll = useCallback(() => {
@@ -119,7 +126,7 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
                                     : 'text-[17px] font-medium text-gray-500 dark:text-zinc-400'
                                     }`}
                             >
-                                {option}{unit ? ` ${unit}` : ''}
+                                {formatOption ? formatOption(option) : option}{!formatOption && unit ? ` ${unit}` : ''}
                             </span>
                         </div>
                     );

@@ -37,6 +37,8 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
     const weightOptions = useMemo(() => Array.from({ length: 161 }, (_, i) => 40 + i), []);
     const days = useMemo(() => Array.from({ length: 31 }, (_, i) => i + 1), []);
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const monthNums = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), []);
+    const monthLabel = (m: number) => months[m - 1] ?? '';
     const years = useMemo(() => Array.from({ length: 100 }, (_, i) => 2010 - i), []);
 
     const calculateAge = () => {
@@ -160,9 +162,31 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <p className="text-gray-500 dark:text-zinc-400 text-lg font-medium">Essencial para taxas metabólicas.</p>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                        <PremiumPicker options={days} value={data.birthDay} onChange={(v) => setData({ ...data, birthDay: v as number })} />
-                        <PremiumPicker options={months} value={months[data.birthMonth - 1]} onChange={(v) => setData({ ...data, birthMonth: months.indexOf(v as string) + 1 })} />
-                        <PremiumPicker options={years} value={data.birthYear} onChange={(v) => setData({ ...data, birthYear: v as number })} />
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2 text-center">Dia</p>
+                            <PremiumPicker
+                                options={days}
+                                value={data.birthDay}
+                                onChange={(v) => setData({ ...data, birthDay: v as number })}
+                            />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2 text-center">Mês</p>
+                            <PremiumPicker
+                                options={monthNums}
+                                value={data.birthMonth}
+                                formatOption={(v) => monthLabel(v as number)}
+                                onChange={(v) => setData({ ...data, birthMonth: v as number })}
+                            />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2 text-center">Ano</p>
+                            <PremiumPicker
+                                options={years}
+                                value={data.birthYear}
+                                onChange={(v) => setData({ ...data, birthYear: v as number })}
+                            />
+                        </div>
                     </div>
                 </div>
             )}
