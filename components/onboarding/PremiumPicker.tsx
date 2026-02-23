@@ -14,7 +14,7 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
     value,
     onChange,
     unit = "",
-    itemHeight = 70
+    itemHeight = 80
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [localValue, setLocalValue] = useState(value);
@@ -43,7 +43,7 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
                 onChange(newValue);
             }
 
-            // Force snap
+            // Force snap smooth
             container.scrollTo({
                 top: index * itemHeight,
                 behavior: 'smooth'
@@ -65,50 +65,65 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
     };
 
     return (
-        <div className="relative w-full overflow-hidden select-none bg-black/5 dark:bg-white/5 rounded-3xl group">
-            {/* Target Highlight */}
-            <div
-                className="absolute left-0 right-0 pointer-events-none border-y-2 border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-500/10 z-20"
-                style={{ height: itemHeight, top: itemHeight }}
-            />
+        <div className="relative w-full max-w-[280px] mx-auto overflow-hidden select-none py-4 px-2">
+            {/* 3D Container with Perspective */}
+            <div className="relative h-[240px] perspective-[1000px] flex items-center justify-center">
 
-            <div
-                ref={containerRef}
-                onScroll={handleScroll}
-                className="w-full overflow-y-scroll overflow-x-hidden scrollbar-hide relative z-10 py-[70px] touch-pan-y overscroll-contain"
-                style={{
-                    height: itemHeight * 3,
-                    msOverflowStyle: 'none',
-                    scrollbarWidth: 'none',
-                    scrollSnapType: 'y mandatory',
-                    WebkitOverflowScrolling: 'touch'
-                }}
-            >
-                {options.map((option, i) => {
-                    const isSelected = option === localValue;
-                    return (
-                        <div
-                            key={i}
-                            onClick={() => handleOptionClick(i)}
-                            className="flex items-center justify-center snap-center cursor-pointer transition-all duration-300 ease-out"
-                            style={{
-                                height: itemHeight,
-                                opacity: isSelected ? 1 : 0.2,
-                                transform: isSelected ? 'scale(1.2)' : 'scale(0.85)',
-                            }}
-                        >
-                            <span className={`tracking-tighter select-none ${isSelected ? 'text-4xl font-black text-gray-900 dark:text-white' : 'text-xl font-bold text-gray-400 dark:text-zinc-600'}`}>
-                                {option}
-                                {isSelected && unit && <span className="text-sm font-bold text-emerald-600 dark:text-emerald-500 ml-1">{unit}</span>}
-                            </span>
-                        </div>
-                    );
-                })}
+                {/* Central Glass Highlight */}
+                <div className="absolute inset-x-0 h-[80px] bg-emerald-500/10 dark:bg-emerald-500/20 backdrop-blur-xl border-y-2 border-emerald-500/40 rounded-3xl z-20 pointer-events-none shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-emerald-500/5 opacity-50"></div>
+                </div>
+
+                <div
+                    ref={containerRef}
+                    onScroll={handleScroll}
+                    className="w-full h-full overflow-y-scroll overflow-x-hidden scrollbar-hide relative z-10 py-[80px] touch-pan-y overscroll-contain"
+                    style={{
+                        height: 240,
+                        scrollSnapType: 'y mandatory',
+                        WebkitOverflowScrolling: 'touch'
+                    }}
+                >
+                    {options.map((option, i) => {
+                        const index = options.indexOf(localValue);
+                        const diff = i - index;
+                        const isSelected = option === localValue;
+
+                        // 3D Math for cylinder effect
+                        const rotateX = diff * 25; // Degrees
+                        const opacity = Math.max(0.1, 1 - Math.abs(diff) * 0.4);
+                        const scale = 1 - Math.abs(diff) * 0.15;
+                        const translateY = diff * -5; // Compensate for perspectve gap
+
+                        return (
+                            <div
+                                key={i}
+                                onClick={() => handleOptionClick(i)}
+                                className="flex items-center justify-center snap-center cursor-pointer transition-all duration-300 ease-out h-[80px]"
+                                style={{
+                                    height: 80,
+                                    transform: `rotateX(${rotateX}deg) scale(${scale}) translateY(${translateY}px)`,
+                                    opacity: opacity,
+                                    transition: 'transform 0.3s ease-out, opacity 0.3s ease-out'
+                                }}
+                            >
+                                <div className={`flex items-baseline gap-1 ${isSelected ? 'text-gray-900 dark:text-white drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'text-gray-400 dark:text-zinc-700'}`}>
+                                    <span className={`italic uppercase tracking-tighter ${isSelected ? 'text-5xl font-black' : 'text-2xl font-bold'}`}>
+                                        {option}
+                                    </span>
+                                    {isSelected && unit && (
+                                        <span className="text-xl font-black text-emerald-500 italic lowercase">{unit}</span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Top and Bottom Fading Folds */}
+                <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-[#F3F6F8] dark:from-zinc-950 to-transparent z-30 pointer-events-none" />
+                <div className="absolute bottom-0 inset-x-0 h-20 bg-gradient-to-t from-[#F3F6F8] dark:from-zinc-950 to-transparent z-30 pointer-events-none" />
             </div>
-
-            {/* Fading Overlays */}
-            <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-[#F3F6F8] dark:from-[#09090b] to-transparent z-30 pointer-events-none transition-colors duration-500" />
-            <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-[#F3F6F8] dark:from-[#09090b] to-transparent z-30 pointer-events-none transition-colors duration-500" />
         </div>
     );
 };
