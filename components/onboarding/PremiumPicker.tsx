@@ -10,7 +10,8 @@ interface PremiumPickerProps {
     formatOption?: (value: number | string) => string;
 }
 
-const VISIBLE = 5; // number of visible items
+const VISIBLE = 5; // must be odd for symmetric centering
+const PAD = Math.floor(VISIBLE / 2); // 2 spacer items on each side
 
 const PremiumPicker: React.FC<PremiumPickerProps> = ({
     options,
@@ -21,122 +22,154 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
     formatOption,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [localIndex, setLocalIndex] = useState(() => Math.max(0, options.indexOf(value)));
-    const isSnapping = useRef(false);
+    const isCommitting = useRef(false);
     const snapTimer = useRef<any>(null);
 
-    // Sync when `value` prop changes from outside
+    // The real selected index (offset by PAD because of spacers)
+    const getValueIndex = useCallback(
+        (val: number | string) => options.indexOf(val),
+        [options]
+    );
+
+    const [localIndex, setLocalIndex] = useState(() => getValueIndex(value));
+
+    // Scroll to a given options index (accounting for PAD spacers)
+    const scrollToIndex = useCallback(
+        (idx: number, smooth = false) => {
+            const container = containerRef.current;
+            if (!container) return;
+            const targetScroll = idx * itemHeight; // spacers handle the padding visually
+            if (smooth) {
+                container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+            } else {
+                container.scrollTop = targetScroll;
+            }
+        },
+        [itemHeight]
+    );
+
+    // Sync scroll when value changes from parent
     useEffect(() => {
-        const idx = options.indexOf(value);
+        const idx = getValueIndex(value);
         if (idx === -1) return;
-        // Always update localIndex, even when idx=0 (January bug fix)
         setLocalIndex(idx);
-        const container = containerRef.current;
-        if (!container) return;
-        isSnapping.current = true;
-        // Force scroll even if already at 0
-        container.scrollTop = idx * itemHeight + 0.001;
-        requestAnimationFrame(() => {
-            if (container) container.scrollTop = idx * itemHeight;
-            setTimeout(() => { isSnapping.current = false; }, 60);
-        });
-    }, [value, options, itemHeight]);
+        isCommitting.current = true;
+        scrollToIndex(idx, false);
+        // Briefly block scroll handling to avoid feedback loop
+        const t = setTimeout(() => { isCommitting.current = false; }, 80);
+        return () => clearTimeout(t);
+    }, [value, getValueIndex, scrollToIndex]);
 
     const handleScroll = useCallback(() => {
-        if (isSnapping.current) return;
+        if (isCommitting.current) return;
         const container = containerRef.current;
         if (!container) return;
 
-        // Live visual index update
+        // Derive which index is at center from scrollTop
         const rawIdx = Math.round(container.scrollTop / itemHeight);
-        const clampedIdx = Math.max(0, Math.min(rawIdx, options.length - 1));
-        setLocalIndex(clampedIdx);
+        const idx = Math.max(0, Math.min(rawIdx, options.length - 1));
+        setLocalIndex(idx);
 
-        // Debounced commit
+        // Debounce: after scroll settles, commit value
         if (snapTimer.current) clearTimeout(snapTimer.current);
         snapTimer.current = setTimeout(() => {
-            const finalIdx = Math.round(container.scrollTop / itemHeight);
-            const clamped = Math.max(0, Math.min(finalIdx, options.length - 1));
-            const finalValue = options[clamped];
+            const finalRaw = Math.round(container.scrollTop / itemHeight);
+            const finalIdx = Math.max(0, Math.min(finalRaw, options.length - 1));
+            const finalValue = options[finalIdx];
             if (finalValue !== undefined) {
-                setLocalIndex(clamped);
+                setLocalIndex(finalIdx);
                 onChange(finalValue);
-                isSnapping.current = true;
-                container.scrollTo({ top: clamped * itemHeight, behavior: 'smooth' });
-                setTimeout(() => { isSnapping.current = false; }, 400);
+                isCommitting.current = true;
+                container.scrollTo({ top: finalIdx * itemHeight, behavior: 'smooth' });
+                setTimeout(() => { isCommitting.current = false; }, 400);
             }
-        }, 120);
+        }, 100);
     }, [options, onChange, itemHeight]);
 
-    const handleClick = useCallback((idx: number) => {
-        const container = containerRef.current;
-        if (!container) return;
-        setLocalIndex(idx);
-        onChange(options[idx]);
-        isSnapping.current = true;
-        container.scrollTo({ top: idx * itemHeight, behavior: 'smooth' });
-        setTimeout(() => { isSnapping.current = false; }, 400);
-    }, [options, onChange, itemHeight]);
+    const handleClick = useCallback(
+        (realIdx: number) => {
+            const val = options[realIdx];
+            if (val === undefined) return;
+            setLocalIndex(realIdx);
+            onChange(val);
+            isCommitting.current = true;
+            scrollToIndex(realIdx, true);
+            setTimeout(() => { isCommitting.current = false; }, 400);
+        },
+        [options, onChange, scrollToIndex]
+    );
 
-    const pad = Math.floor(VISIBLE / 2); // padding items on each side
+    const containerHeight = itemHeight * VISIBLE;
+
+    // Build row items: PAD empty spacers + real options + PAD empty spacers
+    const spacer = (key: string) => (
+        <div key={key} style={{ height: itemHeight, flexShrink: 0, scrollSnapAlign: 'center' }} />
+    );
 
     return (
-        <div className="relative w-full overflow-hidden" style={{ height: itemHeight * VISIBLE }}>
+        <div className="relative w-full overflow-hidden select-none" style={{ height: containerHeight }}>
 
-            {/* Selected item pill highlight */}
+            {/* Selection highlight */}
             <div
-                className="absolute inset-x-0 pointer-events-none z-10 rounded-2xl mx-2 bg-black/[0.06] dark:bg-white/[0.08]"
-                style={{ top: itemHeight * pad, height: itemHeight }}
+                className="absolute inset-x-2 pointer-events-none z-10 rounded-2xl bg-black/[0.06] dark:bg-white/[0.08]"
+                style={{ top: itemHeight * PAD, height: itemHeight }}
             />
 
-            {/* Scroll container */}
+            {/* Scrollable list */}
             <div
                 ref={containerRef}
                 onScroll={handleScroll}
                 className="w-full h-full overflow-y-scroll overflow-x-hidden scrollbar-hide touch-pan-y"
                 style={{
                     scrollSnapType: 'y mandatory',
-                    paddingTop: itemHeight * pad,
-                    paddingBottom: itemHeight * pad,
                     WebkitOverflowScrolling: 'touch',
                 }}
             >
+                {/* Top spacers */}
+                {Array.from({ length: PAD }).map((_, i) => spacer(`top-${i}`))}
+
                 {options.map((option, i) => {
                     const diff = Math.abs(i - localIndex);
                     const isSelected = i === localIndex;
 
-                    // Opacity ladder: selected=1, ±1=0.5, ±2=0.25, beyond=0.1
-                    const opacityMap: Record<number, number> = { 0: 1, 1: 0.45, 2: 0.22 };
-                    const opacity = opacityMap[diff] ?? 0.08;
+                    const opacityMap: Record<number, number> = { 0: 1, 1: 0.4, 2: 0.18 };
+                    const opacity = opacityMap[diff] ?? 0.06;
+                    const scale = isSelected ? 1 : diff === 1 ? 0.88 : 0.75;
+                    const label = formatOption ? formatOption(option) : `${option}${unit ? ` ${unit}` : ''}`;
 
                     return (
                         <div
                             key={i}
                             onClick={() => handleClick(i)}
-                            className="flex items-center justify-center cursor-pointer select-none transition-opacity duration-200"
+                            className="flex items-center justify-center cursor-pointer w-full"
                             style={{
                                 height: itemHeight,
-                                scrollSnapAlign: 'start',
+                                flexShrink: 0,
+                                scrollSnapAlign: 'center',
                                 opacity,
+                                transform: `scale(${scale})`,
+                                transition: 'opacity 0.2s ease, transform 0.2s ease',
                             }}
                         >
                             <span
-                                className={`transition-all duration-200 ${isSelected
-                                    ? 'text-[22px] font-bold text-gray-900 dark:text-white'
-                                    : 'text-[17px] font-medium text-gray-500 dark:text-zinc-400'
+                                className={`whitespace-nowrap ${isSelected
+                                    ? 'text-[21px] font-bold text-gray-900 dark:text-white'
+                                    : 'text-[16px] font-medium text-gray-500 dark:text-zinc-400'
                                     }`}
                             >
-                                {formatOption ? formatOption(option) : option}{!formatOption && unit ? ` ${unit}` : ''}
+                                {label}
                             </span>
                         </div>
                     );
                 })}
+
+                {/* Bottom spacers */}
+                {Array.from({ length: PAD }).map((_, i) => spacer(`bot-${i}`))}
             </div>
 
-            {/* Top fade */}
-            <div className="absolute top-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-b from-[#F3F6F8] dark:from-zinc-950 to-transparent" style={{ height: itemHeight * pad }} />
-            {/* Bottom fade */}
-            <div className="absolute bottom-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-t from-[#F3F6F8] dark:from-zinc-950 to-transparent" style={{ height: itemHeight * pad }} />
+            {/* Gradient fades */}
+            <div className="absolute top-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-b from-[#F3F6F8] dark:from-zinc-950 to-transparent" style={{ height: itemHeight * PAD }} />
+            <div className="absolute bottom-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-t from-[#F3F6F8] dark:from-zinc-950 to-transparent" style={{ height: itemHeight * PAD }} />
         </div>
     );
 };
