@@ -139,13 +139,13 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">Suas medidas</h2>
                         <p className="text-gray-500 dark:text-zinc-400 text-lg font-medium">Seu ponto de partida.</p>
                     </div>
-                    <div className="flex flex-col gap-8">
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">Altura</p>
+                            <p className="text-[11px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2 text-center">Altura (cm)</p>
                             <PremiumPicker options={heightOptions} value={data.height} unit="cm" onChange={(v) => setData({ ...data, height: v as number })} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 text-center">Peso</p>
+                            <p className="text-[11px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-2 text-center">Peso (kg)</p>
                             <PremiumPicker options={weightOptions} value={data.weight} unit="kg" onChange={(v) => setData({ ...data, weight: v as number })} />
                         </div>
                     </div>
