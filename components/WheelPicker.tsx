@@ -60,7 +60,7 @@ const WheelPicker: React.FC<WheelPickerProps> = ({ options, value, onChange, uni
             <div
                 ref={containerRef}
                 onScroll={handleScroll}
-                className="w-full h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide py-[50px]"
+                className="w-full h-full overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scrollbar-hide py-[50px] touch-pan-y overscroll-contain"
                 style={{ scrollSnapType: 'y mandatory' }}
             >
                 {options.map((option, i) => (

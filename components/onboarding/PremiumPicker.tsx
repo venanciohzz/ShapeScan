@@ -75,12 +75,13 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
             <div
                 ref={containerRef}
                 onScroll={handleScroll}
-                className="w-full overflow-y-scroll scrollbar-hide relative z-10 py-[70px]"
+                className="w-full overflow-y-scroll overflow-x-hidden scrollbar-hide relative z-10 py-[70px] touch-pan-y overscroll-contain"
                 style={{
                     height: itemHeight * 3,
                     msOverflowStyle: 'none',
                     scrollbarWidth: 'none',
-                    scrollSnapType: 'y mandatory'
+                    scrollSnapType: 'y mandatory',
+                    WebkitOverflowScrolling: 'touch'
                 }}
             >
                 {options.map((option, i) => {
