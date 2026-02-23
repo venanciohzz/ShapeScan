@@ -336,7 +336,7 @@ ${metricsInfo}
     { "label": "", "bf": 0, "weight": 0 }
   ],
   "body_fat_range": "X-Y%",
-  "bf_classification": "",
+  "bf_classification": "Categoria (ex: Atleta, Fitness, Sobrepeso, etc)",
   "bf_confidence": "Moderada",
   "bf_visual_justification": "",
   "shape_score": 0,

@@ -306,7 +306,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <p className="text-lg md:text-xl font-black text-emerald-500 italic tracking-tighter mb-2">{result.structural_analysis.name}</p>
                 <div className="flex flex-col gap-2">
                   <span className="inline-block px-4 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border border-emerald-500/20">
-                    {result.bf_classification} • BF de {result.body_fat_range}
+                    {result.bf_classification} ({result.body_fat_range})
                   </span>
                   {result.bf_confidence && (
                     <div className="space-y-1.5">
