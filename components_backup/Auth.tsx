@@ -1,5 +1,5 @@
+
 import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { User } from '../types';
 import { db } from '../services/db';
 import { sanitizeInput } from '../utils/security';
@@ -97,13 +97,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
       {/* Wrapper with margin auto to ensure it doesn't stick to top on small screens */}
       <div className="w-full max-w-md my-auto relative">
 
-        <div className="glass-panel w-full p-6 md:p-10 rounded-[2.5rem] animate-in zoom-in-95 duration-500 relative border border-white/10 shadow-2xl glow-hover">
+        <div className="glass-panel w-full p-6 md:p-10 rounded-[2.5rem] animate-in zoom-in-95 duration-500 relative border border-white/10 shadow-2xl">
 
           {/* Glow Effect */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
 
-          <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm hover:scale-105 transition-all active:scale-90 mb-8 text-black dark:text-white">
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-zinc-300" />
+          <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm hover:scale-105 transition-all active:scale-95 mb-8 text-black dark:text-white">
+            <span className="text-lg pb-0.5">←</span>
           </button>
 
           <div className="mb-8">
@@ -187,7 +187,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white py-4 md:py-5 rounded-2xl font-black text-base md:text-lg hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] transition-all uppercase tracking-tight active:scale-[0.98] mt-4 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white py-4 md:py-5 rounded-2xl font-black text-base md:text-lg hover:shadow-lg hover:shadow-emerald-500/30 transition-all uppercase tracking-tight hover:-translate-y-1 active:translate-y-0 mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Conectando...' : (isRegistering ? 'Iniciar minha análise' : 'Acessar App')}
             </button>

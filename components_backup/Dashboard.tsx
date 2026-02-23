@@ -79,7 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                   <p className="text-emerald-600 font-bold uppercase text-[9px] md:text-[11px] tracking-widest truncate">{user.username.startsWith('@') ? user.username : `@${user.username}`}</p>
                </div>
             </div>
-            <button onClick={onLogout} className="glass-card px-3 py-1.5 md:px-6 md:py-3 rounded-xl text-[9px] md:text-[11px] font-black uppercase tracking-widest hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-500/10 hover:text-red-500 transition-colors text-gray-500 dark:text-gray-400 shrink-0 active:scale-95">Sair</button>
+            <button onClick={onLogout} className="glass-card px-3 py-1.5 md:px-6 md:py-3 rounded-xl text-[9px] md:text-[11px] font-black uppercase tracking-widest hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-500/10 hover:text-red-500 transition-colors text-gray-500 dark:text-gray-400 shrink-0">Sair</button>
          </div>
 
          {/* Grid Principal */}

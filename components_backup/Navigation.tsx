@@ -1,6 +1,6 @@
+
 import React from 'react';
 import { View } from '../types';
-import { Home, ScanLine, UserSquare2, TrendingUp, MessageSquare, Settings } from 'lucide-react';
 
 interface NavigationProps {
   currentView: View;
@@ -9,12 +9,12 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Início', icon: <Home className="w-5 h-5 md:w-4 md:h-4" /> },
-    { id: 'food_ai', label: 'Scanner', icon: <ScanLine className="w-5 h-5 md:w-4 md:h-4" /> },
-    { id: 'shape', label: 'Shape', icon: <UserSquare2 className="w-5 h-5 md:w-4 md:h-4" /> },
-    { id: 'evolution', label: 'Evolução', icon: <TrendingUp className="w-5 h-5 md:w-4 md:h-4" /> },
-    { id: 'chat', label: 'Coach', icon: <MessageSquare className="w-5 h-5 md:w-4 md:h-4" /> },
-    { id: 'settings', label: 'Perfil', icon: <Settings className="w-5 h-5 md:w-4 md:h-4" /> },
+    { id: 'dashboard', label: 'Início', icon: '🏠' },
+    { id: 'food_ai', label: 'Scanner', icon: '🍽️' },
+    { id: 'shape', label: 'Shape', icon: '🧍' },
+    { id: 'evolution', label: 'Evolução', icon: '📈' },
+    { id: 'chat', label: 'Coach', icon: '💬' },
+    { id: 'settings', label: 'Perfil', icon: '⚙️' },
   ];
 
   return (
@@ -28,7 +28,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
               <button
                 key={tab.id}
                 onClick={() => onNavigate(tab.id as View)}
-                className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-300 relative group active:scale-95`}
+                className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-300 relative group`}
               >
                 <div className={`
                     relative z-10 w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all duration-300
@@ -67,8 +67,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
                   : 'text-gray-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                   }`}
               >
-                <div className="flex items-center justify-center">{tab.icon}</div>
-                <span className="text-[11px] font-black uppercase tracking-wider">{tab.label}</span>
+                <span className="text-lg">{tab.icon}</span>
+                <span className="text-xs font-bold uppercase tracking-wide">{tab.label}</span>
               </button>
             );
           })}

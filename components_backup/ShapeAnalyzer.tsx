@@ -4,7 +4,6 @@ import { User, ShapeAnalysisResult } from '../types';
 import { analyzeShape } from '../services/openaiService';
 import { compressImage } from '../utils/security';
 import { db } from '../services/db';
-import { Camera, Image as ImageIcon, TrendingUp, RefreshCw, Focus, Scale, Target, Microscope, BicepsFlexed, AlertTriangle } from 'lucide-react';
 
 interface ShapeAnalyzerProps {
   user: User;
@@ -271,18 +270,16 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
             </div>
           </div>
           <div className="bg-zinc-900 p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] border-2 border-emerald-500/20 shadow-sm text-center flex-1 flex flex-col justify-center items-center">
-            <div className="text-emerald-500 mb-6 md:mb-8 flex justify-center">
-              <Focus className="w-24 h-24 md:w-32 md:h-32 opacity-80" strokeWidth={1.5} />
-            </div>
+            <div className="text-7xl md:text-8xl mb-6 md:mb-8">🤳</div>
             <div className="flex flex-col gap-4 w-full md:w-auto">
               <label className="inline-flex items-center justify-center gap-3 cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full">
-                <Camera className="w-6 h-6" />
+                <span className="text-2xl">📸</span>
                 TIRAR FOTO
                 <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading} />
               </label>
 
               <label className="inline-flex items-center justify-center gap-3 cursor-pointer bg-transparent text-emerald-500 border-2 border-emerald-500/30 px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-500/10 shadow-lg active:scale-95 text-base md:text-lg w-full">
-                <ImageIcon className="w-6 h-6" />
+                <span className="text-2xl">🖼️</span>
                 GALERIA DE FOTOS
                 <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading} />
               </label>
@@ -344,7 +341,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-zinc-900 border-2 border-zinc-800 p-8 rounded-[2.5rem] space-y-6">
                 <div className="flex items-center gap-3">
-                  <Scale className="w-8 h-8 text-emerald-500" />
+                  <span className="text-3xl">⚖️</span>
                   <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Composição Corporal Estimada</h3>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -369,7 +366,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
               <div className="bg-zinc-900 border-2 border-zinc-800 p-8 rounded-[2.5rem] space-y-6">
                 <div className="flex items-center gap-3">
-                  <Target className="w-8 h-8 text-emerald-500" />
+                  <span className="text-3xl">🎯</span>
                   <h3 className="text-[10px] font-black text-white uppercase tracking-widest">Pesos Alvo por BF (%)</h3>
                 </div>
                 <div className="space-y-3">
@@ -524,7 +521,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           {/* 🏋️‍♂️ PROTOCOLO DE TREINO TÁTICO */}
           <div className="bg-zinc-900 border-2 border-zinc-800 p-8 md:p-10 rounded-[2.5rem] space-y-6">
             <div className="flex items-center gap-3">
-              <BicepsFlexed className="w-8 h-8 text-emerald-500" />
+              <span className="text-3xl">🏋️‍♂️</span>
               <h3 className="text-xl font-black text-white italic tracking-tight">Protocolo de Treino Tático</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -631,7 +628,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           {/* ⚠️ ALERTAS INTELIGENTES */}
           <div className="bg-red-500/5 border-2 border-red-500/20 p-8 md:p-10 rounded-[2.5rem] space-y-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+              <span className="text-3xl">⚠️</span>
               <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest">Alertas de Platô e Riscos</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -655,9 +652,9 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               {!savedSuccess ? (
                 <button
                   onClick={handleSave}
-                  className="w-full bg-emerald-600 text-white flex items-center justify-center gap-2 py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-[0_10px_40px_rgba(16,185,129,0.3)] active:scale-95 transition-all text-lg"
+                  className="w-full bg-emerald-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-[0_10px_40px_rgba(16,185,129,0.3)] active:scale-95 transition-all text-lg"
                 >
-                  Salvar na Evolução <TrendingUp className="w-5 h-5" />
+                  Salvar na Evolução 📈
                 </button>
               ) : (
                 <div className="bg-emerald-500/10 border-2 border-emerald-500 text-emerald-500 py-6 rounded-[2rem] font-black text-center text-sm uppercase tracking-widest animate-in zoom-in">
@@ -666,9 +663,9 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               )}
               <button
                 onClick={() => { setResult(null); setSavedSuccess(false); setCurrentPhoto(null); setWeight(''); setHeight(''); window.scrollTo(0, 0); }}
-                className="w-full flex items-center justify-center gap-2 py-4 bg-transparent border-2 border-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest hover:text-white hover:border-zinc-600 active:scale-95 transition-all text-xs"
+                className="w-full py-4 bg-transparent border-2 border-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest hover:text-white hover:border-zinc-600 active:scale-95 transition-all text-xs"
               >
-                Refazer Análise <RefreshCw className="w-4 h-4" />
+                Refazer Análise 🔄
               </button>
             </div>
           </div>

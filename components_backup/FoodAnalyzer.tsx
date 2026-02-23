@@ -4,7 +4,6 @@ import { User, FoodLog, FoodAnalysisResult, FoodItem } from '../types';
 import { analyzePlate, getManualFoodMacros } from '../services/openaiService';
 import { compressImage } from '../utils/security';
 import { db } from '../services/db';
-import { Camera, Image as ImageIcon, CheckCircle2, Save, RefreshCw, ScanSearch } from 'lucide-react';
 
 interface FoodAnalyzerProps {
   user: User;
@@ -356,19 +355,17 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                   </div>
                 )}
 
-                <div className="text-emerald-500 mb-6 md:mb-8 flex justify-center">
-                  <ScanSearch className="w-24 h-24 md:w-32 md:h-32 opacity-80" strokeWidth={1.5} />
-                </div>
+                <div className="text-7xl md:text-8xl mb-6 md:mb-8">🥗</div>
 
                 <div className="flex flex-col gap-4 w-full md:w-auto">
                   <label className={`inline-flex items-center justify-center gap-3 cursor-pointer bg-emerald-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 shadow-xl active:scale-95 text-base md:text-lg w-full ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
-                    <Camera className="w-6 h-6" />
+                    <span className="text-2xl">📸</span>
                     {isFreeLocked ? 'CÂMERA BLOQUEADA' : 'ABRIR CÂMERA'}
                     {!isFreeLocked && <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading} />}
                   </label>
 
                   <label className={`inline-flex items-center justify-center gap-3 cursor-pointer bg-zinc-800 text-emerald-400 border-2 border-emerald-600 px-10 py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-zinc-700 shadow-lg active:scale-95 text-base md:text-lg w-full ${isFreeLocked ? 'cursor-not-allowed opacity-50' : ''}`}>
-                    <ImageIcon className="w-6 h-6" />
+                    <span className="text-2xl">🖼️</span>
                     {isFreeLocked ? 'GALERIA BLOQUEADA' : 'ESCOLHER DA GALERIA'}
                     {!isFreeLocked && <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading} />}
                   </label>
@@ -482,23 +479,23 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             <div className="pt-6 space-y-3">
               <button
                 onClick={() => confirmAdd(false)}
-                className="w-full bg-emerald-600 text-white py-6 rounded-[2rem] flex items-center justify-center gap-2 font-black uppercase tracking-widest hover:bg-emerald-500 shadow-[0_10px_40px_rgba(16,185,129,0.2)] active:scale-95 transition-all text-lg"
+                className="w-full bg-emerald-600 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-emerald-500 shadow-[0_10px_40px_rgba(16,185,129,0.2)] active:scale-95 transition-all text-lg"
               >
-                Adicionar ao meu dia <CheckCircle2 className="w-5 h-5" />
+                Adicionar ao meu dia ✅
               </button>
 
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => confirmAdd(true)}
-                  className="py-4 bg-zinc-800 flex items-center justify-center gap-2 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-zinc-700 active:scale-95 transition-all text-[10px]"
+                  className="py-4 bg-zinc-800 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-zinc-700 active:scale-95 transition-all text-[10px]"
                 >
-                  Salvar Favorito <Save className="w-4 h-4" />
+                  Salvar Favorito 💾
                 </button>
                 <button
                   onClick={() => { setResult(null); setPreviewImage(null); setMealDescription(''); }}
-                  className="py-4 bg-transparent flex items-center justify-center gap-2 border-2 border-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest hover:text-white hover:border-zinc-600 active:scale-95 transition-all text-[10px]"
+                  className="py-4 bg-transparent border-2 border-zinc-800 text-zinc-500 rounded-2xl font-black uppercase tracking-widest hover:text-white hover:border-zinc-600 active:scale-95 transition-all text-[10px]"
                 >
-                  Refazer Scan <RefreshCw className="w-4 h-4" />
+                  Refazer Scan 🔄
                 </button>
               </div>
             </div>

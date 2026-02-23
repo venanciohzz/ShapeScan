@@ -12,7 +12,7 @@ interface ActionButtonProps {
 const ActionButton: React.FC<ActionButtonProps> = ({ onClick, icon, title, subtitle, premium }) => (
     <button
         onClick={onClick}
-        className="glass-panel glow-hover w-full p-5 md:p-6 rounded-3xl md:rounded-[2rem] text-center md:text-left hover:bg-white/80 dark:hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden group border border-transparent hover:border-emerald-500/30 shadow-premium hover:shadow-premium-hover h-full flex flex-col items-center md:items-start justify-center md:justify-between min-w-0 dark:bg-zinc-900/60"
+        className="glass-panel w-full p-5 md:p-6 rounded-3xl md:rounded-[2rem] text-center md:text-left hover:bg-white/80 dark:hover:bg-white/10 hover:scale-[1.02] transition-all duration-300 relative overflow-hidden group border border-transparent hover:border-emerald-500/30 shadow-premium hover:shadow-premium-hover h-full flex flex-col items-center md:items-start justify-center md:justify-between min-w-0 dark:bg-zinc-900/60"
     >
         {/* Icon Wrapper */}
         <div className="relative mb-2 md:mb-3 flex justify-center w-full md:w-auto md:block">

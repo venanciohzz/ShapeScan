@@ -460,7 +460,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                 <button
                     onClick={step === totalSteps ? handleFinish : next}
                     disabled={isLoading || !canContinue()}
-                    className="w-full bg-emerald-600 text-white py-6 rounded-2xl font-black text-xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-emerald-600 text-white py-6 rounded-2xl font-black text-xl shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {isLoading ? (
                         <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
@@ -478,7 +478,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 const PremiumCard = ({ title, subtitle, icon, active, onClick }: { title: string, subtitle?: string, icon: string, active: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full p-6 rounded-3xl border transition-all duration-300 flex items-center gap-6 group active:scale-[0.98] ${active ? 'bg-emerald-600 border-emerald-600 shadow-xl shadow-emerald-600/20' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10'}`}
+        className={`w-full p-6 rounded-3xl border transition-all duration-300 flex items-center gap-6 group ${active ? 'bg-emerald-600 border-emerald-600 shadow-xl shadow-emerald-600/20' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10'}`}
     >
         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl transition-colors ${active ? 'bg-white/20' : 'bg-black/5 dark:bg-white/5'}`}>
             {icon}
@@ -496,7 +496,7 @@ const PremiumCard = ({ title, subtitle, icon, active, onClick }: { title: string
 const SelectionButton = ({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full p-6 rounded-3xl border font-black text-lg transition-all duration-300 text-left flex justify-between items-center active:scale-[0.98] ${active ? 'bg-emerald-600 text-white border-emerald-600 shadow-xl shadow-emerald-600/20' : 'bg-black/5 dark:bg-white/5 text-gray-500 dark:text-zinc-400 border-black/5 dark:border-white/10 hover:text-gray-900 dark:hover:text-white'}`}
+        className={`w-full p-6 rounded-3xl border font-black text-lg transition-all duration-300 text-left flex justify-between items-center ${active ? 'bg-emerald-600 text-white border-emerald-600 shadow-xl shadow-emerald-600/20' : 'bg-black/5 dark:bg-white/5 text-gray-500 dark:text-zinc-400 border-black/5 dark:border-white/10 hover:text-gray-900 dark:hover:text-white'}`}
     >
         {label}
         {active && <span className="text-xl">✓</span>}
@@ -506,7 +506,7 @@ const SelectionButton = ({ label, active, onClick }: { label: string, active: bo
 const CheckOption = ({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full p-5 rounded-2xl border font-black text-left transition-all duration-300 flex items-center gap-4 active:scale-[0.98] ${active ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-gray-500 dark:text-zinc-400'}`}
+        className={`w-full p-5 rounded-2xl border font-black text-left transition-all duration-300 flex items-center gap-4 ${active ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600' : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/10 text-gray-500 dark:text-zinc-400'}`}
     >
         <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${active ? 'bg-emerald-500 border-emerald-500' : 'border-gray-200 dark:border-zinc-700'}`}>
             {active && <span className="text-white text-xs">✓</span>}
