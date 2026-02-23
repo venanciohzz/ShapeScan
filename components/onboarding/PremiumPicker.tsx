@@ -14,7 +14,7 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
     value,
     onChange,
     unit = "",
-    itemHeight = 72
+    itemHeight = 56
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [localValue, setLocalValue] = useState(value);
@@ -123,13 +123,13 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
                             }}
                         >
                             <span className={`tracking-tighter ${isSelected
-                                ? 'text-5xl font-black italic text-gray-900 dark:text-white'
-                                : 'text-2xl font-bold text-gray-500 dark:text-zinc-500'
+                                ? 'text-4xl md:text-5xl font-black italic text-gray-900 dark:text-white'
+                                : 'text-lg md:text-2xl font-bold text-gray-500 dark:text-zinc-500'
                                 }`}>
                                 {option}
                             </span>
                             {isSelected && unit && (
-                                <span className="ml-1.5 text-lg font-black italic text-emerald-500">{unit}</span>
+                                <span className="ml-1 text-base md:text-lg font-black italic text-emerald-500">{unit}</span>
                             )}
                         </div>
                     );
