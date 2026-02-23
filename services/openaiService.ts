@@ -266,21 +266,41 @@ Se houver os 3 sinais abaixo simultâneos, o BF é OBRIGATORIAMENTE entre 7% e 9
 - NÃO há serrátil profundo. NÃO há separação nas pernas.
 - Se você vê serrátil e intercostais, VOCÊ NÃO PODE ESTIMAR 15%.
 
-⚠️ REGRAS DE OURO V15:
+4. HARD LOCK: BF ELEVADO (20-25% BF)
+- Ausência total de definição abdominal.
+- Acúmulo leve mas visível nos flancos ("pneuzinhos").
+- Peitoral começa a perder o formato quadrado e ganhar arredondamento por gordura.
+
+5. HARD LOCK: OBESIDADE LEVE A MODERADA (26-34% BF)
+- Cintura visivelmente mais larga que o tórax.
+- Acúmulo significativo na região abdominal inferior e média.
+- Gordura peitoral evidente (pseudo-ginecomastia por gordura).
+- BLOQUEIO: Se a barriga estiver projetada para frente (protrusão abdominal) e cobrir o elástico da calça, o BF é OBRIGATORIAMENTE > 28%.
+
+6. HARD LOCK: OBESIDADE ALTA (>35% BF)
+- Protrusão abdominal acentuada e global.
+- Presença de dobras cutâneas (folds) profundas.
+- MARCADOR CRÍTICO: Se houver estrias (stretch marks) visíveis no abdômen ou flancos, o BF é OBRIGATORIAMENTE > 30%, frequentemente > 35%.
+- Acúmulo denso de gordura nas costas, peitoral e pescoço.
+
+⚠️ REGRAS DE OURO V16:
 - Abdômen Recortado + Pernas Definidas = 7% a 9% BF.
 - Abdômen Fundo + Serrátil total = 10% a 11% BF.
 - Serrátil visível + Pele fina = BF < 12%.
-- NUNCA subestime a secura de quem tem separação muscular profunda.
+- Protrusão Abdominal + Largura da Cintura > Ombros = BF > 30%.
+- Estrias Abdominais + Dobras de Pele = BF > 35%.
+- NUNCA subestime a secura de quem tem separação muscular profunda, mas TAMBÉM NUNCA subestime a gordura de quem tem protrusão abdominal e estrias.
 
 🎯 ETAPA 3: COERÊNCIA DE NOTAS (QUALIDADE FÍSICA)
-- Definição: Se BF < 12%, nota DEVE ser ≥ 8/10. Se extremamemte seco, 9 ou 10.
+- Definição: Se BF < 12%, nota DEVE ser ≥ 8/10. Se BF > 30%, nota DEVE ser ≤ 3/10.
 - Musculatura: Volume e densidade visível.
 - Nível de Gordura (fat_score): ESCALA INVERTIDA (Menor = Mais Seco).
   - Se BF ≤ 10%: Nota DEVE ser entre 1.0 e 2.0.
   - Se BF 11-14%: Nota DEVE ser entre 2.5 e 4.5.
   - Se BF 15-19%: Nota DEVE ser entre 5.0 e 6.5.
-  - Se BF ≥ 20%: Nota DEVE ser ≥ 7.0.
-⚠️ ERRO CRÍTICO: Não dê nota alta de gordura (ex: 7.0) para quem você estimou 10% de BF.
+  - Se BF 20-29%: Nota DEVE ser entre 7.0 e 8.0.
+  - Se BF ≥ 30%: Nota DEVE ser entre 8.5 e 10.0.
+⚠️ ERRO CRÍTICO: Não dê nota alta de gordura (ex: 7.0) para quem você estimou 10% de BF. Da mesma forma, não use fat_score baixo para BF alto.
 
 🎯 ETAPA 4: MATEMÁTICA E COERÊNCIA (V21)
 - Massa Magra = Peso * (1-BF_estimado/100).
