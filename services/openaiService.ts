@@ -56,8 +56,11 @@ const extractJson = (text: string): string => {
 };
 
 const safeParseFloat = (val: any): number => {
+  if (val === undefined || val === null) return 0;
   if (typeof val === 'number') return val;
-  const parsed = parseFloat(val);
+  // Handle potential Brazilian comma separators (e.g. "150,5" -> "150.5") or units like "150 kcal"
+  const strVal = String(val).replace(',', '.').replace(/[^\d.-]/g, '');
+  const parsed = parseFloat(strVal);
   return isNaN(parsed) ? 0 : parsed;
 };
 
@@ -71,66 +74,65 @@ Você é um nutricionista especialista em análise visual de refeições com foc
 
 Sua tarefa é analisar a imagem e identificar TODOS os alimentos visíveis, seguindo rigorosamente a lógica de estimativa abaixo:
 
-🧠 LÓGICA DE ESTIMATIVA OBRIGATÓRIA:
+🧠 LÓGICA DE ESTIMATIVA OBRIGATÓRIA E CÁLCULO DE MACROS:
 1. CLASSIFICAR TAMANHO ANTES DO PESO:
    - Muito pequeno: 20–50g
    - Pequeno: 50–90g
    - Médio: 90–150g
    - Grande: 150–250g
    - Muito grande: 250g+
-   *Nunca assuma peso médio (150g) para porções visivelmente pequenas.*
 
 2. REFERÊNCIA VISUAL DE ESCALA:
-   - Use o tamanho relativo do item comparado ao prato (padrão 24-28cm) e outros itens (ex: arroz/feijão).
-   - Observe a espessura do corte e quantidade de pedaços.
-   - Se houver pedaços picados, estime 15-25g por unidade.
+   - Use o tamanho relativo do item comparado ao prato (padrão 24-28cm).
+   - Espessura do corte e quantidade de pedaços.
 
 3. REGRAS PARA PROTEÍNAS:
    - Frango grelhado pequeno/fino: 40–80g.
    - Coxa pequena: 50–100g.
    - Bife médio: 120-150g.
-   - Se a proteína ocupar menos espaço visual que o carboidrato, ela NÃO pode pesar mais que ele.
 
 4. MÉTODOS DE PREPARO:
    - Classifique como "assado/grelhado" por padrão.
-   - Só classifique como "frito" se houver brilho de óleo excessivo ou textura crocante/empanada clara.
-   - Em caso de dúvida, cite: "preparo não confirmado (estimado como grelhado)".
+   - "Frito" apenas se houver brilho de óleo excessivo ou textura crocante/empanada.
 
-5. RACIOCÍNIO PROPORCIONAL:
-   - Mantenha coerência interna. Se o arroz ocupa 50% do prato e a carne 20%, o peso da carne deve refletir essa proporção volumétrica.
+5. CÁLCULO DE MACRONUTRIENTES E CALORIAS (OBRIGATÓRIO):
+   - VOCÊ DEVE CALCULAR as calorias e macros (proteína, carboidrato, gordura) para CADA INGREDIENTE com base no peso estimado.
+   - VOCÊ DEVE CALCULAR OS TOTAIS no nível principal do JSON somando os ingredientes.
+   - NÃO COPIE OS ZEROS DO TEMPLATE. Substitua os zeros pelos valores numéricos calculados.
 
 🎯 ESTRUTURA DA ANÁLISE POR ITEM:
 Para cada ingrediente, você deve fornecer:
+- Pesos e Macros preenchidos com precisão.
 - Confiança: Baixa, Moderada ou Alta.
-- Observação: Justificativa curta baseada na escala visual (ex: "Porção pequena comparada ao tamanho do prato").
+- Observação: Justificativa curta baseada na escala visual (ex: "Porção pequena comparada ao tamanho").
 
 ⚠️ AVISO OBRIGATÓRIO:
 Ao final do "analysis_comment", você DEVE incluir: "Estimativa com margem de erro de ±20% devido à ausência de balança."
 
 📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
 {
-  "dish_name": "",
-  "total_calories": 0,
-  "total_protein_g": 0,
-  "total_carbs_g": 0,
-  "total_fat_g": 0,
-  "nutrition_score": 0,
+  "dish_name": "Nome descritivo",
+  "total_calories": 500,
+  "total_protein_g": 35,
+  "total_carbs_g": 45,
+  "total_fat_g": 15,
+  "nutrition_score": 8.5,
   "ingredients": [
     {
-      "name": "",
-      "estimated_weight_g": 0,
-      "calories": 0,
-      "protein_g": 0,
-      "carbs_g": 0,
-      "fat_g": 0,
+      "name": "Arroz Branco",
+      "estimated_weight_g": 100,
+      "calories": 130,
+      "protein_g": 2.5,
+      "carbs_g": 28,
+      "fat_g": 0.2,
       "confidence": "Alta",
-      "observation": ""
+      "observation": "Porção média"
     }
   ],
-  "analysis_comment": ""
+  "analysis_comment": "Refeição balanceada. Estimativa com margem de erro de ±20% devido à ausência de balança."
 }
 
-❗ IMPORTANTE: Não retorne texto fora do JSON. SEJA CONCISO em todas as descrições para garantir que o JSON não seja truncado.`;
+❗ IMPORTANTE: Não retorne texto fora do JSON. Substitua os valores de exemplo pelos cálculos reais.`;
 
     const systemPrompt = `Você é um nutricionista brasileiro especialista em estimativa visual de alimentos. Retorne APENAS o JSON solicitado.`;
 
@@ -169,26 +171,28 @@ export const getManualFoodMacros = async (foodDescription: string): Promise<Food
 
 📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
 {
-  "dish_name": "",
-  "total_calories": 0,
-  "total_protein_g": 0,
-  "total_carbs_g": 0,
-  "total_fat_g": 0,
-  "nutrition_score": 0,
+  "dish_name": "Nome descritivo",
+  "total_calories": 350,
+  "total_protein_g": 30,
+  "total_carbs_g": 20,
+  "total_fat_g": 10,
+  "nutrition_score": 8,
   "ingredients": [
     {
-      "name": "",
-      "estimated_weight_g": 0,
-      "calories": 0,
-      "protein_g": 0,
+      "name": "Frango Grelhado",
+      "estimated_weight_g": 100,
+      "calories": 165,
+      "protein_g": 31,
       "carbs_g": 0,
-      "fat_g": 0
+      "fat_g": 3.6
     }
   ],
-  "analysis_comment": ""
+  "analysis_comment": "Análise concluída."
 }
 
-❗ IMPORTANTE: SEJA CONCISO para evitar truncamento.`;
+❗ IMPORTANTE:
+1. SEJA CONCISO para evitar truncamento.
+2. SUBSTITUA OS VALORES DE EXEMPLO (como 350, 30, etc.) pelos CÁLCULOS REAIS exatos da refeição solicitada. NÃO DEIXE ZEROS.`;
 
     const systemPrompt = `Você é um Nutricionista Esportivo Brasileiro especialista em tabelas nutricionais e suplementação (Whey, Creatina, etc).
 
