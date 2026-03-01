@@ -284,7 +284,13 @@ Analise com rigor, mas considere má iluminação ou ausência de pose (relaxado
 - Protrusão abdominal acentuada caindo sobre a cintura.
 - Dobras cutâneas profundas ou presença de estrias.
 
-⚠️ REGRAS DE OURO V16:
+⚠️ REGRAS ABSOLUTAS E INVIOLÁVEIS (HARD LOCKS V17):
+- HARD LOCK 1: Se houver 6 gomos CLARAMENTE visíveis + oblíquo definido + ausência total de flancos ("pneuzinhos") -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 13%. (Ignorar esta regra anulará a análise).
+- HARD LOCK 2: Se houver SEPARAÇÃO CLARA NAS PERNAS (cortes no quadríceps visíveis) -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 11%.
+- HARD LOCK 3: Se houver SERRÁTIL aparente (linha dentada nas laterais visível) -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 12%.
+- HARD LOCK 4: NÃO confunda iluminação noturna, sombras densas ou fundos escuros com retenção ou "bulking". Apenas gordura flácida é gordura.
+
+⚠️ REGRAS DE OURO V17:
 - Abdômen Recortado + Pernas Definidas = 7% a 9% BF.
 - Gomos aparentes mas lisos = 11% a 14% BF.
 - Abdômen totalmente liso mas formato em V = 15% a 19% BF.
