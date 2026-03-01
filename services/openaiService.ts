@@ -86,14 +86,18 @@ Sua tarefa é analisar a imagem e identificar TODOS os alimentos visíveis, segu
    - Use o tamanho relativo do item comparado ao prato (padrão 24-28cm).
    - Espessura do corte e quantidade de pedaços.
 
-3. REGRAS PARA PROTEÍNAS:
-   - Frango grelhado pequeno/fino: 40–80g.
-   - Coxa pequena: 50–100g.
-   - Bife médio: 120-150g.
+3. REFERÊNCIAS VISUAIS DE PORÇÃO BRASILEIRA:
+   - REGRA DO ARROZ/FEIJÃO/MACARRÃO: 1 Colher de Servir = ~40-50g. 1 Concha de Feijão = ~100g. Se for um montinho no prato, estime entre 100g e 150g (salvo pratos gigantes).
+   - REGRAS PARA PROTEÍNAS:
+     * Frango desfiado / carne moída (porção média): 80-100g.
+     * Filé de frango/Bife de boi PEQUENO/fino: 50–80g.
+     * Filé/Bife MÉDIO (tamanho da palma da mão): 90-120g.
+     * Filé/Bife GRANDE (grosso ou ocupando metade do prato): 150-200g+.
+     * Fatias (Queijo/Presunto): ~15 a 20g por fatia.
 
-4. MÉTODOS DE PREPARO:
-   - Classifique como "assado/grelhado" por padrão.
-   - "Frito" apenas se houver brilho de óleo excessivo ou textura crocante/empanada.
+4. MÉTODOS DE PREPARO (IMPACTO CALÓRICO):
+   - Assado/Grelhado por padrão. Adicione +2 a +3g de gordura extra (óleo de preparo) em bifes/frangos grelhados genéricos.
+   - Fritura de imersão (ex: batata frita, à milanesa): Multiplique as calorias base do alimento crú por cerca de 1.5x a 2x devido à absorção de óleo.
 
 5. CÁLCULO DE MACRONUTRIENTES E CALORIAS (OBRIGATÓRIO):
    - VOCÊ DEVE CALCULAR as calorias e macros (proteína, carboidrato, gordura) para CADA INGREDIENTE com base no peso estimado.
@@ -249,51 +253,44 @@ Classifique com base exclusivamente na estrutura e proporção:
 - ENDOMORFO: Estrutura larga, tendência a retenção, aparência compacta, cintura naturalmente espessa.
 ⚠️ Jamais classifique como Ecto se houver ombros largos. Jamais classifique como Endo se o físico for seco e cintura fina.
 
-🎯 ETAPA 2: ESTIMATIVA DE BF% (CALIBRAGEM DE ELITE V15 - HARD LOCKS)
-Analise com rigor de árbitro de fisiculturismo. Use BLOQUEIOS LÓGICOS:
+🎯 ETAPA 2: ESTIMATIVA DE BF% (CALIBRAGEM DE ELITE - COM GRADIENTES)
+Analise com rigor, mas considere má iluminação ou ausência de pose (relaxado). Use a escala contínua abaixo:
 
-1. HARD LOCK: FÍSICO DE ELITE ( < 10% BF)
-Se houver os 3 sinais abaixo simultâneos, o BF é OBRIGATORIAMENTE entre 7% e 9%:
-- Profundidade Abdominal: Gomos "recortados" com sombras profundas (não apenas visíveis).
-- Serrátil/Intercostais: Totalmente aparentes e fundos.
-- Pernas (HARD MARKER): Separação visível entre os músculos da coxa (vasto lateral e reto femoral). Se houver definição na perna, o BF NUNCA pode ser > 11%.
+1. FÍSICO DE ELITE ( < 10% BF ):
+- Abdômen "recortado" com sombras profundas e obliquo aparente.
+- Serrátil visível sem esforço.
+- Pernas com separação muscular (vasto lateral e reto femoral). (Se houver cortes nas pernas, NUNCA estime acima de 11%).
 
-2. HARD LOCK: DEFINIÇÃO CLARA (10-12% BF)
-- 6 gomos aparentes e profundos.
-- Cintura fina e seca.
-- Vascularização clara nos braços e ombros.
-- BLOQUEIO: Se o abdômen for fundo e definido, é ERRO GRAVE estimar > 13%.
+2. DEFINIÇÃO ATLÉTICA ( 11-14% BF ):
+- 4 a 6 gomos do abdômen visíveis, mas não necessariamente "profundos" ou extremamente secos.
+- Cintura ainda atlética. Pode ou não ter vascularização.
+- Linha do oblíquo (V-taper) visível.
 
-3. A VERDADE SOBRE OS 15% BF (CORREÇÃO DE VIÉS)
-- 15% BF é um físico ATLETÍCO porém LISO.
-- Abdômen é plano, gomos superiores aparecem embaçados sob luz forte.
-- NÃO há serrátil profundo. NÃO há separação nas pernas.
-- Se você vê serrátil e intercostais, VOCÊ NÃO PODE ESTIMAR 15%.
+3. OFF-SEASON / BULKING LIMPO ( 15-19% BF ):
+- Físico preenchido/musculoso, mas "liso".
+- Abdômen plano (gomos superiores podem aparecer levemente como sombras sob boa luz, abdominais inferiores sumiram).
+- Braços e peito mantêm o formato anatômico muscular, sem flacidez. Nada de "pneuzinhos" caindo.
 
-4. HARD LOCK: BF ELEVADO (20-25% BF)
-- Ausência total de definição abdominal.
-- Acúmulo leve mas visível nos flancos ("pneuzinhos").
-- Peitoral começa a perder o formato quadrado e ganhar arredondamento por gordura.
+4. FASE DE ACÚMULO INICIAL ( 20-24% BF ):
+- Perda do formato "quadrado" do peitoral e formato muscular geral mais arredondado.
+- Ausência total de marcação abdominal.
+- Presença leve de flancos ("pneuzinhos"), mas sem protrusão enorme do estômago.
 
-5. HARD LOCK: OBESIDADE LEVE A MODERADA (26-34% BF)
-- Cintura visivelmente mais larga que o tórax.
-- Acúmulo significativo na região abdominal inferior e média.
-- Gordura peitoral evidente (pseudo-ginecomastia por gordura).
-- BLOQUEIO: Se a barriga estiver projetada para frente (protrusão abdominal) e cobrir o elástico da calça, o BF é OBRIGATORIAMENTE > 28%.
+5. OBESIDADE LEVE A MODERADA ( 25-30% BF ):
+- Protrusão abdominal começando a se projetar para frente.
+- Cintura frequentemente mais larga que o tórax ou os ombros.
 
-6. HARD LOCK: OBESIDADE ALTA (>35% BF)
-- Protrusão abdominal acentuada e global.
-- Presença de dobras cutâneas (folds) profundas.
-- MARCADOR CRÍTICO: Se houver estrias (stretch marks) visíveis no abdômen ou flancos, o BF é OBRIGATORIAMENTE > 30%, frequentemente > 35%.
-- Acúmulo denso de gordura nas costas, peitoral e pescoço.
+6. OBESIDADE ALTA ( >30% BF ):
+- Protrusão abdominal acentuada caindo sobre a cintura.
+- Dobras cutâneas profundas ou presença de estrias.
 
 ⚠️ REGRAS DE OURO V16:
 - Abdômen Recortado + Pernas Definidas = 7% a 9% BF.
-- Abdômen Fundo + Serrátil total = 10% a 11% BF.
-- Serrátil visível + Pele fina = BF < 12%.
-- Protrusão Abdominal + Largura da Cintura > Ombros = BF > 30%.
-- Estrias Abdominais + Dobras de Pele = BF > 35%.
-- NUNCA subestime a secura de quem tem separação muscular profunda, mas TAMBÉM NUNCA subestime a gordura de quem tem protrusão abdominal e estrias.
+- Gomos aparentes mas lisos = 11% a 14% BF.
+- Abdômen totalmente liso mas formato em V = 15% a 19% BF.
+- Protrusão Abdominal + Largura da Cintura > Ombros = BF > 25%.
+- Estrias Abdominais + Dobras de Pele = BF > 30%.
+- NUNCA subestime a secura de quem tem formato V sem pneuzinhos, nem force BF muito alto só porque não tem abdômen profundo.
 
 🎯 ETAPA 3: COERÊNCIA DE NOTAS (QUALIDADE FÍSICA)
 - Definição: Se BF < 12%, nota DEVE ser ≥ 8/10. Se BF > 30%, nota DEVE ser ≤ 3/10.
