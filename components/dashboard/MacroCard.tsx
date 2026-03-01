@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface MacroCardProps {
     label: string;
@@ -37,63 +38,41 @@ const MacroCard: React.FC<MacroCardProps> = ({
     const progress = hasGoal ? Math.min(100, (value / (goal || 1)) * 100) : 0;
 
     return (
-        <div className="glass-panel p-4 md:p-5 rounded-2xl md:rounded-[2rem] flex flex-col md:items-center md:justify-center hover:-translate-y-1 transition-all duration-300 group shadow-premium hover:shadow-premium-hover min-w-0 dark:bg-zinc-900/40">
-            {/* MOBILE: HORIZONTAL DENSE LAYOUT */}
-            <div className="md:hidden flex flex-col w-full gap-3">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <div
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs border ${activeColor}`}
-                        >
-                            {label.substring(0, 1)}
-                        </div>
-                        <span className="text-[11px] font-black uppercase tracking-widest text-gray-500 dark:text-zinc-400">
-                            {fullLabel}
-                        </span>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-base font-black text-gray-900 dark:text-white">{Math.round(value)}</span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase">{unit}</span>
-                    </div>
-                </div>
+        <div className="relative group overflow-hidden bg-zinc-950/40 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/10 hover:border-white/20 transition-all duration-500 shadow-xl flex flex-col items-center justify-between min-h-[180px]">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 
-                {hasGoal && (
-                    <div className="w-full space-y-1">
-                        <div className="w-full bg-gray-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden border border-black/5 dark:border-white/5">
-                            <div
-                                className={`h-full transition-all duration-1000 ${barColor} shadow-[0_0_10px_rgba(255,255,255,0.1)]`}
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-                        <div className="flex justify-between text-xs font-black text-gray-400 uppercase tracking-tighter">
-                            <span>Consumido</span>
-                            <span>
-                                Meta: {goal}
-                                {unit}
-                            </span>
-                        </div>
-                    </div>
-                )}
+            <div className="w-full flex justify-between items-start mb-4">
+                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] opacity-70">{fullLabel}</span>
+                <div className={`w-2 h-2 rounded-full ${progress > 90 ? 'bg-emerald-400 animate-pulse' : 'bg-white/10'}`}></div>
             </div>
 
-            {/* DESKTOP: ORIGINAL ROUNDED LAYOUT */}
-            <div className="hidden md:flex flex-col items-center justify-center w-full">
-                <div className="w-16 h-16 rounded-full border-[4px] flex items-center justify-center mb-3 transition-all shadow-lg border-gray-100 dark:border-zinc-800">
-                    <span className="text-xl font-black text-gray-900 dark:text-white tracking-tighter">
+            <div className="flex flex-col items-center">
+                <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-serif-premium font-bold text-white tracking-tighter">
                         {Math.round(value)}
                     </span>
+                    <span className="text-emerald-500/50 text-[10px] font-serif-premium italic">{unit}</span>
                 </div>
-                <p className="text-xs font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1">
-                    {fullLabel}
-                </p>
-                {hasGoal && (
-                    <div className="flex items-baseline gap-1 bg-gray-50 dark:bg-white/5 px-2 py-0.5 rounded-lg border border-gray-100 dark:border-white/5">
-                        <span className="text-sm font-black text-gray-900 dark:text-white">{value}</span>
-                        <span className="text-[10px] font-bold text-gray-400 dark:text-zinc-500">
-                            / {goal}
-                            {unit}
-                        </span>
+            </div>
+
+            <div className="w-full mt-6">
+                {hasGoal ? (
+                    <div className="space-y-3">
+                        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progress}%` }}
+                                transition={{ duration: 1.5, ease: "circOut" }}
+                                className="h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                            />
+                        </div>
+                        <div className="flex justify-between items-center text-[9px] font-black text-zinc-500 uppercase tracking-widest">
+                            <span className="opacity-50">Consumo</span>
+                            <span className="text-white/60">Meta: {goal}{unit}</span>
+                        </div>
                     </div>
+                ) : (
+                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden opacity-20"></div>
                 )}
             </div>
         </div>

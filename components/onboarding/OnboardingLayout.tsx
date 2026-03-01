@@ -1,44 +1,52 @@
 
 import React from 'react';
+import PremiumBackground from '../ui/PremiumBackground';
+import { ArrowLeft } from 'lucide-react';
 
 interface OnboardingLayoutProps {
     children: React.ReactNode;
     progress: number; // 0 to 1
     onBack?: () => void;
     showBack?: boolean;
+    intensity?: number;
+    dim?: boolean;
 }
 
-const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children, progress, onBack, showBack = true }) => {
+const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({
+    children,
+    progress,
+    onBack,
+    showBack = true,
+    intensity = 1.0,
+    dim = true
+}) => {
     return (
-        <div className="min-h-[100dvh] w-full bg-[#F3F6F8] dark:bg-zinc-950 text-gray-900 dark:text-white relative flex flex-col items-center overflow-x-hidden transition-colors duration-500">
-            {/* Background Elements - Consistent with Site */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-emerald-50/20 dark:from-zinc-950 dark:via-zinc-900 dark:to-black opacity-40 transition-colors duration-500" />
-            </div>
-
-            {/* Minimalist Progress Bar - Emerald */}
-            <div className="fixed top-0 left-0 w-full h-1 bg-black/5 dark:bg-white/5 z-50">
+        <PremiumBackground intensity={intensity} dim={dim}>
+            {/* Progress Bar Container */}
+            <div className="fixed top-0 left-0 w-full h-1.5 bg-white/5 z-50">
                 <div
-                    className="h-full bg-emerald-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                    className="h-full bg-emerald-500 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(16,185,129,0.5)]"
                     style={{ width: `${progress * 100}%` }}
                 />
             </div>
 
-            <div className="relative z-10 w-full max-w-lg flex flex-col min-h-[100dvh] px-6 py-12 md:py-20 lg:py-24">
+            <div className="relative z-10 w-full max-w-lg mx-auto flex flex-col min-h-screen px-6 py-12 md:py-20">
                 {showBack && (
                     <button
                         onClick={onBack}
-                        className="fixed top-8 left-6 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 backdrop-blur-md hover:bg-black/10 dark:hover:bg-white/10 transition-all active:scale-95 z-50"
+                        className="fixed top-8 left-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 backdrop-blur-xl hover:bg-white/10 transition-all active:scale-95 z-50 group"
                     >
-                        <span className="text-xl pb-0.5">←</span>
+                        <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
                     </button>
                 )}
 
-                <div className="flex-1 flex flex-col justify-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    {children}
+                <div className="flex-1 flex flex-col justify-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <div className="py-8">
+                        {children}
+                    </div>
                 </div>
             </div>
-        </div>
+        </PremiumBackground>
     );
 };
 

@@ -18,89 +18,81 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
     const formatValue = (val: number) => Number(val.toFixed(1));
 
     return (
-        <div className="relative group px-1">
+        <div className="relative group">
+            {/* Glow Effect */}
             <div
-                className={`absolute -inset-1 rounded-[3rem] blur-2xl opacity-20 transition-opacity duration-1000 group-hover:opacity-40 pointer-events-none ${isOverLimit ? 'bg-red-500' : 'bg-emerald-500'
-                    }`}
+                className={`absolute -inset-4 rounded-[3rem] blur-3xl opacity-0 transition-all duration-1000 group-hover:opacity-20 pointer-events-none ${isOverLimit ? 'bg-red-500' : 'bg-emerald-500'}`}
             ></div>
-            <div className="relative glass-panel rounded-[2.5rem] p-8 md:p-12 overflow-hidden border border-white/10 dark:bg-zinc-950/40 backdrop-blur-2xl shadow-3xl">
-                <div className="absolute inset-0 pointer-events-none opacity-5 overflow-hidden">
-                    <div className="w-full h-[1px] bg-white absolute animate-scan-y top-0"></div>
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-20 bg-[length:100%_4px,3px_100%] pointer-events-none"></div>
+
+            <div className="relative bg-zinc-950/40 backdrop-blur-2xl rounded-[2.5rem] p-10 md:p-14 border border-white/10 shadow-2xl overflow-hidden group-hover:border-white/20 transition-all duration-500">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(16,185,129,0.1),transparent)]"></div>
                 </div>
 
                 <div className="relative z-10 flex flex-col items-center">
-                    <div className="flex justify-between items-center w-full mb-10 pb-4 border-b border-white/5">
+                    <div className="flex justify-between items-center w-full mb-12">
                         <div className="flex flex-col">
-                            <span className="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em]">Status Sistema</span>
-                            <div className="flex items-center gap-1.5">
-                                <div
-                                    className={`w-2 h-2 rounded-full animate-pulse ${isOverLimit ? 'bg-red-500 shadow-[0_0_8px_red]' : 'bg-emerald-500 shadow-[0_0_8px_#10b981]'
-                                        }`}
-                                ></div>
-                                <span
-                                    className={`text-[11px] font-black uppercase tracking-widest ${isOverLimit ? 'text-red-500' : 'text-emerald-500 text-shadow-glow'
-                                        }`}
-                                >
-                                    {isOverLimit ? 'Sobrecarga' : 'Otimizado'}
+                            <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2 leading-none">Status do Sistema</span>
+                            <div className="flex items-center gap-2">
+                                <span className={`relative flex h-2 w-2`}>
+                                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOverLimit ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
+                                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isOverLimit ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'}`}></span>
+                                </span>
+                                <span className={`text-[11px] font-black uppercase tracking-widest ${isOverLimit ? 'text-red-500' : 'text-emerald-500'}`}>
+                                    {isOverLimit ? 'Limite Excedido' : 'Performance Otimizada'}
                                 </span>
                             </div>
                         </div>
                         <div className="text-right">
-                            <span className="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em]">Eficiência</span>
-                            <p className="text-xl font-black text-white leading-none">{realPercent.toFixed(0)}%</p>
+                            <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2 leading-none">Consumo Atual</span>
+                            <p className="text-2xl font-serif-premium font-bold text-white leading-none">{realPercent.toFixed(0)}%</p>
                         </div>
                     </div>
 
-                    <div className="relative mb-8 flex flex-col items-center justify-center py-6">
-                        <div className="absolute -inset-10 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-                        <span className="text-gray-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2">Energia Consumida</span>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-5xl md:text-8xl font-black text-white tracking-tighter drop-shadow-[0_0_30px_rgba(255,255,255,0.1)] leading-none">
+                    <div className="relative mb-12 flex flex-col items-center justify-center py-4">
+                        <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.5em] mb-4 opacity-70">Energia Processada</span>
+                        <div className="flex items-baseline gap-3">
+                            <span className="text-7xl md:text-9xl font-serif-premium font-bold text-white tracking-tighter drop-shadow-[0_10px_40px_rgba(255,255,255,0.1)] leading-none">
                                 {formatValue(consumed)}
                             </span>
-                            <span className="text-gray-500 text-lg font-bold">kcal</span>
+                            <span className="text-emerald-500/50 text-xl font-serif-premium italic">kcal</span>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 w-full gap-4 mb-8">
-                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center">
-                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Restante</span>
-                            <span className="text-lg font-black text-white">{Math.max(0, safeGoal - consumed)}</span>
-                            <span className="text-[9px] font-bold text-gray-500 uppercase">kcal</span>
+                    <div className="grid grid-cols-2 w-full gap-6 mb-12">
+                        <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col items-center group/card hover:bg-white/[0.05] transition-colors duration-500">
+                            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-2">Restante</span>
+                            <span className="text-2xl font-serif-premium font-bold text-white">{Math.max(0, safeGoal - consumed)}</span>
                         </div>
-                        <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex flex-col items-center">
-                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Capacidade</span>
-                            <span className="text-lg font-black text-white">{safeGoal}</span>
-                            <span className="text-[9px] font-bold text-gray-500 uppercase">kcal</span>
+                        <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col items-center group/card hover:bg-white/[0.05] transition-colors duration-500">
+                            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-2">Objetivo Final</span>
+                            <span className="text-2xl font-serif-premium font-bold text-white">{safeGoal}</span>
                         </div>
                     </div>
 
-                    <div className="w-full space-y-2 lg:px-4">
+                    <div className="w-full space-y-4">
+                        <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
+                            <div
+                                className={`h-full transition-all duration-1000 ease-out ${isOverLimit ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]'}`}
+                                style={{ width: `${visualPercent}%` }}
+                            />
+                        </div>
                         <div className="flex justify-between items-center px-1">
-                            <div className="flex gap-1.5 md:gap-2">
-                                {[...Array(12)].map((_, i) => (
+                            <div className="flex gap-1">
+                                {[...Array(20)].map((_, i) => (
                                     <div
                                         key={i}
-                                        className={`h-1.5 w-4 md:w-5 rounded-sm transition-all duration-500 ${visualPercent > i * (100 / 12)
-                                            ? isOverLimit
-                                                ? 'bg-red-500 shadow-[0_0_5px_red]'
-                                                : 'bg-emerald-500 shadow-[0_0_5px_#10b981]'
-                                            : 'bg-white/5'
+                                        className={`h-0.5 w-1 rounded-sm transition-all duration-700 ${visualPercent > i * (100 / 20)
+                                            ? isOverLimit ? 'bg-red-500' : 'bg-emerald-500'
+                                            : 'bg-white/10'
                                             }`}
                                     ></div>
                                 ))}
                             </div>
-                            <span className="text-[10px] font-black text-white/30 uppercase tracking-tighter font-mono">
-                                {visualPercent.toFixed(1)}% LOAD
+                            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest opacity-50">
+                                {visualPercent.toFixed(1)}% Load System
                             </span>
-                        </div>
-                        <div className="w-full h-2 md:h-2.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
-                            <div
-                                className={`h-full transition-all duration-1000 ease-out ${isOverLimit ? 'bg-red-500' : 'bg-emerald-500'
-                                    } shadow-[0_0_10px_rgba(16,185,129,0.5)]`}
-                                style={{ width: `${visualPercent}%` }}
-                            />
                         </div>
                     </div>
                 </div>

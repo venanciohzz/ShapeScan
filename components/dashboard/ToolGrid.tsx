@@ -12,29 +12,35 @@ interface ActionButtonProps {
 const ActionButton: React.FC<ActionButtonProps> = ({ onClick, icon, title, subtitle, premium }) => (
     <button
         onClick={onClick}
-        className="glass-panel glow-hover w-full p-5 md:p-6 rounded-3xl md:rounded-[2rem] text-center md:text-left hover:bg-white/80 dark:hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden group border border-transparent hover:border-emerald-500/30 shadow-premium hover:shadow-premium-hover h-full flex flex-col items-center md:items-start justify-center md:justify-between min-w-0 dark:bg-zinc-900/60"
+        className="relative overflow-hidden group bg-zinc-950/40 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] border border-white/10 hover:border-emerald-500/30 transition-all duration-500 shadow-xl flex flex-col items-center md:items-start text-center md:text-left h-full active:scale-[0.98]"
     >
-        {/* Icon Wrapper */}
-        <div className="relative mb-2 md:mb-3 flex justify-center w-full md:w-auto md:block">
-            <span className="text-3xl md:text-4xl group-hover:scale-110 transition-transform duration-300 filter drop-shadow-lg block">
-                {icon}
-            </span>
-            {premium && (
-                <span className="absolute -top-1 -right-3 md:static md:ml-2 bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm animate-pulse">
-                    Pro
-                </span>
-            )}
-        </div>
+        {/* Hover Glow */}
+        <div className="absolute -inset-20 bg-emerald-500/10 rounded-full blur-[60px] opacity-0 group-hover:opacity-40 transition-opacity duration-1000"></div>
 
-        <div className="min-w-0 w-full flex flex-col items-center md:items-start">
-            <h3 className="font-black text-sm md:text-base leading-tight text-gray-900 dark:text-white mb-1 w-full">
-                {title}
-            </h3>
-            {subtitle && (
-                <p className="text-[11px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-tight w-full">
-                    {subtitle}
-                </p>
-            )}
+        <div className="relative z-10 w-full">
+            <div className="flex justify-between items-start mb-6 md:mb-10">
+                <span className="text-4xl md:text-5xl filter grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-110">
+                    {icon}
+                </span>
+                {premium && (
+                    <div className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/30 text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                        Pro
+                    </div>
+                )}
+            </div>
+
+            <div className="flex flex-col">
+                <h3 className="font-serif-premium font-bold text-lg md:text-xl text-white mb-2 tracking-tight group-hover:text-emerald-400 transition-colors">
+                    {title}
+                </h3>
+                {subtitle && (
+                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest leading-relaxed opacity-60">
+                        {subtitle}
+                    </p>
+                )}
+            </div>
+
+            <div className="mt-6 w-8 h-0.5 bg-white/10 group-hover:w-full group-hover:bg-emerald-500/30 transition-all duration-700"></div>
         </div>
     </button>
 );
@@ -45,57 +51,64 @@ interface ToolGridProps {
 
 const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate }) => {
     return (
-        <div className="space-y-8">
-            {/* PREMIUM TOOLS (Unified) */}
-            <div>
-                <h2 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-4 ml-1">
-                    Ferramentas Premium
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+        <div className="space-y-12 pb-20">
+            {/* PREMIUM TOOLS */}
+            <section>
+                <div className="flex items-center gap-4 mb-8">
+                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.5em] opacity-30">
+                        Inteligência Artificial
+                    </h2>
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <ActionButton
                         onClick={() => onNavigate('food_ai')}
                         icon="🍽️"
-                        title="Scanner de Refeição"
-                        subtitle="Calcule macros com IA"
+                        title="Scanner de IA"
+                        subtitle="Análise nutricional"
                         premium={true}
                     />
                     <ActionButton
                         onClick={() => onNavigate('shape')}
                         icon="💪"
-                        title="Avalie seu físico"
-                        subtitle="Análise corporal completa"
+                        title="Body Scan"
+                        subtitle="Morfologia física"
                         premium={true}
                     />
                     <ActionButton
                         onClick={() => onNavigate('chat')}
                         icon="👤"
-                        title="Personal IA"
-                        subtitle="Dieta e treino inteligente"
+                        title="IA Coach"
+                        subtitle="Suporte 24/7"
                         premium={true}
                     />
                     <ActionButton
                         onClick={() => onNavigate('evolution')}
                         icon="📈"
-                        title="Sua Evolução"
-                        subtitle="Histórico de progresso"
+                        title="Metrics"
+                        subtitle="Analytics pessoal"
                         premium={true}
                     />
                 </div>
-            </div>
+            </section>
 
-            <div>
-                <h2 className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-4 ml-1">
-                    Ferramentas Gratuitas
-                </h2>
-                <div className="grid grid-cols-2 gap-3 mb-12">
-                    <ActionButton onClick={() => onNavigate('food_manual')} icon="✍️" title="Add Manual" />
-                    <ActionButton onClick={() => onNavigate('saved_meals')} icon="💾" title="Refeições Salvas" />
-                    <ActionButton onClick={() => onNavigate('water_calc')} icon="💧" title="Meta de Água" />
-                    <ActionButton onClick={() => onNavigate('bmi_calc')} icon="📐" title="Calc. IMC" />
-                    <ActionButton onClick={() => onNavigate('calorie_calc')} icon="🔥" title="Gasto Calórico" />
-                    <ActionButton onClick={() => onNavigate('calorie_plan')} icon="🎯" title="Minha Meta" />
+            {/* FREE TOOLS */}
+            <section>
+                <div className="flex items-center gap-4 mb-8">
+                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.5em] opacity-30">
+                        Sistema Base
+                    </h2>
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
                 </div>
-            </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <ActionButton onClick={() => onNavigate('food_manual')} icon="✍️" title="Manual" />
+                    <ActionButton onClick={() => onNavigate('saved_meals')} icon="💾" title="Database" />
+                    <ActionButton onClick={() => onNavigate('water_calc')} icon="💧" title="H2O" />
+                    <ActionButton onClick={() => onNavigate('bmi_calc')} icon="📐" title="IMC" />
+                    <ActionButton onClick={() => onNavigate('calorie_calc')} icon="🔥" title="BMR" />
+                    <ActionButton onClick={() => onNavigate('calorie_plan')} icon="🎯" title="Focus" />
+                </div>
+            </section>
         </div>
     );
 };

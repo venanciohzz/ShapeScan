@@ -111,7 +111,7 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
 
             {/* Selection highlight */}
             <div
-                className="absolute inset-x-2 pointer-events-none z-10 rounded-2xl bg-black/[0.06] dark:bg-white/[0.08]"
+                className="absolute inset-x-4 pointer-events-none z-10 rounded-3xl bg-white/[0.07] border border-white/10 shadow-[0_0_30px_-10px_rgba(255,255,255,0.2)]"
                 style={{ top: itemHeight * PAD, height: itemHeight }}
             />
 
@@ -132,9 +132,9 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
                     const diff = Math.abs(i - localIndex);
                     const isSelected = i === localIndex;
 
-                    const opacityMap: Record<number, number> = { 0: 1, 1: 0.4, 2: 0.18 };
-                    const opacity = opacityMap[diff] ?? 0.06;
-                    const scale = isSelected ? 1 : diff === 1 ? 0.88 : 0.75;
+                    const opacityMap: Record<number, number> = { 0: 1, 1: 0.3, 2: 0.1 };
+                    const opacity = opacityMap[diff] ?? 0.03;
+                    const scale = isSelected ? 1 : diff === 1 ? 0.9 : 0.8;
                     const label = formatOption ? formatOption(option) : `${option}${unit ? ` ${unit}` : ''}`;
 
                     return (
@@ -148,13 +148,13 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
                                 scrollSnapAlign: 'center',
                                 opacity,
                                 transform: `scale(${scale})`,
-                                transition: 'opacity 0.2s ease, transform 0.2s ease',
+                                transition: 'all 0.4s cubic-bezier(0.23, 1, 0.32, 1)',
                             }}
                         >
                             <span
-                                className={`whitespace-nowrap ${isSelected
-                                    ? 'text-[21px] font-bold text-gray-900 dark:text-white'
-                                    : 'text-[16px] font-medium text-gray-500 dark:text-zinc-400'
+                                className={`whitespace-nowrap transition-all duration-500 ${isSelected
+                                    ? 'text-2xl font-serif-premium font-bold text-white'
+                                    : 'text-lg font-bold text-zinc-500'
                                     }`}
                             >
                                 {label}
@@ -168,8 +168,8 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
             </div>
 
             {/* Gradient fades */}
-            <div className="absolute top-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-b from-[#F3F6F8] dark:from-zinc-950 to-transparent" style={{ height: itemHeight * PAD }} />
-            <div className="absolute bottom-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-t from-[#F3F6F8] dark:from-zinc-950 to-transparent" style={{ height: itemHeight * PAD }} />
+            <div className="absolute top-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-b from-zinc-950 to-transparent opacity-80" style={{ height: itemHeight * PAD }} />
+            <div className="absolute bottom-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-t from-zinc-950 to-transparent opacity-80" style={{ height: itemHeight * PAD }} />
         </div>
     );
 };

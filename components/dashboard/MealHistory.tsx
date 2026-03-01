@@ -15,52 +15,72 @@ const MealHistory: React.FC<MealHistoryProps> = ({
     formatValue,
 }) => {
     return (
-        <div className="space-y-4 pb-8">
-            <h2 className="text-xl font-black mb-6 flex items-center gap-2 tracking-tight text-gray-900 dark:text-white">
-                <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
-                Refeições de Hoje
-            </h2>
+        <div className="space-y-6 pb-20">
+            <div className="flex items-center gap-4 mb-8">
+                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.5em] opacity-30">
+                    Registros Recentes
+                </h2>
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
+            </div>
+
             {todayLogs.length > 0 ? (
-                todayLogs.map((log) => (
-                    <div
-                        key={log.id}
-                        className="glass-panel p-4 rounded-2xl flex justify-between items-center group hover:border-emerald-500/50 transition-colors min-w-0"
-                    >
-                        <div className="flex-1 min-w-0 pr-3">
-                            <p className="font-bold text-gray-900 dark:text-white leading-tight truncate text-base">
-                                {log.name}
-                            </p>
-                            <p className="text-xs font-bold text-emerald-600 mt-1 truncate">
-                                {formatValue(log.protein)}P • {formatValue(log.carbs)}C • {formatValue(log.fat)}G
-                            </p>
-                            <div className="flex gap-4 mt-3">
-                                <button
-                                    onClick={() => onEditLog(log)}
-                                    className="text-[10px] font-black text-gray-400 hover:text-emerald-500 uppercase tracking-widest p-1"
-                                >
-                                    Editar
-                                </button>
-                                <button
-                                    onClick={() => onDeleteLog(log.id)}
-                                    className="text-[10px] font-black text-red-400 hover:text-red-500 uppercase tracking-widest p-1"
-                                >
-                                    Excluir
-                                </button>
+                <div className="space-y-4">
+                    {todayLogs.map((log) => (
+                        <div
+                            key={log.id}
+                            className="group relative overflow-hidden bg-zinc-950/40 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/10 hover:border-emerald-500/30 transition-all duration-500 shadow-xl flex justify-between items-center active:scale-[0.99]"
+                        >
+                            {/* Hover Glow */}
+                            <div className="absolute -inset-10 bg-emerald-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+
+                            <div className="relative z-10 flex-1 min-w-0 pr-6">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                                    <p className="font-serif-premium font-bold text-lg text-white truncate">
+                                        {log.name}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest opacity-60">
+                                        Macros Detectados:
+                                    </span>
+                                    <p className="text-[10px] font-black text-emerald-500/80 tracking-widest uppercase">
+                                        {formatValue(log.protein)}P <span className="text-zinc-700 mx-1">/</span> {formatValue(log.carbs)}C <span className="text-zinc-700 mx-1">/</span> {formatValue(log.fat)}G
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-4 mt-6">
+                                    <button
+                                        onClick={() => onEditLog(log)}
+                                        className="text-[9px] font-black text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors"
+                                    >
+                                        Ajustar
+                                    </button>
+                                    <button
+                                        onClick={() => onDeleteLog(log.id)}
+                                        className="text-[9px] font-black text-red-500/40 hover:text-red-500 uppercase tracking-[0.2em] transition-colors"
+                                    >
+                                        Remover
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="relative z-10 text-right shrink-0">
+                                <p className="font-serif-premium font-bold text-3xl text-white tracking-tighter">
+                                    {formatValue(log.calories)}
+                                </p>
+                                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest opacity-50">kcal</p>
                             </div>
                         </div>
-                        <div className="text-right shrink-0">
-                            <p className="font-black text-lg md:text-xl text-gray-900 dark:text-white">
-                                {formatValue(log.calories)}
-                            </p>
-                            <p className="text-[9px] font-bold text-gray-400 uppercase">kcal</p>
-                        </div>
-                    </div>
-                ))
+                    ))}
+                </div>
             ) : (
-                <div className="glass-panel p-10 rounded-[2.5rem] text-center border-dashed border-2 border-gray-300 dark:border-zinc-700">
-                    <p className="text-4xl mb-3">🍽️</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-                        Nenhum registro hoje.
+                <div className="bg-zinc-950/20 backdrop-blur-xl p-16 rounded-[3rem] text-center border border-dashed border-white/5">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl filter grayscale opacity-30">
+                        🍽️
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 opacity-50">
+                        Nenhum registro no cache
                     </p>
                 </div>
             )}

@@ -3,6 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import { User } from '../types';
 import { db } from '../services/db';
 import { sanitizeInput } from '../utils/security';
+import PremiumBackground from './ui/PremiumBackground';
+import LetterPuller from './ui/LetterPuller';
 
 interface AuthProps {
   onLogin: (user: User, isNew: boolean) => void;
@@ -93,65 +95,69 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center py-12 px-6 md:p-12 overflow-y-auto scrollbar-hide">
-      {/* Wrapper with margin auto to ensure it doesn't stick to top on small screens */}
-      <div className="w-full max-w-md my-auto relative">
+    <PremiumBackground className="flex items-center justify-center p-6" dim={true} intensity={1.0}>
+      <div className="w-full max-w-md relative z-20">
+        <div className="glass-card w-full p-8 md:p-12 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
+          {/* Subtle decoration */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
-        <div className="glass-panel w-full p-6 md:p-10 rounded-[2.5rem] animate-in zoom-in-95 duration-500 relative border border-white/10 shadow-2xl glow-hover">
-
-          {/* Glow Effect */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
-
-          <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm hover:scale-105 transition-all active:scale-90 mb-8 text-black dark:text-white">
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-zinc-300" />
+          <button
+            onClick={onBack}
+            className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:scale-105 transition-all active:scale-95 mb-10 text-white group"
+          >
+            <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
           </button>
 
-          <div className="mb-8">
-            <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tighter mb-2 leading-tight">
-              {isRegistering ? 'Crie sua conta' : 'Login'}
+          <div className="mb-10">
+            <h2 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
+              <LetterPuller text={isRegistering ? 'Crie sua conta' : 'Acessar Conta'} />
             </h2>
-            <p className="text-gray-500 dark:text-zinc-400 font-medium text-sm md:text-base">
-              ShapeScan: Evolução sem milagres.
+            <p className="text-zinc-400 font-medium text-sm md:text-base uppercase tracking-widest opacity-70">
+              Evolução Física Inteligente
             </p>
           </div>
 
-          {error && <p className="bg-red-500/10 text-red-500 p-4 rounded-xl mb-6 text-xs font-bold border border-red-500/20">{error}</p>}
+          {error && (
+            <div className="bg-red-500/10 text-red-400 p-4 rounded-2xl mb-8 text-xs font-bold border border-red-500/20 animate-in fade-in slide-in-from-top-2">
+              {error}
+            </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {isRegistering && (
               <>
-                <div>
-                  <label className="block text-[10px] font-black text-gray-500 dark:text-zinc-500 uppercase tracking-widest mb-1.5 ml-2">Nome Completo</label>
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">Nome Completo</label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-5 py-3.5 md:py-4 rounded-2xl input-premium outline-none font-bold text-base md:text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:bg-zinc-800/50 dark:border-zinc-700 dark:focus:border-emerald-500 dark:focus:bg-zinc-900 transition-all"
-                    placeholder="Seu nome"
+                    className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
+                    placeholder="Seu nome completo"
                     required
                     disabled={isLoading}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-zinc-500 uppercase tracking-widest mb-1.5 ml-2">Usuário</label>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">Usuário</label>
                     <input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full px-5 py-3.5 md:py-4 rounded-2xl input-premium outline-none font-bold text-base md:text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:bg-zinc-800/50 dark:border-zinc-700 dark:focus:border-emerald-500 dark:focus:bg-zinc-900 transition-all"
+                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
                       placeholder="@usuario"
                       required
                       disabled={isLoading}
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 dark:text-zinc-500 uppercase tracking-widest mb-1.5 ml-2">WhatsApp</label>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">WhatsApp</label>
                     <input
                       type="tel"
                       value={phone}
                       onChange={handlePhoneChange}
-                      className="w-full px-5 py-3.5 md:py-4 rounded-2xl input-premium outline-none font-bold text-base md:text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:bg-zinc-800/50 dark:border-zinc-700 dark:focus:border-emerald-500 dark:focus:bg-zinc-900 transition-all"
+                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
                       placeholder="(00) 00000-0000"
                       required
                       disabled={isLoading}
@@ -160,51 +166,52 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
                 </div>
               </>
             )}
-            <div>
-              <label className="block text-[10px] font-black text-gray-500 dark:text-zinc-500 uppercase tracking-widest mb-1.5 ml-2">E-mail</label>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">E-mail Corporativo</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-5 py-3.5 md:py-4 rounded-2xl input-premium outline-none font-bold text-base md:text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:bg-zinc-800/50 dark:border-zinc-700 dark:focus:border-emerald-500 dark:focus:bg-zinc-900 transition-all"
+                className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
                 placeholder="exemplo@email.com"
                 required
                 disabled={isLoading}
               />
             </div>
-            <div>
-              <label className="block text-[10px] font-black text-gray-500 dark:text-zinc-500 uppercase tracking-widest mb-1.5 ml-2">Senha</label>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">Senha Segura</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-5 py-3.5 md:py-4 rounded-2xl input-premium outline-none font-bold text-base md:text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:bg-zinc-800/50 dark:border-zinc-700 dark:focus:border-emerald-500 dark:focus:bg-zinc-900 transition-all"
+                className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
               />
             </div>
+
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white py-4 md:py-5 rounded-2xl font-black text-base md:text-lg hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] transition-all uppercase tracking-tight active:scale-[0.98] mt-4 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-white text-zinc-950 py-5 rounded-full font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] mt-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center uppercase tracking-widest text-xs"
             >
-              {isLoading ? 'Conectando...' : (isRegistering ? 'Iniciar minha análise' : 'Acessar App')}
+              {isLoading ? 'Autenticando...' : (isRegistering ? 'Iniciar Minha Evolução' : 'Entrar no Sistema')}
             </button>
           </form>
 
-          <div className="mt-8 text-center">
+          <div className="mt-10 text-center">
             <button
               onClick={() => setIsRegistering(!isRegistering)}
               disabled={isLoading}
-              className="text-emerald-600 font-bold text-xs uppercase tracking-widest hover:text-emerald-500 transition-colors"
+              className="text-zinc-400 font-bold text-[10px] uppercase tracking-[0.2em] hover:text-emerald-400 transition-colors"
             >
-              {isRegistering ? 'Já tem conta? Faça login' : 'Novo por aqui? Cadastre-se'}
+              {isRegistering ? 'Já possui acesso? Clique aqui' : 'Não tem conta? Cadastre-se agora'}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </PremiumBackground>
   );
 };
 

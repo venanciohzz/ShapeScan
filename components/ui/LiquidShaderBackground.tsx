@@ -203,7 +203,11 @@ class App {
     }
 }
 
-export const LiquidShaderBackground: React.FC = () => {
+interface LiquidShaderBackgroundProps {
+    intensity?: number;
+}
+
+export const LiquidShaderBackground: React.FC<LiquidShaderBackgroundProps> = ({ intensity = 2.2 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<any>(null);
 
@@ -211,11 +215,19 @@ export const LiquidShaderBackground: React.FC = () => {
         const container = containerRef.current;
         if (!container) return;
 
-        if (appRef.current) appRef.current.cleanup();
+        if (appRef.current) {
+            appRef.current.cleanup();
+        }
         appRef.current = new App(container);
 
         return () => { if (appRef.current) appRef.current.cleanup(); };
     }, []);
+
+    useEffect(() => {
+        if (appRef.current && appRef.current.gradientBackground) {
+            appRef.current.gradientBackground.uniforms.uIntensity.value = intensity;
+        }
+    }, [intensity]);
 
     return (
         <div className="fixed inset-0 pointer-events-none z-0">
@@ -225,8 +237,8 @@ export const LiquidShaderBackground: React.FC = () => {
                 style={{ pointerEvents: 'auto' }}
             />
             {/* Overlay to ensure readability and blend */}
-            <div className="absolute inset-0 bg-black/10 mix-blend-multiply z-10 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-zinc-950/80 z-20 pointer-events-none" />
+            <div className="absolute inset-0 bg-black/20 mix-blend-multiply z-10 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-zinc-950/90 z-20 pointer-events-none" />
         </div>
     );
 };
