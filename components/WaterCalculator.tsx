@@ -1,6 +1,9 @@
-
 import React, { useState } from 'react';
 import { User } from '../types';
+import PremiumBackground from './ui/PremiumBackground';
+import LetterPuller from './ui/LetterPuller';
+import { ArrowLeft, Droplets, Activity, CheckCircle2, Save, ChevronDown, Waves } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface WaterCalculatorProps {
   user: User;
@@ -17,7 +20,6 @@ const WaterCalculator: React.FC<WaterCalculatorProps> = ({ user, onBack, onUpdat
 
   const calculate = () => {
     setIsSaved(false);
-    // FIX: Comma handling
     const w = parseFloat(weight.replace(',', '.'));
     if (w > 0) {
       let total = w * 35;
@@ -39,45 +41,126 @@ const WaterCalculator: React.FC<WaterCalculatorProps> = ({ user, onBack, onUpdat
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-8 md:pt-14 pb-24 text-black dark:text-white">
-      <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm hover:scale-105 transition-all active:scale-95 mb-6 text-black dark:text-white">
-        <span className="text-lg pb-0.5">←</span>
-      </button>
-      
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-3xl font-black text-black dark:text-white tracking-tight">Hidratação Inteligente</h1>
-      </div>
+    <PremiumBackground className="flex flex-col p-6 overflow-y-auto" dim={true} intensity={1.0}>
+      <div className="w-full max-w-lg mx-auto py-12 md:py-20 relative z-10">
 
-      <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2.5rem] shadow-xl border-2 border-cyan-500/30 space-y-6">
-        <div><label className="block text-[10px] font-black uppercase tracking-widest mb-2">Peso (kg)</label><input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-gray-100 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 font-bold text-black dark:text-white" /></div>
-        <div>
-          <label className="block text-[10px] font-black uppercase tracking-widest mb-2">Atividade</label>
-          <div className="relative">
-            <select value={activity} onChange={e => setActivity(e.target.value)} className="w-full p-4 rounded-2xl border-2 border-gray-100 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 font-bold text-black dark:text-white appearance-none relative z-10 bg-transparent">
-                <option value="1.2">Sedentário</option>
-                <option value="1.375">Leve</option>
-                <option value="1.55">Moderado</option>
-                <option value="1.725">Intenso</option>
-                <option value="1.9">Atleta</option>
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-0 pointer-events-none text-gray-400">
-               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        {/* Navigation */}
+        <button
+          onClick={onBack}
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 mb-10 text-white group"
+        >
+          <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
+        </button>
+
+        {/* Title Section */}
+        <div className="mb-12">
+          <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
+            <LetterPuller text="Hidratação" />
+          </h1>
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+            Inteligência Metabólica
+          </p>
+        </div>
+
+        {/* Liquid Glass Card */}
+        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+          {/* Subtle Ambient Glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none origin-center" />
+
+          <div className="space-y-8 relative z-10">
+            {/* Weight Input */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">
+                <Activity className="w-3 h-3 text-emerald-500" /> Peso Corporal
+              </label>
+              <div className="relative group">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={weight}
+                  onChange={e => setWeight(e.target.value)}
+                  placeholder="00.0"
+                  className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-xl text-white placeholder:text-zinc-700"
+                />
+                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-500 font-black text-xs uppercase tracking-widest">kg</span>
+              </div>
             </div>
+
+            {/* Activity Level Selector */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">
+                <Droplets className="w-3 h-3 text-emerald-500" /> Nível de Desgaste
+              </label>
+              <div className="relative group">
+                <select
+                  value={activity}
+                  onChange={e => setActivity(e.target.value)}
+                  className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-lg text-white appearance-none cursor-pointer"
+                >
+                  <option value="1.2" className="bg-zinc-900">Sedentário (-250ml)</option>
+                  <option value="1.375" className="bg-zinc-900">Leve (+0ml)</option>
+                  <option value="1.55" className="bg-zinc-900">Moderado (+500ml)</option>
+                  <option value="1.725" className="bg-zinc-900">Intenso (+750ml)</option>
+                  <option value="1.9" className="bg-zinc-900">Atleta (+1L)</option>
+                </select>
+                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none group-hover:text-emerald-500 transition-colors" />
+              </div>
+            </div>
+
+            {/* Calculate Button */}
+            <button
+              onClick={calculate}
+              className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
+            >
+              Consultar Matriz de Hidratação
+            </button>
+
+            {/* Result Area */}
+            <AnimatePresence>
+              {calculatedGoal && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="pt-8 mt-4 border-t border-white/5"
+                >
+                  <div className="bg-emerald-500/10 p-8 rounded-[2.5rem] border border-emerald-500/20 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
+                    <Waves className="w-8 h-8 text-emerald-500 mx-auto mb-4 opacity-70 animate-bounce" />
+
+                    <div className="flex flex-col gap-1 items-center">
+                      <span className="text-[10px] font-black text-emerald-500/70 uppercase tracking-[0.4em]">Protocolo Diário</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-6xl font-serif-premium font-bold text-white">{calculatedGoal}</span>
+                        <span className="text-xl font-bold text-emerald-500 uppercase tracking-tighter">ml</span>
+                      </div>
+                    </div>
+
+                    {!isSaved ? (
+                      <button
+                        onClick={handleSave}
+                        className="mt-8 flex items-center justify-center gap-3 w-full py-5 bg-emerald-500 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-400 active:scale-95 transition-all shadow-[0_15px_30px_rgba(16,185,129,0.2)]"
+                      >
+                        <Save className="w-4 h-4" /> Sincronizar com Diário
+                      </button>
+                    ) : (
+                      <div className="mt-8 flex items-center justify-center gap-3 w-full py-5 bg-zinc-950/50 text-emerald-500 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] border border-emerald-500/20">
+                        <CheckCircle2 className="w-4 h-4" /> Sincronizado
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
-        <button onClick={calculate} className="w-full py-5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest">Calcular Meta</button>
 
-        {calculatedGoal && (
-          <div className="mt-8 pt-8 border-t-2 border-dashed border-gray-100 dark:border-zinc-800 animate-in fade-in">
-            <div className="bg-cyan-50 dark:bg-cyan-900/10 p-6 rounded-3xl border border-cyan-100 dark:border-cyan-800 text-center mb-6">
-               <p className="text-5xl font-black text-cyan-600 dark:text-cyan-400">{calculatedGoal} <span className="text-sm">ml</span></p>
-               <p className="text-xs text-gray-500 mt-2">Recomendação Diária</p>
-            </div>
-            {!isSaved ? <button onClick={handleSave} className="w-full py-5 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase">Aplicar Meta</button> : <div className="bg-emerald-50 dark:bg-emerald-900/30 p-6 rounded-2xl text-center text-emerald-600 font-black">Meta Aplicada! 🚀</div>}
-          </div>
-        )}
+        <p className="text-center text-[9px] font-black text-zinc-600 uppercase tracking-[0.5em] mt-10 opacity-50 px-6">
+          ShapeScan Professional Matrix System
+        </p>
       </div>
-    </div>
+    </PremiumBackground>
   );
 };
+
 export default WaterCalculator;

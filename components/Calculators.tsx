@@ -1,5 +1,8 @@
-
 import React, { useState } from 'react';
+import PremiumBackground from './ui/PremiumBackground';
+import LetterPuller from './ui/LetterPuller';
+import { ArrowLeft, Scale, Activity, Flame, ChevronDown, CheckCircle2, User, UserCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const BMICalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [weight, setWeight] = useState('');
@@ -7,7 +10,6 @@ export const BMICalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [result, setResult] = useState<{ bmi: number; label: string } | null>(null);
 
   const calculate = () => {
-    // FIX: Comma handling
     const w = parseFloat(weight.replace(',', '.'));
     const h = parseFloat(height.replace(',', '.')) / 100;
     if (w > 0 && h > 0) {
@@ -22,25 +24,50 @@ export const BMICalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-8 md:pt-14 pb-24 text-black dark:text-white">
-      <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm hover:scale-105 transition-all active:scale-95 mb-6 text-black dark:text-white">
-        <span className="text-lg pb-0.5">←</span>
-      </button>
+    <PremiumBackground className="flex flex-col p-6 overflow-y-auto" dim={true} intensity={1.0}>
+      <div className="w-full max-w-lg mx-auto py-12 md:py-20 relative z-10">
+        <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 mb-10 text-white group">
+          <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
+        </button>
 
-      <h1 className="text-3xl font-black mb-8 text-black dark:text-white tracking-tight">Calculadora de IMC</h1>
-      <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-xl border-2 border-emerald-600 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 space-y-6">
-        <div><label className="block text-[10px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-2">Seu Peso (kg)</label><input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full p-5 rounded-2xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 outline-none focus:border-emerald-600 font-bold text-black dark:text-white" placeholder="70" /></div>
-        <div><label className="block text-[10px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-2">Sua Altura (cm)</label><input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} className="w-full p-5 rounded-2xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 outline-none focus:border-emerald-600 font-bold text-black dark:text-white" placeholder="175" /></div>
-        <button onClick={calculate} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-emerald-100 dark:shadow-none hover:bg-emerald-700 transition-all uppercase tracking-tight">Calcular Agora</button>
-        {result && (
-          <div className="mt-10 text-center p-8 bg-emerald-50 dark:bg-emerald-900/30 rounded-3xl animate-in zoom-in duration-500 border-2 border-emerald-100 dark:border-emerald-800 shadow-inner">
-            <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase mb-2 tracking-widest">Resultado</p>
-            <p className="text-5xl font-black text-black dark:text-white mb-2">{result.bmi.toFixed(1)}</p>
-            <p className="font-black text-emerald-700 dark:text-emerald-500 text-sm">{result.label.toUpperCase()}</p>
+        <div className="mb-12">
+          <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
+            <LetterPuller text="Índice IMC" />
+          </h1>
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+            Análise de Massa Corporal
+          </p>
+        </div>
+
+        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+
+          <div className="space-y-8 relative z-10">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Peso Corporal (kg)</label>
+              <input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-xl text-white placeholder:text-zinc-800" placeholder="00.0" />
+            </div>
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Altura Corporal (cm)</label>
+              <input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-xl text-white placeholder:text-zinc-800" placeholder="175" />
+            </div>
+            <button onClick={calculate} className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all mt-4">Processar Matriz</button>
+
+            <AnimatePresence>
+              {result && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-10 p-8 bg-emerald-500/10 rounded-[2.5rem] border border-emerald-500/20 text-center relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
+                  <Scale className="w-8 h-8 text-emerald-500 mx-auto mb-4 opacity-70" />
+                  <p className="text-[10px] font-black text-emerald-500/70 uppercase mb-2 tracking-[0.3em]">Score Identificado</p>
+                  <p className="text-6xl font-serif-premium font-bold text-white mb-2">{result.bmi.toFixed(1)}</p>
+                  <p className="font-black text-emerald-500 text-xs uppercase tracking-[0.4em]">{result.label}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+    </PremiumBackground>
   );
 };
 
@@ -53,7 +80,6 @@ export const DailyCalorieCalculator: React.FC<{ onBack: () => void }> = ({ onBac
   const [calories, setCalories] = useState<number | null>(null);
 
   const calculate = () => {
-    // FIX: Comma handling
     const w = parseFloat(weight.replace(',', '.'));
     const h = parseFloat(height.replace(',', '.'));
     const a = parseFloat(age.replace(',', '.'));
@@ -65,32 +91,78 @@ export const DailyCalorieCalculator: React.FC<{ onBack: () => void }> = ({ onBac
   };
 
   return (
-    <div className="max-w-md mx-auto px-6 py-8 md:pt-14 pb-24 text-black dark:text-white">
-      <button onClick={onBack} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/50 dark:bg-white/10 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-sm hover:scale-105 transition-all active:scale-95 mb-6 text-black dark:text-white">
-        <span className="text-lg pb-0.5">←</span>
-      </button>
+    <PremiumBackground className="flex flex-col p-6 overflow-y-auto" dim={true} intensity={1.0}>
+      <div className="w-full max-w-lg mx-auto py-12 md:py-20 relative z-10">
+        <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 mb-10 text-white group">
+          <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
+        </button>
 
-      <h1 className="text-3xl font-black mb-8 text-black dark:text-white tracking-tight">Gasto Calórico Diário</h1>
-      <div className="bg-white dark:bg-zinc-900 p-10 rounded-[2.5rem] shadow-xl border-2 border-emerald-600 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 space-y-6">
-        <div className="flex gap-4 p-1 bg-gray-100 dark:bg-zinc-800 rounded-2xl mb-4">
-          <button onClick={() => setGender('male')} className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${gender === 'male' ? 'bg-white dark:bg-zinc-700 shadow-md text-emerald-600' : 'text-black dark:text-zinc-400'}`}>Masculino</button>
-          <button onClick={() => setGender('female')} className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${gender === 'female' ? 'bg-white dark:bg-zinc-700 shadow-md text-emerald-600' : 'text-black dark:text-zinc-400'}`}>Feminino</button>
+        <div className="mb-12">
+          <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
+            <LetterPuller text="Bio Termo" />
+          </h1>
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+            Gasto Calórico Estimado
+          </p>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-[10px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-2">Peso (kg)</label><input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full p-5 rounded-2xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 outline-none focus:border-emerald-600 font-bold text-black dark:text-white" /></div>
-          <div><label className="block text-[10px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-2">Altura (cm)</label><input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} className="w-full p-5 rounded-2xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 outline-none focus:border-emerald-600 font-bold text-black dark:text-white" /></div>
-        </div>
-        <div><label className="block text-[10px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-2">Idade</label><input type="text" inputMode="decimal" value={age} onChange={e => setAge(e.target.value)} className="w-full p-5 rounded-2xl border-2 border-emerald-500 bg-white dark:bg-zinc-800 outline-none focus:border-emerald-600 font-bold text-black dark:text-white" /></div>
-        <div><label className="block text-[10px] font-black text-black dark:text-zinc-400 uppercase tracking-widest mb-2">Nível de Atividade</label><select value={activity} onChange={e => setActivity(e.target.value)} className="w-full p-5 rounded-2xl border-2 border-emerald-500 outline-none appearance-none bg-white dark:bg-zinc-800 font-bold text-black dark:text-white"><option value="1.2">Sedentário</option><option value="1.375">Leve</option><option value="1.55">Moderado</option><option value="1.725">Ativo</option><option value="1.9">Extremo</option></select></div>
-        <button onClick={calculate} className="w-full py-5 bg-emerald-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-emerald-100 dark:shadow-none hover:bg-emerald-700 transition-all uppercase tracking-tight">Calcular Gasto 🔥</button>
-        {calories && (
-          <div className="mt-10 text-center p-8 bg-emerald-50 dark:bg-emerald-900/30 rounded-3xl animate-in fade-in duration-500 border-2 border-emerald-100 dark:border-emerald-800 shadow-inner">
-            <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase mb-2 tracking-widest">Gasto Estimado</p>
-            <p className="text-5xl font-black text-black dark:text-white">{calories}</p>
-            <p className="text-xs text-black dark:text-white mt-2 font-bold">CALORIAS POR DIA</p>
+
+        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+
+          <div className="space-y-8 relative z-10">
+            <div className="flex gap-4 p-1.5 bg-white/[0.03] border border-white/5 rounded-2xl">
+              <button onClick={() => setGender('male')} className={`flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${gender === 'male' ? 'bg-white text-zinc-950 shadow-xl scale-105' : 'text-zinc-500'}`}>MASC</button>
+              <button onClick={() => setGender('female')} className={`flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${gender === 'female' ? 'bg-white text-zinc-950 shadow-xl scale-105' : 'text-zinc-500'}`}>FEM</button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Peso (kg)</label>
+                <input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-800" />
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Altura (cm)</label>
+                <input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-800" />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Idade</label>
+              <input type="text" inputMode="decimal" value={age} onChange={e => setAge(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-800" />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Nível de Atividade</label>
+              <div className="relative group">
+                <select value={activity} onChange={e => setActivity(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-lg text-white appearance-none cursor-pointer">
+                  <option value="1.2" className="bg-zinc-900">Sedentário</option>
+                  <option value="1.375" className="bg-zinc-900">Leve</option>
+                  <option value="1.55" className="bg-zinc-900">Moderado</option>
+                  <option value="1.725" className="bg-zinc-900">Ativo</option>
+                  <option value="1.9" className="bg-zinc-900">Extremo</option>
+                </select>
+                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none group-hover:text-emerald-500 transition-colors" />
+              </div>
+            </div>
+
+            <button onClick={calculate} className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all mt-4">Calcular TMB</button>
+
+            <AnimatePresence>
+              {calories && (
+                <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-10 p-8 bg-emerald-500/10 rounded-[2.5rem] border border-emerald-500/20 text-center relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
+                  <Flame className="w-8 h-8 text-emerald-500 mx-auto mb-4 opacity-70" />
+                  <p className="text-[10px] font-black text-emerald-500/70 uppercase mb-2 tracking-[0.3em]">Manutenção Estimada</p>
+                  <div className="flex items-baseline justify-center gap-2">
+                    <span className="text-6xl font-serif-premium font-bold text-white tracking-tighter">{calories}</span>
+                    <span className="text-sm font-bold text-emerald-500 uppercase">kcal/dia</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+    </PremiumBackground>
   );
 };
