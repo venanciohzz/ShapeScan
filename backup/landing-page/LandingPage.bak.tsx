@@ -4,7 +4,6 @@ import '@fontsource/playfair-display/700.css';
 import '@fontsource/playfair-display/400.css';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
 import { LiquidShaderBackground } from './ui/LiquidShaderBackground';
-import { NeonFlow } from './ui/NeonFlow';
 
 // --- Utility Components for God Mode UI ---
 
@@ -167,7 +166,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
       {/* Background Ambience V3 - Ultra Immersive */}
       <div className="fixed inset-0 z-0 bg-[#020202] overflow-hidden pointer-events-none">
         <LiquidShaderBackground />
-        <NeonFlow className="opacity-60" />
 
         {/* Dynamic Auroras */}
         <motion.div
@@ -236,13 +234,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             </span>
           </div>
 
-          {/* Nav Links - Desktop (Centered) */}
-          <div className="hidden md:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
-            <button onClick={onHowItWorks} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Como funciona?</button>
-            <button onClick={onAbout} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Quem somos?</button>
+          {/* Nav Links - Desktop */}
+          <div className="hidden md:flex items-center gap-10">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Inicial</button>
+            <button onClick={onHowItWorks} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Como Funciona</button>
+            <button onClick={onAbout} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Tecnologia</button>
+            <button onClick={onAbout} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">O Coach IA</button>
           </div>
 
-          {/* Action Button - Restored */}
+          {/* Action Button - Desktop */}
           <div className="hidden md:flex items-center gap-6">
             <button onClick={onLogin} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">
               Fazer Login
@@ -282,9 +282,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <div className="flex flex-col gap-10 text-center w-full px-8 max-sm">
+        <div className="flex flex-col gap-10 text-center w-full px-8 max-w-sm">
           <button onClick={() => handleMobileNav(onHowItWorks)} className="text-4xl font-serif-premium font-medium text-white hover:text-emerald-400 transition-colors">Como funciona?</button>
-          <button onClick={() => handleMobileNav(onAbout)} className="text-4xl font-serif-premium font-medium text-white hover:text-emerald-400 transition-colors">Quem somos?</button>
+          <button onClick={() => handleMobileNav(onAbout)} className="text-4xl font-serif-premium font-medium text-white hover:text-emerald-400 transition-colors">Tecnologia</button>
           <hr className="w-12 mx-auto border-white/10 my-2" />
           <button onClick={() => handleMobileNav(onLogin)} className="text-xl font-medium text-zinc-400 hover:text-white transition-colors">Acessar Conta</button>
           <button onClick={() => handleMobileNav(onStart)} className="mt-4 bg-white text-zinc-950 w-full py-5 rounded-full font-bold text-lg hover:scale-[1.02] transition-transform">Iniciar Análise</button>
@@ -591,8 +591,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             </button>
 
             <div className="mt-16 flex flex-col md:flex-row justify-center items-center gap-8 text-xs font-black uppercase tracking-widest">
-              <button onClick={onHowItWorks} className="text-zinc-300 hover:text-white transition-colors border-b-2 border-transparent hover:border-emerald-500 pb-1">Como funciona?</button>
-              <button onClick={onAbout} className="text-zinc-300 hover:text-white transition-colors border-b-2 border-transparent hover:border-emerald-500 pb-1">Quem somos?</button>
+              <button onClick={onHowItWorks} className="text-zinc-300 hover:text-white transition-colors border-b-2 border-transparent hover:border-emerald-500 pb-1">Como funciona</button>
+              <button onClick={onAbout} className="text-zinc-300 hover:text-white transition-colors border-b-2 border-transparent hover:border-emerald-500 pb-1">Quem somos</button>
               <span className="hidden md:inline text-zinc-700">•</span>
               <span className="text-emerald-600">ShapeScan © 2026</span>
             </div>
