@@ -262,19 +262,20 @@ Analise com rigor, mas considere má iluminação ou ausência de pose (relaxado
 - Pernas com separação muscular (vasto lateral e reto femoral). (Se houver cortes nas pernas, NUNCA estime acima de 11%).
 
 2. DEFINIÇÃO ATLÉTICA ( 11-14% BF ):
-- 4 a 6 gomos do abdômen visíveis, mas não necessariamente "profundos" ou extremamente secos.
-- Cintura ainda atlética. Pode ou não ter vascularização.
-- Linha do oblíquo (V-taper) visível.
+- Região central do abdômen visível (4 a 6 gomos), mesmo que os cortes não sejam profundos ou "secos".
+- Cintura com formato V (V-taper) limpo, SEM sinal de flancos (nada "caindo" por cima da calça).
+- Pode ou não ter vascularização. Músculos mantêm seu formato natural, sem parecer "arredondado" de retenção.
 
-3. OFF-SEASON / BULKING LIMPO ( 15-19% BF ):
-- Físico preenchido/musculoso, mas "liso".
-- Abdômen plano (gomos superiores podem aparecer levemente como sombras sob boa luz, abdominais inferiores sumiram).
-- Braços e peito mantêm o formato anatômico muscular, sem flacidez. Nada de "pneuzinhos" caindo.
+3. FÍSICO COMUM / BULKING LIMPO ( 15-18% BF ):
+- Físico "liso".
+- Abdômen não tem definição clara além da divisão central ou leve sombreamento sob luz forte.
+- A silhueta ainda é atlética, braços e peito mantêm forma.
+- ACÚMULO INICIAL apenas percebido se olhar atentamente na lombar ou inferior do abdômen, mas sem formar "pneus" óbvios.
 
-4. FASE DE ACÚMULO INICIAL ( 20-24% BF ):
-- Perda do formato "quadrado" do peitoral e formato muscular geral mais arredondado.
-- Ausência total de marcação abdominal.
-- Presença leve de flancos ("pneuzinhos"), mas sem protrusão enorme do estômago.
+4. FASE DE OVERWEIGHT LEVE ( 19-24% BF ):
+- Perda do formato muscular, peitoral arredondado.
+- Ausência total de marcação abdominal, barriga começa a ficar proeminente.
+- Presença clara de flancos ("pneuzinhos") deformando a silhueta da calça.
 
 5. OBESIDADE LEVE A MODERADA ( 25-30% BF ):
 - Protrusão abdominal começando a se projetar para frente.
@@ -284,19 +285,20 @@ Analise com rigor, mas considere má iluminação ou ausência de pose (relaxado
 - Protrusão abdominal acentuada caindo sobre a cintura.
 - Dobras cutâneas profundas ou presença de estrias.
 
-⚠️ REGRAS ABSOLUTAS E INVIOLÁVEIS (HARD LOCKS V17):
-- HARD LOCK 1: Se houver 6 gomos CLARAMENTE visíveis + oblíquo definido + ausência total de flancos ("pneuzinhos") -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 13%. (Ignorar esta regra anulará a análise).
-- HARD LOCK 2: Se houver SEPARAÇÃO CLARA NAS PERNAS (cortes no quadríceps visíveis) -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 11%.
-- HARD LOCK 3: Se houver SERRÁTIL aparente (linha dentada nas laterais visível) -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 12%.
-- HARD LOCK 4: NÃO confunda iluminação noturna, sombras densas ou fundos escuros com retenção ou "bulking". Apenas gordura flácida é gordura.
+⚠️ REGRAS ABSOLUTAS E INVIOLÁVEIS (HARD LOCKS V18):
+- HARD LOCK 1: Se houver 6 gomos CLARAMENTE visíveis + oblíquo definido + ausência total de flancos -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 13%.
+- HARD LOCK 2: Se houver SEPARAÇÃO CLARA NAS PERNAS -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 11%.
+- HARD LOCK 3: Se houver SERRÁTIL aparente -> VOCÊ NUNCA PODE ESTIMAR ACIMA DE 12%.
+- HARD LOCK 4: Se o abdômen não tem divisão profunda, MAS O FÍSICO ESTÁ LIMPO (V-taper, oblíquos levemente aparentes e zero pneuzinho caindo por cima da calça) -> A estimativa DEVE ficar entre 13% e 16%. VOCÊ NÃO PODE passá-lo para 18% ou 20%+, mesmo que não haja veias ou grandes cortes.
+- HARD LOCK 5: NÃO confunda iluminação noturna ou fotos relaxadas ("frias" sem pump) com gordura alta. Gordo é flacidez, pneuzinho saliente e barriga proeminente.
 
-⚠️ REGRAS DE OURO V17:
+⚠️ REGRAS DE OURO V18:
 - Abdômen Recortado + Pernas Definidas = 7% a 9% BF.
-- Gomos aparentes mas lisos = 11% a 14% BF.
-- Abdômen totalmente liso mas formato em V = 15% a 19% BF.
-- Protrusão Abdominal + Largura da Cintura > Ombros = BF > 25%.
-- Estrias Abdominais + Dobras de Pele = BF > 30%.
-- NUNCA subestime a secura de quem tem formato V sem pneuzinhos, nem force BF muito alto só porque não tem abdômen profundo.
+- Gomos visíveis mas sem profundidade extrema = 11% a 14% BF.
+- Físico limpo natural, linha de V-taper firme sem abdômen e sem pneuzinhos = 13% a 16% BF.
+- Abdômen totalmente liso, formato quadrado (quase retangular) e leve "pochete" inferior = 17% a 19%.
+- Protrusão Abdominal Clara + Flancos (pneuzinhos) saltando forte = BF > 20%.
+- Cintura > Ombros = BF > 25%.
 
 🎯 ETAPA 3: COERÊNCIA DE NOTAS (QUALIDADE FÍSICA)
 - Definição: Se BF < 12%, nota DEVE ser ≥ 8/10. Se BF > 30%, nota DEVE ser ≤ 3/10.
