@@ -254,53 +254,48 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
           <div ref={scrollRef} className="h-10" />
         </div>
 
-        {/* Input Area - Truly Fixed at Bottom */}
-        <div className="absolute bottom-0 left-0 w-full px-6 pb-6 pt-10 z-30 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pointer-events-none">
-          <form
-            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-            className="bg-zinc-950/80 backdrop-blur-3xl rounded-[2.5rem] p-2 flex items-center gap-2 border border-white/10 shadow-2xl relative overflow-hidden group/input pointer-events-auto"
-          >
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
-            <div className="absolute inset-0 bg-emerald-500/[0.01] opacity-0 group-hover/input:opacity-100 transition-opacity duration-700"></div>
-
-            <button
-              type="button"
-              onClick={isListening ? stopListening : startListening}
-              className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all active:scale-90 shadow-lg ${isListening
-                ? 'bg-red-500 text-white animate-pulse'
-                : 'bg-white/5 border border-white/10 text-zinc-400 hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-500'
-                }`}
+        {/* Input Area - Fixed at bottom of viewport */}
+        <div className="fixed bottom-0 left-0 w-full px-4 pb-6 pt-10 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent pointer-events-none select-none touch-none">
+          <div className="max-w-2xl mx-auto w-full pointer-events-auto">
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+              className="bg-zinc-950/90 backdrop-blur-3xl rounded-[2rem] p-1.5 flex items-center gap-2 border border-white/10 shadow-2xl relative overflow-hidden group/input"
             >
-              <Mic className="w-5 h-5" />
-            </button>
+              <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
 
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Pergunte à Personal IA..."
-              className="flex-1 bg-transparent py-4 px-2 outline-none text-white font-medium placeholder:text-zinc-600 text-[15px]"
-              disabled={loading}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-            />
+              <button
+                type="button"
+                onClick={isListening ? stopListening : startListening}
+                className={`w-11 h-11 flex-none flex items-center justify-center rounded-2xl transition-all active:scale-95 shadow-lg ${isListening
+                  ? 'bg-red-500 text-white animate-pulse'
+                  : 'bg-white/5 border border-white/10 text-zinc-400'
+                  }`}
+              >
+                <Mic className="w-5 h-5" />
+              </button>
 
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={loading || !input.trim()}
-              className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all active:scale-90 ${input.trim()
-                ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_20px_rgba(16,185,129,0.4)]'
-                : 'bg-white/5 text-zinc-600 border border-white/5'
-                }`}
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          </form>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Pergunte à Personal IA..."
+                className="flex-1 bg-transparent py-3.5 px-2 outline-none text-white font-medium placeholder:text-zinc-600 text-[16px] min-w-0"
+                disabled={loading}
+                autoComplete="off"
+              />
+
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className={`w-11 h-11 flex-none flex items-center justify-center rounded-2xl transition-all active:scale-95 ${input.trim()
+                  ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                  : 'bg-white/5 text-zinc-600 border border-white/5'
+                  }`}
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </form>
+          </div>
         </div>
 
       </div>
