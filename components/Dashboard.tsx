@@ -92,15 +92,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                            <LetterPuller text={user.name.split(' ')[0]} />
                         </h1>
                         <div className="flex items-center gap-2">
-                           <span className="text-zinc-500 font-bold text-[9px] md:text-xs tracking-widest uppercase">
+                           <span className="text-emerald-400 font-bold text-[9px] md:text-xs tracking-widest uppercase">
                               {user.username.startsWith('@') ? user.username : `@${user.username}`}
                            </span>
-                           {user.plan !== 'free' && (
-                              <div className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center gap-1">
-                                 <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse"></div>
-                                 <span className="text-[7px] md:text-[9px] font-black text-amber-500 tracking-tighter uppercase">PREMIUM</span>
-                              </div>
-                           )}
+                           <div className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center gap-1">
+                              <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse"></div>
+                              <span className="text-[7px] md:text-[9px] font-black text-amber-500 tracking-tighter uppercase">
+                                 {user.plan === 'pro_monthly' || user.plan === 'pro_annual' ? 'PRO' :
+                                    (user.plan === 'free' || !user.plan) ? 'GRATUITO' : 'PADRÃO'}
+                              </span>
+                           </div>
                         </div>
                      </div>
                   </div>
