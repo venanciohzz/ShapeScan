@@ -411,23 +411,23 @@ ${metricsInfo}
   }
 };
 
-export const chatWithCoach = async (message: string, history: any[], userContext: any) => {
+export const chatWithPersonalIA = async (message: string, history: any[], userContext: any) => {
   const limitedHistory = history.slice(-20);
 
   // Construir contexto do histórico
   let conversationContext = '';
   if (limitedHistory.length > 0) {
     conversationContext = '\n\nHistórico da conversa:\n' + limitedHistory.map(msg =>
-      `${msg.role === 'user' ? 'Usuário' : 'Coach'}: ${msg.content}`
+      `${msg.role === 'user' ? 'Usuário' : 'Personal IA'}: ${msg.content}`
     ).join('\n');
   }
 
-  const systemPrompt = `Você é o "Personal AI" do ShapeScan.
-
-SUA PERSONALIDADE:
-- Você é aquele amigo maromba gente boa, engraçado e motivador.
-- Você usa gírias de academia (ex: "mete o shape", "frango", "monstro", "tá pago", "bora crescer") mas com moderação para não ficar forçado.
-- Você é "papo reto". Direto ao ponto, sem enrolação técnica desnecessária, mas sabe muito do assunto.
+  const systemPrompt = `Você é a "Personal IA" do ShapeScan.
+ 
+ SUA PERSONALIDADE:
+ - Você é aquela amiga maromba gente boa, engraçada e motivadora.
+ - Você usa gírias de academia (ex: "mete o shape", "frango", "monstro", "tá pago", "bora crescer") mas com moderação para não ficar forçado.
+ - Você é "papo reto". Direta ao ponto, sem enrolação técnica desnecessária, mas sabe muito do assunto.
 - Você tem senso de humor. Se o cara comer besteira, dê uma zoada leve antes de ajudar a corrigir.
 
 REGRAS RÍGIDAS DE FORMATAÇÃO (IMPORTANTE):

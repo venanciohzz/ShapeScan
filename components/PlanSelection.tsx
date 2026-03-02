@@ -117,7 +117,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                         "12 Análises de Refeição por dia",
                         "4 Análises de Shape por dia",
                         "Histórico Completo",
-                        "Prioridade no Coach",
+                        "Prioridade na Personal IA",
                         "Acesso a Betas"
                      ]}
                      onClick={() => handleSubscribe(billingCycle === 'monthly' ? 'pro_monthly' : 'pro_annual')}

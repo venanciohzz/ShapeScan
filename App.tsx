@@ -7,7 +7,7 @@ import About from './components/About';
 import Dashboard from './components/Dashboard';
 import FoodAnalyzer from './components/FoodAnalyzer';
 import ShapeAnalyzer from './components/ShapeAnalyzer';
-import CoachChat from './components/CoachChat';
+import PersonalIA from './components/PersonalIA';
 import Auth from './components/Auth';
 import Navigation from './components/Navigation';
 import { BMICalculator, DailyCalorieCalculator } from './components/Calculators';
@@ -365,7 +365,7 @@ const App: React.FC = () => {
       case 'food_manual': return <FoodAnalyzer mode="manual" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
       case 'saved_meals': return <SavedMeals user={user!} onAddLog={addFoodLog} onBack={() => setCurrentView('dashboard')} onShowToast={showToast} />;
       case 'shape': return <ShapeAnalyzer user={user!} onBack={() => setCurrentView('dashboard')} onSaveToEvolution={(data) => addEvolutionRecord({ ...data, date: Date.now() })} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
-      case 'chat': return <CoachChat user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} onUpgrade={() => setCurrentView('plans')} onShowToast={showToast} />;
+      case 'chat': return <PersonalIA user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} onUpgrade={() => setCurrentView('plans')} onShowToast={showToast} />;
       case 'evolution': return <Evolution user={user!} records={evolutionRecords} onBack={() => setCurrentView('dashboard')} onAdd={addEvolutionRecord} onDelete={deleteEvolutionRecord} onEdit={editEvolutionRecord} onUpgrade={() => setCurrentView('plans')} />;
       case 'bmi_calc': return <BMICalculator onBack={() => setCurrentView('dashboard')} />;
       case 'calorie_calc': return <DailyCalorieCalculator onBack={() => setCurrentView('dashboard')} />;
@@ -377,7 +377,7 @@ const App: React.FC = () => {
     }
   };
 
-  const hideNavViews: View[] = ['landing', 'how_it_works', 'about', 'auth', 'quiz', 'plans', 'upgrade_pro', 'water_calc', 'calorie_calc', 'bmi_calc', 'calorie_plan', 'saved_meals'];
+  const hideNavViews: View[] = ['landing', 'how_it_works', 'about', 'auth', 'quiz', 'plans', 'upgrade_pro', 'water_calc', 'calorie_calc', 'bmi_calc', 'calorie_plan', 'saved_meals', 'chat'];
   const showMobileNav = user && !hideNavViews.includes(currentView);
 
   return (
