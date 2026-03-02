@@ -150,7 +150,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ onBack, onRegister }) => {
 
           <StepItem
             number="03"
-            title="Processamento Neural"
+            title="Processamento por IA"
             description="A IA analisa a imagem pixel a pixel. Para alimentos, identificamos ingredientes e estimamos densidade calórica. Para o corpo, analisamos simetria, definição muscular e estimamos a composição corporal."
             icon={<BrainCircuit className="w-5 h-5" />}
             align="right"

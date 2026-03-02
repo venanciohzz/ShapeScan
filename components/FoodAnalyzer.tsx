@@ -317,8 +317,14 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                   <span className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.4em] leading-none">Módulo de Análise</span>
                 </div>
                 <h1 className="text-4xl md:text-8xl font-serif-premium font-bold text-white tracking-tighter leading-[0.9] flex flex-col">
-                  <LetterPuller text={mode === 'manual' ? 'Registro' : 'Neural'} className="opacity-60 md:opacity-40 text-3xl md:text-6xl" />
-                  <LetterPuller text={mode === 'manual' ? 'Manual' : 'Food Scan'} />
+                  {mode === 'manual' ? (
+                    <>
+                      <LetterPuller text="Registro" className="opacity-60 md:opacity-40 text-3xl md:text-6xl" />
+                      <LetterPuller text="Manual" />
+                    </>
+                  ) : (
+                    <LetterPuller text="Food Scan" />
+                  )}
                 </h1>
               </div>
 

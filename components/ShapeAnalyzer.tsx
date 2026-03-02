@@ -44,7 +44,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
             <LetterPuller text="Acesso Exclusivo" />
           </h2>
           <p className="text-zinc-400 font-medium text-base mb-12 leading-relaxed max-w-xs mx-auto">
-            Descubra sua arquitetura corporal com o Scanner Neural de Proporção Estética. Disponível apenas no plano Pro.
+            Descubra sua arquitetura corporal com o Scanner de Proporção Estética. Disponível apenas no plano Pro.
           </p>
 
           <button
@@ -240,7 +240,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div className="text-4xl mb-4">🛑</div>
                 <h3 className="text-2xl font-serif-premium font-bold text-white mb-4">Limite Diário</h3>
                 <p className="text-zinc-500 mb-8 text-sm leading-relaxed tracking-wide">
-                  Você utilizou todas as análises de físico do seu plano hoje. O scanner neural requer alto processamento e volta a ficar disponível amanhã.
+                  Você utilizou todas as análises de físico do seu plano hoje. O scanner requer alto processamento e volta a ficar disponível amanhã.
                 </p>
                 <button
                   onClick={() => { setShowLimitModal(false); onUpgradePro(); }}
@@ -289,7 +289,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="space-y-2">
                 <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">Análise de Bioimpedância Visual</span>
-                <LetterPuller text="Neural Shape Scan" className="text-4xl md:text-6xl text-white tracking-tighter" />
+                <LetterPuller text="Shape Scan" className="text-4xl md:text-6xl text-white tracking-tighter" />
               </div>
 
               <div className="bg-zinc-950/40 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 shadow-2xl space-y-8">
@@ -354,7 +354,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                       <span className="text-3xl font-serif-premium text-zinc-600 font-bold tracking-tighter">/10</span>
                     </div>
                     <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] max-w-[240px] leading-relaxed mx-auto md:mx-0">
-                      ÍNDICE NEURAL DE COMPOSIÇÃO E PROPORÇÃO ESTÉTICA.
+                      ÍNDICE DE COMPOSIÇÃO E PROPORÇÃO ESTÉTICA.
                     </p>
                   </div>
 
@@ -419,7 +419,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                         <p className="text-3xl font-serif-premium font-bold text-white">{result.weight_metrics.current_weight}<span className="text-xs ml-1 opacity-40">kg</span></p>
                       </div>
                       <div className="p-6 bg-white/[0.03] rounded-3xl border border-white/5 space-y-2 hover:bg-white/[0.05] transition-colors">
-                        <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">IMC Neural</p>
+                        <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">IMC</p>
                         <p className="text-3xl font-serif-premium font-bold text-white">{result.weight_metrics.bmi.toFixed(1)}</p>
                       </div>
                     </div>
@@ -486,7 +486,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
                   <div className="space-y-6 p-8 bg-white/[0.02] rounded-[2.5rem] border border-white/5">
                     <div className="space-y-1">
-                      <p className="text-zinc-500 text-[9px] font-black uppercase tracking-widest">Responsividade Neural</p>
+                      <p className="text-zinc-500 text-[9px] font-black uppercase tracking-widest">Responsividade Metabólica</p>
                       <p className="text-lg text-white font-serif-premium font-bold">{result.structural_analysis.genetic_responsiveness}</p>
                     </div>
                     <div className="space-y-1">
@@ -538,7 +538,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-10 rounded-[3rem] space-y-10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-2xl">🍲</div>
-                  <h3 className="text-2xl font-serif-premium font-bold text-white tracking-tight">Suporte Nutricional Neural</h3>
+                  <h3 className="text-2xl font-serif-premium font-bold text-white tracking-tight">Suporte Nutricional</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -594,7 +594,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-10 rounded-[3rem] space-y-10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-2xl">📍</div>
-                  <h3 className="text-2xl font-serif-premium font-bold text-white tracking-tight">Mapeamento Regional Neural</h3>
+                  <h3 className="text-2xl font-serif-premium font-bold text-white tracking-tight">Mapeamento Regional</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -644,7 +644,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                   <div className="space-y-8">
                     <p className="text-base text-zinc-400 font-medium leading-relaxed">
-                      A curva de evolução neural projeta uma otimização metabólica progressiva, com maior eficiência lipolítica nas janelas de estímulo inicial.
+                      A curva de evolução projeta uma otimização metabólica progressiva, com maior eficiência lipolítica nas janelas de estímulo inicial.
                     </p>
                     <div className="flex items-center gap-10">
                       <div className="space-y-1">
@@ -728,7 +728,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                       animate={{ scale: 1, opacity: 1 }}
                       className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 py-6 rounded-3xl font-black text-center text-[10px] uppercase tracking-[0.3em]"
                     >
-                      Sincronizado com a Evolução Neural ✅
+                      Sincronizado com a Evolução ✅
                     </motion.div>
                   )}
                   <button

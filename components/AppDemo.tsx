@@ -123,7 +123,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
         fat_score: 11.5,
         structural_analysis: {
             name: "Mesomorfo Dominante",
-            meaning: "Alto Índice de Responsividade Neural. Fibras tipo II otimizadas, resposta hipertrófica rápida ao treino tensional.",
+            meaning: "Alto Índice de Responsividade Metabólica. Fibras tipo II otimizadas, resposta hipertrófica rápida ao treino tensional.",
             strength: "Biotipo estético clássico com ombros largos (clavículas longas) e cintura compacta. V-Taper evidente.",
             improvement: "Proporção inferior requer maior volume para equiparar à densidade muscular do tronco.",
             genetic_responsiveness: "Hipertrófica Rápida",
@@ -401,7 +401,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                                     <span className="text-3xl font-serif-premium text-zinc-500 font-bold tracking-tighter">/10</span>
                                 </div>
                                 <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.3em] max-w-[300px] leading-relaxed text-center mb-8 drop-shadow">
-                                    ÍNDICE NEURAL DE COMPOSIÇÃO E PROPORÇÃO ESTÉTICA.
+                                    ÍNDICE DE COMPOSIÇÃO E PROPORÇÃO ESTÉTICA.
                                 </p>
 
                                 <div className="bg-zinc-950/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 text-center flex-1 max-w-sm space-y-6 w-full shadow-2xl">
@@ -416,10 +416,8 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                                         </span>
 
                                         <div className="flex flex-col items-center gap-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-                                                <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest">Confiança {mockShapeData.bf_confidence}</span>
-                                            </div>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                                            <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest">Confiança {mockShapeData.bf_confidence}</span>
                                             <p className="text-[10px] text-zinc-400 font-medium leading-relaxed italic max-w-[200px]">
                                                 "{mockShapeData.bf_visual_justification}"
                                             </p>
@@ -458,7 +456,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                                         <p className="text-3xl font-serif-premium font-bold text-white">{mockShapeData.weight_metrics.current_weight}<span className="text-xs ml-1 opacity-40">kg</span></p>
                                     </div>
                                     <div className="p-6 bg-white/[0.03] rounded-3xl border border-white/5 space-y-2 hover:bg-white/[0.05] transition-colors">
-                                        <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">IMC Neural</p>
+                                        <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">IMC</p>
                                         <p className="text-3xl font-serif-premium font-bold text-white">{mockShapeData.weight_metrics.bmi.toFixed(1)}</p>
                                     </div>
                                 </div>
@@ -481,8 +479,8 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                                         />
                                     ))}
                                 </div>
-                                <p className="text-[9px] text-zinc-600 font-bold leading-relaxed tracking-tight px-2 border-l border-white/10 uppercase">
-                                    Cálculo algorítmico baseado na preservação de massa miositária.
+                                <p className="text-sm text-zinc-400 font-medium leading-relaxed italic border-l border-white/10 pl-4">
+                                    "A curva de evolução projeta uma otimização metabólica progressiva, com maior eficiência lipolítica nas janelas de estímulo inicial."
                                 </p>
                             </div>
                         </div>
