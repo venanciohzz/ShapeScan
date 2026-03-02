@@ -70,7 +70,7 @@ const WaterCalculator: React.FC<WaterCalculatorProps> = ({ user, onBack, onUpdat
           <div className="space-y-8 relative z-10">
             {/* Weight Input */}
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">
+              <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 drop-shadow-sm ml-2">
                 <Activity className="w-3 h-3 text-emerald-500" /> Peso Corporal
               </label>
               <div className="relative group">
@@ -82,13 +82,13 @@ const WaterCalculator: React.FC<WaterCalculatorProps> = ({ user, onBack, onUpdat
                   placeholder="00.0"
                   className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-xl text-white placeholder:text-zinc-700"
                 />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-500 font-black text-xs uppercase tracking-widest">kg</span>
+                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-400 font-black text-xs uppercase tracking-widest drop-shadow-sm">kg</span>
               </div>
             </div>
 
             {/* Activity Level Selector */}
             <div className="space-y-3">
-              <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">
+              <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 drop-shadow-sm ml-2">
                 <Droplets className="w-3 h-3 text-emerald-500" /> Nível de Desgaste
               </label>
               <div className="relative group">
@@ -103,7 +103,7 @@ const WaterCalculator: React.FC<WaterCalculatorProps> = ({ user, onBack, onUpdat
                   <option value="1.725" className="bg-zinc-900">Intenso (+750ml)</option>
                   <option value="1.9" className="bg-zinc-900">Atleta (+1L)</option>
                 </select>
-                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none group-hover:text-emerald-500 transition-colors" />
+                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none group-hover:text-emerald-500 transition-colors" />
               </div>
             </div>
 

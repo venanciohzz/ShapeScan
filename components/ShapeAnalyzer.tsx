@@ -28,10 +28,43 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (user.plan === 'free' && !user.isAdmin) {
-      onUpgrade();
-    }
-  }, [user, onUpgrade]);
+  }, [user]);
+
+  if (user.plan === 'free' && !user.isAdmin) {
+    return (
+      <PremiumBackground className="flex items-center justify-center p-6" dim={true} intensity={1.5}>
+        <div className="w-full max-w-lg bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-10 md:p-14 border border-emerald-500/20 text-center relative overflow-hidden shadow-2xl">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
+
+          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-10 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.1)]">
+            <Focus className="w-10 h-10 text-emerald-500" />
+          </div>
+
+          <h2 className="text-4xl font-serif-premium font-bold text-white mb-4 tracking-tight">
+            <LetterPuller text="Acesso Exclusivo" />
+          </h2>
+          <p className="text-zinc-400 font-medium text-base mb-12 leading-relaxed max-w-xs mx-auto">
+            Descubra sua arquitetura corporal com o Scanner Neural de Proporção Estética. Disponível apenas no plano Pro.
+          </p>
+
+          <button
+            onClick={onUpgrade}
+            className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:bg-zinc-200 active:scale-95 transition-all text-xs mb-6"
+          >
+            Desbloquear Scanner
+          </button>
+
+          <button
+            onClick={onBack}
+            className="flex items-center justify-center gap-2 mx-auto text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em] hover:text-white transition-colors"
+          >
+            ← Voltar ao Painel
+          </button>
+        </div>
+      </PremiumBackground>
+    );
+  }
+
 
   useEffect(() => {
     if (loading) {
@@ -249,11 +282,6 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white">
             <span className="text-xl">←</span>
           </button>
-          {!result && (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full">
-              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Biometric AI v4.0</span>
-            </div>
-          )}
         </header>
 
         <main className="flex-1 flex flex-col">

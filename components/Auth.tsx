@@ -127,7 +127,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
             {isRegistering && (
               <>
                 <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">Nome Completo</label>
+                  <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Nome Completo</label>
                   <input
                     type="text"
                     value={name}
@@ -140,7 +140,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">Usuário</label>
+                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Usuário</label>
                     <input
                       type="text"
                       value={username}
@@ -152,7 +152,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">WhatsApp</label>
+                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">WhatsApp</label>
                     <input
                       type="tel"
                       value={phone}
@@ -167,7 +167,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
               </>
             )}
             <div className="space-y-2">
-              <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">E-mail Corporativo</label>
+              <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">E-mail Corporativo</label>
               <input
                 type="email"
                 value={email}
@@ -179,7 +179,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) =
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] ml-2">Senha Segura</label>
+              <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Senha Segura</label>
               <input
                 type="password"
                 value={password}

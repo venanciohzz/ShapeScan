@@ -96,7 +96,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Qual seu gênero?" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">Análise metabólica personalizada</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Análise metabólica personalizada</p>
                     </div>
                     <div className="grid grid-cols-1 gap-4">
                         <PremiumCard
@@ -124,7 +124,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Frequência de treino?" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">Seja sincero com sua rotina</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Seja sincero com sua rotina</p>
                     </div>
                     <div className="space-y-4">
                         {['0-2', '3-5', '6 ou mais'].map(opt => (
@@ -146,7 +146,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Suas medidas" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">Seu ponto de partida</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Seu ponto de partida</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -168,7 +168,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Data de Nascimento" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">Essencial para taxas metabólicas</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Essencial para taxas metabólicas</p>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                         <div>
@@ -207,7 +207,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Qual seu objetivo?" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">O plano será moldado aqui</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">O plano será moldado aqui</p>
                     </div>
                     <div className="space-y-4">
                         <PremiumCard title="Perder gordura" icon="🔥" active={data.goal === 'lose'} onClick={() => setData({ ...data, goal: 'lose' })} />
@@ -227,12 +227,12 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         </h2>
                         <div className="mt-6 flex items-center justify-center gap-10 bg-white/5 py-8 px-10 rounded-[2.5rem] border border-white/10 backdrop-blur-xl">
                             <div className="text-center">
-                                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Atual</p>
+                                <p className="text-[10px] font-black text-zinc-400 drop-shadow-sm uppercase tracking-widest mb-1">Atual</p>
                                 <p className="text-3xl font-black text-white">{data.weight}kg</p>
                             </div>
                             <div className="text-emerald-500 font-black text-3xl animate-pulse">→</div>
                             <div className="text-center">
-                                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-1">Meta</p>
+                                <p className="text-[10px] font-black text-zinc-400 drop-shadow-sm uppercase tracking-widest mb-1">Meta</p>
                                 <p className="text-4xl font-black text-white">{data.targetWeight}kg</p>
                             </div>
                         </div>
@@ -276,7 +276,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Velocidade" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">Qual seu compromisso semanal?</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Qual seu compromisso semanal?</p>
                     </div>
 
                     <div className="bg-white/5 p-12 rounded-[3.5rem] border border-white/10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl">
@@ -324,7 +324,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                                 onChange={(e) => setData({ ...data, velocity: parseFloat(e.target.value) })}
                                 className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-emerald-500 transition-all hover:accent-emerald-400"
                             />
-                            <div className="flex justify-between mt-6 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                            <div className="flex justify-between mt-6 text-[10px] font-black text-zinc-400 drop-shadow-sm uppercase tracking-widest">
                                 <span>Equilibrado</span>
                                 <span>Intenso</span>
                             </div>
@@ -355,7 +355,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Obstáculos" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">O que te impede hoje?</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">O que te impede hoje?</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10">
                         {[
@@ -389,7 +389,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Conquistas" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">Visualize sua vitória</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Visualize sua vitória</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10">
                         {[
@@ -457,7 +457,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight leading-[1.2]">
                             <LetterPuller text="Entende o poder dos Macros?" />
                         </h2>
-                        <p className="text-zinc-500 text-sm md:text-base font-medium uppercase tracking-[0.2em]">A base técnica do seu resultado</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">A base técnica do seu resultado</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -534,7 +534,7 @@ const SelectionButton = ({ label, active, onClick }: { label: string, active: bo
 const CheckOption = ({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full p-6 rounded-[2rem] border font-bold text-left transition-all duration-500 flex items-center gap-6 active:scale-[0.98] ${active ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-white/[0.03] border-white/10 text-zinc-500 hover:bg-white/[0.07] hover:text-zinc-300'}`}
+        className={`w-full p-6 rounded-[2rem] border font-bold text-left transition-all duration-500 flex items-center gap-6 active:scale-[0.98] ${active ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-white/[0.03] border-white/10 text-zinc-400 drop-shadow-sm hover:bg-white/[0.07] hover:text-white'}`}
     >
         <div className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all duration-500 ${active ? 'bg-emerald-500 border-emerald-500 rotate-[360deg]' : 'border-white/10'}`}>
             {active && <span className="text-white text-sm">✓</span>}

@@ -149,6 +149,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         .animate-scan {
           animation: scan 3s linear infinite;
         }
+        @keyframes sweep {
+          0% { left: -100%; top: -100%; }
+          50% { left: 100%; top: 100%; }
+          100% { left: 100%; top: 100%; }
+        }
+        .animate-sweep {
+          animation: sweep 2.5s ease-in-out infinite;
+        }
 
         /* Typography overrides for Premium V2 */
         .font-serif-premium {
@@ -219,58 +227,76 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/40 to-[#020202]" />
       </div>
 
-      {/* Navbar V2 - Omi Ghost Style */}
-      <nav className="fixed top-0 inset-x-0 z-50 glass-nav">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      {/* Navbar V3 - Ultra Premium Floating Pill */}
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        className={`fixed top-0 inset-x-0 z-50 transition-all duration-700 flex justify-center ${scrolled ? 'pt-4 sm:pt-6 px-4' : 'pt-8 px-6'}`}
+      >
+        <div className={`w-full transition-all duration-700 flex items-center justify-between ${scrolled
+          ? 'max-w-5xl bg-zinc-950/70 backdrop-blur-2xl border border-white/10 rounded-full px-4 sm:px-6 py-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5),0_0_20px_rgba(16,185,129,0.1)]'
+          : 'max-w-7xl bg-transparent px-2 py-2'
+          }`}>
 
           {/* Logo */}
-          <div className="flex items-center gap-2 group cursor-pointer z-50" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <div className="flex items-center gap-3 group cursor-pointer z-50" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="relative flex items-center justify-center w-10 h-10">
-              <div className="absolute inset-0 bg-emerald-500 rounded-lg opacity-20 group-hover:opacity-40 transition-opacity duration-500 blur-md"></div>
-              <div className="relative w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-lg flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-300">
-                <span className="text-white font-black text-xs font-serif-premium tracking-tighter">S</span>
+              <div className="absolute inset-0 bg-emerald-500 rounded-xl opacity-20 group-hover:opacity-60 transition-opacity duration-500 blur-md"></div>
+              <div className="relative w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 overflow-hidden">
+                <span className="text-white font-black text-sm font-serif-premium tracking-tighter relative z-10">S</span>
               </div>
             </div>
-            <span className="font-serif-premium font-bold text-xl tracking-tight text-white group-hover:text-emerald-400 transition-colors duration-300">
+            <span className="font-serif-premium font-bold text-xl tracking-tight text-white group-hover:text-emerald-400 transition-colors duration-300 leading-none">
               ShapeScan<span className="text-emerald-500">.</span>
             </span>
           </div>
 
           {/* Nav Links - Desktop (Centered) */}
-          <div className="hidden md:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
-            <button onClick={onHowItWorks} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Como funciona?</button>
-            <button onClick={onAbout} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">Quem somos?</button>
+          <div className="hidden md:flex items-center gap-2 absolute left-1/2 -translate-x-1/2">
+            <button onClick={onHowItWorks} className="px-5 py-2 rounded-full text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all duration-300">Como funciona?</button>
+            <button onClick={onAbout} className="px-5 py-2 rounded-full text-sm font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all duration-300">Quem somos?</button>
           </div>
 
-          {/* Action Button - Restored */}
-          <div className="hidden md:flex items-center gap-6">
-            <button onClick={onLogin} className="text-sm font-medium text-zinc-300 hover:text-white transition-colors">
-              Fazer Login
+          {/* Action Button - Premium (Always Visible) */}
+          <div className="flex items-center gap-2 sm:gap-4 relative z-50">
+            <button
+              onClick={onLogin}
+              className="flex items-center gap-2 px-4 py-2 sm:py-2.5 rounded-full border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-zinc-300 hover:text-white transition-all active:scale-95 group"
+            >
+              <div className="w-4 h-4 rounded-full bg-white/10 group-hover:bg-emerald-500/20 flex items-center justify-center transition-colors">
+                <svg className="w-2.5 h-2.5 text-zinc-400 group-hover:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </div>
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em]">Login</span>
             </button>
+            <div className="w-[1px] h-4 bg-white/10 hidden sm:block"></div>
             <button
               onClick={onStart}
-              className="group relative px-6 py-2.5 rounded-full overflow-hidden flex items-center gap-2 bg-white text-black font-semibold tracking-tight hover:bg-zinc-200 transition-colors"
+              className="group relative px-6 py-2.5 rounded-full overflow-hidden flex items-center gap-3 font-black tracking-[0.2em] uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] hidden sm:flex border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
             >
-              Iniciar Análise
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-emerald-500/10 to-transparent rotate-45 animate-sweep"></div>
+              <span className="relative z-10 text-[10px] text-white group-hover:text-emerald-50 transition-colors">Começar Agora</span>
+              <div className="relative z-10 w-5 h-5 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 text-emerald-500 transition-all shadow-sm">
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
+              </div>
+            </button>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              className="md:hidden z-50 relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-colors ml-1"
+              onClick={toggleMenu}
+              aria-label="Toggle menu"
+            >
+              <div className="w-4 h-3 flex flex-col justify-between items-end">
+                <span className={`h-0.5 bg-white rounded-full transition-all duration-300 ${isMenuOpen ? 'w-4 rotate-45 translate-y-1.5' : 'w-4'}`} />
+                <span className={`h-0.5 bg-white rounded-full transition-all duration-300 ${isMenuOpen ? 'opacity-0' : 'w-3'}`} />
+                <span className={`h-0.5 bg-white rounded-full transition-all duration-300 ${isMenuOpen ? 'w-4 -rotate-45 -translate-y-1' : 'w-2'}`} />
+              </div>
             </button>
           </div>
-
-          {/* Mobile Menu Toggle */}
-          <button
-            className="md:hidden z-50 relative p-2"
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
-          >
-            <div className="w-6 h-5 flex flex-col justify-between items-end">
-              <span className={`h-0.5 bg-white rounded-full transition-all duration-300 ${isMenuOpen ? 'w-6 rotate-45 translate-y-2.5' : 'w-6'}`} />
-              <span className={`h-0.5 bg-white rounded-full transition-all duration-300 ${isMenuOpen ? 'opacity-0' : 'w-4'}`} />
-              <span className={`h-0.5 bg-white rounded-full transition-all duration-300 ${isMenuOpen ? 'w-6 -rotate-45 -translate-y-2' : 'w-5'}`} />
-            </div>
-          </button>
-
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Mobile Full Screen Menu Overlay V2 */}
       <div className={`fixed inset-0 bg-zinc-950/98 backdrop-blur-3xl z-[60] flex flex-col items-center justify-center transition-all duration-500 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
@@ -285,9 +311,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="flex flex-col gap-10 text-center w-full px-8 max-sm">
           <button onClick={() => handleMobileNav(onHowItWorks)} className="text-4xl font-serif-premium font-medium text-white hover:text-emerald-400 transition-colors">Como funciona?</button>
           <button onClick={() => handleMobileNav(onAbout)} className="text-4xl font-serif-premium font-medium text-white hover:text-emerald-400 transition-colors">Quem somos?</button>
-          <hr className="w-12 mx-auto border-white/10 my-2" />
-          <button onClick={() => handleMobileNav(onLogin)} className="text-xl font-medium text-zinc-400 hover:text-white transition-colors">Acessar Conta</button>
-          <button onClick={() => handleMobileNav(onStart)} className="mt-4 bg-white text-zinc-950 w-full py-5 rounded-full font-bold text-lg hover:scale-[1.02] transition-transform">Iniciar Análise</button>
         </div>
       </div>
 
@@ -326,18 +349,19 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             >
               <button
                 onClick={onStart}
-                className="group relative px-10 py-5 rounded-full overflow-hidden bg-white text-zinc-950 font-bold tracking-tight text-xl hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 shadow-[0_0_60px_-15px_rgba(255,255,255,0.6)]"
+                className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 bg-emerald-500 text-zinc-950 font-black tracking-[0.2em] text-sm md:text-base uppercase shadow-[0_0_40px_-5px_rgba(16,185,129,0.5)] hover:shadow-[0_0_60px_-5px_rgba(16,185,129,0.7)]"
               >
-                Iniciar Análise
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-1.5 transition-transform" />
-              </button>
+                {/* Subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-              <button
-                onClick={onHowItWorks}
-                className="group px-10 py-5 rounded-full font-semibold tracking-tight text-lg text-white transition-colors duration-300 flex items-center justify-center gap-3 hover:text-emerald-400 border border-transparent hover:border-white/10 hover:bg-white/5 backdrop-blur-sm"
-              >
-                <Play className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-colors bg-white/10 p-1.5 rounded-full border border-white/20 group-hover:scale-110" />
-                Ver Demonstração
+                {/* Sweep Animation Diagonal */}
+                <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-white/40 to-transparent rotate-45 animate-sweep"></div>
+
+                <span className="relative z-10 drop-shadow-sm">Começar Agora</span>
+
+                <div className="relative z-10 w-8 h-8 rounded-full bg-zinc-950/20 flex items-center justify-center group-hover:bg-zinc-950/30 transition-colors backdrop-blur-sm shadow-inner group-hover:scale-110 duration-300">
+                  <ArrowRight className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />
+                </div>
               </button>
             </motion.div>
 
@@ -584,10 +608,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             </p>
             <button
               onClick={onStart}
-              className="bg-white text-zinc-950 px-14 py-6 rounded-full font-bold text-xl hover:scale-105 active:scale-95 transition-all shadow-[0_0_60px_-15px_rgba(255,255,255,0.6)] flex items-center justify-center gap-3 mx-auto group"
+              className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden font-black tracking-[0.15em] text-base md:text-lg uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] mx-auto border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
             >
-              Criar Conta Gratuita
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-1.5 transition-transform" />
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-emerald-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-emerald-500/10 to-transparent rotate-45 animate-sweep"></div>
+
+              <span className="relative z-10 text-white group-hover:text-emerald-50 transition-colors">Começar Agora</span>
+
+              <div className="relative z-10 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 text-emerald-500 transition-all duration-500 shadow-lg backdrop-blur-sm">
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />
+              </div>
             </button>
 
             <div className="mt-16 flex flex-col md:flex-row justify-center items-center gap-8 text-xs font-black uppercase tracking-widest">

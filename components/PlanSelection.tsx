@@ -1,7 +1,9 @@
-
 import React, { useState } from 'react';
 import { PlanType, getCheckoutUrl } from '../services/paymentConfig';
 import { User } from '../types';
+import PremiumBackground from './ui/PremiumBackground';
+import LetterPuller from './ui/LetterPuller';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 interface PlanSelectionProps {
    user?: User | null;
@@ -37,33 +39,34 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
    };
 
    return (
-      <div className="min-h-screen bg-[#050505] text-white overflow-x-hidden font-sans relative selection:bg-emerald-500 selection:text-white">
-         <div className="fixed inset-0 z-0 pointer-events-none">
-            <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-900/10 rounded-full blur-[120px] animate-pulse" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-600/5 rounded-full blur-[120px]" />
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
-         </div>
-
-         {/* Safe Area Fix for Mobile Notch */}
-         <div className="absolute top-12 left-6 z-50">
-            <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-zinc-900/80 backdrop-blur-md border border-white/20 shadow-lg hover:scale-105 transition-all active:scale-95 text-white group">
-               <span className="text-xl pb-0.5 group-hover:-translate-x-0.5 transition-transform">←</span>
+      <PremiumBackground className="overflow-x-hidden selection:bg-emerald-500 selection:text-white" dim={true} intensity={1.5}>
+         {/* Top Navigation */}
+         <div className="absolute top-8 left-6 md:top-12 md:left-12 z-50">
+            <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white group">
+               <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
             </button>
          </div>
 
          <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24">
-            <div className="text-center mb-10 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-700">
-               <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 leading-[1.1]">Escolha o seu nível de <br className="hidden md:block" /><span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-200 to-white">evolução.</span></h1>
-               <p className="text-zinc-400 font-medium text-lg">Desbloqueie todo o potencial da tecnologia para o seu físico.</p>
+            <div className="text-center mb-16 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000">
+               <h1 className="text-5xl md:text-7xl font-serif-premium font-bold tracking-tight mb-6 text-white leading-[1.1]">
+                  Escolha o seu nível de<br />
+                  <span className="text-emerald-400 drop-shadow-[0_0_30px_rgba(52,211,153,0.3)]">
+                     <LetterPuller text="evolução." />
+                  </span>
+               </h1>
+               <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs md:text-sm opactiy-80">
+                  Desbloqueie todo o potencial da tecnologia para o seu físico.
+               </p>
             </div>
 
-            {/* Billing Toggle - Redesigned & Centered */}
-            <div className="flex justify-center mb-12 animate-in fade-in duration-700 delay-100">
-               <div className="bg-zinc-950 p-1 rounded-full border border-white/10 flex relative h-14 w-80 max-w-full items-center shadow-inner shadow-black/50">
+            {/* Billing Toggle - Premium Redesign */}
+            <div className="flex justify-center mb-16 animate-in fade-in duration-1000 delay-200">
+               <div className="bg-zinc-950/50 backdrop-blur-xl p-1.5 rounded-full border border-white/10 flex relative h-16 w-80 max-w-full items-center shadow-2xl">
                   {/* Monthly Button */}
                   <button
                      onClick={() => setBillingCycle('monthly')}
-                     className={`flex-1 h-full rounded-full text-xs font-black uppercase tracking-widest transition-all relative z-10 flex items-center justify-center ${billingCycle === 'monthly' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                     className={`flex-1 h-full rounded-full text-[10px] md:text-xs font-black uppercase tracking-[0.2em] transition-all relative z-10 flex items-center justify-center ${billingCycle === 'monthly' ? 'text-zinc-950' : 'text-zinc-500 hover:text-white'}`}
                   >
                      Mensal
                   </button>
@@ -71,22 +74,21 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                   {/* Annual Button */}
                   <button
                      onClick={() => setBillingCycle('annual')}
-                     className={`flex-1 h-full rounded-full text-xs font-black uppercase tracking-widest transition-all relative z-10 flex items-center justify-center gap-2 ${billingCycle === 'annual' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                     className={`flex-1 h-full rounded-full text-[10px] md:text-xs font-black uppercase tracking-[0.2em] transition-all relative z-10 flex items-center justify-center gap-2 ${billingCycle === 'annual' ? 'text-zinc-950' : 'text-zinc-500 hover:text-white'}`}
                   >
                      Anual
-                     <span className={`text-[9px] px-1.5 py-0.5 rounded transition-colors ${billingCycle === 'annual' ? 'bg-white/20 text-white' : 'bg-emerald-500/10 text-emerald-500'}`}>-20%</span>
+                     <span className={`text-[8px] px-2 py-1 rounded bg-zinc-950 text-emerald-400 border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]`}>-20%</span>
                   </button>
 
-                  {/* Sliding Background (Emerald with Glow) */}
-                  <div className={`absolute top-1 bottom-1 w-[calc(50%-6px)] bg-emerald-600 rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] ${billingCycle === 'monthly' ? 'left-1' : 'left-[calc(50%+2px)]'}`}></div>
+                  {/* Sliding Background */}
+                  <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white rounded-full transition-all duration-500 shadow-[0_0_20px_rgba(255,255,255,0.4)] ${billingCycle === 'monthly' ? 'left-1.5' : 'left-[calc(50%+2px)]'}`}></div>
                </div>
             </div>
 
             {/* Plans Grid */}
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-
+            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
                {/* STANDARD PLAN */}
-               <div className="relative">
+               <div className="relative animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
                   <PlanCard
                      title="Standard"
                      price={billingCycle === 'monthly' ? "29,90" : "247"}
@@ -100,14 +102,13 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                      onClick={() => handleSubscribe(billingCycle === 'monthly' ? 'monthly' : 'annual')}
                      loading={loadingPlan === 'monthly' || loadingPlan === 'annual'}
                      highlightTag={billingCycle === 'monthly' ? "Mais Escolhido" : "Melhor Custo-Benefício"}
-                     highlightColor={billingCycle === 'monthly' ? "blue" : "emerald"}
                      isPro={false}
                   />
                </div>
 
                {/* PRO PLAN */}
-               <div className="relative">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500 rounded-[2.5rem] blur opacity-20 animate-pulse"></div>
+               <div className="relative animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
+                  <div className="absolute -inset-1 bg-gradient-to-tr from-emerald-500/40 via-cyan-500/20 to-emerald-500/40 rounded-[3rem] blur-2xl opacity-50 animate-pulse"></div>
                   <PlanCard
                      title="Pro"
                      price={billingCycle === 'monthly' ? "44,90" : "347"}
@@ -127,69 +128,71 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                </div>
             </div>
 
-            <div className="mt-16 max-w-2xl mx-auto text-center">
-               <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5">
-                  <h3 className="text-zinc-400 font-bold text-xs uppercase tracking-widest mb-2">Sobre os Limites</h3>
-                  <p className="text-zinc-500 text-sm">
-                     Nossa tecnologia utiliza processamento avançado de alto desempenho. Devido aos custos operacionais desta infraestrutura, aplicamos limites diários para manter a sustentabilidade do serviço.
+            <div className="mt-20 max-w-3xl mx-auto text-center">
+               <div className="p-8 rounded-[2rem] bg-zinc-950/40 backdrop-blur-xl border border-white/5 shadow-2xl">
+                  <h3 className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.4em] mb-4">Sobre os Limites</h3>
+                  <p className="text-zinc-400 text-xs md:text-sm leading-relaxed font-medium">
+                     Nossa tecnologia utiliza processamento avançado de alto desempenho em IA. Devido aos custos operacionais desta infraestrutura, aplicamos limites diários para manter a sustentabilidade do serviço.
                   </p>
                </div>
             </div>
 
             {/* Show "Continue Free" only if user hasn't used their 1 scan or isn't logged in yet */}
             {(!user || (user.plan === 'free' && (user.freeScansUsed || 0) < 1)) && (
-               <div className="text-center mt-12 animate-in fade-in duration-1000 delay-300">
-                  <button onClick={() => onSelect('free')} className="text-zinc-600 hover:text-emerald-500 transition-colors text-xs font-bold uppercase tracking-widest border-b border-transparent hover:border-emerald-500/50 pb-0.5">Continuar no Plano Gratuito (1 Análise Total)</button>
+               <div className="text-center mt-12 animate-in fade-in duration-1000 delay-700">
+                  <button onClick={() => onSelect('free')} className="text-zinc-500 hover:text-emerald-400 transition-colors text-[10px] font-black uppercase tracking-[0.3em] border-b border-white/10 hover:border-emerald-500/50 pb-1">
+                     Continuar no Plano Gratuito (1 Análise Total)
+                  </button>
                </div>
             )}
          </div>
-      </div>
+      </PremiumBackground>
    );
 };
 
-const PlanCard = ({ title, price, period, features, highlightTag, highlightColor = 'emerald', onClick, loading, subtext, isPro }: any) => (
+const PlanCard = ({ title, price, period, features, highlightTag, onClick, loading, subtext, isPro }: any) => (
    <div
       onClick={onClick}
       className={`
-      group relative rounded-[2.5rem] p-8 border flex flex-col justify-between h-full cursor-pointer
-      transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-      ${isPro ? 'bg-zinc-900/90 border-emerald-500/30' : 'bg-zinc-900/40 border-white/5'}
-      hover:bg-zinc-800/90 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-2
+      group relative rounded-[3rem] p-10 md:p-12 border flex flex-col justify-between h-full cursor-pointer
+      transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+      ${isPro ? 'bg-zinc-950/60 backdrop-blur-3xl border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.1)]' : 'bg-zinc-950/40 backdrop-blur-3xl border-white/10'}
+      hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-4
     `}
    >
+      {/* Internal Glow Effect */}
+      {isPro && <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none transition-opacity duration-700 group-hover:opacity-100 overflow-hidden rounded-tr-[3rem]"></div>}
+
       {highlightTag && (
-         <div className={`absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg border border-white/5 z-20 
-          ${highlightColor === 'blue' ? 'bg-blue-600 text-white' : ''}
-          ${highlightColor === 'emerald' ? 'bg-emerald-600 text-white' : ''}
-          ${isPro ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white' : ''}
-          ${!isPro && highlightColor !== 'blue' && highlightColor !== 'emerald' ? 'bg-zinc-800 text-zinc-400' : ''}
+         <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(0,0,0,0.5)] border z-20 transition-all duration-500 group-hover:scale-105 whitespace-nowrap
+          ${isPro ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white border-white/20' : 'bg-white text-zinc-950 border-white'}
         `}>
             {highlightTag}
          </div>
       )}
 
-      <div>
-         <h3 className={`font-black uppercase text-xl tracking-tighter mb-4 ${isPro ? 'text-white' : 'text-zinc-500 group-hover:text-white transition-colors'}`}>
+      <div className="relative z-10">
+         <h3 className={`font-black uppercase text-xl md:text-2xl tracking-[0.2em] mb-6 ${isPro ? 'text-emerald-400' : 'text-zinc-400 group-hover:text-white transition-colors duration-500'}`}>
             {title}
          </h3>
 
-         <div className="mb-1 flex items-baseline gap-1 whitespace-nowrap">
-            <span className="text-5xl font-black text-white tracking-tighter">
-               {price.includes('R$') ? '' : 'R$'} {price}
+         <div className="mb-2 flex items-baseline gap-2 whitespace-nowrap">
+            <span className="text-6xl md:text-7xl font-serif-premium font-bold text-white tracking-tighter drop-shadow-lg">
+               {price.includes('R$') ? '' : <span className="text-3xl font-black text-zinc-500 mr-1">R$</span>}{price}
             </span>
-            <span className="text-zinc-500 font-bold text-xs uppercase tracking-wide">{period}</span>
+            <span className="text-zinc-500 font-bold text-[10px] uppercase tracking-widest">{period}</span>
          </div>
 
-         {subtext && <p className="text-[10px] text-zinc-400 font-bold mb-6">{subtext}</p>}
-         {!subtext && <div className="h-4 mb-2"></div>}
+         {subtext && <p className="text-[10px] text-zinc-500 font-bold mb-8 uppercase tracking-wider">{subtext}</p>}
+         {!subtext && <div className="h-6 mb-4"></div>}
 
-         <div className={`h-px w-full my-6 transition-colors duration-300 ${isPro ? 'bg-emerald-500/30' : 'bg-white/5 group-hover:bg-emerald-500/30'}`}></div>
+         <div className={`h-px w-full my-8 ${isPro ? 'bg-gradient-to-r from-emerald-500/50 to-transparent' : 'bg-gradient-to-r from-white/10 to-transparent'}`}></div>
 
-         <ul className="space-y-4 mb-8">
+         <ul className="space-y-6 mb-10">
             {features.map((f: string, i: number) => (
-               <li key={i} className="flex items-start gap-3 text-sm font-bold text-zinc-300">
-                  <div className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${isPro ? 'bg-emerald-500 text-white' : 'bg-zinc-800 text-zinc-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors'}`}>
-                     ✓
+               <li key={i} className="flex items-start gap-4 text-sm font-medium text-zinc-300 group-hover:text-white transition-colors duration-500">
+                  <div className={`mt-0.5 shrink-0 transition-transform duration-500 group-hover:scale-110 ${isPro ? 'text-emerald-400' : 'text-zinc-600 group-hover:text-emerald-400'}`}>
+                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   {f}
                </li>
@@ -197,8 +200,8 @@ const PlanCard = ({ title, price, period, features, highlightTag, highlightColor
          </ul>
       </div>
 
-      <button disabled={loading} className={`w-full py-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg ${isPro ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-white/5 text-zinc-400 hover:bg-emerald-500 hover:text-white'}`}>
-         {loading ? 'Processando...' : 'Escolher Plano'}
+      <button disabled={loading} className={`relative overflow-hidden w-full py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all duration-500 shadow-xl border ${isPro ? 'bg-emerald-500 text-zinc-950 border-emerald-400 hover:bg-emerald-400 hover:shadow-[0_0_30px_rgba(52,211,153,0.4)]' : 'bg-white/5 text-white border-white/10 hover:bg-white hover:text-zinc-950'} active:scale-95`}>
+         <span className="relative z-10">{loading ? 'Validando...' : 'Assinar Agora'}</span>
       </button>
    </div>
 );

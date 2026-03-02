@@ -20,6 +20,7 @@ import Evolution from './components/Evolution';
 import Settings from './components/Settings';
 import SavedMeals from './components/SavedMeals';
 import AdminDashboard from './components/AdminDashboard';
+import AppDemo from './components/AppDemo';
 import { db } from './services/db';
 
 const App: React.FC = () => {
@@ -363,7 +364,7 @@ const App: React.FC = () => {
       case 'food_ai': return <FoodAnalyzer mode="ai" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
       case 'food_manual': return <FoodAnalyzer mode="manual" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
       case 'saved_meals': return <SavedMeals user={user!} onAddLog={addFoodLog} onBack={() => setCurrentView('dashboard')} onShowToast={showToast} />;
-      case 'shape': return <ShapeAnalyzer user={user!} onBack={() => setCurrentView('dashboard')} onSaveToEvolution={(data) => addEvolutionRecord({ ...data, date: Date.now() })} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} />;
+      case 'shape': return <ShapeAnalyzer user={user!} onBack={() => setCurrentView('dashboard')} onSaveToEvolution={(data) => addEvolutionRecord({ ...data, date: Date.now() })} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
       case 'chat': return <CoachChat user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} onUpgrade={() => setCurrentView('plans')} onShowToast={showToast} />;
       case 'evolution': return <Evolution user={user!} records={evolutionRecords} onBack={() => setCurrentView('dashboard')} onAdd={addEvolutionRecord} onDelete={deleteEvolutionRecord} onEdit={editEvolutionRecord} onUpgrade={() => setCurrentView('plans')} />;
       case 'bmi_calc': return <BMICalculator onBack={() => setCurrentView('dashboard')} />;

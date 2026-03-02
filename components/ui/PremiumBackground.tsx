@@ -18,7 +18,7 @@ const PremiumBackground: React.FC<PremiumBackgroundProps> = ({
     dim = false
 }) => {
     return (
-        <div className={`relative min-h-screen w-full bg-[#020202] text-white selection:bg-emerald-500 selection:text-white ${className}`}>
+        <div className="relative min-h-screen w-full bg-[#020202] text-white selection:bg-emerald-500 selection:text-white">
             {showShaders && (
                 <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
                     <LiquidShaderBackground intensity={intensity} />
@@ -29,7 +29,7 @@ const PremiumBackground: React.FC<PremiumBackgroundProps> = ({
                     )}
                 </div>
             )}
-            <div className="relative z-10 w-full min-h-screen">
+            <div className={`relative z-10 w-full min-h-screen ${className}`}>
                 {children}
             </div>
         </div>

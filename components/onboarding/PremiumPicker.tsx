@@ -123,6 +123,8 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
                 style={{
                     scrollSnapType: 'y mandatory',
                     WebkitOverflowScrolling: 'touch',
+                    maskImage: 'linear-gradient(to bottom, transparent, black 30%, black 70%, transparent)',
+                    WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 30%, black 70%, transparent)',
                 }}
             >
                 {/* Top spacers */}
@@ -167,9 +169,7 @@ const PremiumPicker: React.FC<PremiumPickerProps> = ({
                 {Array.from({ length: PAD }).map((_, i) => spacer(`bot-${i}`))}
             </div>
 
-            {/* Gradient fades */}
-            <div className="absolute top-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-b from-zinc-950 to-transparent opacity-80" style={{ height: itemHeight * PAD }} />
-            <div className="absolute bottom-0 inset-x-0 pointer-events-none z-20 bg-gradient-to-t from-zinc-950 to-transparent opacity-80" style={{ height: itemHeight * PAD }} />
+            {/* Gradient fades foram removidos. mask-image no scroll container faz o fade alpha real, mantendo total transparência ao background. */}
         </div>
     );
 };

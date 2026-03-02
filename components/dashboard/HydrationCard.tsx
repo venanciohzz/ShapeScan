@@ -35,9 +35,9 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
             <div className="relative z-10">
                 <div className="flex justify-between items-start mb-10">
                     <div className="flex flex-col">
-                        <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em] mb-3 leading-none opacity-70">Monitoramento H2O</span>
+                        <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.4em] mb-3 leading-none opacity-90 drop-shadow-sm">Monitoramento H2O</span>
                         <div className="flex items-center gap-3">
-                            <h3 className="font-serif-premium font-bold text-3xl text-white tracking-tight">Hidratação</h3>
+                            <h3 className="font-serif-premium font-bold text-3xl text-white tracking-tight drop-shadow-md">Hidratação</h3>
                             {isWaterGoalMet && (
                                 <div className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30 text-[9px] font-black uppercase tracking-widest animate-pulse">
                                     Otimizado
@@ -46,7 +46,7 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
                         </div>
                     </div>
                     <div className="text-right flex flex-col items-end">
-                        <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em] mb-3 leading-none opacity-70">Nível Atual</span>
+                        <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.4em] mb-3 leading-none opacity-90 drop-shadow-sm">Nível Atual</span>
                         {manualWaterEdit ? (
                             <div className="flex items-center gap-2">
                                 <input
@@ -63,8 +63,8 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
                                 className="flex items-baseline gap-1 cursor-pointer group/data"
                                 onClick={() => setManualWaterEdit(true)}
                             >
-                                <span className="text-3xl font-serif-premium font-bold text-white group-hover/data:text-cyan-400 transition-colors">{waterConsumed}</span>
-                                <span className="text-zinc-500 text-xs font-serif-premium italic">/ {waterGoal}ml</span>
+                                <span className="text-3xl font-serif-premium font-bold text-white group-hover/data:text-cyan-400 transition-colors drop-shadow-md">{waterConsumed}</span>
+                                <span className="text-zinc-300 text-xs font-serif-premium italic drop-shadow-sm">/ {waterGoal}ml</span>
                             </div>
                         )}
                     </div>

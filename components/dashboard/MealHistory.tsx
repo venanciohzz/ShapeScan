@@ -1,5 +1,6 @@
 import React from 'react';
 import { FoodLog } from '../../types';
+import { Utensils } from 'lucide-react';
 
 interface MealHistoryProps {
     todayLogs: FoodLog[];
@@ -36,29 +37,29 @@ const MealHistory: React.FC<MealHistoryProps> = ({
                             <div className="relative z-10 flex-1 min-w-0 pr-6">
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                                    <p className="font-serif-premium font-bold text-lg text-white truncate">
+                                    <p className="font-serif-premium font-bold text-lg text-white truncate drop-shadow-md">
                                         {log.name}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest opacity-60">
+                                    <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest opacity-80 drop-shadow-sm">
                                         Macros Detectados:
                                     </span>
-                                    <p className="text-[10px] font-black text-emerald-500/80 tracking-widest uppercase">
-                                        {formatValue(log.protein)}P <span className="text-zinc-700 mx-1">/</span> {formatValue(log.carbs)}C <span className="text-zinc-700 mx-1">/</span> {formatValue(log.fat)}G
+                                    <p className="text-[10px] font-black text-emerald-400 tracking-widest uppercase drop-shadow-sm">
+                                        {formatValue(log.protein)}P <span className="text-zinc-500 mx-1">/</span> {formatValue(log.carbs)}C <span className="text-zinc-500 mx-1">/</span> {formatValue(log.fat)}G
                                     </p>
                                 </div>
 
                                 <div className="flex gap-4 mt-6">
                                     <button
                                         onClick={() => onEditLog(log)}
-                                        className="text-[9px] font-black text-zinc-500 hover:text-white uppercase tracking-[0.2em] transition-colors"
+                                        className="text-[9px] font-black text-zinc-300 hover:text-white uppercase tracking-[0.2em] transition-colors drop-shadow-sm"
                                     >
                                         Ajustar
                                     </button>
                                     <button
                                         onClick={() => onDeleteLog(log.id)}
-                                        className="text-[9px] font-black text-red-500/40 hover:text-red-500 uppercase tracking-[0.2em] transition-colors"
+                                        className="text-[9px] font-black text-red-400 hover:text-red-500 uppercase tracking-[0.2em] transition-colors drop-shadow-sm"
                                     >
                                         Remover
                                     </button>
@@ -66,20 +67,20 @@ const MealHistory: React.FC<MealHistoryProps> = ({
                             </div>
 
                             <div className="relative z-10 text-right shrink-0">
-                                <p className="font-serif-premium font-bold text-3xl text-white tracking-tighter">
+                                <p className="font-serif-premium font-bold text-3xl text-white tracking-tighter drop-shadow-md">
                                     {formatValue(log.calories)}
                                 </p>
-                                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest opacity-50">kcal</p>
+                                <p className="text-[9px] font-black text-zinc-300 uppercase tracking-widest opacity-80 drop-shadow-sm">kcal</p>
                             </div>
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="bg-zinc-950/20 backdrop-blur-xl p-16 rounded-[3rem] text-center border border-dashed border-white/5">
-                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl filter grayscale opacity-30">
-                        🍽️
+                <div className="bg-zinc-950/20 backdrop-blur-xl p-16 rounded-[3rem] text-center border border-dashed border-white/5 shadow-xl">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl text-zinc-400 opacity-80">
+                        <Utensils className="w-8 h-8" />
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 opacity-50">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-80 drop-shadow-sm">
                         Nenhum registro no cache
                     </p>
                 </div>

@@ -42,37 +42,37 @@ const MacroCard: React.FC<MacroCardProps> = ({
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 
             <div className="w-full flex justify-between items-start mb-4">
-                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] opacity-70">{fullLabel}</span>
-                <div className={`w-2 h-2 rounded-full ${progress > 90 ? 'bg-emerald-400 animate-pulse' : 'bg-white/10'}`}></div>
+                <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em] opacity-90 drop-shadow-sm">{fullLabel}</span>
+                <div className={`w-2 h-2 rounded-full ${progress > 90 ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`}></div>
             </div>
 
             <div className="flex flex-col items-center">
                 <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-serif-premium font-bold text-white tracking-tighter">
+                    <span className="text-4xl font-serif-premium font-bold text-white tracking-tighter drop-shadow-md">
                         {Math.round(value)}
                     </span>
-                    <span className="text-emerald-500/50 text-[10px] font-serif-premium italic">{unit}</span>
+                    <span className="text-emerald-500/80 text-[10px] font-serif-premium italic">{unit}</span>
                 </div>
             </div>
 
             <div className="w-full mt-6">
                 {hasGoal ? (
                     <div className="space-y-3">
-                        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                        <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${progress}%` }}
                                 transition={{ duration: 1.5, ease: "circOut" }}
-                                className="h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                                className="h-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.8)]"
                             />
                         </div>
-                        <div className="flex justify-between items-center text-[9px] font-black text-zinc-500 uppercase tracking-widest">
-                            <span className="opacity-50">Consumo</span>
-                            <span className="text-white/60">Meta: {goal}{unit}</span>
+                        <div className="flex justify-between items-center text-[9px] font-black text-zinc-300 uppercase tracking-widest drop-shadow-sm">
+                            <span className="opacity-80">Consumo</span>
+                            <span className="text-white/80">Meta: {goal}{unit}</span>
                         </div>
                     </div>
                 ) : (
-                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden opacity-20"></div>
+                    <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden opacity-40"></div>
                 )}
             </div>
         </div>

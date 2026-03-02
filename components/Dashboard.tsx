@@ -72,7 +72,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
             />
 
             {/* Header do Usuário */}
-            <div className="flex justify-between items-end mb-12 md:mb-16 gap-6">
+            <div className="flex justify-between items-start mb-12 md:mb-16 gap-6">
                <div className="flex items-center gap-6 min-w-0 flex-1">
                   <div className="relative group">
                      <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -81,19 +81,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                      </div>
                   </div>
                   <div className="flex flex-col min-w-0">
-                     <p className="text-zinc-500 font-bold uppercase text-[10px] md:text-xs tracking-[0.3em] mb-2 opacity-70">Painel de Controle</p>
-                     <h1 className="text-3xl md:text-6xl font-serif-premium font-bold text-white tracking-tight truncate leading-tight">
+                     <p className="text-zinc-300 font-bold uppercase text-[10px] md:text-xs tracking-[0.3em] mb-2 drop-shadow-md">Painel de Controle</p>
+                     <h1 className="text-3xl md:text-6xl font-serif-premium font-bold text-white tracking-tight truncate leading-tight drop-shadow-xl">
                         Olá, <LetterPuller text={user.name.split(' ')[0]} /> 👋
                      </h1>
-                     <p className="text-emerald-500 font-black uppercase text-[10px] md:text-xs tracking-[0.2em] mt-2">{user.username.startsWith('@') ? user.username : `@${user.username}`}</p>
+                     <p className="text-emerald-400 font-black uppercase text-[10px] md:text-xs tracking-[0.2em] mt-2 drop-shadow-md">{user.username.startsWith('@') ? user.username : `@${user.username}`}</p>
                   </div>
                </div>
                <button
                   onClick={onLogout}
-                  className="bg-white/5 border border-white/10 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-500 transition-all text-zinc-500 shrink-0 active:scale-95 flex items-center gap-2"
+                  className="bg-white/5 border border-white/10 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-all text-zinc-300 shrink-0 active:scale-95 flex items-center gap-2 shadow-lg backdrop-blur-sm"
                >
                   <span>Sair</span>
-                  <span className="opacity-50">BYE</span>
+                  <span className="opacity-70">BYE</span>
                </button>
             </div>
 

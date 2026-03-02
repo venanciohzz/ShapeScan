@@ -33,7 +33,7 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
                 <div className="relative z-10 flex flex-col items-center">
                     <div className="flex justify-between items-center w-full mb-12">
                         <div className="flex flex-col">
-                            <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2 leading-none">Status do Sistema</span>
+                            <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.4em] mb-2 leading-none drop-shadow-md">Status do Sistema</span>
                             <div className="flex items-center gap-2">
                                 <span className={`relative flex h-2 w-2`}>
                                     <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOverLimit ? 'bg-red-500' : 'bg-emerald-500'}`}></span>
@@ -45,34 +45,34 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
                             </div>
                         </div>
                         <div className="text-right">
-                            <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2 leading-none">Consumo Atual</span>
-                            <p className="text-2xl font-serif-premium font-bold text-white leading-none">{realPercent.toFixed(0)}%</p>
+                            <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.4em] mb-2 leading-none drop-shadow-md">Consumo Atual</span>
+                            <p className="text-2xl font-serif-premium font-bold text-white leading-none drop-shadow-md">{realPercent.toFixed(0)}%</p>
                         </div>
                     </div>
 
                     <div className="relative mb-12 flex flex-col items-center justify-center py-4">
-                        <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.5em] mb-4 opacity-70">Energia Processada</span>
+                        <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.5em] mb-4 opacity-90 drop-shadow-sm">Energia Processada</span>
                         <div className="flex items-baseline gap-3">
                             <span className="text-7xl md:text-9xl font-serif-premium font-bold text-white tracking-tighter drop-shadow-[0_10px_40px_rgba(255,255,255,0.1)] leading-none">
                                 {formatValue(consumed)}
                             </span>
-                            <span className="text-emerald-500/50 text-xl font-serif-premium italic">kcal</span>
+                            <span className="text-emerald-500/80 text-xl font-serif-premium italic">kcal</span>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 w-full gap-6 mb-12">
                         <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col items-center group/card hover:bg-white/[0.05] transition-colors duration-500">
-                            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-2">Restante</span>
+                            <span className="text-[9px] font-black text-zinc-300 uppercase tracking-[0.3em] mb-2 drop-shadow-sm">Restante</span>
                             <span className="text-2xl font-serif-premium font-bold text-white">{Math.max(0, safeGoal - consumed)}</span>
                         </div>
                         <div className="bg-white/[0.03] rounded-3xl p-6 border border-white/5 flex flex-col items-center group/card hover:bg-white/[0.05] transition-colors duration-500">
-                            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.3em] mb-2">Objetivo Final</span>
+                            <span className="text-[9px] font-black text-zinc-300 uppercase tracking-[0.3em] mb-2 drop-shadow-sm">Objetivo Final</span>
                             <span className="text-2xl font-serif-premium font-bold text-white">{safeGoal}</span>
                         </div>
                     </div>
 
                     <div className="w-full space-y-4">
-                        <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
+                        <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/10 relative">
                             <div
                                 className={`h-full transition-all duration-1000 ease-out ${isOverLimit ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]'}`}
                                 style={{ width: `${visualPercent}%` }}
@@ -85,12 +85,12 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
                                         key={i}
                                         className={`h-0.5 w-1 rounded-sm transition-all duration-700 ${visualPercent > i * (100 / 20)
                                             ? isOverLimit ? 'bg-red-500' : 'bg-emerald-500'
-                                            : 'bg-white/10'
+                                            : 'bg-white/20'
                                             }`}
                                     ></div>
                                 ))}
                             </div>
-                            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest opacity-50">
+                            <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest opacity-80 drop-shadow-sm">
                                 {visualPercent.toFixed(1)}% Load System
                             </span>
                         </div>

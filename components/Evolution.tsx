@@ -241,13 +241,14 @@ const Evolution: React.FC<EvolutionProps> = ({ user, records, onBack, onAdd, onD
           )}
         </AnimatePresence>
 
-        {/* Navigation */}
-        <button
-          onClick={onBack}
-          className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 mb-10 text-white group"
-        >
-          <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
-        </button>
+        <header className="flex justify-between items-center mb-8 relative z-20">
+          <button
+            onClick={onBack}
+            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        </header>
 
         {/* Title Section */}
         <div className="mb-12">

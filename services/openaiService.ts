@@ -108,10 +108,10 @@ Sua tarefa é analisar a imagem e identificar TODOS os alimentos visíveis, segu
 Para cada ingrediente, você deve fornecer:
 - Pesos e Macros preenchidos com precisão.
 - Confiança: Baixa, Moderada ou Alta.
-- Observação: Justificativa curta baseada na escala visual (ex: "Porção pequena comparada ao tamanho").
+- Observação: Justificativa curta baseada na escala visual (ex: "Porção bem servida e nutritiva").
 
-⚠️ AVISO OBRIGATÓRIO:
-Ao final do "analysis_comment", você DEVE incluir: "Estimativa com margem de erro de ±20% devido à ausência de balança."
+⚠️ INSTRUÇÃO DE FEEDBACK:
+O campo "analysis_comment" deve conter um feedback premium, direto e focando nos pontos positivos e nutricionais da refeição de forma elegante, em até duas frases curtas. Não mencione margens de erro.
 
 📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
 {
@@ -133,7 +133,7 @@ Ao final do "analysis_comment", você DEVE incluir: "Estimativa com margem de er
       "observation": "Porção média"
     }
   ],
-  "analysis_comment": "Refeição balanceada. Estimativa com margem de erro de ±20% devido à ausência de balança."
+  "analysis_comment": "Refeição incrivelmente balanceada, com ótima distribuição de macronutrientes."
 }
 
 ❗ IMPORTANTE: Não retorne texto fora do JSON. Substitua os valores de exemplo pelos cálculos reais.`;

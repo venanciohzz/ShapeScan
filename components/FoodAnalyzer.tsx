@@ -199,7 +199,42 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
     }
   };
 
-  const isFreeLocked = mode === 'ai' && user.plan === 'free' && (user.freeScansUsed || 0) >= 1 && !result;
+  const isFreeLocked = mode === 'ai' && user.plan === 'free' && !user.isAdmin;
+
+  if (isFreeLocked) {
+    return (
+      <PremiumBackground className="flex items-center justify-center p-6" dim={true} intensity={1.5}>
+        <div className="w-full max-w-lg bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-10 md:p-14 border border-emerald-500/20 text-center relative overflow-hidden shadow-2xl">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
+
+          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-10 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.1)]">
+            <ScanSearch className="w-10 h-10 text-emerald-500" />
+          </div>
+
+          <h2 className="text-4xl font-serif-premium font-bold text-white mb-4 tracking-tight">
+            <LetterPuller text="Acesso Exclusivo" />
+          </h2>
+          <p className="text-zinc-400 font-medium text-base mb-12 leading-relaxed max-w-xs mx-auto">
+            Acesse a Inteligência Artificial para descobrir os macronutrientes exatos da sua refeição apenas tirando uma foto. Disponível no plano Pro.
+          </p>
+
+          <button
+            onClick={onUpgrade}
+            className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:bg-zinc-200 active:scale-95 transition-all text-xs mb-6"
+          >
+            Fazer Upgrade Pro
+          </button>
+
+          <button
+            onClick={onBack}
+            className="flex items-center justify-center gap-2 mx-auto text-zinc-500 font-black text-[10px] uppercase tracking-[0.3em] hover:text-white transition-colors"
+          >
+            ← Voltar ao Painel
+          </button>
+        </div>
+      </PremiumBackground>
+    );
+  }
 
   return (
     <PremiumBackground>
@@ -265,16 +300,10 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             </motion.div>
           )}
         </AnimatePresence>
-
         <header className="flex justify-between items-center mb-12">
           <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white">
             <span className="text-xl">←</span>
           </button>
-          {!result && mode === 'ai' && (
-            <div className="bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full">
-              <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Neural Scanner 2.0</span>
-            </div>
-          )}
         </header>
 
         <main className="flex-1 flex flex-col">
@@ -315,16 +344,8 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                     />
                   </div>
 
-                  <div className={`relative group bg-zinc-950/40 backdrop-blur-2xl p-12 rounded-[3.5rem] border-2 border-dashed ${isFreeLocked ? 'border-zinc-800' : 'border-emerald-500/20'} flex flex-col items-center justify-center min-h-[400px] transition-all duration-500`}>
+                  <div className={`relative group bg-zinc-950/40 backdrop-blur-2xl p-12 rounded-[3.5rem] border-2 border-dashed border-emerald-500/20 flex flex-col items-center justify-center min-h-[400px] transition-all duration-500`}>
                     <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[3.5rem]"></div>
-
-                    {isFreeLocked && (
-                      <div className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md z-30 flex flex-col items-center justify-center p-12 text-center rounded-[3.5rem]">
-                        <div className="text-4xl mb-6">🔒</div>
-                        <h3 className="text-2xl font-serif-premium font-bold text-white mb-4">Trial Encerrado</h3>
-                        <button onClick={onUpgrade} className="bg-white text-zinc-950 px-8 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl hover:bg-zinc-200 transition-all">Desbloquear Agora</button>
-                      </div>
-                    )}
 
                     <ScanSearch className="w-32 h-32 text-emerald-500/20 mb-10 transform group-hover:scale-110 transition-transform duration-700" strokeWidth={1} />
 
@@ -382,13 +403,12 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                 </div>
 
                 <div className="bg-zinc-950/40 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 space-y-8 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-8 transform group-hover:rotate-12 transition-transform duration-700 opacity-10">
-                    <CheckCircle2 className="w-24 h-24 text-emerald-500" strokeWidth={0.5} />
-                  </div>
-
                   <div className="space-y-6 relative z-10">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-40">Pontuação Metabólica</span>
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-40 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        Pontuação Metabólica
+                      </span>
                       <span className="text-3xl font-serif-premium font-bold text-emerald-500">{result.score}/10</span>
                     </div>
                     <div className="h-1 bg-white/5 rounded-full overflow-hidden">

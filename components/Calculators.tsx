@@ -44,12 +44,12 @@ export const BMICalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
           <div className="space-y-8 relative z-10">
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Peso Corporal (kg)</label>
-              <input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-xl text-white placeholder:text-zinc-800" placeholder="00.0" />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 drop-shadow-sm ml-2">Peso Corporal (kg)</label>
+              <input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-xl text-white placeholder:text-zinc-600" placeholder="00.0" />
             </div>
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Altura Corporal (cm)</label>
-              <input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-xl text-white placeholder:text-zinc-800" placeholder="175" />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 drop-shadow-sm ml-2">Altura Corporal (cm)</label>
+              <input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500/50 focus:bg-white/[0.05] transition-all font-bold text-xl text-white placeholder:text-zinc-600" placeholder="175" />
             </div>
             <button onClick={calculate} className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all mt-4">Processar Matriz</button>
 
@@ -111,28 +111,28 @@ export const DailyCalorieCalculator: React.FC<{ onBack: () => void }> = ({ onBac
 
           <div className="space-y-8 relative z-10">
             <div className="flex gap-4 p-1.5 bg-white/[0.03] border border-white/5 rounded-2xl">
-              <button onClick={() => setGender('male')} className={`flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${gender === 'male' ? 'bg-white text-zinc-950 shadow-xl scale-105' : 'text-zinc-500'}`}>MASC</button>
-              <button onClick={() => setGender('female')} className={`flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${gender === 'female' ? 'bg-white text-zinc-950 shadow-xl scale-105' : 'text-zinc-500'}`}>FEM</button>
+              <button onClick={() => setGender('male')} className={`flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${gender === 'male' ? 'bg-white text-zinc-950 shadow-xl scale-105' : 'text-zinc-400 hover:text-white drop-shadow-sm'}`}>MASC</button>
+              <button onClick={() => setGender('female')} className={`flex-1 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${gender === 'female' ? 'bg-white text-zinc-950 shadow-xl scale-105' : 'text-zinc-400 hover:text-white drop-shadow-sm'}`}>FEM</button>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Peso (kg)</label>
-                <input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-800" />
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 drop-shadow-sm ml-2">Peso (kg)</label>
+                <input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-600" />
               </div>
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Altura (cm)</label>
-                <input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-800" />
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 drop-shadow-sm ml-2">Altura (cm)</label>
+                <input type="text" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-600" />
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Idade</label>
-              <input type="text" inputMode="decimal" value={age} onChange={e => setAge(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-800" />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 drop-shadow-sm ml-2">Idade</label>
+              <input type="text" inputMode="decimal" value={age} onChange={e => setAge(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-xl text-white placeholder:text-zinc-600" />
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-2">Nível de Atividade</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 drop-shadow-sm ml-2">Nível de Atividade</label>
               <div className="relative group">
                 <select value={activity} onChange={e => setActivity(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 p-5 rounded-2xl outline-none focus:border-emerald-500 transition-all font-bold text-lg text-white appearance-none cursor-pointer">
                   <option value="1.2" className="bg-zinc-900">Sedentário</option>
@@ -141,7 +141,7 @@ export const DailyCalorieCalculator: React.FC<{ onBack: () => void }> = ({ onBac
                   <option value="1.725" className="bg-zinc-900">Ativo</option>
                   <option value="1.9" className="bg-zinc-900">Extremo</option>
                 </select>
-                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none group-hover:text-emerald-500 transition-colors" />
+                <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none group-hover:text-emerald-500 transition-colors" />
               </div>
             </div>
 

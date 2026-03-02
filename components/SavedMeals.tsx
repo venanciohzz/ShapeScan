@@ -78,8 +78,8 @@ const SavedMeals: React.FC<SavedMealsProps> = ({ user, onAddLog, onBack, onShowT
         ) : meals.length === 0 ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-24 bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] border border-white/5 border-dashed">
             <Bookmark className="w-16 h-16 text-emerald-500/20 mx-auto mb-6" />
-            <p className="font-black text-zinc-500 uppercase text-[10px] tracking-[0.3em] mb-2">Arquivo Vazio</p>
-            <p className="text-sm text-zinc-400 font-medium px-12">Você ainda não salvou refeições. Use o scanner ou registro manual para alimentar seu arquivo.</p>
+            <p className="font-black text-zinc-400 uppercase text-[10px] tracking-[0.3em] mb-2 drop-shadow-sm">Arquivo Vazio</p>
+            <p className="text-sm text-zinc-300 font-medium px-12 drop-shadow-sm">Você ainda não salvou refeições. Use o scanner ou registro manual para alimentar seu arquivo.</p>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 gap-6">
@@ -96,20 +96,20 @@ const SavedMeals: React.FC<SavedMealsProps> = ({ user, onAddLog, onBack, onShowT
                           <Sparkles className="w-3 h-3 text-emerald-500" />
                           <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{meal.calories} kcal</span>
                         </div>
-                        <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">{meal.weight}g</span>
+                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest drop-shadow-sm">{meal.weight}g</span>
                       </div>
                     </div>
-                    <button onClick={() => handleDelete(meal.id)} className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500/5 border border-red-500/10 hover:bg-red-500/20 transition-all text-red-500 opacity-40 group-hover:opacity-100">
+                    <button onClick={() => handleDelete(meal.id)} className="w-10 h-10 flex items-center justify-center rounded-full bg-red-500/5 border border-red-500/10 hover:bg-red-500/20 transition-all text-red-500 opacity-60 group-hover:opacity-100">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="text-xs text-zinc-500 font-medium mb-8 leading-relaxed line-clamp-2 italic opacity-60">
+                  <div className="text-xs text-zinc-400 font-medium mb-8 leading-relaxed line-clamp-2 italic opacity-80 drop-shadow-sm">
                     <Utensils className="w-3 h-3 inline mr-2 opacity-30" />
                     {meal.items.map(i => i.name).join(', ')}
                   </div>
 
-                  <button onClick={() => handleAddToDay(meal)} className="w-full py-4 bg-white/[0.03] border border-white/5 text-emerald-500 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-500 hover:text-white transition-all active:scale-[0.98]">
+                  <button onClick={() => handleAddToDay(meal)} className="w-full py-4 bg-white/[0.03] border border-white/5 text-emerald-400 font-bold rounded-2xl uppercase tracking-[0.2em] text-[10px] hover:bg-emerald-500 hover:text-white transition-all active:scale-[0.98] shadow-lg">
                     + Restaurar Refeição
                   </button>
                 </motion.div>
