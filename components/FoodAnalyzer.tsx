@@ -7,6 +7,7 @@ import { db } from '../services/db';
 import { Camera, Image as ImageIcon, CheckCircle2, Save, RefreshCw, ScanSearch } from 'lucide-react';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
+import PremiumLoading from './ui/PremiumLoading';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FoodAnalyzerProps {
@@ -270,35 +271,11 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             </motion.div>
           )}
 
-          {loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center overscroll-none"
-            >
-              <div className="relative w-72 h-72 md:w-96 md:h-96 flex items-center justify-center mb-16">
-                {previewImage && (
-                  <div className="absolute inset-0 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl z-10">
-                    <img src={previewImage} alt="Scanning" className="w-full h-full object-cover opacity-40 brightness-50" />
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-emerald-400 shadow-[0_0_30px_rgba(52,211,153,1)] animate-[scan-line_2.5s_ease-in-out_infinite] z-20"></div>
-                  </div>
-                )}
-                <div className="absolute animate-spin w-full h-full border-t-2 border-emerald-500/30 rounded-full"></div>
-              </div>
-              <div className="z-10 text-center space-y-6">
-                <LetterPuller text={scanMessages[scanStep]} className="text-white text-xl md:text-2xl tracking-[0.2em] uppercase" />
-                <div className="w-48 h-[1px] bg-white/10 mx-auto overflow-hidden">
-                  <motion.div
-                    initial={{ x: '-100%' }}
-                    animate={{ x: '100%' }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                    className="w-full h-full bg-emerald-500"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
+          <PremiumLoading
+            loading={loading}
+            messages={scanMessages}
+            previewImage={previewImage}
+          />
         </AnimatePresence>
         <header className="flex justify-between items-center mb-8">
           <button onClick={onBack} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-90 text-white shadow-xl backdrop-blur-md">
@@ -388,18 +365,18 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <div className="space-y-8">
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] opacity-70">Resultado Identificado</span>
-                    <h2 className="text-5xl md:text-6xl font-serif-premium font-bold text-white tracking-tight leading-none uppercase">
+                    <h2 className="text-4xl md:text-6xl font-serif-premium font-bold text-white tracking-tight leading-none uppercase break-words">
                       {result.mealName}
                     </h2>
                   </div>
 
-                  <div className="flex items-baseline gap-4">
-                    <span className="text-8xl font-serif-premium font-bold text-white tracking-tighter hover:text-emerald-500 transition-colors duration-500">
+                  <div className="flex items-baseline gap-4 flex-wrap">
+                    <span className="text-6xl md:text-8xl font-serif-premium font-bold text-white tracking-tighter hover:text-emerald-500 transition-colors duration-500">
                       {result.totalCalories.toFixed(0)}
                     </span>
-                    <span className="text-emerald-500/50 text-2xl font-serif-premium italic">kcal</span>
+                    <span className="text-emerald-500/50 text-xl md:text-2xl font-serif-premium italic">kcal</span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-6">

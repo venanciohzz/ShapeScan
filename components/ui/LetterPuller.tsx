@@ -37,12 +37,12 @@ const LetterPuller: React.FC<{ text: string; className?: string; delay?: number 
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
-            className="inline break-words"
+            className={`inline break-words ${className}`}
         >
             {words.map((word, wordIndex) => {
                 const letters = Array.from(word);
-                const wordElement = (
-                    <span key={wordIndex} className="inline-block whitespace-nowrap">
+                return (
+                    <span key={wordIndex} className="inline-block">
                         {letters.map((letter, letterIndex) => {
                             const index = globalIndex++;
                             return (
@@ -58,11 +58,10 @@ const LetterPuller: React.FC<{ text: string; className?: string; delay?: number 
                                     }}
                                 >
                                     <motion.span
-                                        className={`${className} animate-smooth-float`}
+                                        className="animate-smooth-float"
                                         style={{
                                             display: 'inline-block',
-                                            padding: '0.35em',
-                                            margin: '-0.35em',
+                                            padding: '0.1em 0',
                                             overflow: 'visible',
                                             animationDelay: `${index * 0.15}s`,
                                             transform: 'translateZ(0)',
@@ -78,7 +77,6 @@ const LetterPuller: React.FC<{ text: string; className?: string; delay?: number 
                         {wordIndex < words.length - 1 && <span className="inline-block">&nbsp;</span>}
                     </span>
                 );
-                return wordElement;
             })}
         </motion.span>
     );

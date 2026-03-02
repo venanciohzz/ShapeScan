@@ -6,6 +6,7 @@ import { db } from '../services/db';
 import { Camera, Image as ImageIcon, TrendingUp, RefreshCw, Focus, Scale, Target, BicepsFlexed, AlertTriangle } from 'lucide-react';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
+import PremiumLoading from './ui/PremiumLoading';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ShapeAnalyzerProps {
@@ -255,27 +256,11 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
             </motion.div>
           )}
 
-          {loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center overscroll-none"
-            >
-              <div className="relative w-72 h-72 md:w-96 md:h-96 flex items-center justify-center mb-16">
-                {currentPhoto && (
-                  <div className="absolute inset-0 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl z-10">
-                    <img src={currentPhoto} alt="Scanning" className="w-full h-full object-cover opacity-40 brightness-50" />
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-emerald-400 shadow-[0_0_30px_rgba(52,211,153,1)] animate-[scan-line_2.5s_ease-in-out_infinite] z-20"></div>
-                  </div>
-                )}
-                <div className="absolute animate-spin w-full h-full border-t-2 border-emerald-500/30 rounded-full"></div>
-              </div>
-              <div className="z-10 text-center space-y-6">
-                <LetterPuller text="Mapeando geometria corporal..." className="text-white text-xl md:text-2xl tracking-[0.2em] uppercase" />
-              </div>
-            </motion.div>
-          )}
+          <PremiumLoading
+            loading={loading}
+            messages={["Mapeando geometria corporal...", "Analisando proporções...", "Calculando densidade...", "Finalizando relatório..."]}
+            previewImage={currentPhoto}
+          />
         </AnimatePresence>
 
         <header className="flex justify-between items-center mb-12">
@@ -347,11 +332,11 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[120px] rounded-full -mr-20 -mt-20"></div>
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-12">
                   <div className="space-y-4 text-center md:text-left">
-                    <div className="flex items-baseline gap-2 justify-center md:justify-start">
-                      <h2 className="text-8xl md:text-[10rem] font-serif-premium font-bold text-white leading-none tracking-tighter">
+                    <div className="flex items-baseline gap-2 justify-center md:justify-start flex-wrap">
+                      <h2 className="text-6xl md:text-[10rem] font-serif-premium font-bold text-white leading-none tracking-tighter">
                         {result.shape_score.toFixed(1)}
                       </h2>
-                      <span className="text-3xl font-serif-premium text-zinc-600 font-bold tracking-tighter">/10</span>
+                      <span className="text-2xl md:text-3xl font-serif-premium text-zinc-600 font-bold tracking-tighter">/10</span>
                     </div>
                     <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] max-w-[240px] leading-relaxed mx-auto md:mx-0">
                       ÍNDICE DE COMPOSIÇÃO E PROPORÇÃO ESTÉTICA.
@@ -507,7 +492,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div className="relative z-10 space-y-10">
                   <div className="space-y-4">
                     <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Veredito do Analista AI</p>
-                    <p className="text-white text-3xl md:text-5xl font-serif-premium font-bold leading-tight tracking-tighter italic">
+                    <p className="text-white text-2xl md:text-5xl font-serif-premium font-bold leading-tight tracking-tighter italic">
                       "{result.personal_ia_insight.aesthetic_diagnosis}"
                     </p>
                   </div>
