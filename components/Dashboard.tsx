@@ -51,7 +51,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
    };
 
    return (
-      <PremiumBackground className="pt-24 pb-32 md:pb-12 h-screen overflow-y-auto scrollbar-hide">
+      <PremiumBackground className="pt-12 pb-32 md:pb-12 h-screen overflow-y-auto scrollbar-hide">
          <div className="w-full max-w-7xl mx-auto px-6 relative z-20">
 
             {/* Modais de Controle */}
@@ -71,51 +71,51 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                formatValue={formatValue}
             />
 
-            {/* Header do Usuário */}
-            <div className="mb-12 md:mb-16 group/header">
-               {/* Top Bar: Label e Logout */}
-               <div className="flex justify-between items-center mb-10 gap-4 border-b border-white/5 pb-6">
-                  <div></div>
+            {/* Header Unificado e Compacto */}
+            <header className="mb-12 md:mb-20">
+               <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 md:gap-8 min-w-0">
+                     <div className="relative shrink-0">
+                        <div className="absolute inset-0 bg-emerald-500/30 rounded-full blur-2xl opacity-40 animate-pulse"></div>
+                        <div className="w-16 h-16 md:w-32 md:h-32 rounded-[2rem] bg-white/5 border border-emerald-500/20 flex items-center justify-center overflow-hidden shadow-2xl relative z-10 p-0.5">
+                           <div className="w-full h-full rounded-[1.8rem] overflow-hidden bg-zinc-900">
+                              {user.photo ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" /> : <span className="text-3xl md:text-6xl flex items-center justify-center h-full">👤</span>}
+                           </div>
+                           <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-[3px] border-zinc-950 z-20 shadow-lg"></div>
+                        </div>
+                     </div>
+
+                     <div className="flex flex-col min-w-0">
+                        <p className="text-emerald-500/50 font-black uppercase text-[8px] md:text-[11px] tracking-[0.4em] mb-1">DASHBOARD</p>
+                        <h1 className="text-2xl md:text-7xl font-serif-premium font-bold text-white tracking-tight leading-none drop-shadow-xl flex flex-wrap items-center gap-x-2 gap-y-0 min-w-0 mb-2">
+                           <span className="opacity-60 text-lg md:text-5xl font-light">Olá,</span>
+                           <LetterPuller text={user.name.split(' ')[0]} />
+                        </h1>
+                        <div className="flex items-center gap-2">
+                           <span className="text-zinc-500 font-bold text-[9px] md:text-xs tracking-widest uppercase">
+                              {user.username.startsWith('@') ? user.username : `@${user.username}`}
+                           </span>
+                           {user.plan !== 'free' && (
+                              <div className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-md flex items-center gap-1">
+                                 <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse"></div>
+                                 <span className="text-[7px] md:text-[9px] font-black text-amber-500 tracking-tighter uppercase">PREMIUM</span>
+                              </div>
+                           )}
+                        </div>
+                     </div>
+                  </div>
+
                   <button
                      onClick={onLogout}
-                     className="bg-white/5 border border-white/10 px-4 py-2 md:px-6 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-all text-zinc-400 shrink-0 active:scale-95 flex items-center gap-2 shadow-lg backdrop-blur-sm"
+                     className="bg-white/5 border border-white/10 w-12 h-12 md:w-auto md:px-8 md:py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-red-500/10 hover:border-red-500/30 group/logout transition-all active:scale-90"
                   >
-                     <span>Sair</span>
-                     <span className="opacity-30 hidden md:inline">EXIT</span>
+                     <span className="hidden md:inline text-[11px] font-black uppercase tracking-[0.3em] text-zinc-400 group-hover/logout:text-red-400 transition-colors">Sair / Logout</span>
+                     <svg viewBox="0 0 24 24" className="w-5 h-5 text-zinc-500 group-hover/logout:text-red-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                     </svg>
                   </button>
                </div>
-
-               {/* Profile Info Row */}
-               <div className="flex items-center gap-6 md:gap-10">
-                  <div className="relative group/avatar">
-                     <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-700"></div>
-                     <div className="w-20 h-20 md:w-32 md:h-32 rounded-full bg-white/[0.03] border-2 border-white/10 flex items-center justify-center shrink-0 overflow-hidden shadow-2xl relative z-10 transition-transform duration-700 group-hover/avatar:scale-110">
-                        {user.photo ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" /> : <span className="text-4xl md:text-6xl">👤</span>}
-                     </div>
-                     <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-zinc-950 z-20 shadow-lg"></div>
-                  </div>
-
-                  <div className="flex flex-col min-w-0">
-                     <p className="text-emerald-500/50 font-black uppercase text-[9px] md:text-[11px] tracking-[0.3em] mb-2">Bem-vindo de volta</p>
-                     <h1 className="text-3xl md:text-7xl font-serif-premium font-bold text-white tracking-tight leading-none drop-shadow-xl flex flex-wrap items-center gap-x-2 gap-y-0 min-w-0 mb-3">
-                        <span>Olá,</span>
-                        <LetterPuller text={user.name.split(' ')[0]} />
-                        <span className="animate-smooth-float inline-block">👋</span>
-                     </h1>
-                     <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-500 font-black uppercase text-[8px] md:text-[10px] tracking-widest cursor-default hover:bg-emerald-500/20 transition-colors">
-                           {user.username.startsWith('@') ? user.username : `@${user.username}`}
-                        </span>
-                        {user.plan !== 'free' && (
-                           <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1 opacity-80">
-                              <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-                              PRO
-                           </span>
-                        )}
-                     </div>
-                  </div>
-               </div>
-            </div>
+            </header>
 
             {/* Grid Principal */}
             <div className="flex flex-col md:flex-row gap-8 items-start">
