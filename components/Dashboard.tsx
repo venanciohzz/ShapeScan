@@ -82,8 +82,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                   </div>
                   <div className="flex flex-col min-w-0">
                      <p className="text-zinc-300 font-bold uppercase text-[10px] md:text-xs tracking-[0.3em] mb-2 drop-shadow-md">Painel de Controle</p>
-                     <h1 className="text-xl md:text-6xl font-serif-premium font-bold text-white tracking-tight leading-tight drop-shadow-xl flex items-center gap-2 flex-wrap min-w-0">
-                        Olá, <LetterPuller text={user.name.split(' ')[0]} /> 👋
+                     <h1 className="text-2xl md:text-6xl font-serif-premium font-bold text-white tracking-tight leading-tight drop-shadow-xl flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                        <span>Olá,</span>
+                        <LetterPuller text={user.name.split(' ')[0]} />
+                        <span>👋</span>
                      </h1>
                      <p className="text-emerald-400 font-black uppercase text-[10px] md:text-xs tracking-[0.2em] mt-2 drop-shadow-md truncate max-w-[150px] md:max-w-none">{user.username.startsWith('@') ? user.username : `@${user.username}`}</p>
                   </div>
