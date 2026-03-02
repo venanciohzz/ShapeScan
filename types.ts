@@ -126,12 +126,12 @@ export interface ShapeAnalysisResult {
     distribution: string; // e.g., "4-5 refeições"
     practical_guidelines: string[];
   };
-  coach_insight: {
+  personal_ia_insight: {
     aesthetic_diagnosis: string;
     main_leverage: string;
     smart_strategy: string;
   };
-  coach_comment: string; // Keep as fallback/summary
+  personal_ia_comment: string; // Keep as fallback/summary
   execution_strategy: {
     training_focus: string[];
     nutrition_focus: string;

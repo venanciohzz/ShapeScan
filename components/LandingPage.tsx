@@ -80,7 +80,7 @@ const LetterPuller: React.FC<{ text: string; className?: string; delay?: number 
 
 interface LandingPageProps {
   onStart: () => void; // Register
-  onLogin: () => void; // Login
+  onLogin: () => void;
   onHowItWorks: () => void;
   onAbout: () => void;
 }
@@ -267,7 +267,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
               <div className="w-4 h-4 rounded-full bg-white/10 group-hover:bg-emerald-500/20 flex items-center justify-center transition-colors">
                 <svg className="w-2.5 h-2.5 text-zinc-400 group-hover:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </div>
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em]">Login</span>
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.15em]">Entrar</span>
             </button>
             <div className="w-[1px] h-4 bg-white/10 hidden sm:block"></div>
             <button
@@ -580,7 +580,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   name="Lucas Martins"
                   role="Iniciante"
                   image="https://randomuser.me/api/portraits/men/86.jpg"
-                  text="A análise de shape foi um choque de realidade. O coach IA me ajudou a montar um plano que eu realmente consigo seguir."
+                  text="A análise de shape foi um choque de realidade. A Personal IA me ajudou a montar um plano que eu realmente consigo seguir."
                 />
               </motion.div>
             </div>

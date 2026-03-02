@@ -9,16 +9,16 @@ import LetterPuller from './ui/LetterPuller';
 interface AuthProps {
   onLogin: (user: User, isNew: boolean) => void;
   onBack: () => void;
-  initialMode?: 'login' | 'register';
+  initialMode?: 'entrar' | 'registrar';
 }
 
-const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'login' }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
-  const [isRegistering, setIsRegistering] = useState(initialMode === 'register');
+  const [isRegistering, setIsRegistering] = useState(initialMode === 'registrar');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 

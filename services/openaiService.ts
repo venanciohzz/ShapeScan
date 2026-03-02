@@ -378,12 +378,12 @@ ${metricsInfo}
     "distribution": "",
     "practical_guidelines": [""]
   },
-  "coach_insight": {
+  "personal_ia_insight": {
     "aesthetic_diagnosis": "",
     "main_leverage": "",
     "smart_strategy": ""
   },
-  "coach_comment": "",
+  "personal_ia_comment": "",
   "execution_strategy": {
     "training_focus": [""],
     "nutrition_focus": "",

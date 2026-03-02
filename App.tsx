@@ -34,7 +34,7 @@ const App: React.FC = () => {
     const saved = localStorage.getItem('shapescan_theme');
     return saved ? saved === 'dark' : true;
   });
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authMode, setAuthMode] = useState<'entrar' | 'registrar'>('entrar');
   const [currentView, setCurrentView] = useState<View>('landing');
   const [previousView, setPreviousView] = useState<View>('dashboard');
 
@@ -353,9 +353,9 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case 'landing': return <LandingPage onStart={() => { setAuthMode('register'); setCurrentView('auth'); }} onLogin={() => { setAuthMode('login'); setCurrentView('auth'); }} onHowItWorks={() => setCurrentView('how_it_works')} onAbout={() => setCurrentView('about')} />;
-      case 'how_it_works': return <HowItWorks onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('register'); setCurrentView('auth'); }} />;
-      case 'about': return <About onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('register'); setCurrentView('auth'); }} />;
+      case 'landing': return <LandingPage onStart={() => { setAuthMode('registrar'); setCurrentView('auth'); }} onLogin={() => { setAuthMode('entrar'); setCurrentView('auth'); }} onHowItWorks={() => setCurrentView('how_it_works')} onAbout={() => setCurrentView('about')} />;
+      case 'how_it_works': return <HowItWorks onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('registrar'); setCurrentView('auth'); }} />;
+      case 'about': return <About onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('registrar'); setCurrentView('auth'); }} />;
       case 'auth': return <Auth initialMode={authMode} onLogin={handleLogin} onBack={() => setCurrentView('landing')} />;
       case 'quiz': return <OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />;
       case 'plans': return <PlanSelection user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onSelect={async (plan) => { if (plan === 'free' && user) { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); setCurrentView('dashboard'); } }} onShowToast={showToast} />;

@@ -140,8 +140,9 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
             { label: "Palco / Extremo", bf: 8, weight: 75.5 },
             { label: "Manutenção Estética", bf: 10, weight: 77.2 }
         ],
-        coach_insight: {
+        personal_ia_insight: {
             aesthetic_diagnosis: "Físico extremamente polido com proporções 'Golden Era'. A densidade muscular de peito e ombros está muito à frente, criando uma estética em V agressiva.",
+            personal_ia_comment: "Excelente densidade muscular.",
             main_leverage: "Treinos metabólicos de perna (Super Slow e Drop Sets) para quebrar o platô de desenvolvimento inferior.",
             smart_strategy: "Ondulação Calórica Controlada: Ciclar carboidratos mantendo os picos apenas nos dias de leg-day intenso."
         },
@@ -419,7 +420,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
                                             <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest">Confiança {mockShapeData.bf_confidence}</span>
                                             <p className="text-[10px] text-zinc-400 font-medium leading-relaxed italic max-w-[200px]">
-                                                "{mockShapeData.bf_visual_justification}"
+                                                "{mockShapeData.personal_ia_insight.aesthetic_diagnosis}"
                                             </p>
                                         </div>
                                     </div>
