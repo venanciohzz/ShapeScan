@@ -190,7 +190,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
         </div>
 
         {/* Messages List - Immersive Scroll Area */}
-        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-32 space-y-8 scrollbar-hide overscroll-contain">
+        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-4 space-y-8 scrollbar-hide overscroll-contain">
           <AnimatePresence initial={false}>
             {messages.map((msg: ChatMessage, i: number) => (
               <motion.div
@@ -251,22 +251,22 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
               </div>
             </motion.div>
           )}
-          <div ref={scrollRef} className="h-10" />
+          <div ref={scrollRef} className="h-4" />
         </div>
 
-        {/* Input Area - Fixed at bottom of viewport */}
-        <div className="fixed bottom-0 left-0 w-full px-4 pb-6 pt-10 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent pointer-events-none select-none touch-none">
-          <div className="max-w-2xl mx-auto w-full pointer-events-auto">
+        {/* Input Area - Back to flex flow for guaranteed touch interaction */}
+        <div className="flex-none w-full px-4 pb-12 pt-4 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent">
+          <div className="max-w-2xl mx-auto w-full">
             <form
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-              className="bg-zinc-950/90 backdrop-blur-3xl rounded-[2rem] p-1.5 flex items-center gap-2 border border-white/10 shadow-2xl relative overflow-hidden group/input"
+              className="bg-zinc-950/90 backdrop-blur-3xl rounded-[2.5rem] p-2 flex items-center gap-2 border border-white/10 shadow-2xl relative overflow-hidden group/input"
             >
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
 
               <button
                 type="button"
                 onClick={isListening ? stopListening : startListening}
-                className={`w-11 h-11 flex-none flex items-center justify-center rounded-2xl transition-all active:scale-95 shadow-lg ${isListening
+                className={`w-12 h-12 flex-none flex items-center justify-center rounded-2xl transition-all active:scale-95 shadow-lg ${isListening
                   ? 'bg-red-500 text-white animate-pulse'
                   : 'bg-white/5 border border-white/10 text-zinc-400'
                   }`}
@@ -279,7 +279,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Pergunte à Personal IA..."
-                className="flex-1 bg-transparent py-3.5 px-2 outline-none text-white font-medium placeholder:text-zinc-600 text-[16px] min-w-0"
+                className="flex-1 bg-transparent py-4 px-2 outline-none text-white font-medium placeholder:text-zinc-600 text-[16px] min-w-0"
                 disabled={loading}
                 autoComplete="off"
               />
@@ -287,8 +287,8 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className={`w-11 h-11 flex-none flex items-center justify-center rounded-2xl transition-all active:scale-95 ${input.trim()
-                  ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                className={`w-12 h-12 flex-none flex items-center justify-center rounded-2xl transition-all active:scale-95 ${input.trim()
+                  ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_20px_rgba(16,185,129,0.4)]'
                   : 'bg-white/5 text-zinc-600 border border-white/5'
                   }`}
               >
