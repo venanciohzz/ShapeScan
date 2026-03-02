@@ -37,7 +37,7 @@ const MealHistory: React.FC<MealHistoryProps> = ({
                             <div className="relative z-10 flex-1 min-w-0 pr-6">
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                                    <p className="font-serif-premium font-bold text-lg text-white truncate drop-shadow-md">
+                                    <p className="font-serif-premium font-bold text-base md:text-lg text-white truncate drop-shadow-md">
                                         {log.name}
                                     </p>
                                 </div>
@@ -45,8 +45,8 @@ const MealHistory: React.FC<MealHistoryProps> = ({
                                     <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest opacity-80 drop-shadow-sm">
                                         Macros Detectados:
                                     </span>
-                                    <p className="text-[10px] font-black text-emerald-400 tracking-widest uppercase drop-shadow-sm">
-                                        {formatValue(log.protein)}P <span className="text-zinc-500 mx-1">/</span> {formatValue(log.carbs)}C <span className="text-zinc-500 mx-1">/</span> {formatValue(log.fat)}G
+                                    <p className="text-[9px] md:text-[10px] font-black text-emerald-400 tracking-widest uppercase drop-shadow-sm truncate">
+                                        {formatValue(log.protein)}P <span className="text-zinc-500 mx-0.5">/</span> {formatValue(log.carbs)}C <span className="text-zinc-500 mx-0.5">/</span> {formatValue(log.fat)}G
                                     </p>
                                 </div>
 
@@ -67,10 +67,10 @@ const MealHistory: React.FC<MealHistoryProps> = ({
                             </div>
 
                             <div className="relative z-10 text-right shrink-0">
-                                <p className="font-serif-premium font-bold text-3xl text-white tracking-tighter drop-shadow-md">
+                                <p className="font-serif-premium font-bold text-2xl md:text-3xl text-white tracking-tighter drop-shadow-md">
                                     {formatValue(log.calories)}
                                 </p>
-                                <p className="text-[9px] font-black text-zinc-300 uppercase tracking-widest opacity-80 drop-shadow-sm">kcal</p>
+                                <p className="text-[8px] md:text-[9px] font-black text-zinc-300 uppercase tracking-widest opacity-80 drop-shadow-sm">kcal</p>
                             </div>
                         </div>
                     ))}
