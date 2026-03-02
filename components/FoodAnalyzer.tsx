@@ -300,18 +300,26 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             </motion.div>
           )}
         </AnimatePresence>
-        <header className="flex justify-between items-center mb-12">
-          <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white">
-            <span className="text-xl">←</span>
+        <header className="flex justify-between items-center mb-8">
+          <button onClick={onBack} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-90 text-white shadow-xl backdrop-blur-md">
+            <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
           </button>
         </header>
 
         <main className="flex-1 flex flex-col">
           {!result ? (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="space-y-2">
-                <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">Módulo de Análise</span>
-                <LetterPuller text={mode === 'manual' ? 'Registro Manual' : 'Neural Food Scan'} className="text-2xl md:text-6xl text-white tracking-tighter" />
+            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-[2px] bg-emerald-500/50"></div>
+                  <span className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.4em] leading-none">Módulo de Análise</span>
+                </div>
+                <h1 className="text-4xl md:text-8xl font-serif-premium font-bold text-white tracking-tighter leading-[0.9] flex flex-col">
+                  <LetterPuller text={mode === 'manual' ? 'Registro' : 'Neural'} className="opacity-60 md:opacity-40 text-3xl md:text-6xl" />
+                  <LetterPuller text={mode === 'manual' ? 'Manual' : 'Food Scan'} />
+                </h1>
               </div>
 
               {mode === 'manual' ? (
