@@ -86,16 +86,21 @@ Sua tarefa é analisar a imagem e identificar TODOS os alimentos visíveis, segu
    - Use o tamanho relativo do item comparado ao prato (padrão 24-28cm).
    - Espessura do corte e quantidade de pedaços.
 
-3. REFERÊNCIAS VISUAIS DE PORÇÃO BRASILEIRA:
-   - REGRA DO ARROZ/FEIJÃO/MACARRÃO: 1 Colher de Servir = ~40-50g. 1 Concha de Feijão = ~100g. Se for um montinho no prato, estime entre 100g e 150g (salvo pratos gigantes).
-   - REGRAS PARA PROTEÍNAS:
-     * Frango desfiado / carne moída (porção média): 80-100g.
-     * Filé de frango/Bife de boi PEQUENO/fino: 50–80g.
-     * Filé/Bife MÉDIO (tamanho da palma da mão): 90-120g.
-     * Filé/Bife GRANDE (grosso ou ocupando metade do prato): 150-200g+.
+3. REFERÊNCIAS VISUAIS DE PORÇÃO BRASILEIRA (SEJA CONSERVADOR):
+   - Arroz/Feijão/Macarrão: 1 Colher de Servir = ~40-50g. 1 Concha de Feijão = ~100g. Uma porção "normal" de arroz de prato feito tem cerca de 100g a 150g no total.
+   - Pedaços de Frango/Carne: 
+     * Tiras ou pedaços irregulares caseiros geralmente têm **30g a 50g CADA**.
+     * Filé de frango inteiro pequeno/fino: 80g a 100g MÁXIMO.
+     * NÃO ESCALE pesos de carnes de pratos caseiros para valores absurdos. Se vir 2 ou 3 pedaços ou tiras de frango em um prato normal de almoço brasileiro, o TOTAL absoluto raramente passará de 120-150g. Analise o tamanho do grão de arroz ao lado como escala: se o pedaço de frango equivale a apenas um terço do tamanho do prato, é leve.
      * Fatias (Queijo/Presunto): ~15 a 20g por fatia.
 
-4. MÉTODOS DE PREPARO (IMPACTO CALÓRICO):
+4. REGRAS ANTI-EXAGERO E BALANCEAMENTO (MUITO IMPORTANTE):
+   - USE OBJETOS VIZINHOS COMO ESCALA OBRIGATÓRIA: Observe teclados, mouses, talheres ou os próprios GRÃOS DE ARROZ na foto para entender o tamanho real do prato.
+   - ⚠️ TIRAS DE FRANGO VS FILÉ INTEIRO: Preste MUITA atenção se são pedaços finos ou um filé inteiro. Tiras PANCADAS (médias e grossas de frigideira, como sassami ou peito cortado robusto) pesam entre **50g e 70g CADA UMA**. Portanto, 3 tiras médias num prato VÃO bater a marca de **150g no total**.  
+   - O volume branco que compõe o fundo (arroz) costuma pesar bem mais que as proteínas. Normalmente um prato coberto razoavelmente no fundo tem cerca de 150g a 200g de arroz (pese a cada colher cerca de 30-40g).
+   - Na dúvida de escala em pratos rasos, tente encontrar o meio termo visual usando o tamanho do grão de arroz e a borda do prato. Não jogue o peso lá embaixo se os pedaços de carne parecerem robustos e volumosos.
+
+5. MÉTODOS DE PREPARO (IMPACTO CALÓRICO):
    - Assado/Grelhado por padrão. Adicione +2 a +3g de gordura extra (óleo de preparo) em bifes/frangos grelhados genéricos.
    - Fritura de imersão (ex: batata frita, à milanesa): Multiplique as calorias base do alimento crú por cerca de 1.5x a 2x devido à absorção de óleo.
 
