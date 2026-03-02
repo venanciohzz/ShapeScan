@@ -75,10 +75,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
             <div className="mb-12 md:mb-16 group/header">
                {/* Top Bar: Label e Logout */}
                <div className="flex justify-between items-center mb-10 gap-4 border-b border-white/5 pb-6">
-                  <div className="flex flex-col">
-                     <p className="text-zinc-500 font-black uppercase text-[10px] md:text-xs tracking-[0.4em] drop-shadow-md">SISTEMA ATIVO</p>
-                     <p className="text-zinc-300/40 font-bold uppercase text-[8px] md:text-[10px] tracking-[0.2em] mt-1">ShapeScan v2.0</p>
-                  </div>
+                  <div></div>
                   <button
                      onClick={onLogout}
                      className="bg-white/5 border border-white/10 px-4 py-2 md:px-6 md:py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 transition-all text-zinc-400 shrink-0 active:scale-95 flex items-center gap-2 shadow-lg backdrop-blur-sm"
