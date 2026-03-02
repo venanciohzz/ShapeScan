@@ -190,7 +190,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
         </div>
 
         {/* Messages List - Immersive Scroll Area */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-8 scrollbar-hide overscroll-contain">
+        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-32 space-y-8 scrollbar-hide overscroll-contain">
           <AnimatePresence initial={false}>
             {messages.map((msg: ChatMessage, i: number) => (
               <motion.div
@@ -254,11 +254,11 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
           <div ref={scrollRef} className="h-10" />
         </div>
 
-        {/* Input Area - Fixed/Floating Glass Bar */}
-        <div className="flex-none px-6 pb-6 pt-2 z-30 bg-gradient-to-t from-zinc-950/80 to-transparent">
+        {/* Input Area - Truly Fixed at Bottom */}
+        <div className="absolute bottom-0 left-0 w-full px-6 pb-6 pt-10 z-30 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent pointer-events-none">
           <form
             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-            className="bg-zinc-950/60 backdrop-blur-3xl rounded-[2.5rem] p-2 flex items-center gap-2 border border-white/10 shadow-2xl relative overflow-hidden group/input"
+            className="bg-zinc-950/80 backdrop-blur-3xl rounded-[2.5rem] p-2 flex items-center gap-2 border border-white/10 shadow-2xl relative overflow-hidden group/input pointer-events-auto"
           >
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
             <div className="absolute inset-0 bg-emerald-500/[0.01] opacity-0 group-hover/input:opacity-100 transition-opacity duration-700"></div>
@@ -301,10 +301,6 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
               <Send className="w-5 h-5" />
             </button>
           </form>
-
-          <p className="text-center text-[8px] font-black text-zinc-600 uppercase tracking-[0.4em] mt-3 opacity-40">
-            ShapeScan Intelligence • v2.0
-          </p>
         </div>
 
       </div>
