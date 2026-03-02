@@ -154,14 +154,14 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
       <div className="w-full max-w-2xl h-full flex flex-col relative mx-auto overflow-hidden">
 
         {/* Header - Glass Aesthetic */}
-        <div className="flex-none px-6 pt-10 pb-6 z-30">
+        <div className="flex-none px-6 pt-10 pb-6 z-[60]">
           <div className="bg-zinc-950/60 backdrop-blur-3xl rounded-[2.5rem] p-4 flex justify-between items-center border border-white/10 shadow-2xl relative overflow-hidden group/header">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent"></div>
-            <div className="absolute inset-0 bg-emerald-500/[0.02] opacity-0 group-hover/header:opacity-100 transition-opacity duration-700"></div>
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent pointer-events-none"></div>
+            <div className="absolute inset-0 bg-emerald-500/[0.02] opacity-0 group-hover/header:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
 
             <button
-              onClick={handleBack}
-              className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-90 text-white shadow-lg"
+              onClick={() => onBack()}
+              className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all active:scale-90 text-white shadow-lg relative z-20"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
