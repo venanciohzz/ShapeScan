@@ -311,7 +311,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="space-y-2">
                 <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">Módulo de Análise</span>
-                <LetterPuller text={mode === 'manual' ? 'Registro Manual' : 'Neural Food Scan'} className="text-4xl md:text-6xl text-white tracking-tighter" />
+                <LetterPuller text={mode === 'manual' ? 'Registro Manual' : 'Neural Food Scan'} className="text-2xl md:text-6xl text-white tracking-tighter" />
               </div>
 
               {mode === 'manual' ? (

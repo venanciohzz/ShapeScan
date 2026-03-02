@@ -31,7 +31,7 @@ export const BMICalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </button>
 
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
+          <h1 className="text-3xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
             <LetterPuller text="Índice IMC" />
           </h1>
           <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
@@ -98,7 +98,7 @@ export const DailyCalorieCalculator: React.FC<{ onBack: () => void }> = ({ onBac
         </button>
 
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
+          <h1 className="text-3xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
             <LetterPuller text="Bio Termo" />
           </h1>
           <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">

@@ -252,7 +252,7 @@ const Evolution: React.FC<EvolutionProps> = ({ user, records, onBack, onAdd, onD
 
         {/* Title Section */}
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
+          <h1 className="text-3xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
             <LetterPuller text="Histórico" />
           </h1>
           <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
