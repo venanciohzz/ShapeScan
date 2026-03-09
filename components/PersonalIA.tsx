@@ -62,7 +62,15 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
   useEffect(() => {
     // Only add welcome message if chat is completely empty
     if (messages.length === 0) {
-      let welcome = `Fala ${user.name.split(' ')[0]}! Bora pra cima? 🚀`;
+      const welcomeOptions = [
+        `Fala ${user.name.split(' ')[0]}! Bora pra cima? 🚀`,
+        `E aí ${user.name.split(' ')[0]}! Como estamos na meta hoje? 💪`,
+        `Opa ${user.name.split(' ')[0]}! Pronto para o próximo nível? 🔥`,
+        `Diz aí ${user.name.split(' ')[0]}! No que posso te ajudar a evoluir agora? 📈`,
+        `Salve ${user.name.split(' ')[0]}! Qual o plano de hoje? Treino, dieta ou só um gás? ⚡`
+      ];
+
+      let welcome = welcomeOptions[Math.floor(Math.random() * welcomeOptions.length)];
 
       // Check for latest evolution context
       if (evolution.length > 0) {
@@ -72,12 +80,16 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
         }
       }
 
-      setMessages([{ role: 'assistant', content: welcome + " Manda a braba, no que posso ajudar hoje?" }]);
+      setMessages([{ role: 'assistant', content: welcome + (welcome.includes('ajudar') ? '' : " Manda a braba!") }]);
     }
   }, []);
 
+  // Fix scroll behavior: Scroll to the TOP of the new message
+  const lastMessageRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length > 0) {
+      lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, [messages, loading]);
 
   // Speech Recognition Setup
@@ -251,7 +263,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
               </div>
             </motion.div>
           )}
-          <div ref={scrollRef} className="h-4" />
+          <div ref={lastMessageRef} className="h-4" />
         </div>
 
         {/* Input Area - Back to flex flow for guaranteed touch interaction */}

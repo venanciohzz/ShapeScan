@@ -30,6 +30,11 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
         knowsMacros: null as boolean | null
     });
 
+    // Auto-scroll to top on step change
+    React.useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [step]);
+
     const next = () => setStep(s => Math.min(s + 1, totalSteps));
     const prev = () => setStep(s => Math.max(s - 1, 1));
 
@@ -454,24 +459,31 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
             {step === 12 && (
                 <div className="space-y-10">
                     <div className="text-center space-y-4 mb-2">
-                        <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight leading-[1.2]">
-                            <LetterPuller text="Entende o poder dos Macros?" />
+                        <h2 className="text-4xl md:text-5xl font-serif-premium font-bold text-white leading-tight">
+                            <LetterPuller text="O que são Macros?" />
                         </h2>
-                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">A base técnica do seu resultado</p>
+                        <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium leading-relaxed">
+                            Proteínas, Carboidratos e Gorduras são o combustível do seu corpo. <br />
+                            Equilibrá-los é o segredo para ter resultados reais sem passar fome.
+                        </p>
+                    </div>
+
+                    <div className="bg-emerald-500/5 border border-emerald-500/10 p-6 rounded-3xl text-center mb-8">
+                        <p className="text-zinc-300 font-medium">Você já ouviu falar ou sabe como contar macros?</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <SelectionButton label="Sim" active={data.knowsMacros === true} onClick={() => setData({ ...data, knowsMacros: true })} />
-                        <SelectionButton label="Não" active={data.knowsMacros === false} onClick={() => setData({ ...data, knowsMacros: false })} />
+                        <SelectionButton label="Sim, entendo" active={data.knowsMacros === true} onClick={() => setData({ ...data, knowsMacros: true })} />
+                        <SelectionButton label="Não, sou iniciante" active={data.knowsMacros === false} onClick={() => setData({ ...data, knowsMacros: false })} />
                     </div>
 
                     <div className="min-h-[140px] flex items-center justify-center">
                         {data.knowsMacros !== null && (
-                            <div className="p-8 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 backdrop-blur-2xl animate-in slide-in-from-top-4 duration-500 text-center">
+                            <div className="p-8 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-2xl animate-in slide-in-from-top-4 duration-500 text-center">
                                 <p className="text-gray-600 dark:text-zinc-400 font-bold leading-relaxed">
                                     {data.knowsMacros
-                                        ? "Excelente! Usaremos tecnologia para dar precisão ao que você já domina sem precisar pesar comida."
-                                        : "Nós cuidaremos de toda a ciência. Foque apenas em atingir suas metas visuais no app."
+                                        ? "Show! Nossa IA vai facilitar sua vida, calculando tudo automaticamente através das fotos."
+                                        : "Fica tranquilo! A IA cuida da parte técnica. Você só precisa seguir as metas que o app vai te dar."
                                     }
                                 </p>
                             </div>
