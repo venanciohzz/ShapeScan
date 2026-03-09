@@ -111,7 +111,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
   };
 
   const validateAndCoherenceResult = (data: ShapeAnalysisResult, currentWeight: number): ShapeAnalysisResult => {
-    const bfMatch = data.body_fat_range.match(/(\d+(?:\.\d+)?)/g);
+    const bfMatch = data.body_fat_range ? data.body_fat_range.match(/(\d+(?:\.\d+)?)/g) : null;
     let bfValue = 20;
     if (bfMatch) {
       const nums = bfMatch.map(Number);
@@ -205,12 +205,11 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     const w = weight ? parseFloat(weight.replace(',', '.')) : user.weight;
     const h = height ? parseFloat(height.replace(',', '.')) : user.height;
     onSaveToEvolution({
-      bf: result.body_fat_range,
       photo: undefined,
-      notes: `${result.personal_ia_comment}\n\nANÁLISE REGIONAL:\nTronco: ${result.regional_analysis.trunk.strength} | ${result.regional_analysis.trunk.improvement}\nBraços: ${result.regional_analysis.arms.strength} | ${result.regional_analysis.arms.improvement}\nAbdômen: ${result.regional_analysis.abs_waist.strength} | ${result.regional_analysis.abs_waist.improvement}\nPernas: ${result.regional_analysis.legs.strength} | ${result.regional_analysis.legs.improvement}`,
-      detailedAnalysis: `${result.structural_analysis.name} | ${result.bf_classification}\n\nSignificado: ${result.structural_analysis.meaning}\n\nVantagem: ${result.structural_analysis.strength}\n\nDesafio: ${result.structural_analysis.improvement}\n\nFoco 60 Dias: ${result.execution_strategy.primary_focus_next_60_days}\n\nEstratégia: ${result.execution_strategy.training_focus.join(', ')}\n\nNutrição: ${result.nutritional_protocol.caloric_strategy} | ${result.nutritional_protocol.protein_target}`,
-      pointsToImprove: result.execution_strategy.common_mistakes.join('\n'),
-      macroSuggestions: result.execution_strategy.nutrition_focus,
+      notes: `${result.personal_ia_comment}\n\nANÁLISE REGIONAL:\nTronco: ${result.regional_analysis?.trunk?.strength || 'N/A'} | ${result.regional_analysis?.trunk?.improvement || 'N/A'}\nBraços: ${result.regional_analysis?.arms?.strength || 'N/A'} | ${result.regional_analysis?.arms?.improvement || 'N/A'}\nAbdômen: ${result.regional_analysis?.abs_waist?.strength || 'N/A'} | ${result.regional_analysis?.abs_waist?.improvement || 'N/A'}\nPernas: ${result.regional_analysis?.legs?.strength || 'N/A'} | ${result.regional_analysis?.legs?.improvement || 'N/A'}`,
+      detailedAnalysis: `${result.structural_analysis?.name || 'N/A'} | ${result.bf_classification || 'N/A'}\n\nSignificado: ${result.structural_analysis?.meaning || 'N/A'}\n\nVantagem: ${result.structural_analysis?.strength || 'N/A'}\n\nDesafio: ${result.structural_analysis?.improvement || 'N/A'}\n\nFoco 60 Dias: ${result.execution_strategy?.primary_focus_next_60_days || 'N/A'}\n\nEstratégia: ${result.execution_strategy?.training_focus?.join(', ') || 'N/A'}\n\nNutrição: ${result.nutritional_protocol?.caloric_strategy || 'N/A'} | ${result.nutritional_protocol?.protein_target || 'N/A'}`,
+      pointsToImprove: result.execution_strategy?.common_mistakes?.join('\n') || '',
+      macroSuggestions: result.execution_strategy?.nutrition_focus || '',
       weight: w,
       height: h
     });

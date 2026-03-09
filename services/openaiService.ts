@@ -244,15 +244,58 @@ Seja cirúrgico nos marcadores:
 - HARD LOCK: Se houver separação clara no quadríceps -> BF MÁXIMO de 12%.
 
 📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
-(Mantenha a estrutura JSON solicitada anteriormente: structural_analysis, weight_metrics, target_projections, etc.)
+{
+  "structural_analysis": {
+    "name": "Ectomorfo/Mesomorfo/Endomorfo",
+    "meaning": "Breve explicação",
+    "strength": "Vantagem genética",
+    "improvement": "Ponto fraco",
+    "genetic_responsiveness": "Alta/Média/Baixa",
+    "fat_storage_tendency": "Regiões de acúmulo",
+    "structural_limitation_strategy": "Dica técnica"
+  },
+  "body_fat_range": "12-14%",
+  "bf_classification": "Atlético",
+  "bf_confidence": "Alta",
+  "bf_visual_justification": "Justificativa visual real",
+  "shape_score": 8.5,
+  "muscle_score": 7.0,
+  "definition_score": 7.5,
+  "fat_score": 4.0,
+  "regional_analysis": {
+    "trunk": { "strength": "...", "improvement": "...", "strategy": "..." },
+    "arms": { "strength": "...", "improvement": "...", "strategy": "..." },
+    "abs_waist": { "strength": "...", "improvement": "...", "strategy": "..." },
+    "legs": { "strength": "...", "improvement": "...", "strategy": "..." }
+  },
+  "execution_strategy": {
+    "training_focus": ["...", "..."],
+    "nutrition_focus": "...",
+    "time_expectation": "8 semanas",
+    "common_mistakes": ["...", "...", "...", "..."],
+    "primary_focus_next_60_days": "..."
+  },
+  "nutritional_protocol": {
+    "caloric_strategy": "Bulk/Cut/Recomp",
+    "protein_target": "2.2g/kg",
+    "distribution": "4 refeições",
+    "practical_guidelines": ["...", "..."]
+  },
+  "personal_ia_insight": {
+    "aesthetic_diagnosis": "Frase de efeito"
+  },
+  "personal_ia_comment": "Resumo final motivador"
+}
 
-❗ IMPORTANTE: Seja técnico, direto e evite clichês. Não retorne texto fora do JSON.`;
+❗ IMPORTANTE: Não retorne texto fora do JSON. Preencha TODOS os campos acima.`;
 
     const text = await callAIAnalyzer({ image: base64Image, prompt, type: 'shape' });
     const data = JSON.parse(extractJson(text));
 
+    // Mapeamento de segurança para garantir que campos vitais existam
     return {
       ...data,
+      body_fat_range: data.body_fat_range || data.bf_range || "15-20%",
       shape_score: safeParseFloat(data.shape_score || data.shapeScore),
       muscle_score: safeParseFloat(data.muscle_score || data.muscleScore),
       definition_score: safeParseFloat(data.definition_score || data.definitionScore),
