@@ -68,62 +68,60 @@ export const analyzePlate = async (base64Image: string, userDescription?: string
   try {
     const descriptionContext = userDescription ? `O usuário descreveu a refeição como: "${userDescription}". Use esta informação para auxiliar na identificação, mas priorize o que é visível na imagem.` : '';
 
-    const prompt = `### PROMPT PARA A IA — ANÁLISE NUTRICIONAL DE EXTREMA PRECISÃO (Padrão Ouro)
+    const prompt = `### PROMPT DE AUDITORIA BIOMÉTRICA — PRECISÃO ABSOLUTA
 
-Você é o Analista Visual de Alimentos mais preciso do mundo, especialista em Biometria de Porções e Tabelas TACO/IBGE.
-Sua missão é eliminar o erro de "superestimativa" e fornecer gramas exatas.
+Você é um Auditor Visual de Macronutrientes. Sua missão é decompor a imagem em unidades básicas para evitar o erro de "pesos genéricos" ou "repetição de padrões".
 
-🔍 1. CALIBRAGEM DE ESCALA (FUNDAMENTAL):
-Use TODOS os objetos ao redor para definir o tamanho real:
-- TECLADOS: Cada tecla de um teclado comum tem ~1.8cm a 1.9cm de largura. Use as teclas para medir os alimentos se visíveis.
-- TALHERES: Um garfo padrão tem ~18-20cm de comprimento total, e a "cabeça" tem ~4.5cm de largura.
-- PRATOS: Pratos de refeição no Brasil têm ~24-27cm de diâmetro. Pratos de sobremesa ~18-20cm.
-- HANDS/FINGERS: Se visíveis, use como régua biométrica.
+🔍 1. PROTOCOLO DE CONTAGEM (OBRIGATÓRIO):
+Antes de estimar o peso, você DEVE contar:
+- "Quantos pedaços individuais de proteína existem?" (Ex: 2 filés, 3 pedaços, 5 tiras).
+- Se houver 3 pedaços em vez de 2, o peso DEVE ser proporcionalmente maior se o tamanho for similar.
 
-🧠 2. LÓGICA DE IDENTIFICAÇÃO E PESO (PROTEÍNAS):
-- FRANGO GRELHADO:
-    * Filés FINOS/PEQUENOS (estilo "sashimi" ou tiras): ~40g a 60g por unidade.
-    * Filé MÉDIO (palma da mão sem dedos): ~100g a 120g.
-    * Peito INTEIRO/GRANDE: ~180g a 240g.
-- HARD LOCK: Se dois filés não cobrem metade de um prato padrão, eles JAMAIS pesam 200g. Seja conservador se não houver volume (altura/espessura).
+🧠 2. MÉTRICA DE UNIDADE (PROTEÍNAS):
+Analise cada pedaço usando a escala (Teclado/Prato):
+- FILÉ FINO (espessura < 1cm): ~40g a 45g por unidade.
+- FILÉ MÉDIO (1cm a 2cm): ~70g a 85g por unidade.
+- FILÉ GROSSO (> 2cm): ~120g+ por unidade.
+- REGRA DE OURO: Somatório = Número de unidades × Peso por unidade baseado na espessura.
+- EXTREMO CUIDADO: O usuário reportou que você deu o mesmo peso para 2 e 3 filés. Isso é um ERRO GRAVE. Diferencie as quantidades!
 
-🍚 3. CARBOIDRATOS (VOLUME):
-- ARROZ: Uma colher de servir padrão (Ryzane) cheia tem ~80g a 100g. 
-- Analise a profundidade. Se o arroz está espalhado em camada fina, ele pesa menos que um "montinho" denso.
+🍚 3. CARBOIDRATOS (VOLUME GEOMÉTRICO):
+- Se o arroz cobre o fundo do prato mas você vê relevo de grãos individuais (camada rasa), o volume é baixo (~120g a 160g).
+- Só chegue a 300g de arroz se houver uma "montanha" que oculte o centro do prato.
 
-⚠️ REGRAS ANTI-ERRO:
-- PARE de dar valores redondos (ex: 200g para tudo). Alimentos reais têm pesos quebrados (85g, 110g, 165g).
-- SEJA ANALÍTICO: "A fatia de frango tem a largura de 2 teclas (3.8cm) e comprimento de 4 teclas (7.6cm), espessura fina. Cálculo: ~45g".
-- PRIORIZE A ESCALA EXTERNA (Teclado, Garfo) sobre a intuição.
+⚠️ SISTEMA DE CHECAGEM ANALÍTICA:
+- Compare: Prato A (2 filés finos) = ~85g. Prato B (3 filés finos similares) = ~125g.
+- Use a escala do teclado (cada tecla ~1.8cm) para justificar o tamanho de CADA pedaço.
 
 📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
 {
   "dish_name": "Nome",
-  "total_calories": 350,
-  "total_protein_g": 30,
-  "total_carbs_g": 20,
-  "total_fat_g": 10,
-  "nutrition_score": 8,
+  "total_calories": [SOMA_DOS_ITENS],
+  "total_protein_g": [SOMA_DOS_ITENS],
+  "total_carbs_g": [SOMA_DOS_ITENS],
+  "total_fat_g": [SOMA_DOS_ITENS],
+  "nutrition_score": [1-10],
   "ingredients": [
     {
       "name": "Nome",
-      "estimated_weight_g": 100,
-      "calories": 165,
-      "protein_g": 31,
-      "carbs_g": 0,
-      "fat_g": 3.6,
+      "estimated_weight_g": [VALOR_CALCULADO],
+      "calories": [VALOR],
+      "protein_g": [VALOR],
+      "carbs_g": [VALOR],
+      "fat_g": [VALOR],
       "confidence": "Alta",
-      "observation": "Explique a métrica: 'Usando teclas do teclado como escala (1.8cm cada), o frango mede X cm...'"
+      "observation": "AUDITORIA: 'Detectados X pedaços. Cada pedaço mede aprox. Y cm (Z teclas). Espessura fina. Cálculo: X * Wg = Total.'"
     }
   ],
-  "analysis_comment": "Explique brevemente como chegou à escala (Teclado/Talher/Prato)."
+  "analysis_comment": "Resumo técnico da contagem e escala utilizada."
 }
 
-❗ IMPORTANTE: 
-1. NÃO DEIXE VALORES ZERADOS. Calcule as calorias e macros com base no peso estimado usando a tabela TACO.
-2. Não retorne texto fora do JSON.`;
+❗ IMPORTANTE:
+1. SEJA EXTREMAMENTE ESPECÍFICO NA CONTAGEM.
+2. Não use pesos redondos se a biometria indicar valores quebrados.
+3. Não retorne texto fora do JSON.`;
 
-    const systemPrompt = `Você é um nutricionista brasileiro especialista em estimativa visual de alimentos. Retorne APENAS o JSON solicitado.`;
+    const systemPrompt = `Você é um robô de biometria nutricional de alta precisão. Sua função é auditar a imagem, contar itens e calcular o peso matemático baseado em escala real. Não aceite aproximações preguiçosas.`;
 
     const text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'food' });
     const data = JSON.parse(extractJson(text));
