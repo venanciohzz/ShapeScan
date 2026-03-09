@@ -68,68 +68,79 @@ export const analyzePlate = async (base64Image: string, userDescription?: string
   try {
     const descriptionContext = userDescription ? `O usuário descreveu a refeição como: "${userDescription}". Use esta informação para auxiliar na identificação, mas priorize o que é visível na imagem.` : '';
 
-    const prompt = `### PROMPT PARA A IA — ANÁLISE NUTRICIONAL AVANÇADA E IDENTIFICAÇÃO DE ALTA PRECISÃO
+    const prompt = `### PROMPT PARA A IA — ANÁLISE NUTRICIONAL DE EXTREMA PRECISÃO (Padrão Ouro)
 
-Você é um Nutricionista e Analista Visual de Alimentos especialista em gastronomia brasileira e tabelas TACO/IBGE.
+Você é o Analista Visual de Alimentos mais preciso do mundo, especialista em Biometria de Porções e Tabelas TACO/IBGE.
+Sua missão é eliminar o erro de "superestimativa" e fornecer gramas exatas.
 
-Sua tarefa é analisar a imagem e identificar TODOS os alimentos com rigor técnico, seguindo as diretrizes abaixo:
+🔍 1. CALIBRAGEM DE ESCALA (FUNDAMENTAL):
+Use TODOS os objetos ao redor para definir o tamanho real:
+- TECLADOS: Cada tecla de um teclado comum tem ~1.8cm a 1.9cm de largura. Use as teclas para medir os alimentos se visíveis.
+- TALHERES: Um garfo padrão tem ~18-20cm de comprimento total, e a "cabeça" tem ~4.5cm de largura.
+- PRATOS: Pratos de refeição no Brasil têm ~24-27cm de diâmetro. Pratos de sobremesa ~18-20cm.
+- HANDS/FINGERS: Se visíveis, use como régua biométrica.
 
-🔍 1. IDENTIFICAÇÃO DE PROTEÍNAS (CRÍTICO):
-Não seja genérico. Analise cor, textura e fibras para diferenciar:
-- CARNE DE PORCO: Geralmente mais clara após cozida (rosado pálido ou branco acinzentado), fibras mais curtas. Ex: Lombo, pernil, bisteca.
-- CARNE BOVINA: Fibras mais escuras e robustas. Identifique o ponto (mal passado, selado).
-- FRANGO: Fibras brancas e longas. Diferencie peito (seco/fibrado) de sobrecoxa (mais suculenta/escura).
-- DIFERENCIE PREPARO: Empanado (crosta de farinha), Frito (brilho de óleo), Grelhado (marcas de grelha/chapa), Cozido (ausência de brilho de fritura).
+🧠 2. LÓGICA DE IDENTIFICAÇÃO E PESO (PROTEÍNAS):
+- FRANGO GRELHADO:
+    * Filés FINOS/PEQUENOS (estilo "sashimi" ou tiras): ~40g a 60g por unidade.
+    * Filé MÉDIO (palma da mão sem dedos): ~100g a 120g.
+    * Peito INTEIRO/GRANDE: ~180g a 240g.
+- HARD LOCK: Se dois filés não cobrem metade de um prato padrão, eles JAMAIS pesam 200g. Seja conservador se não houver volume (altura/espessura).
 
-🧠 2. LÓGICA DE ESTIMATIVA DE PESO:
-- Use Escala de Referência: Compare com o tamanho do prato, talheres ou grãos de arroz.
-- Fragmentação: Se vir tiras/pedaços, conte a quantidade e estime o peso individual (ex: 3 tiras médias = ~120-150g).
-- Densidade: Proteínas pesam mais que vegetais/folhas por volume.
+🍚 3. CARBOIDRATOS (VOLUME):
+- ARROZ: Uma colher de servir padrão (Ryzane) cheia tem ~80g a 100g. 
+- Analise a profundidade. Se o arroz está espalhado em camada fina, ele pesa menos que um "montinho" denso.
 
-3. REGRAS ANTI-VÍCIO:
-- PARE de assumir que toda carne branca é frango. Verifique se não é peixe ou porco pela textura.
-- PARE de ser "excessivamente conservador" a ponto de ignorar volume óbvio. Se a porção parece grande, dê o peso real.
-
-🎯 ESTRUTURA DA ANÁLISE POR ITEM:
-Para cada ingrediente: Pesos, Macros, Confiança e Justificativa (ex: "Fibra escura e densa característica de bife bovino").
+⚠️ REGRAS ANTI-ERRO:
+- PARE de dar valores redondos (ex: 200g para tudo). Alimentos reais têm pesos quebrados (85g, 110g, 165g).
+- SEJA ANALÍTICO: "A fatia de frango tem a largura de 2 teclas (3.8cm) e comprimento de 4 teclas (7.6cm), espessura fina. Cálculo: ~45g".
+- PRIORIZE A ESCALA EXTERNA (Teclado, Garfo) sobre a intuição.
 
 📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
 {
-  "dish_name": "Nome descritivo",
-  "total_calories": 0,
-  "total_protein_g": 0,
-  "total_carbs_g": 0,
-  "total_fat_g": 0,
-  "nutrition_score": 0,
+  "dish_name": "Nome",
+  "total_calories": 350,
+  "total_protein_g": 30,
+  "total_carbs_g": 20,
+  "total_fat_g": 10,
+  "nutrition_score": 8,
   "ingredients": [
     {
       "name": "Nome",
-      "estimated_weight_g": 0,
-      "calories": 0,
-      "protein_g": 0,
+      "estimated_weight_g": 100,
+      "calories": 165,
+      "protein_g": 31,
       "carbs_g": 0,
-      "fat_g": 0,
+      "fat_g": 3.6,
       "confidence": "Alta",
-      "observation": "Justificativa visual"
+      "observation": "Explique a métrica: 'Usando teclas do teclado como escala (1.8cm cada), o frango mede X cm...'"
     }
   ],
-  "analysis_comment": "Feedback curto e elegante."
+  "analysis_comment": "Explique brevemente como chegou à escala (Teclado/Talher/Prato)."
 }
 
-❗ IMPORTANTE: Não retorne texto fora do JSON. Calcule os totais somando os itens.`;
+❗ IMPORTANTE: 
+1. NÃO DEIXE VALORES ZERADOS. Calcule as calorias e macros com base no peso estimado usando a tabela TACO.
+2. Não retorne texto fora do JSON.`;
 
     const systemPrompt = `Você é um nutricionista brasileiro especialista em estimativa visual de alimentos. Retorne APENAS o JSON solicitado.`;
 
     const text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'food' });
     const data = JSON.parse(extractJson(text));
 
+    const ingredients = data.ingredients || data.items || [];
+    const calculatedCalories = ingredients.reduce((acc: number, i: any) => acc + safeParseFloat(i.calories), 0);
+    const calculatedProtein = ingredients.reduce((acc: number, i: any) => acc + safeParseFloat(i.protein_g || i.protein), 0);
+    const calculatedCarbs = ingredients.reduce((acc: number, i: any) => acc + safeParseFloat(i.carbs_g || i.carbs), 0);
+    const calculatedFat = ingredients.reduce((acc: number, i: any) => acc + safeParseFloat(i.fat_g || i.fat), 0);
+
     return {
       mealName: data.dish_name || data.mealName || "Refeição Digitalizada",
       score: safeParseFloat(data.nutrition_score || data.score) || 5,
-      totalCalories: safeParseFloat(data.total_calories || data.totalCalories),
-      totalProtein: safeParseFloat(data.total_protein_g || data.totalProtein),
-      totalCarbs: safeParseFloat(data.total_carbs_g || data.totalCarbs),
-      totalFat: safeParseFloat(data.total_fat_g || data.totalFat),
+      totalCalories: safeParseFloat(data.total_calories || data.totalCalories) || calculatedCalories,
+      totalProtein: safeParseFloat(data.total_protein_g || data.totalProtein) || calculatedProtein,
+      totalCarbs: safeParseFloat(data.total_carbs_g || data.totalCarbs) || calculatedCarbs,
+      totalFat: safeParseFloat(data.total_fat_g || data.totalFat) || calculatedFat,
       totalWeight: safeParseFloat(data.ingredients?.reduce((acc: number, i: any) => acc + (i.estimated_weight_g || 0), 0) || data.totalWeight || 0),
       reasoning: data.analysis_comment || data.reasoning || "Análise concluída.",
       items: (data.ingredients || data.items || []).map((item: any) => ({
