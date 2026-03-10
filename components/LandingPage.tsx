@@ -191,57 +191,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         }
       `}</style>
 
-      {/* Background Ambience V3 - Ultra Immersive */}
       <div className="fixed inset-0 z-0 bg-[#020202] overflow-hidden pointer-events-none">
         <LiquidShaderBackground />
         <NeonFlow className="opacity-60" />
 
-        {/* Dynamic Auroras */}
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 5, 0],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-10%] right-[-10%] w-[80vw] h-[80vw] bg-emerald-900/20 rounded-full blur-[160px] mix-blend-screen"
-        />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [0, -5, 0],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-[-10%] left-[-10%] w-[70vw] h-[70vw] bg-teal-900/10 rounded-full blur-[140px] mix-blend-screen"
-        />
-
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05]" />
-
-        {/* Floating Particles (Simulated via CSS) */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-emerald-400/30 rounded-full"
-              initial={{
-                x: Math.random() * 100 + "%",
-                y: Math.random() * 100 + "%",
-                opacity: Math.random() * 0.5
-              }}
-              animate={{
-                y: [null, "-10%"],
-                opacity: [null, 0]
-              }}
-              transition={{
-                duration: Math.random() * 10 + 10,
-                repeat: Infinity,
-                ease: "linear",
-                delay: Math.random() * 5
-              }}
-            />
-          ))}
-        </div>
 
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/40 to-[#020202]" />
       </div>
@@ -261,7 +215,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           {/* Logo */}
           <div className="flex items-center gap-3 group cursor-pointer z-50" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div className="relative flex items-center justify-center w-10 h-10">
-              <div className="absolute inset-0 bg-emerald-500 rounded-xl opacity-20 group-hover:opacity-60 transition-opacity duration-500 blur-md"></div>
               <div className="relative w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 overflow-hidden">
                 <span className="text-white font-black text-sm font-serif-premium tracking-tighter relative z-10">S</span>
               </div>
@@ -342,13 +295,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="w-full max-w-5xl mx-auto relative z-20">
           <div className="flex flex-col items-center space-y-8 pt-8 relative z-30">
 
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[7.5rem] font-serif-premium tracking-tight text-white leading-[1.2] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible">
-              <LetterPuller text="Evolua seu físico" /> <br className="hidden md:block" />
-              <LetterPuller
-                text="com clareza."
-                className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
-                delay={0.5}
-              />
+            <h1 className="flex flex-col items-center text-5xl sm:text-6xl md:text-7xl lg:text-[7.5rem] font-serif-premium tracking-tight text-white leading-[1.2] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible">
+              <span className="block">
+                <LetterPuller text="Evolua seu físico" />
+              </span>
+              <span className="block">
+                <LetterPuller
+                  text="com clareza."
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
+                  delay={0.5}
+                />
+              </span>
             </h1>
 
             <motion.p

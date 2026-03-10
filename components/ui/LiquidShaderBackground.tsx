@@ -30,13 +30,14 @@ class TouchTexture {
         let force = 0, vx = 0, vy = 0;
         if (this.last) {
             const dx = point.x - this.last.x, dy = point.y - this.last.y;
-            if (dx === 0 && dy === 0) return;
-            const d = Math.sqrt(dx * dx + dy * dy);
-            vx = dx / d; vy = dy / d;
-            force = Math.min((dx * dx + dy * dy) * 20000, 2.5);
-        }
-        this.last = { x: point.x, y: point.y };
-        this.trail.push({ x: point.x, y: point.y, age: 0, force, vx, vy });
+        if (dx === 0 && dy === 0) return;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        vx = dx / d; vy = dy / d;
+        force = Math.min((dx * dx + dy * dy) * 20000, 2.5);
+        if (force < 0.01) return; // Evita pingo de luz inicial parado
+      }
+      this.last = { x: point.x, y: point.y };
+      this.trail.push({ x: point.x, y: point.y, age: 0, force, vx, vy });
     }
     drawPoint(p: any) {
         const pos = { x: p.x * this.width, y: (1 - p.y) * this.height };
@@ -62,7 +63,7 @@ class GradientBackground {
     constructor(sceneManager: any) {
         this.sceneManager = sceneManager;
         this.uniforms = {
-            uTime: { value: 0 },
+            uTime: { value: Math.random() * 1000 },
             uResolution: { value: new THREE.Vector2(1024, 1024) },
             // Paleta Verde Esmeralda Premium
             uColor1: { value: new THREE.Vector3(0.06, 0.72, 0.50) }, // Emerald 500

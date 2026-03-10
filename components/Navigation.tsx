@@ -64,7 +64,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
       <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 px-10 py-6 justify-between items-center pointer-events-none">
         <div className="pointer-events-auto bg-zinc-950/80 backdrop-blur-2xl px-8 py-4 rounded-full flex items-center gap-4 shadow-2xl border border-white/10 group">
           <div className="relative">
-            <div className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-serif-premium font-bold italic rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-lg shadow-emerald-500/30">S</div>
+            <div className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-serif-premium font-bold italic rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-lg">S</div>
           </div>
           <span className="font-serif-premium font-bold text-2xl tracking-tight text-white group-hover:tracking-widest transition-all duration-500">ShapeScan</span>
         </div>

@@ -77,9 +77,32 @@ export function NeonFlow({
         tubesRef.current.tubes.setLightsColors(lightsColors);
     };
 
+    const [hasInteracted, setHasInteracted] = useState(false);
+
+    useEffect(() => {
+        const handleInteraction = () => {
+            setHasInteracted(true);
+            window.removeEventListener('mousemove', handleInteraction);
+            window.removeEventListener('touchstart', handleInteraction);
+        };
+
+        window.addEventListener('mousemove', handleInteraction);
+        window.addEventListener('touchstart', handleInteraction);
+
+        return () => {
+            window.removeEventListener('mousemove', handleInteraction);
+            window.removeEventListener('touchstart', handleInteraction);
+        };
+    }, []);
+
     return (
         <div
             className={cn("absolute inset-0 w-full h-full overflow-hidden bg-transparent pointer-events-none", className)}
+            style={{ 
+                opacity: hasInteracted ? undefined : 0, 
+                visibility: hasInteracted ? 'visible' : 'hidden',
+                transition: 'opacity 1s ease-in-out'
+            }}
             onClick={handleClick}
         >
             <canvas
