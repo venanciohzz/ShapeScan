@@ -8,7 +8,7 @@ import { NeonFlow } from './ui/NeonFlow';
 
 // --- Utility Components for God Mode UI ---
 
-const LetterPuller: React.FC<{ text: string; className?: string; delay?: number }> = ({ text, className = "", delay = 0 }) => {
+const LetterPuller = React.memo(({ text, className = "", delay = 0 }: { text: string; className?: string; delay?: number }) => {
   const words = text.split(" ");
   let letterCounter = 0;
 
@@ -95,7 +95,9 @@ const LetterPuller: React.FC<{ text: string; className?: string; delay?: number 
       })}
     </motion.span>
   );
-};
+});
+
+LetterPuller.displayName = 'LetterPuller';
 
 interface LandingPageProps {
   onStart: () => void; // Register

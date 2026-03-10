@@ -99,4 +99,4 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
   );
 };
 
-export default Navigation;
+export default React.memo(Navigation);

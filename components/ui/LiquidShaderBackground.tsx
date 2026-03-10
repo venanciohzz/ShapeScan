@@ -153,9 +153,13 @@ class App {
     animationId: number | null = null; container: HTMLElement;
     constructor(container: HTMLElement) {
         this.container = container;
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        this.renderer = new THREE.WebGLRenderer({ 
+          antialias: true, 
+          alpha: false,
+          powerPreference: "high-performance"
+        });
         this.renderer.setSize(container.clientWidth, container.clientHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // 1.5 is enough for sharpness and much faster than 2.0+
         container.appendChild(this.renderer.domElement);
         this.camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 10000);
         this.camera.position.z = 50;
@@ -174,12 +178,21 @@ class App {
     init() {
         this.gradientBackground.init();
         const c = this.container;
-        const onMove = (x: number, y: number) => { this.touchTexture.addTouch({ x: x / c.clientWidth, y: 1 - y / c.clientHeight }); };
-        c.addEventListener("mousemove", (e) => onMove(e.offsetX, e.offsetY));
+        
+        // Throttled input for better performance
+        let lastMove = 0;
+        const onMove = (x: number, y: number) => { 
+          const now = performance.now();
+          if (now - lastMove < 16) return; // ~60fps Limit
+          lastMove = now;
+          this.touchTexture.addTouch({ x: x / c.clientWidth, y: 1 - y / c.clientHeight }); 
+        };
+
+        c.addEventListener("mousemove", (e) => onMove(e.offsetX, e.offsetY), { passive: true });
         c.addEventListener("touchmove", (e) => {
             const rect = c.getBoundingClientRect();
             onMove(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
-        });
+        }, { passive: true });
         window.addEventListener("resize", () => {
             this.camera.aspect = c.clientWidth / c.clientHeight;
             this.camera.updateProjectionMatrix();

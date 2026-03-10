@@ -86,8 +86,8 @@ export function NeonFlow({
             window.removeEventListener('touchstart', handleInteraction);
         };
 
-        window.addEventListener('mousemove', handleInteraction);
-        window.addEventListener('touchstart', handleInteraction);
+        window.addEventListener('mousemove', handleInteraction, { passive: true });
+        window.addEventListener('touchstart', handleInteraction, { passive: true });
 
         return () => {
             window.removeEventListener('mousemove', handleInteraction);
