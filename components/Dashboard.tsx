@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { User, FoodLog, View } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { User, FoodLog, View, DailyFeedback } from '../types';
 import { isSameTrackingDay } from '../services/dateUtils';
+import { getDailyFeedback } from '../services/openaiService';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 
@@ -12,6 +13,7 @@ import ToolGrid from './dashboard/ToolGrid';
 import MealHistory from './dashboard/MealHistory';
 import EditMealModal from './dashboard/EditMealModal';
 import DeleteMealModal from './dashboard/DeleteMealModal';
+import DailyFeedbackCard from './dashboard/DailyFeedbackCard';
 
 interface DashboardProps {
    user: User;
@@ -28,13 +30,48 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout, onDeleteLog, onEditLog, waterConsumed, setWaterConsumed, onShowToast }) => {
    const [editingLog, setEditingLog] = useState<FoodLog | null>(null);
    const [logToDelete, setLogToDelete] = useState<string | null>(null);
+   const [dailyFeedback, setDailyFeedback] = useState<DailyFeedback | null>(null);
+   const [loadingFeedback, setLoadingFeedback] = useState(false);
 
-   const todayLogs = logs.filter(log => isSameTrackingDay(log.timestamp));
+   const todayLogs = useMemo(() => logs.filter(log => isSameTrackingDay(log.timestamp)), [logs]);
 
-   const consumed = todayLogs.reduce((acc, log) => acc + log.calories, 0);
-   const protein = todayLogs.reduce((acc, log) => acc + log.protein, 0);
-   const carbs = todayLogs.reduce((acc, log) => acc + log.carbs, 0);
-   const fat = todayLogs.reduce((acc, log) => acc + log.fat, 0);
+   const totals = useMemo(() => ({
+      consumed: todayLogs.reduce((acc, log) => acc + log.calories, 0),
+      protein: todayLogs.reduce((acc, log) => acc + log.protein, 0),
+      carbs: todayLogs.reduce((acc, log) => acc + log.carbs, 0),
+      fat: todayLogs.reduce((acc, log) => acc + log.fat, 0),
+   }), [todayLogs]);
+
+   const { consumed, protein, carbs, fat } = totals;
+
+   useEffect(() => {
+      const fetchDailyFeedback = async () => {
+         if (todayLogs.length === 0) {
+            setDailyFeedback(null);
+            return;
+         }
+         
+         setLoadingFeedback(true);
+         try {
+            const consumedData = { calories: consumed, protein, carbs, fat };
+            const goals = { 
+               calories: user.dailyCalorieGoal || 2000, 
+               protein: user.dailyProtein || 150, 
+               carbs: user.dailyCarbs || 200, 
+               fat: user.dailyFat || 60 
+            };
+            const feedback = await getDailyFeedback(consumedData, goals, user.goal || 'Hipertrofia');
+            setDailyFeedback(feedback);
+         } catch (err) {
+            console.error('Erro ao buscar feedback diário:', err);
+         } finally {
+            setLoadingFeedback(false);
+         }
+      };
+
+      const timer = setTimeout(fetchDailyFeedback, 1000);
+      return () => clearTimeout(timer);
+   }, [todayLogs.length, user.dailyCalorieGoal, user.goal]);
 
    const safeGoal = user.dailyCalorieGoal > 0 ? user.dailyCalorieGoal : 2000;
    const realPercent = (consumed / safeGoal) * 100;
@@ -148,6 +185,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
 
                {/* Lado Direito: Ferramentas e Histórico */}
                <div className="w-full md:w-[40%] space-y-8">
+                  <DailyFeedbackCard feedback={dailyFeedback} loading={loadingFeedback} />
+                  
                   <ToolGrid onNavigate={onNavigate} />
 
                   <MealHistory

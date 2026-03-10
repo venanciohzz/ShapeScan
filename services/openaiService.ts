@@ -4,16 +4,74 @@ import { supabase } from './supabaseService';
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-analyzer`;
 
+// --- HELPER FUNCTIONS (v43/v45/v47-v50) ---
+
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
+
+// Clamps Equilibrados (v50)
+const clampWeight = (name: string, weight: number): number => {
+  const n = name.toLowerCase();
+  // Arroz continua conservador (v49 success)
+  if (n.includes("arroz")) return clamp(weight, 30, 180); 
+  // Proteína subiu levemente para evitar subestimação (v50)
+  if (n.includes("frango") || n.includes("carne") || n.includes("peixe") || n.includes("proteina")) return clamp(weight, 50, 220);
+  if (n.includes("feijao")) return clamp(weight, 30, 200);
+  return clamp(weight, 10, 500);
+};
+
+// Normalização de Prato Inteligente (v47/v48)
+const normalizeWeights = (items: any[], maxTotal: number = 550): any[] => {
+  let currentTotal = items.reduce((sum, i) => sum + i.weight, 0);
+  if (currentTotal <= maxTotal) return items;
+  
+  const factor = maxTotal / currentTotal;
+  const normalized = items.map(item => ({
+    ...item,
+    weight: Math.round(item.weight * factor),
+    calories: Math.round(item.calories * factor),
+    protein: Math.round(item.protein * factor),
+    carbs: Math.round(item.carbs * factor),
+    fat: Math.round(item.fat * factor)
+  }));
+
+  const finalTotal = normalized.reduce((sum, i) => sum + i.weight, 0);
+  if (finalTotal > maxTotal) {
+    normalized[0].weight -= (finalTotal - maxTotal);
+  }
+
+  return normalized;
+};
+
+// Health Score (v43/v48)
+const calculateIntelligentScore = (baseScore: number | undefined, protein: number, fat: number, calories: number, observation: string): number => {
+  let score = baseScore ?? 5;
+  if (fat > 40) score -= 2;
+  if (protein < 15) score -= 2;
+  if (calories > 900) score -= 1;
+  if (protein > 30) score += 1;
+  const obs = observation.toLowerCase();
+  if (obs.includes("legumes") || obs.includes("vegetais") || obs.includes("salada") || obs.includes("fibras")) score += 1;
+  return clamp(Math.round(score), 0, 10);
+};
+
+// Muscle Score (v45)
+const calculateMuscleScore = (protein: number, carbs: number, fat: number): number => {
+  let score = 5;
+  if (protein > 30) score += 2;
+  if (protein > 50) score += 3;
+  if (carbs > 40) score += 1;
+  if (carbs > 80) score += 2;
+  if (fat > 35) score -= 1;
+  return clamp(Math.round(score), 0, 10);
+};
+
 const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
-  // 1. Verificar se existe sessão ativa
   const { data: { session } } = await supabase.auth.getSession();
   
   if (!session) {
-    console.warn('Tentativa de chamada de IA sem sessão ativa.');
     throw new Error('401: Sessão expirada ou não encontrada. Por favor, saia e entre novamente.');
   }
 
-  // 2. Invocar função com cabeçalhos explícitos para garantir que o token seja enviado
   const { data, error } = await supabase.functions.invoke('ai-analyzer', {
     body: payload,
     headers: {
@@ -22,21 +80,11 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
   });
 
   if (error) {
-    console.error('AI Service Error:', error);
-
-    // Se a função retornar um erro JSON estruturado
-    if (typeof error === 'object' && error !== null) {
-       const msg = (error as any).message || '';
-       
-       if (msg.includes('401') || msg.includes('Unauthorized')) {
-         throw new Error('401: Sessão expirada.');
-       }
-       if (msg.includes('403') || msg.includes('limit_reached')) {
-         throw new Error('403: Limite atingido.');
-       }
-    }
-
     throw new Error(error.message || 'Erro desconhecido na análise de IA');
+  }
+
+  if (data?.isError) {
+    throw new Error(data.error || 'Erro na lógica da IA');
   }
 
   return data.text;
@@ -44,24 +92,17 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
 
 const extractJson = (text: string): string => {
   try {
-    // Tenta encontrar JSON dentro de blocos de código markdown
     const markdownMatch = text.match(/```(?:json|JSON)?\s*([\s\S]*?)\s*```/);
     if (markdownMatch && markdownMatch[1]) {
       return markdownMatch[1].trim();
     }
-
-    // Tenta encontrar o primeiro { e o último }
     const firstBrace = text.indexOf('{');
     const lastBrace = text.lastIndexOf('}');
-
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
       return text.substring(firstBrace, lastBrace + 1);
     }
-
-    // Se não encontrar nada estruturado, tenta limpar o texto
     return text.replace(/```json|```JSON|```/g, '').trim();
   } catch (e) {
-    console.warn('Erro ao extrair JSON:', e);
     return text;
   }
 };
@@ -69,7 +110,6 @@ const extractJson = (text: string): string => {
 const safeParseFloat = (val: any): number => {
   if (val === undefined || val === null) return 0;
   if (typeof val === 'number') return val;
-  // Handle potential Brazilian comma separators (e.g. "150,5" -> "150.5") or units like "150 kcal"
   const strVal = String(val).replace(',', '.').replace(/[^\d.-]/g, '');
   const parsed = parseFloat(strVal);
   return isNaN(parsed) ? 0 : parsed;
@@ -77,316 +117,235 @@ const safeParseFloat = (val: any): number => {
 
 export const analyzePlate = async (base64Image: string, userDescription?: string): Promise<FoodAnalysisResult> => {
   try {
-    const descriptionContext = userDescription ? `O usuário descreveu a refeição como: "${userDescription}". Use esta informação para auxiliar na identificação, mas priorize o que é visível na imagem.` : '';
+    const descriptionContext = userDescription ? `O usuário descreveu a refeição como: "${userDescription}".` : '';
 
-    const prompt = `### PROMPT DE AUDITORIA BIOMÉTRICA — PRECISÃO ABSOLUTA
+    const prompt = `Analise a imagem da refeição e identifique os alimentos visíveis. ${descriptionContext}
 
-Você é um Auditor Visual de Macronutrientes. Sua missão é decompor a imagem em unidades básicas para evitar o erro de "pesos genéricos" ou "repetição de padrões".
+Instruções (v50 - Equilíbrio Protein-Base):
+1. Identifique cada alimento separadamente (Máximo 8 itens).
+2. Identifique o tamanho do prato ("plate_size"): "P", "M" ou "G".
+3. Estime peso e macros com foco em DENSIDADE REAL.
 
-🔍 1. PROTOCOLO DE CONTAGEM (OBRIGATÓRIO):
-Antes de estimar o peso, você DEVE contar:
-- "Quantos pedaços individuais de proteína existem?" (Ex: 2 filés, 3 pedaços, 5 tiras).
-- Se houver 3 pedaços em vez de 2, o peso DEVE ser proporcionalmente maior se o tamanho for similar.
+Regras de Ouro (v50):
+- DENSIDADE DE PROTEÍNA: Carnes e proteínas são densas e "pesam no prato". 3 tiras médias de frango grelhado ≈ 130-150g. Não subestime proteínas.
+- REGRA DA CAMADA FINA (Carbos): Se o arroz/massas cobrirem o prato mas forem uma camada rasa, o peso é ≈ 120-140g. Isso evita a inflação volumétrica.
+- VOLUME vs DENSIDADE: Saiba que uma porção que parece igual em volume, pesará mais se for proteína do que se for arroz ou vegetais.
+- ESCALA VISUAL: Use referências fixas (teclado, prato) para calibrar a profundidade.
 
-🧠 2. MÉTRICA DE UNIDADE (PROTEÍNAS):
-Analise cada pedaço usando a escala (Teclado/Prato):
-- FILÉ FINO (espessura < 1cm): ~40g a 45g por unidade.
-- FILÉ MÉDIO (1cm a 2cm): ~70g a 85g por unidade.
-- FILÉ GROSSO (> 2cm): ~120g+ por unidade.
-- REGRA DE OURO: Somatório = Número de unidades × Peso por unidade baseado na espessura.
-- EXTREMO CUIDADO: O usuário reportou que você deu o mesmo peso para 2 e 3 filés. Isso é um ERRO GRAVE. Diferencie as quantidades!
-
-🍚 3. CARBOIDRATOS (VOLUME GEOMÉTRICO):
-- Se o arroz cobre o fundo do prato mas você vê relevo de grãos individuais (camada rasa), o volume é baixo (~120g a 160g).
-- Só chegue a 300g de arroz se houver uma "montanha" que oculte o centro do prato.
-
-⚠️ SISTEMA DE CHECAGEM ANALÍTICA:
-- Compare: Prato A (2 filés finos) = ~85g. Prato B (3 filés finos similares) = ~125g.
-- Use a escala do teclado (cada tecla ~1.8cm) para justificar o tamanho de CADA pedaço.
-
-📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
+Retorne apenas um JSON válido contendo:
 {
-  "dish_name": "Nome",
-  "total_calories": [SOMA_DOS_ITENS],
-  "total_protein_g": [SOMA_DOS_ITENS],
-  "total_carbs_g": [SOMA_DOS_ITENS],
-  "total_fat_g": [SOMA_DOS_ITENS],
-  "nutrition_score": [1-10],
-  "ingredients": [
-    {
-      "name": "Nome",
-      "estimated_weight_g": [VALOR_CALCULADO],
-      "calories": [VALOR],
-      "protein_g": [VALOR],
-      "carbs_g": [VALOR],
-      "fat_g": [VALOR],
-      "confidence": "Alta",
-      "observation": "AUDITORIA: 'Detectados X pedaços. Cada pedaço mede aprox. Y cm (Z teclas). Espessura fina. Cálculo: X * Wg = Total.'"
-    }
-  ],
-  "analysis_comment": "Resumo técnico da contagem e escala utilizada."
-}
+ "dish_name": "Nome",
+ "plate_size": "P" | "M" | "G",
+ "calories": 0,
+ "protein_g": 0,
+ "carbs_g": 0,
+ "fat_g": 0,
+ "ingredients": [
+   {"name": "Item", "estimated_weight_g": 0, "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0}
+ ],
+ "score": 0.0,
+ "goal_analysis": {"bulking": "Dica", "cutting": "Dica"},
+ "observation": "Resumo"
+}`;
 
-❗ IMPORTANTE:
-1. SEJA EXTREMAMENTE ESPECÍFICO NA CONTAGEM.
-2. Não use pesos redondos se a biometria indicar valores quebrados.
-3. Não retorne texto fora do JSON.`;
+    const systemPrompt = `Você é um analista nutricional focado em REALISMO e DENSIDADE.
+DIRETRIZES:
+- Diferencie COBERTURA (espaço que ocupa) de MASSA (peso real).
+- Proteínas (carnes) devem ser estimadas com base na espessura e quantidade de pedaços. 3 tiras médias ≈ 140g.
+- Arroz em camada fina ≈ 130g.
+- Responda apenas com o JSON solicitado.`;
 
-    const systemPrompt = `Você é um robô de biometria nutricional de alta precisão. Sua função é auditar a imagem, contar itens e calcular o peso matemático baseado em escala real. Não aceite aproximações preguiçosas.`;
+    let text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'food' });
+    if (typeof text !== 'string') text = JSON.stringify(text);
 
-    const text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'food' });
     const data = JSON.parse(extractJson(text));
+    const ingredientsRaw = data.ingredients || data.items || [];
+    const plateSize = data.plate_size || "M";
 
-    const ingredients = data.ingredients || data.items || [];
-    const calculatedCalories = ingredients.reduce((acc: number, i: any) => acc + safeParseFloat(i.calories), 0);
-    const calculatedProtein = ingredients.reduce((acc: number, i: any) => acc + safeParseFloat(i.protein_g || i.protein), 0);
-    const calculatedCarbs = ingredients.reduce((acc: number, i: any) => acc + safeParseFloat(i.carbs_g || i.carbs), 0);
-    const calculatedFat = ingredients.reduce((acc: number, i: any) => acc + safeParseFloat(i.fat_g || i.fat), 0);
-
-    return {
-      mealName: data.dish_name || data.mealName || "Refeição Digitalizada",
-      score: safeParseFloat(data.nutrition_score || data.score) || 5,
-      totalCalories: safeParseFloat(data.total_calories || data.totalCalories) || calculatedCalories,
-      totalProtein: safeParseFloat(data.total_protein_g || data.totalProtein) || calculatedProtein,
-      totalCarbs: safeParseFloat(data.total_carbs_g || data.totalCarbs) || calculatedCarbs,
-      totalFat: safeParseFloat(data.total_fat_g || data.totalFat) || calculatedFat,
-      totalWeight: safeParseFloat(data.ingredients?.reduce((acc: number, i: any) => acc + (i.estimated_weight_g || 0), 0) || data.totalWeight || 0),
-      reasoning: data.analysis_comment || data.reasoning || "Análise concluída.",
-      items: (data.ingredients || data.items || []).map((item: any) => ({
-        name: item.name,
-        weight: safeParseFloat(item.estimated_weight_g || item.weight),
-        calories: safeParseFloat(item.calories),
-        protein: safeParseFloat(item.protein_g || item.protein),
-        carbs: safeParseFloat(item.carbs_g || item.carbs),
-        fat: safeParseFloat(item.fat_g || item.fat),
-        confidence: item.confidence,
-        observation: item.observation
-      }))
-    };
-  } catch (error: any) {
-    console.error("Error analyzing plate:", error);
-    const msg = error.message || "";
-    let reasoning = "Não foi possível analisar a imagem. Tente uma foto mais clara.";
+    const plateLimits: Record<string, number> = { "P": 350, "M": 550, "G": 750 };
+    const maxTotalWeight = plateLimits[plateSize] || 550;
     
-    if (msg.includes('401')) reasoning = "Sessão expirada. Por favor, saia da conta e entre novamente para renovar seu acesso.";
-    if (msg.includes('403')) reasoning = "Limite de análise diária atingido para o seu plano.";
+    let processedItems = ingredientsRaw.map((item: any) => ({
+      name: item.name,
+      weight: clampWeight(item.name, safeParseFloat(item.estimated_weight_g || item.weight)),
+      calories: safeParseFloat(item.calories),
+      protein: safeParseFloat(item.protein_g || item.protein),
+      carbs: safeParseFloat(item.carbs_g || item.carbs),
+      fat: safeParseFloat(item.fat_g || item.fat)
+    }));
 
+    processedItems = normalizeWeights(processedItems, maxTotalWeight);
+
+    const result: FoodAnalysisResult = {
+      dish_name: data.dish_name || data.mealName || "Refeição Analisada",
+      score: safeParseFloat(data.health_score ?? data.nutrition_score ?? data.score ?? 5),
+      calories: processedItems.reduce((acc: number, i: any) => acc + i.calories, 0),
+      protein_g: processedItems.reduce((acc: number, i: any) => acc + i.protein, 0),
+      carbs_g: processedItems.reduce((acc: number, i: any) => acc + i.carbs, 0),
+      fat_g: processedItems.reduce((acc: number, i: any) => acc + i.fat, 0),
+      dish_category: data.dish_category || data.category || "Refeição",
+      totalWeight: processedItems.reduce((acc: number, i: any) => acc + i.weight, 0),
+      goal_analysis: data.goal_analysis || { bulking: "Análise não disponível", cutting: "Análise não disponível" },
+      observation: data.observation || data.analysis_comment || "Análise concluída.",
+      items: processedItems
+    };
+
+    const calculatedKcal = (result.protein_g * 4) + (result.carbs_g * 4) + (result.fat_g * 9);
+    const diffRatio = result.calories > 0 ? Math.abs(result.calories - calculatedKcal) / result.calories : 1;
+    if (diffRatio > 0.15 || result.calories === 0) {
+      result.calories = calculatedKcal;
+    }
+
+    result.calories = clamp(result.calories, 0, 2000);
+    result.score = calculateIntelligentScore(result.score, result.protein_g, result.fat_g, result.calories, result.observation);
+    result.muscle_score = calculateMuscleScore(result.protein_g, result.carbs_g, result.fat_g);
+
+    // Compatibilidade
+    result.mealName = result.dish_name; result.totalCalories = result.calories;
+    result.totalProtein = result.protein_g; result.totalCarbs = result.carbs_g;
+    result.totalFat = result.fat_g; result.reasoning = result.observation;
+
+    return result;
+  } catch (error: any) {
     return { 
-      mealName: "Erro na análise", 
-      items: [], 
-      totalCalories: 0, 
-      totalProtein: 0, 
-      totalCarbs: 0, 
-      totalFat: 0, 
-      totalWeight: 0, 
-      score: 0, 
-      reasoning 
+      dish_name: "Erro na análise", items: [], calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, totalWeight: 0, score: 0, 
+      observation: "Não foi possível analisar. Tente uma foto mais clara.",
+      mealName: "Erro", reasoning: "Erro"
     };
   }
 };
 
 export const getManualFoodMacros = async (foodDescription: string): Promise<FoodAnalysisResult> => {
   try {
-    const prompt = `Analise a refeição: "${foodDescription}". Identifique itens, pesos, calorias e macros exatos seguindo o formato JSON da ANÁLISE NUTRICIONAL AVANÇADA.
+    const prompt = `Analise a refeição e estime macros. Refeição: "${foodDescription}"
+Retorne JSON com: food_items, total_calories, total_protein_g, total_carbs_g, total_fat_g, health_score, dish_category, goal_analysis, observation.
+Limite máximo de 8 ingredientes.`;
 
-📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
-{
-  "dish_name": "Nome descritivo",
-  "total_calories": 350,
-  "total_protein_g": 30,
-  "total_carbs_g": 20,
-  "total_fat_g": 10,
-  "nutrition_score": 8,
-  "ingredients": [
-    {
-      "name": "Frango Grelhado",
-      "estimated_weight_g": 100,
-      "calories": 165,
-      "protein_g": 31,
-      "carbs_g": 0,
-      "fat_g": 3.6
-    }
-  ],
-  "analysis_comment": "Análise concluída."
-}
+    const systemPrompt = `Você é um nutricionista especialista brasileiro. Forneça diagnósticos para Bulking/Cutting e macros realistas baseados em porções padrão.`;
 
-❗ IMPORTANTE:
-1. SEJA CONCISO para evitar truncamento.
-2. SUBSTITUA OS VALORES DE EXEMPLO (como 350, 30, etc.) pelos CÁLCULOS REAIS exatos da refeição solicitada. NÃO DEIXE ZEROS.`;
+    let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'food' });
+    if (typeof text !== 'string') text = JSON.stringify(text);
 
-    const systemPrompt = `Você é um Nutricionista Esportivo Brasileiro especialista em tabelas nutricionais e suplementação (Whey, Creatina, etc).
-
-DIRETRIZES CRÍTICAS:
-1. MARCAS ESPECÍFICAS: Se o usuário citar uma marca (ex: Max Titanium, Growth, Integralmedica, Nestlé), USE OS DADOS EXATOS DO RÓTULO dessa marca. Não use médias genéricas.
-2. PORÇÕES IMPLÍCITAS: Se a quantidade for vaga (ex: "1 scoop", "1 dose", "1 colher"), use o padrão do fabricante ou o padrão brasileiro (ex: 1 scoop whey = ~30g a 40g dependendo da marca).
-3. ARROZ/FEIJÃO: Considere sempre o peso do alimento COZIDO, a menos que especificado "cru".
-4. SEJA HONESTO: Se for um alimento calórico, não subestime.
-
-Retorne sempre JSON válido.`;
-
-    const text = await callAIAnalyzer({ prompt, systemPrompt, type: 'food' });
     const data = JSON.parse(extractJson(text));
+    const itemsRaw = data.food_items || data.ingredients || [];
+    
+    let processedItems = itemsRaw.map((item: any) => ({
+      name: item.name,
+      weight: clampWeight(item.name, safeParseFloat(item.weight_g || item.weight)),
+      calories: safeParseFloat(item.calories),
+      protein: safeParseFloat(item.total_protein_g || item.protein_g || item.protein),
+      carbs: safeParseFloat(item.total_carbs_g || item.carbs_g || item.carbs),
+      fat: safeParseFloat(item.total_fat_g || item.fat_g || item.fat)
+    }));
 
-    return {
-      mealName: data.dish_name || data.mealName || foodDescription,
-      score: safeParseFloat(data.nutrition_score || data.score) || 5,
-      totalCalories: safeParseFloat(data.total_calories || data.totalCalories),
-      totalProtein: safeParseFloat(data.total_protein_g || data.totalProtein),
-      totalCarbs: safeParseFloat(data.total_carbs_g || data.totalCarbs),
-      totalFat: safeParseFloat(data.total_fat_g || data.totalFat),
-      totalWeight: safeParseFloat(data.ingredients?.reduce((acc: number, i: any) => acc + (i.estimated_weight_g || 0), 0) || data.totalWeight || 0),
-      reasoning: data.analysis_comment || data.reasoning || "Cálculo concluído.",
-      items: (data.ingredients || data.items || []).map((item: any) => ({
-        name: item.name,
-        weight: safeParseFloat(item.estimated_weight_g || item.weight),
-        calories: safeParseFloat(item.calories),
-        protein: safeParseFloat(item.protein_g || item.protein),
-        carbs: safeParseFloat(item.carbs_g || item.carbs),
-        fat: safeParseFloat(item.fat_g || item.fat)
-      }))
+    const result: FoodAnalysisResult = {
+      dish_name: foodDescription,
+      score: safeParseFloat(data.health_score ?? data.nutrition_score ?? data.score ?? 5),
+      calories: processedItems.reduce((acc: number, i: any) => acc + i.calories, 0),
+      protein_g: processedItems.reduce((acc: number, i: any) => acc + i.protein, 0),
+      carbs_g: processedItems.reduce((acc: number, i: any) => acc + i.carbs, 0),
+      fat_g: processedItems.reduce((acc: number, i: any) => acc + i.fat, 0),
+      dish_category: data.dish_category || data.category || "Refeição",
+      totalWeight: processedItems.reduce((acc: number, i: any) => acc + i.weight, 0),
+      goal_analysis: data.goal_analysis || { bulking: "Análise não disponível", cutting: "Análise não disponível" },
+      observation: data.observation || "Cálculo concluído.",
+      items: processedItems
     };
+
+    const calculatedKcal = (result.protein_g * 4) + (result.carbs_g * 4) + (result.fat_g * 9);
+    const diffRatio = result.calories > 0 ? Math.abs(result.calories - calculatedKcal) / result.calories : 1;
+    if (diffRatio > 0.15 || result.calories === 0) result.calories = calculatedKcal;
+
+    result.calories = clamp(result.calories, 0, 2000);
+    result.score = calculateIntelligentScore(result.score, result.protein_g, result.fat_g, result.calories, result.observation);
+    result.muscle_score = calculateMuscleScore(result.protein_g, result.carbs_g, result.fat_g);
+
+    result.mealName = result.dish_name; result.totalCalories = result.calories;
+    result.totalProtein = result.protein_g; result.totalCarbs = result.carbs_g;
+    result.totalFat = result.fat_g; result.reasoning = result.observation;
+
+    return result;
   } catch (error) {
-    console.error("Error calculating macros:", error);
-    return { mealName: "Erro ao calcular", items: [], totalCalories: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0, totalWeight: 0, score: 0, reasoning: "Erro ao calcular." };
+    return { dish_name: "Erro ao calcular", items: [], calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, totalWeight: 0, score: 0, observation: "Erro ao calcular." };
   }
 };
 
 export const analyzeShape = async (base64Image: string, metrics?: { weight?: number, height?: number, goal?: string }): Promise<ShapeAnalysisResult> => {
-  const metricsInfo = metrics?.weight || metrics?.height || metrics?.goal
-    ? `Considere também estes dados: Peso ${metrics.weight || 'N/A'}kg, Altura ${metrics.height || 'N/A'}cm, Objetivo: ${metrics.goal || 'N/A'}.`
-    : '';
-
   try {
-    const prompt = `### SCANNER DE FÍSICO: BIOMETRIA VISUAL E ANÁLISE DE PROPORÇÃO
+    const prompt = `Analise BF%, massa muscular e pontos fortes/fracos. ${metrics?.weight ? `Dados: ${metrics.weight}kg, ${metrics.height}cm, Objetivo: ${metrics.goal}.` : ''}`;
+    const systemPrompt = `Especialista em antropometria visual. Use faixas BF (ex: 12-14%). Sem conselho médico. JSON: structural_analysis, body_fat_range, muscle_score, shape_score, regional_analysis, recommendations.`;
 
-Você é um especialista em Antropometria Visual e Treinamento de Elite.
-Sua missão é extrair dados técnicos da imagem, ignorando sombras de iluminação e focando em marcadores anatômicos reais.
+    let text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'shape' });
+    if (typeof text !== 'string') text = JSON.stringify(text);
 
-🎯 1. BIOTIPO E ESTRUTURA:
-- Identifique a base óssea (clavículas, bacia, punhos) para diferenciar Ecto, Meso ou Endomorfo.
-- Diferencie volume muscular real de retenção hídrica ou gordura subcutânea.
-
-🔍 2. MARCADORES DE BF% (PERCENTUAL DE GORDURA):
-Seja cirúrgico nos marcadores:
-- < 10%: Separação muscular profunda, vascularização no tronco, serrátil fibrado.
-- 11-14%: Abdômen visível (gomos centrais definidos), sem acúmulo nos flancos (cintura limpa).
-- 15-18%: Silhueta atlética mas "lisa", abdômen com pouco relevo, flancos iniciando leve dobra.
-- 19-24%: Perda de contorno muscular no peitoral, flancos proeminentes (pneuzinhos), barriga relaxada.
-- > 25%: Cintura maior que a linha dos ombros, acúmulo acentuado.
-
-⚠️ REGRAS DE OURO (NÃO NEGOCIÁVEIS):
-- ILUMINAÇÃO: Se a foto estiver escura, não assuma BF alto. Olhe o contorno da silhueta (V-Taper).
-- HARD LOCK: Se houver qualquer sinal de gomos abdominais -> BF MÁXIMO de 15%.
-- HARD LOCK: Se houver separação clara no quadríceps -> BF MÁXIMO de 12%.
-
-📊 RETORNO OBRIGATÓRIO (APENAS JSON VÁLIDO):
-{
-  "structural_analysis": {
-    "name": "Ectomorfo/Mesomorfo/Endomorfo",
-    "meaning": "Breve explicação",
-    "strength": "Vantagem genética",
-    "improvement": "Ponto fraco",
-    "genetic_responsiveness": "Alta/Média/Baixa",
-    "fat_storage_tendency": "Regiões de acúmulo",
-    "structural_limitation_strategy": "Dica técnica"
-  },
-  "body_fat_range": "12-14%",
-  "bf_classification": "Atlético",
-  "bf_confidence": "Alta",
-  "bf_visual_justification": "Justificativa visual real",
-  "shape_score": 8.5,
-  "muscle_score": 7.0,
-  "definition_score": 7.5,
-  "fat_score": 4.0,
-  "regional_analysis": {
-    "trunk": { "strength": "...", "improvement": "...", "strategy": "..." },
-    "arms": { "strength": "...", "improvement": "...", "strategy": "..." },
-    "abs_waist": { "strength": "...", "improvement": "...", "strategy": "..." },
-    "legs": { "strength": "...", "improvement": "...", "strategy": "..." }
-  },
-  "execution_strategy": {
-    "training_focus": ["...", "..."],
-    "nutrition_focus": "...",
-    "time_expectation": "8 semanas",
-    "common_mistakes": ["...", "...", "...", "..."],
-    "primary_focus_next_60_days": "..."
-  },
-  "nutritional_protocol": {
-    "caloric_strategy": "Bulk/Cut/Recomp",
-    "protein_target": "2.2g/kg",
-    "distribution": "4 refeições",
-    "practical_guidelines": ["...", "..."]
-  },
-  "personal_ia_insight": {
-    "aesthetic_diagnosis": "Frase de efeito"
-  },
-  "personal_ia_comment": "Resumo final motivador"
-}
-
-❗ IMPORTANTE: Não retorne texto fora do JSON. Preencha TODOS os campos acima.`;
-
-    const text = await callAIAnalyzer({ image: base64Image, prompt, type: 'shape' });
     const data = JSON.parse(extractJson(text));
 
-    // Mapeamento de segurança para garantir que campos vitais existam
     return {
       ...data,
-      body_fat_range: data.body_fat_range || data.bf_range || "15-20%",
-      shape_score: safeParseFloat(data.shape_score || data.shapeScore),
-      muscle_score: safeParseFloat(data.muscle_score || data.muscleScore),
-      definition_score: safeParseFloat(data.definition_score || data.definitionScore),
-      fat_score: safeParseFloat(data.fat_score || data.fatScore)
+      body_fat_range: data.body_fat_range || data.bf_range || data.bf || "N/A",
+      shape_score: safeParseFloat(data.shape_score ?? data.shapeScore ?? 0),
+      muscle_score: safeParseFloat(data.muscle_score ?? data.muscleScore ?? 0),
+      definition_score: safeParseFloat(data.definition_score ?? data.definitionScore ?? 0),
+      fat_score: safeParseFloat(data.fat_score ?? data.fatScore ?? 0)
     };
   } catch (error) {
-    console.error("Error analyzing shape:", error);
     throw error;
   }
 };
 
 export const chatWithPersonalIA = async (message: string, history: any[], userContext: any) => {
-  const limitedHistory = history.slice(-20);
-
-  // Construir contexto do histórico
+  const limitedHistory = history.slice(-10);
   let conversationContext = '';
   if (limitedHistory.length > 0) {
-    conversationContext = '\n\nHistórico da conversa:\n' + limitedHistory.map(msg =>
-      `${msg.role === 'user' ? 'Usuário' : 'Personal IA'}: ${msg.content}`
+    conversationContext = '\n\nHistórico:\n' + limitedHistory.map(msg =>
+      `${msg.role === 'user' ? 'U' : 'AI'}: ${msg.content}`
     ).join('\n');
   }
 
-  const systemPrompt = `Você é a "Personal IA" do ShapeScan.
- 
- SUA PERSONALIDADE:
- - Você é aquela amiga maromba gente boa, engraçada e motivadora.
- - Você usa gírias de academia (ex: "mete o shape", "frango", "monstro", "tá pago", "bora crescer") mas com moderação para não ficar forçado.
- - Você é "papo reto". Direta ao ponto, sem enrolação técnica desnecessária, mas sabe muito do assunto.
-- Você tem senso de humor. Se o cara comer besteira, dê uma zoada leve antes de ajudar a corrigir.
-
-REGRAS RÍGIDAS DE FORMATAÇÃO (IMPORTANTE):
-1. **PROIBIDO USAR ASTERISCOS (**) OU UNDERSCORES (__) PARA NEGRITO/ITÁLICO.** O chat do usuário não renderiza Markdown. Escreva apenas texto puro.
-2. Se quiser enfatizar algo, USE CAIXA ALTA ou EMOJIS.
-3. Use MUITOS emojis para dar vida à conversa. 🔥💪🚀🥗🍗
-4. Respostas curtas, no estilo de mensagem de WhatsApp. Evite textões.
-5. JAMAIS use formatação de código ou listas com hifens se puder evitar. Mantenha o texto fluido.
-
-CONTEXTO DO USUÁRIO:
-- Dados: ${JSON.stringify(userContext.user)}.
-- Refeições Recentes: ${JSON.stringify(userContext.logsSummary)}.
-- Análise do Shape (Se tiver): ${userContext.lastEvolution ? JSON.stringify(userContext.lastEvolution.detailedAnalysis + " " + userContext.lastEvolution.pointsToImprove) : 'Nenhuma análise recente'}.
-
-AÇÃO:
-- Se pedirem dieta: Calcule macros (2g/kg Prot, 0.8g/kg Gordura, resto Carbo) e sugira alimentos limpos.
-- Se pedirem treino: Use os "pontos fracos" da análise do shape para sugerir exercícios focados.
-- Se o usuário estiver desanimado: Dê um choque de realidade motivacional com humor.
-${conversationContext}`;
-
-  const prompt = message;
+  const systemPrompt = `Você é a "Personal IA" do ShapeScan (Amiga Maromba). 
+REGRAS: 1. Sem conselho médico. 2. Estilo WhatsApp (Sem markdown, texto puro). 3. Respostas curtas e motivadoras. 4. Emojis moderados.
+CONTEXTO: ${JSON.stringify(userContext.user)}. ${conversationContext}`;
 
   try {
-    const text = await callAIAnalyzer({ prompt, systemPrompt, type: 'chat' });
-    return text;
+    return await callAIAnalyzer({ prompt: message, systemPrompt, type: 'chat' });
   } catch (error: any) {
-    console.error("Error in chat:", error);
-    return `Erro detalhado: ${error.message || JSON.stringify(error)}`;
+    return `Erro: ${error.message || "Tente novamente mais tarde."}`;
+  }
+};
+
+export const getDailyFeedback = async (
+  consumed: { calories: number, protein: number, carbs: number, fat: number },
+  goals: { calories: number, protein: number, carbs: number, fat: number },
+  userGoal: string
+): Promise<any> => {
+  const prompt = `Analise o resumo nutricional do dia e forneça um feedback inteligente.
+Consumido: ${consumed.calories.toFixed(0)}kcal, P:${consumed.protein.toFixed(0)}g, C:${consumed.carbs.toFixed(0)}g, G:${consumed.fat.toFixed(0)}g
+Metas: ${goals.calories.toFixed(0)}kcal, P:${goals.protein.toFixed(0)}g, C:${goals.carbs.toFixed(0)}g, G:${goals.fat.toFixed(0)}g
+Objetivo do Usuário: ${userGoal}
+
+Retorne um JSON válido contendo:
+{
+  "status": "excellent",
+  "protein_feedback": "mensagem curta sobre proteína",
+  "energy_feedback": "mensagem curta sobre calorias e energia",
+  "general_advice": "dica prática final",
+  "score": 85
+}
+(status pode ser: excellent, good, average, bad. score de 0 a 100)`;
+
+  const systemPrompt = `Você é um coach de nutrição esportiva. Analise os totais do dia contra as metas e o objetivo do usuário. Seja direto, motivador e técnico. Responda apenas o JSON.`;
+
+  try {
+    let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'chat' });
+    if (typeof text !== 'string') text = JSON.stringify(text);
+    return JSON.parse(extractJson(text));
+  } catch (error) {
+    return {
+      status: 'average',
+      protein_feedback: 'Continue monitorando sua proteína.',
+      energy_feedback: 'Ajuste suas calorias conforme sua meta.',
+      general_advice: 'Mantenha a consistência para ver resultados.',
+      score: 50
+    };
   }
 };

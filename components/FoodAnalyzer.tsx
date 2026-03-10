@@ -179,14 +179,14 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       fat: Number((it.fat || 0).toFixed(1))
     }));
 
-    const mealName = result.mealName || manualName || (foodItems.length > 1 ? "Refeição Completa" : (foodItems[0]?.name || "Refeição"));
+    const mealName = result.dish_name || manualName || (foodItems.length > 1 ? "Refeição Completa" : (foodItems[0]?.name || "Refeição"));
     const mealData = {
       name: mealName,
       items: foodItems,
-      calories: Number(result.totalCalories.toFixed(1)),
-      protein: Number(result.totalProtein.toFixed(1)),
-      carbs: Number(result.totalCarbs.toFixed(1)),
-      fat: Number(result.totalFat.toFixed(1)),
+      calories: Number(result.calories.toFixed(1)),
+      protein: Number(result.protein_g.toFixed(1)),
+      carbs: Number(result.carbs_g.toFixed(1)),
+      fat: Number(result.fat_g.toFixed(1)),
       weight: Number(result.totalWeight.toFixed(1))
     };
 
@@ -372,22 +372,34 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                   <div className="space-y-4">
                     <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] opacity-70">Resultado Identificado</span>
                     <h2 className="text-4xl md:text-6xl font-serif-premium font-bold text-white tracking-tight leading-none uppercase break-words">
-                      {result.mealName}
+                      {result.dish_name}
                     </h2>
+                    {result.dish_category && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+                          {result.dish_category.includes('fitness') ? '🥗 ' : 
+                           result.dish_category.includes('fast food') ? '🍔 ' : 
+                           result.dish_category.includes('brasileiro') ? '🇧🇷 ' : 
+                           result.dish_category.includes('sobremesa') ? '🍰 ' : 
+                           result.dish_category.includes('lanche') ? '🥪 ' : '🍽️ '}
+                          {result.dish_category}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-baseline gap-4 flex-wrap">
                     <span className="text-6xl md:text-8xl font-serif-premium font-bold text-white tracking-tighter hover:text-emerald-500 transition-colors duration-500">
-                      {result.totalCalories.toFixed(0)}
+                      {result.calories.toFixed(0)}
                     </span>
                     <span className="text-emerald-500/50 text-xl md:text-2xl font-serif-premium italic">kcal</span>
                   </div>
 
                   <div className="grid grid-cols-3 gap-6">
                     {[
-                      { l: 'Prot', v: result.totalProtein, u: 'g' },
-                      { l: 'Carb', v: result.totalCarbs, u: 'g' },
-                      { l: 'Gord', v: result.totalFat, u: 'g' }
+                      { l: 'Prot', v: result.protein_g, u: 'g' },
+                      { l: 'Carb', v: result.carbs_g, u: 'g' },
+                      { l: 'Gord', v: result.fat_g, u: 'g' }
                     ].map(m => (
                       <div key={m.l} className="bg-zinc-950/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 text-center group/macro hover:border-emerald-500/30 transition-all duration-500">
                         <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2 group-hover/macro:text-emerald-500 transition-colors">{m.l}</p>
@@ -399,23 +411,60 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 
                 <div className="bg-zinc-950/40 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 space-y-8 relative overflow-hidden group">
                   <div className="space-y-6 relative z-10">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-40 flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        Pontuação Metabólica
-                      </span>
-                      <span className="text-3xl font-serif-premium font-bold text-emerald-500">{result.score}/10</span>
+                    {/* Health Score */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-40 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          Health Score (Saúde)
+                        </span>
+                        <span className="text-3xl font-serif-premium font-bold text-emerald-500">{result.score || 0}/10</span>
+                      </div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${((result.score || 0) / 10) * 100}%` }}
+                          transition={{ duration: 2, ease: "circOut" }}
+                          className="h-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+                        />
+                      </div>
                     </div>
-                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(result.score / 10) * 100}%` }}
-                        transition={{ duration: 2, ease: "circOut" }}
-                        className="h-full bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]"
-                      />
+
+                    {/* Muscle Score (v45) */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-40 flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-indigo-500" />
+                          Muscle Score (Hipertrofia)
+                        </span>
+                        <span className="text-3xl font-serif-premium font-bold text-indigo-500">{result.muscle_score || 0}/10</span>
+                      </div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${((result.muscle_score || 0) / 10) * 100}%` }}
+                          transition={{ duration: 2, ease: "circOut" }}
+                          className="h-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                        />
+                      </div>
                     </div>
+
+                    {/* Goal Analysis (v45) */}
+                    {result.goal_analysis && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/5">
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">💪 Bulking</span>
+                          <p className="text-[11px] text-zinc-500 leading-relaxed italic">"{result.goal_analysis.bulking}"</p>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest">🔥 Cutting</span>
+                          <p className="text-[11px] text-zinc-500 leading-relaxed italic">"{result.goal_analysis.cutting}"</p>
+                        </div>
+                      </div>
+                    )}
+
                     <p className="text-sm font-medium text-zinc-400 leading-relaxed italic border-l-2 border-emerald-500/30 pl-6 py-2">
-                      "{result.reasoning}"
+                      "{result.observation}"
                     </p>
                   </div>
                 </div>

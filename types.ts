@@ -142,15 +142,28 @@ export interface ShapeAnalysisResult {
 }
 
 export interface FoodAnalysisResult {
-  mealName: string;
+  dish_name: string;
   items: FoodAnalysisItem[];
-  totalCalories: number;
-  totalProtein: number;
-  totalCarbs: number;
-  totalFat: number;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
   totalWeight: number;
-  score: number;
-  reasoning: string;
+  score?: number;
+  muscle_score?: number;
+  dish_category?: string;
+  goal_analysis?: {
+    bulking: string;
+    cutting: string;
+  };
+  observation: string;
+  // Compatibilidade com campos antigos para evitar quebras imediatas
+  mealName?: string;
+  totalCalories?: number;
+  totalProtein?: number;
+  totalCarbs?: number;
+  totalFat?: number;
+  reasoning?: string;
 }
 
 export interface FoodAnalysisItem {
@@ -163,6 +176,14 @@ export interface FoodAnalysisItem {
   weightUnit?: string;
   confidence?: string; // New: Baixa/Moderada/Alta
   observation?: string; // New: Justificativa visual
+}
+
+export interface DailyFeedback {
+  status: 'excellent' | 'good' | 'average' | 'bad';
+  protein_feedback: string;
+  energy_feedback: string;
+  general_advice: string;
+  score: number;
 }
 
 export interface ChatMessage {
