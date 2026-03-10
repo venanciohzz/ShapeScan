@@ -76,7 +76,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 md:gap-8 min-w-0">
                      <div className="relative shrink-0">
-                        <div className="w-16 h-16 md:w-32 md:h-32 rounded-[2rem] bg-white/5 border border-emerald-500/20 flex items-center justify-center overflow-hidden shadow-2xl relative z-10 p-0.5">
+                        <div className="w-16 h-16 md:w-32 md:h-32 rounded-[2rem] bg-white/5 border border-emerald-500/20 flex items-center justify-center shadow-2xl relative z-10 p-0.5">
                            <div className="w-full h-full rounded-[1.8rem] overflow-hidden bg-zinc-900">
                               {user.photo ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" /> : <span className="text-3xl md:text-6xl flex items-center justify-center h-full">👤</span>}
                            </div>

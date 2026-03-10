@@ -3,7 +3,7 @@ import { User as UserType } from '../types';
 import { compressImage } from '../utils/security';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
-import { ArrowLeft, Moon, Sun, User, Camera, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, User, Camera, CheckCircle2, ShieldAlert, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface SettingsProps {
@@ -61,23 +61,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
 
           <div className="space-y-10 relative z-10">
 
-            {/* Theme Toggle */}
-            <div className="flex items-center justify-between bg-white/[0.03] p-6 rounded-3xl border border-white/5 shadow-inner">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                  {darkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                </div>
-                <div>
-                  <p className="font-black text-white uppercase text-[10px] tracking-[0.3em]">Modo Visual</p>
-                  <p className="text-xs text-zinc-400 font-medium drop-shadow-sm">{darkMode ? 'Dark Theme Ativo' : 'Light Theme Ativo'}</p>
-                </div>
-              </div>
-              <button onClick={toggleTheme} className={`w-16 h-8 rounded-full p-1 transition-colors duration-500 relative ${darkMode ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-zinc-700'}`}>
-                <div className={`bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-500 flex items-center justify-center text-zinc-900 ${darkMode ? 'translate-x-8' : 'translate-x-0'}`}>
-                  {darkMode ? <Moon className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
-                </div>
-              </button>
-            </div>
+
 
             {/* Profile Avatar */}
             <div className="flex flex-col items-center justify-center pt-4">
@@ -90,6 +74,15 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
                   <Camera className="w-5 h-5" />
                   <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                 </label>
+                {photo && (
+                  <button 
+                    onClick={() => setPhoto('')}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-lg hover:scale-110 hover:bg-red-600 transition-all z-20 active:scale-95 border-2 border-zinc-950"
+                    title="Remover foto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
 
