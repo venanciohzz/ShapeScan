@@ -5,26 +5,37 @@ import { supabase } from './supabaseService';
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-analyzer`;
 
 const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
+  // 1. Verificar se existe sessão ativa
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (!session) {
+    console.warn('Tentativa de chamada de IA sem sessão ativa.');
+    throw new Error('401: Sessão expirada ou não encontrada. Por favor, saia e entre novamente.');
+  }
+
+  // 2. Invocar função com cabeçalhos explícitos para garantir que o token seja enviado
   const { data, error } = await supabase.functions.invoke('ai-analyzer', {
-    body: payload
+    body: payload,
+    headers: {
+      Authorization: `Bearer ${session.access_token}`
+    }
   });
 
   if (error) {
     console.error('AI Service Error:', error);
 
-    // Tenta acessar o corpo da resposta de erro (algumas versões do supabase guardam em 'context')
-    const context = (error as any).context;
-    if (context && context.error) {
-      throw new Error(context.error);
+    // Se a função retornar um erro JSON estruturado
+    if (typeof error === 'object' && error !== null) {
+       const msg = (error as any).message || '';
+       
+       if (msg.includes('401') || msg.includes('Unauthorized')) {
+         throw new Error('401: Sessão expirada.');
+       }
+       if (msg.includes('403') || msg.includes('limit_reached')) {
+         throw new Error('403: Limite atingido.');
+       }
     }
 
-    // Se a mensagem for genérica de status code, tentamos manter a mensagem original para tratamento no frontend
-    if (error.message && error.message.includes('Edge Function returned a non-2xx status code')) {
-      console.warn('Edge Function returned non-2xx:', error);
-      // Não lançamos erro genérico aqui para permitir que o FoodAnalyzer detecte 401/403
-    }
-
-    // Fallback final
     throw new Error(error.message || 'Erro desconhecido na análise de IA');
   }
 
@@ -152,9 +163,25 @@ Analise cada pedaço usando a escala (Teclado/Prato):
         observation: item.observation
       }))
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error analyzing plate:", error);
-    return { mealName: "Erro na análise", items: [], totalCalories: 0, totalProtein: 0, totalCarbs: 0, totalFat: 0, totalWeight: 0, score: 0, reasoning: "Não foi possível analisar a imagem. Tente uma foto mais clara." };
+    const msg = error.message || "";
+    let reasoning = "Não foi possível analisar a imagem. Tente uma foto mais clara.";
+    
+    if (msg.includes('401')) reasoning = "Sessão expirada. Por favor, saia da conta e entre novamente para renovar seu acesso.";
+    if (msg.includes('403')) reasoning = "Limite de análise diária atingido para o seu plano.";
+
+    return { 
+      mealName: "Erro na análise", 
+      items: [], 
+      totalCalories: 0, 
+      totalProtein: 0, 
+      totalCarbs: 0, 
+      totalFat: 0, 
+      totalWeight: 0, 
+      score: 0, 
+      reasoning 
+    };
   }
 };
 

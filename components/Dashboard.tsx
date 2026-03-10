@@ -51,7 +51,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
    };
 
    return (
-      <PremiumBackground className="pt-12 md:pt-28 pb-32 md:pb-12 h-screen overflow-y-auto scrollbar-hide">
+      <PremiumBackground className="pt-20 md:pt-28 pb-32 md:pb-12 h-screen overflow-y-auto scrollbar-hide">
          <div className="w-full max-w-7xl mx-auto px-6 relative z-20">
 
             {/* Modais de Controle */}

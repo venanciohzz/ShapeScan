@@ -127,12 +127,16 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
         } catch (err: any) {
           console.error("Erro no scanner:", err);
           let msg = err.message || "Falha na análise";
-          if (msg.includes('401') || msg.includes('jwt')) msg = "Sessão expirada.";
-          else if (msg.includes('403') || msg.includes('limit')) {
+          
+          if (msg.includes('401') || msg.includes('jwt') || msg.includes('expired')) {
+            msg = "Sessão expirada. Por favor, saia e entre novamente.";
+          } else if (msg.includes('403') || msg.includes('limit')) {
             setLimitModalType('daily');
             setShowLimitModal(true);
+            return;
           }
-          onShowToast(`Erro: ${msg}`, 'error');
+          
+          onShowToast(msg, 'error');
           setPreviewImage(null);
         } finally {
           setLoading(false);
