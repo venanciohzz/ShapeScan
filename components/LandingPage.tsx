@@ -323,7 +323,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="w-full max-w-5xl mx-auto relative z-20">
           <div className="flex flex-col items-center space-y-8 pt-8 relative z-30">
 
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[7.5rem] font-serif-premium tracking-tight text-white leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible">
+            <h1 className="text-[2.6rem] sm:text-6xl md:text-7xl lg:text-[7.5rem] font-serif-premium tracking-tight text-white leading-[1.2] sm:leading-[1.1] drop-shadow-2xl px-2 sm:px-4 z-20 overflow-visible">
               <LetterPuller text="Evolua seu físico" /> <br className="hidden md:block" />
               <LetterPuller
                 text="com clareza."
