@@ -8,15 +8,15 @@ const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
 
-// Clamps Equilibrados (v50)
+// Clamps Equilibrados (v51 - Calibrado)
 const clampWeight = (name: string, weight: number): number => {
   const n = name.toLowerCase();
-  // Arroz continua conservador (v49 success)
-  if (n.includes("arroz")) return clamp(weight, 30, 180); 
-  // Proteína subiu levemente para evitar subestimação (v50)
-  if (n.includes("frango") || n.includes("carne") || n.includes("peixe") || n.includes("proteina")) return clamp(weight, 50, 220);
+  // Arroz continua conservador para evitar inflação (v51)
+  if (n.includes("arroz")) return clamp(weight, 30, 250); 
+  // Proteína calibrada: reduzimos o mínimo para aceitar pedaços pequenos (v51)
+  if (n.includes("frango") || n.includes("carne") || n.includes("peixe") || n.includes("proteina")) return clamp(weight, 40, 250);
   if (n.includes("feijao")) return clamp(weight, 30, 200);
-  return clamp(weight, 10, 500);
+  return clamp(weight, 10, 600);
 };
 
 // Normalização de Prato Inteligente (v47/v48)
@@ -42,14 +42,16 @@ const normalizeWeights = (items: any[], maxTotal: number = 550): any[] => {
   return normalized;
 };
 
-// Health Score (v43/v48)
+// Health Score (v55 - Ajustado para Comida Limpa)
 const calculateIntelligentScore = (baseScore: number | undefined, protein: number, fat: number, calories: number, observation: string): number => {
-  let score = baseScore ?? 5;
-  if (fat > 40) score -= 2;
-  if (protein < 15) score -= 2;
-  if (calories > 900) score -= 1;
-  if (protein > 30) score += 1;
+  let score = baseScore ?? 7; // Default maior para comida limpa
+  if (fat > 35) score -= 2;
+  if (protein < 12) score -= 2;
+  if (calories > 1000) score -= 1;
+  if (protein > 25) score += 2; // Bônus maior para proteína
   const obs = observation.toLowerCase();
+  const isClean = obs.includes("grelhado") || obs.includes("cozido") || obs.includes("frango") || obs.includes("arroz");
+  if (isClean && fat < 15) score += 1;
   if (obs.includes("legumes") || obs.includes("vegetais") || obs.includes("salada") || obs.includes("fibras")) score += 1;
   return clamp(Math.round(score), 0, 10);
 };
@@ -115,22 +117,22 @@ const safeParseFloat = (val: any): number => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
-export const analyzePlate = async (base64Image: string, userDescription?: string): Promise<FoodAnalysisResult> => {
+export const analyzePlate = async (base64Image: string, userDescription?: string, userGoal?: string): Promise<FoodAnalysisResult> => {
   try {
     const descriptionContext = userDescription ? `O usuário descreveu a refeição como: "${userDescription}".` : '';
 
     const prompt = `Analise a imagem da refeição e identifique os alimentos visíveis. ${descriptionContext}
 
-Instruções (v50 - Equilíbrio Protein-Base):
+Instruções (v51 - Ultra Precision):
 1. Identifique cada alimento separadamente (Máximo 8 itens).
 2. Identifique o tamanho do prato ("plate_size"): "P", "M" ou "G".
-3. Estime peso e macros com foco em DENSIDADE REAL.
+3. Estime peso e macros com foco em DENSIDADE REAL e REFERÊNCIA DE ESCALA.
 
-Regras de Ouro (v50):
-- DENSIDADE DE PROTEÍNA: Carnes e proteínas são densas e "pesam no prato". 3 tiras médias de frango grelhado ≈ 130-150g. Não subestime proteínas.
-- REGRA DA CAMADA FINA (Carbos): Se o arroz/massas cobrirem o prato mas forem uma camada rasa, o peso é ≈ 120-140g. Isso evita a inflação volumétrica.
-- VOLUME vs DENSIDADE: Saiba que uma porção que parece igual em volume, pesará mais se for proteína do que se for arroz ou vegetais.
-- ESCALA VISUAL: Use referências fixas (teclado, prato) para calibrar a profundidade.
+Regras de Ouro (v54):
+- DENSIDADE DE PROTEÍNA (CÁLCULO): Use a âncora de 85g para 2 pedaços finos. Calcule proporcionalmente a quantidade: 1 pedaço ≈ 42g, 2 ≈ 85g, 3 ≈ 127g.
+- COBERTURA DE ARROZ (EQUILÍBRIO): Arroz que cobre o fundo do prato de forma rasa e completa pesa ≈ 130-150g. Só dê >160g se houver altura (montanha).
+- ESCALA VISUAL: O prato azul é raso. Arroz espalhado nele nunca passa de 150g a menos que forme uma pilha.
+- REALISMO ABSOLUTO: Prefira a gramatura menor se houver dúvida entre densidades.
 
 Retorne apenas um JSON válido contendo:
 {
@@ -148,11 +150,13 @@ Retorne apenas um JSON válido contendo:
  "observation": "Resumo"
 }`;
 
-    const systemPrompt = `Você é um analista nutricional focado em REALISMO e DENSIDADE.
+    const systemPrompt = `Você é um analista nutricional focado em REALISMO EXTREMO e JUSTIÇA NUTRICIONAL.
 DIRETRIZES:
-- Diferencie COBERTURA (espaço que ocupa) de MASSA (peso real).
-- Proteínas (carnes) devem ser estimadas com base na espessura e quantidade de pedaços. 3 tiras médias ≈ 140g.
-- Arroz em camada fina ≈ 130g.
+- Âncora: 2 pedaços finos de frango = 85g. (1 pedaço ≈ 42g).
+- Arroz (Cobertura Rasa): 130g-150g.
+- HEALTH SCORE: Arroz e Frango/Carne Grelhado é uma refeição EXCELENTE (Nota 8 a 10).
+- META DO USUÁRIO: ${userGoal || 'Não informada'}. 
+- No campo do JSON correspondente à meta do usuário, escreva de 2 a 3 frases DETALHADAS explicando por que a refeição é adequada (ou o que ajustar) especificamente para ESSA meta. Não diga apenas "Ideal". Justifique com base nos macros. No outro campo, mantenha uma dica curta e genérica.
 - Responda apenas com o JSON solicitado.`;
 
     let text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'food' });
@@ -215,13 +219,13 @@ DIRETRIZES:
   }
 };
 
-export const getManualFoodMacros = async (foodDescription: string): Promise<FoodAnalysisResult> => {
+export const getManualFoodMacros = async (foodDescription: string, userGoal?: string): Promise<FoodAnalysisResult> => {
   try {
     const prompt = `Analise a refeição e estime macros. Refeição: "${foodDescription}"
 Retorne JSON com: food_items, total_calories, total_protein_g, total_carbs_g, total_fat_g, health_score, dish_category, goal_analysis, observation.
 Limite máximo de 8 ingredientes.`;
 
-    const systemPrompt = `Você é um nutricionista especialista brasileiro. Forneça diagnósticos para Bulking/Cutting e macros realistas baseados em porções padrão.`;
+    const systemPrompt = `Você é um nutricionista especialista brasileiro focado no objetivo: ${userGoal || 'Geral'}. Forneça diagnósticos para Bulking/Cutting e macros realistas baseados em porções padrão.`;
 
     let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'food' });
     if (typeof text !== 'string') text = JSON.stringify(text);

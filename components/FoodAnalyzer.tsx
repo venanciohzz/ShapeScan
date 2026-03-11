@@ -120,7 +120,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
           const compressedBase64 = await compressImage(rawBase64);
           setPreviewImage(compressedBase64);
           const apiBase64 = compressedBase64.split(',')[1];
-          const data = await analyzePlate(apiBase64, mealDescription);
+          const data = await analyzePlate(apiBase64, mealDescription, user.goal);
           if (!data || !data.items) throw new Error("Não foi possível identificar alimentos.");
           await incrementUsage();
           setResult(data);
@@ -156,7 +156,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
     }
     setLoading(true);
     try {
-      const analysis = await getManualFoodMacros(manualName);
+      const analysis = await getManualFoodMacros(manualName, user.goal);
       if (!analysis?.items?.length) throw new Error("Falha no cálculo.");
       setResult(analysis);
     } catch (err) {
@@ -449,15 +449,21 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                       </div>
                     </div>
 
-                    {/* Goal Analysis (v45) */}
+                    {/* Goal Analysis (v56) */}
                     {result.goal_analysis && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 pt-6 border-t border-white/5">
-                        <div className="space-y-1">
-                          <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">💪 Bulking</span>
+                        <div className={`space-y-1 p-3 rounded-2xl transition-all duration-500 ${user.goal === 'gain' ? 'bg-orange-500/10 border border-orange-500/30' : 'opacity-30 grayscale'}`}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">💪 Bulking</span>
+                            {user.goal === 'gain' && <span className="text-[8px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-full font-black uppercase">Sua Meta</span>}
+                          </div>
                           <p className="text-[11px] text-zinc-500 leading-relaxed italic">"{result.goal_analysis.bulking}"</p>
                         </div>
-                        <div className="space-y-1">
-                          <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest">🔥 Cutting</span>
+                        <div className={`space-y-1 p-3 rounded-2xl transition-all duration-500 ${user.goal === 'lose' ? 'bg-cyan-500/10 border border-cyan-500/30' : 'opacity-30 grayscale'}`}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[9px] font-black text-cyan-400 uppercase tracking-widest">🔥 Cutting</span>
+                            {user.goal === 'lose' && <span className="text-[8px] bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full font-black uppercase">Sua Meta</span>}
+                          </div>
                           <p className="text-[11px] text-zinc-500 leading-relaxed italic">"{result.goal_analysis.cutting}"</p>
                         </div>
                       </div>
