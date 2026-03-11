@@ -88,8 +88,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
    };
 
    return (
-      <PremiumBackground className="pt-20 md:pt-28 pb-32 md:pb-12 h-screen overflow-y-auto scrollbar-hide">
-         <div className="w-full max-w-7xl mx-auto px-6 relative z-20">
+      <PremiumBackground className="pt-20 md:pt-28 pb-32 md:pb-12 h-screen overflow-y-auto scrollbar-hide overflow-x-hidden">
+         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-20">
 
             {/* Modais de Controle */}
             <DeleteMealModal
@@ -123,8 +123,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
 
                      <div className="flex flex-col min-w-0">
                         <p className="text-emerald-500/50 font-black uppercase text-[8px] md:text-[11px] tracking-[0.4em] mb-1">DASHBOARD</p>
-                        <h1 className="text-2xl md:text-7xl font-serif-premium font-bold text-white tracking-tight leading-none drop-shadow-xl flex flex-wrap items-center gap-x-2 gap-y-0 min-w-0 mb-2">
-                           <span className="opacity-60 text-lg md:text-5xl font-light">Olá,</span>
+                        <h1 className="text-2xl sm:text-3xl md:text-7xl font-serif-premium font-bold text-white tracking-tight leading-none drop-shadow-xl flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0 mb-2 text-balance">
+                           <span className="opacity-60 text-lg sm:text-2xl md:text-5xl font-light">Olá,</span>
                            <LetterPuller text={user.name.split(' ')[0]} />
                         </h1>
                         <div className="flex items-center gap-2">

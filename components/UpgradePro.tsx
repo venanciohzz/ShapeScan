@@ -131,7 +131,14 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
                         <span className="text-3xl font-black text-white">R$ 44,90</span>
                         <span className="text-zinc-500 text-sm font-bold">/mês</span>
                      </div>
-                     <p className="mt-4 text-emerald-500 font-bold text-xs group-hover:underline">Assinar Mensal →</p>
+                     <div className="mt-4 flex items-center justify-between">
+                        <p className={`font-bold text-xs ${loading === 'pro_monthly' ? 'text-zinc-500' : 'text-emerald-500 group-hover:underline'}`}>
+                           {loading === 'pro_monthly' ? 'Processando...' : 'Assinar Mensal →'}
+                        </p>
+                        {loading === 'pro_monthly' && (
+                           <div className="w-4 h-4 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+                        )}
+                     </div>
                   </div>
                </button>
 
@@ -148,7 +155,14 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
                         <span className="text-3xl font-black text-white">R$ 347</span>
                         <span className="text-zinc-500 text-sm font-bold">/ano</span>
                      </div>
-                     <p className="mt-4 text-white font-bold text-xs group-hover:underline">Assinar Anual →</p>
+                     <div className="mt-4 flex items-center justify-between">
+                        <p className={`font-bold text-xs ${loading === 'pro_annual' ? 'text-zinc-500' : 'text-white group-hover:underline'}`}>
+                           {loading === 'pro_annual' ? 'Processando...' : 'Assinar Anual →'}
+                        </p>
+                        {loading === 'pro_annual' && (
+                           <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        )}
+                     </div>
                   </div>
                </button>
             </div>

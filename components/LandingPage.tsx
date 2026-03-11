@@ -297,11 +297,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="w-full max-w-5xl mx-auto relative z-20">
           <div className="flex flex-col items-center space-y-8 pt-8 relative z-30">
 
-            <h1 className="flex flex-col items-center text-5xl sm:text-6xl md:text-7xl lg:text-[7.5rem] font-serif-premium tracking-tight text-white leading-[1.2] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible">
-              <span className="block">
+            <h1 className="flex flex-col items-center text-5xl sm:text-6xl md:text-7xl lg:text-[7.5rem] font-serif-premium tracking-tight text-white leading-[1.1] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible text-balance">
+              <span className="block w-full">
                 <LetterPuller text="Evolua seu físico" />
               </span>
-              <span className="block">
+              <span className="block w-full">
                 <LetterPuller
                   text="com clareza."
                   className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
@@ -314,7 +314,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-              className="text-lg sm:text-xl lg:text-2xl text-zinc-300 font-medium max-w-3xl mx-auto leading-relaxed px-4 z-20"
+              className="text-lg sm:text-xl lg:text-2xl text-zinc-300 font-medium max-w-3xl mx-auto leading-relaxed px-4 z-20 text-pretty"
             >
               Analise seu shape, suas refeições e acompanhe sua evolução com fotos, dados e orientação inteligente em um só lugar.
             </motion.p>
@@ -323,11 +323,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
-              className="flex flex-col sm:flex-row gap-6 pt-8 justify-center w-full px-6"
+              className="flex flex-col sm:flex-row gap-4 sm:gap-6 pt-8 justify-center w-full px-6 max-w-lg"
             >
               <button
                 onClick={onStart}
-                className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 bg-emerald-500 text-zinc-950 font-black tracking-[0.2em] text-sm md:text-base uppercase shadow-[0_0_40px_-5px_rgba(16,185,129,0.5)] hover:shadow-[0_0_60px_-5px_rgba(16,185,129,0.7)]"
+                className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 bg-emerald-500 text-zinc-950 font-black tracking-[0.2em] text-sm md:text-base uppercase shadow-[0_0_40px_-5px_rgba(16,185,129,0.5)] hover:shadow-[0_0_60px_-5px_rgba(16,185,129,0.7)] w-full sm:w-auto"
               >
                 {/* Subtle gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>

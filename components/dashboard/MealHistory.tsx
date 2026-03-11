@@ -80,8 +80,11 @@ const MealHistory: React.FC<MealHistoryProps> = ({
                     <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl text-zinc-400 opacity-80">
                         <Utensils className="w-8 h-8" />
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-80 drop-shadow-sm">
-                        Nenhum registro no cache
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-80 drop-shadow-sm mb-6">
+                        Nenhuma análise hoje
+                    </p>
+                    <p className="text-xs text-zinc-600 font-medium max-w-[200px] mx-auto leading-relaxed">
+                        Suas refeições analisadas por IA aparecerão aqui.
                     </p>
                 </div>
             )}

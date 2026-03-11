@@ -24,6 +24,7 @@ const MacroGrid: React.FC<MacroGridProps> = ({ protein, carbs, fat, user, format
                 unit="g"
                 fullLabel="Proteínas"
                 goal={user.dailyProtein}
+                color="emerald"
             />
             <MacroCard
                 label="Carb"
@@ -31,6 +32,7 @@ const MacroGrid: React.FC<MacroGridProps> = ({ protein, carbs, fat, user, format
                 unit="g"
                 fullLabel="Carboidratos"
                 goal={user.dailyCarbs}
+                color="blue"
             />
             <MacroCard
                 label="Gord"
@@ -38,6 +40,7 @@ const MacroGrid: React.FC<MacroGridProps> = ({ protein, carbs, fat, user, format
                 unit="g"
                 fullLabel="Gorduras"
                 goal={user.dailyFat}
+                color="yellow"
             />
         </div>
     );

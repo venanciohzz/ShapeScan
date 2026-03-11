@@ -7,6 +7,7 @@ import { Camera, Image as ImageIcon, TrendingUp, RefreshCw, Focus, Scale, Target
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 import PremiumLoading from './ui/PremiumLoading';
+import Skeleton from './ui/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ShapeAnalyzerProps {
@@ -271,9 +272,9 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
         <main className="flex-1 flex flex-col">
           {!result ? (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">Análise de Bioimpedância Visual</span>
-                <LetterPuller text="Shape Scan" className="text-4xl md:text-6xl text-white tracking-tighter" />
+                <LetterPuller text="Shape Scan" className="text-4xl md:text-6xl text-white tracking-tighter text-balance" />
               </div>
 
               <div className="bg-zinc-950/40 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 shadow-2xl space-y-8">
@@ -310,7 +311,12 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg z-10">
                   <label className="cursor-pointer bg-white text-zinc-950 p-6 rounded-3xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-zinc-200 transition-all active:scale-95 shadow-xl shadow-white/5">
-                    <Camera className="w-5 h-5" /> Iniciar Scanner
+                    {loading ? (
+                      <div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin"></div>
+                    ) : (
+                      <Camera className="w-5 h-5" />
+                    )}
+                    {loading ? 'Processando...' : 'Iniciar Scanner'}
                     <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading} />
                   </label>
                   <label className="cursor-pointer bg-zinc-900 text-white p-6 rounded-3xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 border border-white/10 hover:bg-zinc-800 transition-all active:scale-95">
@@ -323,6 +329,24 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                   Para precisão máxima, use iluminação frontal e roupas de treino.
                 </p>
               </div>
+
+              {loading && (
+                <div className="py-12 space-y-12">
+                  <div className="bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[3.5rem] p-12 shadow-2xl space-y-10">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-12">
+                      <div className="space-y-4">
+                        <Skeleton className="h-20 w-48 rounded-2xl" />
+                        <Skeleton className="h-4 w-64 rounded-full" />
+                      </div>
+                      <Skeleton className="w-full md:w-64 h-32 rounded-[2.5rem]" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <Skeleton className="h-64 rounded-[3rem]" />
+                    <Skeleton className="h-64 rounded-[3rem]" />
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-12 pb-32 animate-in fade-in slide-in-from-bottom-8 duration-1000">
@@ -332,12 +356,12 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-12">
                   <div className="space-y-4 text-center md:text-left">
                     <div className="flex items-baseline gap-2 justify-center md:justify-start flex-wrap">
-                      <h2 className="text-6xl md:text-[10rem] font-serif-premium font-bold text-white leading-none tracking-tighter">
+                      <h2 className="text-7xl md:text-[10rem] font-serif-premium font-bold text-white leading-none tracking-tighter">
                         {result.shape_score.toFixed(1)}
                       </h2>
                       <span className="text-2xl md:text-3xl font-serif-premium text-zinc-600 font-bold tracking-tighter">/10</span>
                     </div>
-                    <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] max-w-[240px] leading-relaxed mx-auto md:mx-0">
+                    <p className="text-[9px] md:text-[10px] text-zinc-500 font-black uppercase tracking-[0.2em] max-w-[240px] leading-relaxed mx-auto md:mx-0 text-balance">
                       ÍNDICE DE COMPOSIÇÃO E PROPORÇÃO ESTÉTICA.
                     </p>
                   </div>
@@ -440,10 +464,10 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               )}
 
               {/* 🦴 DIAGNÓSTICO GENÉTICO TÁTICO */}
-              <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-10 rounded-[3rem] space-y-10">
+              <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] space-y-8 sm:space-y-10">
                 <div className="flex items-center gap-4">
                   <div className="w-1.5 h-8 bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
-                  <h3 className="text-2xl font-serif-premium font-bold text-white tracking-tight">Arquitetura Genética</h3>
+                  <h3 className="text-xl sm:text-2xl font-serif-premium font-bold text-white tracking-tight">Arquitetura Genética</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -491,7 +515,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div className="relative z-10 space-y-10">
                   <div className="space-y-4">
                     <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Veredito do Analista AI</p>
-                    <p className="text-white text-2xl md:text-5xl font-serif-premium font-bold leading-tight tracking-tighter italic">
+                    <p className="text-white text-xl sm:text-2xl md:text-5xl font-serif-premium font-bold leading-tight tracking-tighter italic text-balance">
                       "{result.personal_ia_insight.aesthetic_diagnosis}"
                     </p>
                   </div>
@@ -510,19 +534,19 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               </div>
 
               {/* 🎯 PRIORIDADE: 60 DIAS */}
-              <div className="bg-emerald-500/10 backdrop-blur-2xl border border-emerald-500/20 p-12 rounded-[3.5rem] relative overflow-hidden">
+              <div className="bg-emerald-500/10 backdrop-blur-2xl border border-emerald-500/20 p-8 sm:p-12 rounded-[2.5rem] sm:rounded-[3.5rem] relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 blur-[100px] rounded-full -mr-32 -mt-32"></div>
                 <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] mb-6 opacity-70">Diretriz Crítica: Ciclo de 60 Dias</p>
-                <p className="text-white text-3xl md:text-4xl font-serif-premium font-bold tracking-tight leading-tight">
+                <p className="text-white text-2xl sm:text-3xl md:text-4xl font-serif-premium font-bold tracking-tight leading-tight text-balance">
                   "{result.execution_strategy.primary_focus_next_60_days}"
                 </p>
               </div>
 
               {/* 🍽️ PROTOCOLO NUTRICIONAL */}
-              <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-10 rounded-[3rem] space-y-10">
+              <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] space-y-8 sm:space-y-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-2xl">🍲</div>
-                  <h3 className="text-2xl font-serif-premium font-bold text-white tracking-tight">Suporte Nutricional</h3>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-xl sm:text-2xl">🍲</div>
+                  <h3 className="text-xl sm:text-2xl font-serif-premium font-bold text-white tracking-tight">Suporte Nutricional</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -556,12 +580,12 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               </div>
 
               {/* 🏋️‍♂️ PROTOCOLO DE TREINO */}
-              <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-10 rounded-[3rem] space-y-10">
+              <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] space-y-8 sm:space-y-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                    <BicepsFlexed className="w-6 h-6 text-emerald-500" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                    <BicepsFlexed className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500" />
                   </div>
-                  <h3 className="text-2xl font-serif-premium font-bold text-white tracking-tight">Microciclo de Estímulo Tático</h3>
+                  <h3 className="text-xl sm:text-2xl font-serif-premium font-bold text-white tracking-tight">Estímulo Tático</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -575,10 +599,10 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               </div>
 
               {/* 📍 ANÁLISE POR REGIÃO */}
-              <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-10 rounded-[3rem] space-y-10">
+              <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-6 sm:p-10 rounded-[2.5rem] sm:rounded-[3rem] space-y-8 sm:space-y-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-2xl">📍</div>
-                  <h3 className="text-2xl font-serif-premium font-bold text-white tracking-tight">Mapeamento Regional</h3>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 text-xl sm:text-2xl">📍</div>
+                  <h3 className="text-xl sm:text-2xl font-serif-premium font-bold text-white tracking-tight">Mapeamento Regional</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

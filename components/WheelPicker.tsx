@@ -52,9 +52,15 @@ const WheelPicker: React.FC<WheelPickerProps> = ({ options, value, onChange, uni
 
     return (
         <div className={`relative h-[150px] overflow-hidden flex items-center justify-center ${className}`}>
+            {/* Máscaras de Gradiente para efeito de profundidade */}
+            <div className="absolute inset-0 pointer-events-none z-20">
+                <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-zinc-950 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 w-full h-[30%] bg-gradient-to-t from-zinc-950 to-transparent"></div>
+            </div>
+
             {/* Centro / Overlay de Seleção */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <div className="w-full h-[50px] bg-emerald-500/10 dark:bg-emerald-500/20 border-y border-emerald-500/30"></div>
+            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+                <div className="w-full h-[50px] bg-emerald-500/5 border-y border-white/5 shadow-[0_0_30px_rgba(16,185,129,0.05)]"></div>
             </div>
 
             <div
@@ -66,10 +72,15 @@ const WheelPicker: React.FC<WheelPickerProps> = ({ options, value, onChange, uni
                 {options.map((option, i) => (
                     <div
                         key={i}
-                        className={`h-[50px] flex items-center justify-center snap-center transition-all duration-200 ${value === option ? 'text-emerald-600 dark:text-emerald-400 font-black text-2xl scale-110' : 'text-gray-400 dark:text-zinc-600 font-bold text-lg'
-                            }`}
+                        className={`h-[50px] flex items-center justify-center snap-center transition-all duration-300 ${value === option 
+                            ? 'text-white font-serif-premium font-bold text-3xl scale-110' 
+                            : 'text-zinc-600 font-medium text-lg scale-90 opacity-40'
+                        }`}
                     >
-                        {option}{unit && value === option ? unit : ''}
+                        {option}
+                        {unit && value === option && (
+                            <span className="text-xs text-emerald-500 font-black ml-1 uppercase tracking-widest">{unit}</span>
+                        )}
                     </div>
                 ))}
             </div>

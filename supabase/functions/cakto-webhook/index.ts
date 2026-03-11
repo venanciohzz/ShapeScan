@@ -14,14 +14,43 @@ Deno.serve(async (req) => {
     try {
         const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const webhookSecret = Deno.env.get('CAKTO_WEBHOOK_SECRET');
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        const payload = await req.text();
-        const event = JSON.parse(payload);
-        console.log('Webhook event received:', event);
+        if (!webhookSecret) {
+            throw new Error('Missing CAKTO_WEBHOOK_SECRET environment variable');
+        }
 
-        // Formato Cakto: { event: "purchase_approved", data: {...} }
+        // 0. OBTER CORPO BRUTO (CRÍTICO PARA VALIDAÇÃO)
+        const rawBody = await req.text();
+        const signature = req.headers.get('x-cakto-signature');
+
+        // 1. VERIFICAÇÃO DE ASSINATURA (CRÍTICO)
+        // Usamos o segredo configurado no dashboard da Cakto
+        if (signature !== webhookSecret) {
+            console.error('Unauthorized webhook attempt. Invalid signature.');
+            return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+                status: 401,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+        }
+
+        // 2. PARSE DO JSON (APÓS VALIDAÇÃO)
+        const event = JSON.parse(rawBody);
+        
+        // 3. FILTRAGEM DE EVENTOS PERMITIDOS
+        const allowedEvents = ['purchase_approved', 'subscription_canceled', 'purchase_refunded', 'purchase_chargeback'];
         const { event: eventType, data } = event;
+
+        if (!allowedEvents.includes(eventType)) {
+            console.log('Ignoring non-monitored event (returning 200):', eventType);
+            return new Response(JSON.stringify({ success: true, message: 'Event ignored' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
+            });
+        }
+
+        console.log('Verified webhook event received:', eventType);
 
         switch (eventType) {
             case 'purchase_approved': {
@@ -212,9 +241,9 @@ Deno.serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Webhook error:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ error: error.message || 'Unknown error' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,
         });

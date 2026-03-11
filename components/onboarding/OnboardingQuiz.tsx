@@ -98,7 +98,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
             {step === 1 && (
                 <div className="space-y-10">
                     <div className="text-center space-y-4 mb-2">
-                        <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
+                        <h2 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight text-balance">
                             <LetterPuller text="Qual seu gênero?" />
                         </h2>
                         <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Análise metabólica personalizada</p>
@@ -126,7 +126,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
             {step === 2 && (
                 <div className="space-y-10">
                     <div className="text-center space-y-4 mb-2">
-                        <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
+                        <h2 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight text-balance">
                             <LetterPuller text="Frequência de treino?" />
                         </h2>
                         <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Seja sincero com sua rotina</p>
@@ -148,7 +148,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
             {step === 3 && (
                 <div className="space-y-10">
                     <div className="text-center space-y-4 mb-2">
-                        <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
+                        <h2 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight text-balance">
                             <LetterPuller text="Suas medidas" />
                         </h2>
                         <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Seu ponto de partida</p>
@@ -209,7 +209,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
             {step === 5 && (
                 <div className="space-y-10">
                     <div className="text-center space-y-4 mb-2">
-                        <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
+                        <h2 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight text-balance">
                             <LetterPuller text="Qual seu objetivo?" />
                         </h2>
                         <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">O plano será moldado aqui</p>
@@ -518,14 +518,14 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 const PremiumCard = ({ title, subtitle, icon, active, onClick }: { title: string, subtitle?: string, icon: string, active: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full p-8 rounded-[2.5rem] border transition-all duration-500 flex items-center gap-8 group active:scale-[0.98] relative overflow-hidden ${active ? 'bg-white border-white shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]' : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.07] hover:border-white/20'}`}
+        className={`w-full p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border transition-all duration-500 flex items-center gap-6 sm:gap-8 group active:scale-[0.98] relative overflow-hidden ${active ? 'bg-white border-white shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]' : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.07] hover:border-white/20'}`}
     >
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-4xl transition-all duration-500 ${active ? 'bg-zinc-950/5 scale-110' : 'bg-white/5'}`}>
+        <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl transition-all duration-500 ${active ? 'bg-zinc-950/5 scale-110' : 'bg-white/5'}`}>
             {icon}
         </div>
         <div className="text-left">
-            <p className={`font-serif-premium font-bold text-2xl tracking-tight transition-colors duration-500 ${active ? 'text-zinc-950' : 'text-white'}`}>{title}</p>
-            {subtitle && <p className={`text-[10px] font-black uppercase tracking-widest transition-colors duration-500 ${active ? 'text-zinc-950/60' : 'text-zinc-500'}`}>{subtitle}</p>}
+            <p className={`font-serif-premium font-bold text-xl sm:text-2xl tracking-tight transition-colors duration-500 ${active ? 'text-zinc-950' : 'text-white'}`}>{title}</p>
+            {subtitle && <p className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-colors duration-500 ${active ? 'text-zinc-950/60' : 'text-zinc-500'}`}>{subtitle}</p>}
         </div>
         <div className={`ml-auto transition-all duration-500 ${active ? 'translate-x-0 opacity-100 text-zinc-950' : 'translate-x-4 opacity-0'}`}>
             <span className="text-2xl">→</span>
