@@ -177,23 +177,9 @@ Deno.serve(async (req) => {
         const finalSystemPrompt = (systemPrompt || "Você é um assistente de IA.") + jsonInstruction;
 
         const callOpenAI = async (targetModel: string) => {
-            const isGpt5 = targetModel.includes('gpt-5');
-            const url = isGpt5 
-                ? 'https://api.openai.com/v1/responses' 
-                : 'https://api.openai.com/v1/chat/completions';
+            const url = 'https://api.openai.com/v1/chat/completions';
             
-            const reqBody = isGpt5 ? {
-                model: targetModel,
-                input: [
-                    { role: "system", content: [{ type: "input_text", text: finalSystemPrompt }] },
-                    { role: "user", content: [
-                        ...(prompt ? [{ type: "input_text", text: prompt }] : []),
-                        ...(image ? [{ type: "input_image", image_url: image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}` }] : [])
-                    ]}
-                ],
-                max_output_tokens: 4000,
-                text: { format: { type: "json_object" } }
-            } : {
+            const reqBody = {
                 model: targetModel,
                 messages: [
                     { role: 'system', content: finalSystemPrompt },
@@ -202,7 +188,7 @@ Deno.serve(async (req) => {
                         ...(image ? [{ type: 'image_url', image_url: { url: image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}` } }] : [])
                     ]}
                 ],
-                max_completion_tokens: 2000,
+                max_completion_tokens: 250,
                 response_format: { type: "json_object" }
             };
 
@@ -290,6 +276,7 @@ Deno.serve(async (req) => {
 
             return new Response(JSON.stringify({ 
                 text: reply,
+                usage: data.usage,
                 model_used: model,
                 status: 'success'
             }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });

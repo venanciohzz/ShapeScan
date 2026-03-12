@@ -548,7 +548,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
               <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.3 }}>
                 <TestimonialCard
                   name="Fernanda Lima"
-                  role="Nutricionista Esportiva"
+                  role="Personal 24h"
                   image="https://randomuser.me/api/portraits/women/44.jpg"
                   text="Comecei a usar para validar as fotos que meus pacientes mandam. A estimativa de macros bate muito com a realidade."
                 />
@@ -558,7 +558,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   name="Lucas Martins"
                   role="Iniciante"
                   image="https://randomuser.me/api/portraits/men/86.jpg"
-                  text="A análise de shape foi um choque de realidade. A Nutricionista Diário me ajudou a montar um plano que eu realmente consigo seguir."
+                  text="A análise de shape foi um choque de realidade. A Personal 24h me ajudou a montar um plano que eu realmente consigo seguir."
                 />
               </motion.div>
             </div>

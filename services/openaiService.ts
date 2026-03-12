@@ -89,22 +89,30 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
     throw new Error(data.error || 'Erro na lógica da IA');
   }
 
+  if (data?.usage) {
+    console.log(`[AI Usage] Prompt: ${data.usage.prompt_tokens} | Completion: ${data.usage.completion_tokens} | Total: ${data.usage.total_tokens}`);
+  }
+
   return data.text;
 };
 
 const extractJson = (text: string): string => {
   try {
+    // Tenta primeiro encontrar o bloco de código JSON padrão
     const markdownMatch = text.match(/```(?:json|JSON)?\s*([\s\S]*?)\s*```/);
     if (markdownMatch && markdownMatch[1]) {
       return markdownMatch[1].trim();
     }
+    // Tenta extrair qualquer coisa entre chaves (salva o backend de textos aleatórios antes e depois)
     const firstBrace = text.indexOf('{');
     const lastBrace = text.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
       return text.substring(firstBrace, lastBrace + 1);
     }
+    // Fallback agressivo limpando tags markdown restantes
     return text.replace(/```json|```JSON|```/g, '').trim();
   } catch (e) {
+    console.error("Erro ao extrair JSON:", e);
     return text;
   }
 };
@@ -120,73 +128,76 @@ const safeParseFloat = (val: any): number => {
 export const analyzePlate = async (base64Image: string, userDescription?: string, userGoal?: string): Promise<FoodAnalysisResult> => {
   try {
     const descriptionContext = userDescription ? `O usuário descreveu a refeição como: "${userDescription}".` : '';
+    const prompt = `Analise a refeição. ${descriptionContext}
+Identifique alimentos, estime peso(g) e calcule macros.
+Objetivo: ${userGoal || 'Manutenção'}`;
 
-    const prompt = `Analise a imagem da refeição e identifique os alimentos visíveis. ${descriptionContext}
+    const plateLimits: Record<string, number> = { "P": 350, "M": 550, "G": 750 };
+    const plateSizeHint = userDescription?.toLowerCase().includes("prato grande") ? "G" : "M";
 
-Instruções (v51 - Ultra Precision):
-1. Identifique cada alimento separadamente (Máximo 8 itens).
-2. Identifique o tamanho do prato ("plate_size"): "P", "M" ou "G".
-3. Estime peso e macros com foco em DENSIDADE REAL e REFERÊNCIA DE ESCALA.
+    const systemPrompt = `Você é um analista nutricional especializado em estimativa visual de alimentos (Personal 24h).
+Seu objetivo é analisar imagens de refeições e estimar pesos e macros de forma REALISTA (culinária brasileira).
 
-Regras de Ouro (v54):
-- DENSIDADE DE PROTEÍNA (CÁLCULO): Use a âncora de 85g para 2 pedaços finos. Calcule proporcionalmente a quantidade: 1 pedaço ≈ 42g, 2 ≈ 85g, 3 ≈ 127g.
-- COBERTURA DE ARROZ (EQUILÍBRIO): Arroz que cobre o fundo do prato de forma rasa e completa pesa ≈ 130-150g. Só dê >160g se houver altura (montanha).
-- ESCALA VISUAL: O prato azul é raso. Arroz espalhado nele nunca passa de 150g a menos que forme uma pilha.
-- REALISMO ABSOLUTO: Prefira a gramatura menor se houver dúvida entre densidades.
+PRINCÍPIOS:
+1. ESTIMATIVA POR ETAPAS: Analise internamente (não mostre): identificar alimentos -> estimar peso -> calcular macros.
+2. ÂNCORAS BR: Arroz (110-150g), Feijão (80-120g), Proteína/Carne (100-150g).
+3. TOP-DOWN: Reduza estimativa de peso em 10-20% devido à compressão visual.
+4. SEGURANÇA: Se não detectar comida, retorne {"error": "no_food_detected"}.
 
-Retorne apenas um JSON válido contendo:
+RESPOSTA (JSON APENAS):
 {
- "dish_name": "Nome",
- "plate_size": "P" | "M" | "G",
- "calories": 0,
- "protein_g": 0,
- "carbs_g": 0,
- "fat_g": 0,
- "ingredients": [
-   {"name": "Item", "estimated_weight_g": 0, "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0}
- ],
- "score": 0.0,
- "goal_analysis": {"bulking": "Dica", "cutting": "Dica"},
- "observation": "Resumo"
+  "dish_name": "Nome Curto",
+  "food_items": [{"name": "...", "weight_g": 0, "calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0}],
+  "total_calories": 0, "total_protein_g": 0, "total_carbs_g": 0, "total_fat_g": 0, "health_score": 0.0,
+  "dish_category": "...",
+  "goal_analysis": {"bulking": "...", "cutting": "..."},
+  "observation": "..."
 }`;
-
-    const systemPrompt = `Você é um analista nutricional focado em REALISMO EXTREMO e JUSTIÇA NUTRICIONAL.
-DIRETRIZES:
-- Âncora: 2 pedaços finos de frango = 85g. (1 pedaço ≈ 42g).
-- Arroz (Cobertura Rasa): 130g-150g.
-- HEALTH SCORE: Arroz e Frango/Carne Grelhado é uma refeição EXCELENTE (Nota 8 a 10).
-- META DO USUÁRIO: ${userGoal || 'Não informada'}. 
-- No campo do JSON correspondente à meta do usuário, escreva de 2 a 3 frases DETALHADAS explicando por que a refeição é adequada (ou o que ajustar) especificamente para ESSA meta. Não diga apenas "Ideal". Justifique com base nos macros. No outro campo, mantenha uma dica curta e genérica.
-- Responda apenas com o JSON solicitado.`;
 
     let text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'food' });
     if (typeof text !== 'string') text = JSON.stringify(text);
 
-    const data = JSON.parse(extractJson(text));
-    const ingredientsRaw = data.ingredients || data.items || [];
+    const jsonText = extractJson(text);
+    const data = JSON.parse(jsonText);
+
+    // Tratamento para detecção de não-comida
+    if (data.error === "no_food_detected") {
+      return {
+        dish_name: "Alimento não detectado",
+        items: [],
+        calories: 0,
+        protein_g: 0,
+        carbs_g: 0,
+        fat_g: 0,
+        totalWeight: 0,
+        score: 0,
+        observation: "Não conseguimos identificar alimentos nesta imagem. Certifique-se de que a foto está clara e mostra o prato de frente.",
+        mealName: "Não identificado",
+        reasoning: "A IA não detectou comida na imagem."
+      };
+    }
+
+    const itemsRaw = data.food_items || data.ingredients || data.items || [];
     const plateSize = data.plate_size || "M";
 
-    const plateLimits: Record<string, number> = { "P": 350, "M": 550, "G": 750 };
-    const maxTotalWeight = plateLimits[plateSize] || 550;
-    
-    let processedItems = ingredientsRaw.map((item: any) => ({
+    let processedItems = itemsRaw.map((item: any) => ({
       name: item.name,
-      weight: clampWeight(item.name, safeParseFloat(item.estimated_weight_g || item.weight)),
+      weight: clampWeight(item.name, safeParseFloat(item.weight_g || item.estimated_weight_g || item.weight)),
       calories: safeParseFloat(item.calories),
       protein: safeParseFloat(item.protein_g || item.protein),
       carbs: safeParseFloat(item.carbs_g || item.carbs),
       fat: safeParseFloat(item.fat_g || item.fat)
     }));
 
-    processedItems = normalizeWeights(processedItems, maxTotalWeight);
+    processedItems = normalizeWeights(processedItems, plateLimits[plateSize] || 550);
 
     const result: FoodAnalysisResult = {
       dish_name: data.dish_name || data.mealName || "Refeição Analisada",
       score: safeParseFloat(data.health_score ?? data.nutrition_score ?? data.score ?? 5),
-      calories: processedItems.reduce((acc: number, i: any) => acc + i.calories, 0),
-      protein_g: processedItems.reduce((acc: number, i: any) => acc + i.protein, 0),
-      carbs_g: processedItems.reduce((acc: number, i: any) => acc + i.carbs, 0),
-      fat_g: processedItems.reduce((acc: number, i: any) => acc + i.fat, 0),
+      calories: safeParseFloat(data.total_calories) || processedItems.reduce((acc: number, i: any) => acc + i.calories, 0),
+      protein_g: safeParseFloat(data.total_protein_g) || processedItems.reduce((acc: number, i: any) => acc + i.protein, 0),
+      carbs_g: safeParseFloat(data.total_carbs_g) || processedItems.reduce((acc: number, i: any) => acc + i.carbs, 0),
+      fat_g: safeParseFloat(data.total_fat_g) || processedItems.reduce((acc: number, i: any) => acc + i.fat, 0),
       dish_category: data.dish_category || data.category || "Refeição",
       totalWeight: processedItems.reduce((acc: number, i: any) => acc + i.weight, 0),
       goal_analysis: data.goal_analysis || { bulking: "Análise não disponível", cutting: "Análise não disponível" },
@@ -225,13 +236,14 @@ export const getManualFoodMacros = async (foodDescription: string, userGoal?: st
 Retorne JSON com: food_items, total_calories, total_protein_g, total_carbs_g, total_fat_g, health_score, dish_category, goal_analysis, observation.
 Limite máximo de 8 ingredientes.`;
 
-    const systemPrompt = `Você é um nutricionista especialista brasileiro focado no objetivo: ${userGoal || 'Geral'}. Forneça diagnósticos para Bulking/Cutting e macros realistas baseados em porções padrão.`;
+    const systemPrompt = `Você é um analista nutricional especializado em estimativa de alimentos com foco em REALISMO e CONSISTÊNCIA.
+REGRAS: 1. Use porções comuns BR. 2. Estime por etapas internamente. 3. JSON APENAS (food_items, total_calories, total_protein_g, total_carbs_g, total_fat_g, health_score, dish_category, goal_analysis, observation).`;
 
     let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'food' });
     if (typeof text !== 'string') text = JSON.stringify(text);
 
     const data = JSON.parse(extractJson(text));
-    const itemsRaw = data.food_items || data.ingredients || [];
+    const itemsRaw = data.food_items || data.ingredients || data.items || [];
     
     let processedItems = itemsRaw.map((item: any) => ({
       name: item.name,
@@ -243,12 +255,12 @@ Limite máximo de 8 ingredientes.`;
     }));
 
     const result: FoodAnalysisResult = {
-      dish_name: foodDescription,
+      dish_name: data.dish_name || foodDescription,
       score: safeParseFloat(data.health_score ?? data.nutrition_score ?? data.score ?? 5),
-      calories: processedItems.reduce((acc: number, i: any) => acc + i.calories, 0),
-      protein_g: processedItems.reduce((acc: number, i: any) => acc + i.protein, 0),
-      carbs_g: processedItems.reduce((acc: number, i: any) => acc + i.carbs, 0),
-      fat_g: processedItems.reduce((acc: number, i: any) => acc + i.fat, 0),
+      calories: safeParseFloat(data.total_calories) || processedItems.reduce((acc: number, i: any) => acc + i.calories, 0),
+      protein_g: safeParseFloat(data.total_protein_g) || processedItems.reduce((acc: number, i: any) => acc + i.protein, 0),
+      carbs_g: safeParseFloat(data.total_carbs_g) || processedItems.reduce((acc: number, i: any) => acc + i.carbs, 0),
+      fat_g: safeParseFloat(data.total_fat_g) || processedItems.reduce((acc: number, i: any) => acc + i.fat, 0),
       dish_category: data.dish_category || data.category || "Refeição",
       totalWeight: processedItems.reduce((acc: number, i: any) => acc + i.weight, 0),
       goal_analysis: data.goal_analysis || { bulking: "Análise não disponível", cutting: "Análise não disponível" },
@@ -276,28 +288,80 @@ Limite máximo de 8 ingredientes.`;
 
 export const analyzeShape = async (base64Image: string, metrics?: { weight?: number, height?: number, goal?: string }): Promise<ShapeAnalysisResult> => {
   try {
-    const prompt = `Analise BF%, massa muscular e pontos fortes/fracos. ${metrics?.weight ? `Dados: ${metrics.weight}kg, ${metrics.height}cm, Objetivo: ${metrics.goal}.` : ''}`;
-    const systemPrompt = `Especialista em antropometria visual. Use faixas BF (ex: 12-14%). Sem conselho médico. JSON: structural_analysis, body_fat_range, muscle_score, shape_score, regional_analysis, recommendations.`;
+    const prompt = `Analise o shape (simetria, volume, definição). Objetivo: ${metrics?.goal || 'Geral'}.`;
+
+    const systemPrompt = `Especialista em bioimpedância visual. Analise por etapas internamente.
+REGRAS:
+1. BF em faixa (ex: 14-16%).
+2. Retorne APENAS JSON:
+{
+  "body_fat_range": "...", "bf_classification": "...", "bf_visual_justification": "...",
+  "shape_score": 0, "muscle_score": 0, "definition_score": 0, "fat_score": 0,
+  "structural_analysis": {"name": "...", "meaning": "...", "strength": "...", "improvement": "...", "genetic_responsiveness": "...", "fat_storage_tendency": "...", "structural_limitation_strategy": "..."},
+  "regional_analysis": {"trunk": {"strength": "...", "improvement": "...", "strategy": "..."}, "arms": {"strength": "...", "improvement": "...", "strategy": "..."}, "abs_waist": {"strength": "...", "improvement": "...", "strategy": "..."}, "legs": {"strength": "...", "improvement": "...", "strategy": "..."}},
+  "personal_ia_insight": {"aesthetic_diagnosis": "...", "main_leverage": "...", "smart_strategy": "..."},
+  "execution_strategy": {"training_focus": [], "nutrition_focus": "...", "time_expectation": "...", "common_mistakes": [], "primary_focus_next_60_days": "..."},
+  "nutritional_protocol": {"caloric_strategy": "...", "protein_target": "...", "distribution": "...", "practical_guidelines": []}
+}`;
 
     let text = await callAIAnalyzer({ image: base64Image, prompt, systemPrompt, type: 'shape' });
     if (typeof text !== 'string') text = JSON.stringify(text);
 
     const data = JSON.parse(extractJson(text));
 
+    // Fallbacks robustos para evitar crash se a IA esquecer campos (v55)
     return {
       ...data,
       body_fat_range: data.body_fat_range || data.bf_range || data.bf || "N/A",
+      bf_classification: data.bf_classification || "Não identificado",
+      bf_confidence: data.bf_confidence || "Moderada",
+      bf_visual_justification: data.bf_visual_justification || "",
       shape_score: safeParseFloat(data.shape_score ?? data.shapeScore ?? 0),
       muscle_score: safeParseFloat(data.muscle_score ?? data.muscleScore ?? 0),
       definition_score: safeParseFloat(data.definition_score ?? data.definitionScore ?? 0),
-      fat_score: safeParseFloat(data.fat_score ?? data.fatScore ?? 0)
+      fat_score: safeParseFloat(data.fat_score ?? data.fatScore ?? 0),
+      structural_analysis: data.structural_analysis || {
+        name: data.biotype || "Não Identificado",
+        meaning: "Arquitetura corporal padrão",
+        strength: "Base sólida",
+        improvement: "Consistência geral",
+        genetic_responsiveness: "Padrão",
+        fat_storage_tendency: "Equilibrada",
+        structural_limitation_strategy: "Seguir plano base"
+      },
+      personal_ia_insight: data.personal_ia_insight || {
+        aesthetic_diagnosis: data.personal_ia_comment || "Análise concluída com sucesso.",
+        main_leverage: "Consistência no treino",
+        smart_strategy: "Seguir o plano recomendado"
+      },
+      personal_ia_comment: data.personal_ia_comment || "Análise concluída.",
+      regional_analysis: data.regional_analysis || {
+        trunk: { strength: "N/A", improvement: "N/A", strategy: "N/A" },
+        arms: { strength: "N/A", improvement: "N/A", strategy: "N/A" },
+        abs_waist: { strength: "N/A", improvement: "N/A", strategy: "N/A" },
+        legs: { strength: "N/A", improvement: "N/A", strategy: "N/A" }
+      },
+      execution_strategy: data.execution_strategy || {
+        training_focus: [],
+        nutrition_focus: "Foco em macros limpos",
+        time_expectation: "8-12 semanas",
+        common_mistakes: [],
+        primary_focus_next_60_days: "Construção de base"
+      },
+      nutritional_protocol: data.nutritional_protocol || {
+        caloric_strategy: "Manutenção",
+        protein_target: "2.0g/kg",
+        distribution: "4-5 refeições",
+        practical_guidelines: []
+      }
     };
   } catch (error) {
+    console.error("Erro em analyzeShape:", error);
     throw error;
   }
 };
 
-export const chatWithNutricionistaDiario = async (message: string, history: any[], userContext: any) => {
+export const chatWithPersonal24h = async (message: string, history: any[], userContext: any) => {
   const limitedHistory = history.slice(-10);
   let conversationContext = '';
   if (limitedHistory.length > 0) {
@@ -306,8 +370,8 @@ export const chatWithNutricionistaDiario = async (message: string, history: any[
     ).join('\n');
   }
 
-  const systemPrompt = `Você é a "Nutricionista Diário" do ShapeScan. 
-REGRAS: 1. Sem conselho médico. 2. Estilo WhatsApp (Sem markdown, texto puro). 3. Respostas curtas e motivadoras. 4. Emojis moderados.
+  const systemPrompt = `Você é o "Personal 24h" do ShapeScan. 
+REGRAS: 1. S/ conselho médico. 2. Estilo WhatsApp (sem markdown). 3. Curto e motivador. 4. NÃO REPETIR info recente.
 CONTEXTO: ${JSON.stringify(userContext.user)}. ${conversationContext}`;
 
   try {

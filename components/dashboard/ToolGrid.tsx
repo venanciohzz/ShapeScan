@@ -82,7 +82,7 @@ const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate }) => {
                     <ActionButton
                         onClick={() => onNavigate('chat')}
                         icon={<MessageSquare className="w-10 h-10 md:w-12 md:h-12" />}
-                        title="Nutricionista Diário"
+                        title="Personal 24h"
                         subtitle="Suporte 24/7"
                         premium={true}
                     />

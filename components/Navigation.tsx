@@ -14,7 +14,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
     { id: 'food_ai', label: 'Scanner', icon: <ScanLine className="w-5 h-5" /> },
     { id: 'shape', label: 'Shape', icon: <UserSquare2 className="w-5 h-5" /> },
     { id: 'evolution', label: 'Evolução', icon: <TrendingUp className="w-5 h-5" /> },
-    { id: 'chat', label: 'Nutricionista Diário', icon: <MessageSquare className="w-5 h-5" /> },
+    { id: 'chat', label: 'Personal 24h', icon: <MessageSquare className="w-5 h-5" /> },
     { id: 'settings', label: 'Perfil', icon: <Settings className="w-5 h-5" /> },
   ];
 

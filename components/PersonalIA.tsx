@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, FoodLog, ChatMessage, EvolutionRecord } from '../types';
-import { chatWithNutricionistaDiario } from '../services/openaiService';
+import { chatWithPersonal24h } from '../services/openaiService';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 import { ChevronLeft, Sparkles, Diamond, Mic, Send, Bot, User as UserIcon } from 'lucide-react';
@@ -135,7 +135,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
       // Pass the last evolution record as context
       const lastEvolution = evolution.length > 0 ? evolution[0] : null;
 
-      const response = await chatWithNutricionistaDiario(userMsg, newHistory, {
+      const response = await chatWithPersonal24h(userMsg, newHistory, {
         user,
         logsSummary: logs.slice(0, 5),
         lastEvolution
@@ -185,7 +185,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
                   <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-40" />
                 </div>
                 <h1 className="text-2xl font-serif-premium font-bold text-white tracking-tight leading-none">
-                  Nutricionista Diário
+                  Personal 24h
                 </h1>
               </div>
               <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Pergunte ao Nutricionista Diário..."
+                placeholder="Pergunte ao Personal 24h..."
                 className="flex-1 bg-transparent py-4 px-2 outline-none text-white font-medium placeholder:text-zinc-600 text-[16px] min-w-0"
                 disabled={loading}
                 autoComplete="off"
