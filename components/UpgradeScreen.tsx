@@ -22,13 +22,13 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ user, onBack }) => {
       <div className="w-20 h-20 bg-emerald-100 rounded-3xl flex items-center justify-center text-4xl mb-8 animate-bounce">💎</div>
       <h2 className="text-3xl font-black text-gray-900 mb-4">Seja ShapeScan Premium</h2>
       <p className="text-gray-500 max-w-sm mb-12">
-        Desbloqueie o Scanner de Refeições por IA, Análise de Shape Corporal e a Personal IA Inteligente 24/7.
+        Desbloqueie o Scanner de Refeições por IA, Análise de Shape Corporal e a Nutricionista Diário Inteligente 24/7.
       </p>
 
       <div className="w-full max-w-sm space-y-4 mb-12">
         <Benefit item="Scanner de Refeições por Foto" />
         <Benefit item="Análise de Shape e Percentual de Gordura" />
-        <Benefit item="Personal IA para Treino e Dieta" />
+        <Benefit item="Nutricionista Diário para Treino e Dieta" />
         <Benefit item="Suporte Prioritário" />
       </div>
 

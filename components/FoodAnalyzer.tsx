@@ -226,12 +226,20 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
           <p className="text-zinc-400 font-medium text-base mb-12 leading-relaxed max-w-xs mx-auto">
             Acesse a Inteligência Artificial para descobrir os macronutrientes exatos da sua refeição apenas tirando uma foto.
           </p>
-          <button onClick={onUpgrade} className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black uppercase tracking-widest text-xs mb-6 active:scale-95 transition-all">
+          <motion.button 
+            whileTap={{ scale: 0.97 }}
+            onClick={onUpgrade} 
+            className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black uppercase tracking-widest text-xs mb-6 transition-all"
+          >
             Fazer Upgrade Pro
-          </button>
-          <button onClick={onBack} className="flex items-center justify-center gap-2 mx-auto text-zinc-500 font-black text-[10px] uppercase tracking-widest hover:text-white transition-colors">
+          </motion.button>
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            onClick={onBack} 
+            className="flex items-center justify-center gap-2 mx-auto text-zinc-500 font-black text-[10px] uppercase tracking-widest hover:text-white transition-colors"
+          >
             ← Voltar ao Painel
-          </button>
+          </motion.button>
         </div>
       </PremiumBackground>
     );
@@ -253,12 +261,20 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                     : "Sua análise experimental terminou."
                   }
                 </p>
-                <button onClick={() => { setShowLimitModal(false); if (limitModalType === 'daily') onUpgradePro(); else onUpgrade(); }} className="w-full py-5 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[10px] mb-4 hover:bg-zinc-200 transition-all">
+                <motion.button 
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { setShowLimitModal(false); if (limitModalType === 'daily') onUpgradePro(); else onUpgrade(); }} 
+                  className="w-full py-5 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[10px] mb-4 hover:bg-zinc-200 transition-all"
+                >
                   Fazer Upgrade
-                </button>
-                <button onClick={() => { setShowLimitModal(false); onBack(); }} className="text-zinc-500 font-black uppercase tracking-widest text-[9px] hover:text-white transition-colors">
+                </motion.button>
+                <motion.button 
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => { setShowLimitModal(false); onBack(); }} 
+                  className="text-zinc-500 font-black uppercase tracking-widest text-[9px] hover:text-white transition-colors"
+                >
                   Voltar
-                </button>
+                </motion.button>
               </div>
             </motion.div>
           )}
@@ -267,11 +283,15 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
         </AnimatePresence>
 
         <header className="flex justify-between items-center mb-8">
-          <button onClick={onBack} className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-90 text-white shadow-xl backdrop-blur-md">
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            onClick={onBack} 
+            className="w-14 h-14 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-white shadow-xl backdrop-blur-md"
+          >
             <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
-          </button>
+          </motion.button>
         </header>
 
         <main className="flex-1 flex flex-col">
@@ -305,10 +325,11 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                       className="w-full bg-white/[0.03] p-6 rounded-3xl border border-white/5 font-serif-premium text-xl text-white outline-none focus:border-emerald-500/50 transition-colors min-h-[150px] resize-none"
                     />
                   </div>
-                  <button
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
                     onClick={handleManualAdd}
                     disabled={loading}
-                    className="w-full bg-white text-zinc-950 py-6 rounded-3xl font-black uppercase tracking-[0.2em] text-xs hover:bg-zinc-200 transition-all active:scale-95 shadow-xl flex items-center justify-center gap-2"
+                    className="w-full bg-white text-zinc-950 py-6 rounded-3xl font-black uppercase tracking-[0.2em] text-xs hover:bg-zinc-200 transition-all shadow-xl flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>
@@ -318,7 +339,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                     ) : (
                       'Processar Dados'
                     )}
-                  </button>
+                  </motion.button>
                 </div>
               ) : (
                 <div className="space-y-8">
@@ -336,14 +357,14 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                     <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[3.5rem]"></div>
                     <ScanSearch className="w-32 h-32 text-emerald-500/20 mb-10 transform group-hover:scale-110 transition-transform duration-700" strokeWidth={1} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg z-10">
-                      <label className="cursor-pointer bg-white text-zinc-950 p-6 rounded-3xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-zinc-200 active:scale-95 transition-all">
+                      <motion.label whileTap={{ scale: 0.97 }} className="cursor-pointer bg-white text-zinc-950 p-6 rounded-3xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-zinc-200 transition-all">
                         <Camera className="w-5 h-5" /> Iniciar Câmera
                         <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileUpload} disabled={loading} />
-                      </label>
-                      <label className="cursor-pointer bg-zinc-900 text-white p-6 rounded-3xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 border border-white/10 hover:bg-zinc-800 active:scale-95 transition-all">
+                      </motion.label>
+                      <motion.label whileTap={{ scale: 0.97 }} className="cursor-pointer bg-zinc-900 text-white p-6 rounded-3xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 border border-white/10 hover:bg-zinc-800 transition-all">
                         <ImageIcon className="w-5 h-5" /> Importar Foto
                         <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} disabled={loading} />
-                      </label>
+                      </motion.label>
                     </div>
                   </div>
                 </div>
@@ -494,12 +515,20 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 
               <div className="fixed bottom-10 left-0 w-full px-6 z-50">
                 <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button onClick={() => confirmAdd(false)} className="md:col-span-2 bg-white text-zinc-950 py-6 rounded-3xl font-black uppercase tracking-widest text-[10px] hover:bg-zinc-200 transition-all shadow-2xl flex items-center justify-center gap-3 active:scale-95">
+                  <motion.button 
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => confirmAdd(false)} 
+                    className="md:col-span-2 bg-white text-zinc-950 py-6 rounded-3xl font-black uppercase tracking-widest text-[10px] hover:bg-zinc-200 transition-all shadow-2xl flex items-center justify-center gap-3"
+                  >
                     Confirmar Registro <CheckCircle2 className="w-5 h-5" />
-                  </button>
-                  <button onClick={() => confirmAdd(true)} className="bg-zinc-900 text-white py-6 rounded-3xl font-black uppercase tracking-widest text-[9px] border border-white/10 hover:bg-zinc-800 transition-all active:scale-95">
+                  </motion.button>
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => confirmAdd(true)} 
+                    className="bg-zinc-900 text-white py-6 rounded-3xl font-black uppercase tracking-widest text-[9px] border border-white/10 hover:bg-zinc-800 transition-all"
+                  >
                     Set as Favorite <Save className="w-4 h-4 ml-2 inline-block" />
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </div>

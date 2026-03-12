@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface CalorieCardProps {
     consumed: number;
@@ -73,9 +74,11 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
 
                     <div className="w-full space-y-4">
                         <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/10 relative">
-                            <div
-                                className={`h-full transition-all duration-1000 ease-out ${isOverLimit ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]'}`}
-                                style={{ width: `${visualPercent}%` }}
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${visualPercent}%` }}
+                                transition={{ duration: 1.2, ease: "circOut" }}
+                                className={`h-full ${isOverLimit ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]'}`}
                             />
                         </div>
                         <div className="flex justify-between items-center px-1">

@@ -159,7 +159,7 @@ const HowItWorks: React.FC<HowItWorksProps> = ({ onBack, onRegister }) => {
           <StepItem
             number="04"
             title="Dashboard de Inteligência"
-            description="Receba instantaneamente um relatório detalhado. Visualize calorias, macronutrientes, percentual de gordura estimado e feedback da Personal IA sobre como melhorar."
+            description="Receba instantaneamente um relatório detalhado. Visualize calorias, macronutrientes, percentual de gordura estimado e feedback da Nutricionista Diário sobre como melhorar."
             icon={<BarChart3 className="w-5 h-5" />}
             align="left"
           />

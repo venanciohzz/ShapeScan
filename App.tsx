@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { View, User, FoodLog, EvolutionRecord, ChatMessage } from './types';
 import { db } from './services/db';
 
@@ -23,6 +24,7 @@ const Settings = React.lazy(() => import('./components/Settings'));
 const SavedMeals = React.lazy(() => import('./components/SavedMeals'));
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
 const AppDemo = React.lazy(() => import('./components/AppDemo'));
+import SuccessCelebration from './components/ui/SuccessCelebration';
 const { BMICalculator, DailyCalorieCalculator } = { 
   BMICalculator: React.lazy(() => import('./components/Calculators').then(m => ({ default: m.BMICalculator }))),
   DailyCalorieCalculator: React.lazy(() => import('./components/Calculators').then(m => ({ default: m.DailyCalorieCalculator })))
@@ -184,6 +186,7 @@ const App: React.FC = () => {
   /* estado novo */
   const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // ... (código existente)
 
@@ -282,6 +285,10 @@ const App: React.FC = () => {
     if (!user) return;
     const newLog = await db.logs.add(user.id, logData);
     setFoodLogs(prev => [newLog, ...prev]);
+    // Atualizar Gamificação e Mostrar Celebração
+    db.gamification.updateStreak(user.id)
+      .then(() => setShowCelebration(true))
+      .catch(err => console.error("Erro ao atualizar streak:", err));
   };
 
   const removeFoodLog = async (id: string) => {
@@ -315,6 +322,11 @@ const App: React.FC = () => {
         console.log('📈 Estado atualizado. Total de registros:', updated.length);
         return updated;
       });
+
+      // Atualizar Gamificação e Mostrar Celebração
+      db.gamification.updateStreak(user.id)
+        .then(() => setShowCelebration(true))
+        .catch(err => console.error("Erro ao atualizar streak:", err));
     } catch (error) {
       console.error('❌ Erro ao salvar evolução:', error);
       alert('Erro ao salvar evolução: ' + (error as Error).message);
@@ -358,37 +370,48 @@ const App: React.FC = () => {
 
   const renderView = () => {
     return (
-      <React.Suspense fallback={
-        <div className="min-h-[100dvh] transition-opacity duration-300 flex items-center justify-center">
-          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      }>
-        {(() => {
-          switch (currentView) {
-            case 'landing': return <LandingPage onStart={() => { setAuthMode('registrar'); setCurrentView('auth'); }} onLogin={() => { setAuthMode('entrar'); setCurrentView('auth'); }} onHowItWorks={() => setCurrentView('how_it_works')} onAbout={() => setCurrentView('about')} />;
-            case 'how_it_works': return <HowItWorks onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('registrar'); setCurrentView('auth'); }} />;
-            case 'about': return <About onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('registrar'); setCurrentView('auth'); }} />;
-            case 'auth': return <Auth initialMode={authMode} onLogin={handleLogin} onBack={() => setCurrentView('landing')} />;
-            case 'quiz': return <OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />;
-            case 'plans': return <PlanSelection user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onSelect={async (plan) => { if (plan === 'free' && user) { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); setCurrentView('dashboard'); } }} onShowToast={showToast} />;
-            case 'upgrade_pro': return <UpgradePro user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onShowToast={showToast} />;
-            case 'dashboard': return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />;
-            case 'food_ai': return <FoodAnalyzer mode="ai" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
-            case 'food_manual': return <FoodAnalyzer mode="manual" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
-            case 'saved_meals': return <SavedMeals user={user!} onAddLog={addFoodLog} onBack={() => setCurrentView('dashboard')} onShowToast={showToast} />;
-            case 'shape': return <ShapeAnalyzer user={user!} onBack={() => setCurrentView('dashboard')} onSaveToEvolution={(data) => addEvolutionRecord({ ...data, date: Date.now() })} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
-            case 'chat': return <PersonalIA user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} onUpgrade={() => setCurrentView('plans')} onShowToast={showToast} />;
-            case 'evolution': return <Evolution user={user!} records={evolutionRecords} onBack={() => setCurrentView('dashboard')} onAdd={addEvolutionRecord} onDelete={deleteEvolutionRecord} onEdit={editEvolutionRecord} onUpgrade={() => setCurrentView('plans')} />;
-            case 'bmi_calc': return <BMICalculator onBack={() => setCurrentView('dashboard')} />;
-            case 'calorie_calc': return <DailyCalorieCalculator onBack={() => setCurrentView('dashboard')} />;
-            case 'calorie_plan': return <CaloriePlan user={user!} onBack={() => setCurrentView('dashboard')} onUpdateGoal={handleUpdateGoal} />;
-            case 'water_calc': return <WaterCalculator user={user!} onBack={() => setCurrentView('dashboard')} onUpdateWaterGoal={handleUpdateWaterGoal} />;
-            case 'settings': return <Settings user={user!} onUpdateProfile={handleUpdateProfile} onBack={() => setCurrentView('dashboard')} darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} onGoToAdmin={() => setCurrentView('admin')} />;
-            case 'admin': return <AdminDashboard user={user!} onBack={() => setCurrentView('settings')} onShowToast={showToast} />;
-            default: return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />;
-          }
-        })()}
-      </React.Suspense>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentView}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="flex-1 flex flex-col"
+        >
+          <React.Suspense fallback={
+            <div className="min-h-[100dvh] transition-opacity duration-300 flex items-center justify-center">
+              <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          }>
+            {(() => {
+              switch (currentView) {
+                case 'landing': return <LandingPage onStart={() => { setAuthMode('registrar'); setCurrentView('auth'); }} onLogin={() => { setAuthMode('entrar'); setCurrentView('auth'); }} onHowItWorks={() => setCurrentView('how_it_works')} onAbout={() => setCurrentView('about')} />;
+                case 'how_it_works': return <HowItWorks onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('registrar'); setCurrentView('auth'); }} />;
+                case 'about': return <About onBack={() => setCurrentView('landing')} onRegister={() => { setAuthMode('registrar'); setCurrentView('auth'); }} />;
+                case 'auth': return <Auth initialMode={authMode} onLogin={handleLogin} onBack={() => setCurrentView('landing')} />;
+                case 'quiz': return <OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />;
+                case 'plans': return <PlanSelection user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onSelect={async (plan) => { if (plan === 'free' && user) { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); setCurrentView('dashboard'); } }} onShowToast={showToast} />;
+                case 'upgrade_pro': return <UpgradePro user={user!} onBack={() => setCurrentView(previousView || 'dashboard')} onShowToast={showToast} />;
+                case 'dashboard': return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />;
+                case 'food_ai': return <FoodAnalyzer mode="ai" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
+                case 'food_manual': return <FoodAnalyzer mode="manual" user={user!} onAdd={addFoodLog} onBack={() => setCurrentView('dashboard')} onUpdateUser={refreshUser} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
+                case 'saved_meals': return <SavedMeals user={user!} onAddLog={addFoodLog} onBack={() => setCurrentView('dashboard')} onShowToast={showToast} />;
+                case 'shape': return <ShapeAnalyzer user={user!} onBack={() => setCurrentView('dashboard')} onSaveToEvolution={(data) => addEvolutionRecord({ ...data, date: Date.now() })} onUpgrade={() => setCurrentView('plans')} onUpgradePro={() => setCurrentView('upgrade_pro')} onShowToast={showToast} />;
+                case 'chat': return <PersonalIA user={user!} logs={foodLogs} evolution={evolutionRecords} onBack={() => setCurrentView('dashboard')} messages={chatHistory} setMessages={setChatHistory} onUpgrade={() => setCurrentView('plans')} onShowToast={showToast} />;
+                case 'evolution': return <Evolution user={user!} records={evolutionRecords} onBack={() => setCurrentView('dashboard')} onAdd={addEvolutionRecord} onDelete={deleteEvolutionRecord} onEdit={editEvolutionRecord} onUpgrade={() => setCurrentView('plans')} />;
+                case 'bmi_calc': return <BMICalculator onBack={() => setCurrentView('dashboard')} />;
+                case 'calorie_calc': return <DailyCalorieCalculator onBack={() => setCurrentView('dashboard')} />;
+                case 'calorie_plan': return <CaloriePlan user={user!} onBack={() => setCurrentView('dashboard')} onUpdateGoal={handleUpdateGoal} />;
+                case 'water_calc': return <WaterCalculator user={user!} onBack={() => setCurrentView('dashboard')} onUpdateWaterGoal={handleUpdateWaterGoal} />;
+                case 'settings': return <Settings user={user!} onUpdateProfile={handleUpdateProfile} onBack={() => setCurrentView('dashboard')} darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} onGoToAdmin={() => setCurrentView('admin')} />;
+                case 'admin': return <AdminDashboard user={user!} onBack={() => setCurrentView('settings')} onShowToast={showToast} />;
+                default: return <Dashboard user={user!} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />;
+              }
+            })()}
+          </React.Suspense>
+        </motion.div>
+      </AnimatePresence>
     );
   };
 
@@ -407,6 +430,7 @@ const App: React.FC = () => {
       <div className={`relative z-10 min-h-[100dvh] flex flex-col ${showMobileNav ? 'pb-32 md:pb-0' : ''} overflow-x-hidden`}>
         {renderView()}
       </div>
+      <SuccessCelebration show={showCelebration} onComplete={() => setShowCelebration(false)} />
       {showMobileNav && <Navigation currentView={currentView} onNavigate={navigateWithPremiumCheck} />}
     </div>
   );

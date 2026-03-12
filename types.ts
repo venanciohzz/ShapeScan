@@ -191,4 +191,16 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface UserStats {
+  userId: string;
+  currentStreak: number;
+  longestStreak: number;
+  lastActivityDate: string | null;
+  totalLogs: number;
+  level: number;
+  experience: number;
+  badges: string[];
+  updatedAt: number;
+}
+
 export type View = 'landing' | 'how_it_works' | 'about' | 'dashboard' | 'food_ai' | 'food_manual' | 'saved_meals' | 'shape' | 'chat' | 'auth' | 'bmi_calc' | 'calorie_calc' | 'calorie_plan' | 'water_calc' | 'upgrade' | 'upgrade_pro' | 'quiz' | 'plans' | 'evolution' | 'settings' | 'admin';

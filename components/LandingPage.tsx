@@ -558,7 +558,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   name="Lucas Martins"
                   role="Iniciante"
                   image="https://randomuser.me/api/portraits/men/86.jpg"
-                  text="A análise de shape foi um choque de realidade. A Personal IA me ajudou a montar um plano que eu realmente consigo seguir."
+                  text="A análise de shape foi um choque de realidade. A Nutricionista Diário me ajudou a montar um plano que eu realmente consigo seguir."
                 />
               </motion.div>
             </div>

@@ -85,16 +85,18 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
                 </div>
 
                 <div className="flex gap-4">
-                    <button
+                    <motion.button
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => addWater(250)}
-                        className={`flex-[3] py-5 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] active:scale-95 transition-all duration-500 flex items-center justify-center gap-3 border shadow-xl ${isWaterGoalMet
+                        className={`flex-[3] py-5 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-3 border shadow-xl ${isWaterGoalMet
                             ? 'bg-white text-zinc-950 border-white shadow-white/10 hover:bg-zinc-100'
                             : 'bg-zinc-950 text-white border-white/10 hover:border-cyan-500/50 hover:bg-zinc-900'
                             }`}
                     >
                         <span className="text-xl">+</span> Injetar 250ml
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => setShowWaterShortcuts(!showWaterShortcuts)}
                         className={`flex-1 flex items-center justify-center rounded-[2rem] border transition-all duration-500 active:scale-90 ${showWaterShortcuts
                             ? 'bg-cyan-500/20 border-cyan-500 text-cyan-400'
@@ -109,7 +111,7 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
                         >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                         </svg>
-                    </button>
+                    </motion.button>
                 </div>
 
                 <AnimatePresence>

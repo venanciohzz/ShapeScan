@@ -13,7 +13,7 @@ const DailyFeedbackCard: React.FC<DailyFeedbackCardProps> = ({ feedback, loading
     return (
       <div className="bg-zinc-950/40 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/10 animate-pulse min-h-[200px] flex flex-col justify-center items-center gap-4">
         <Brain className="w-8 h-8 text-white/10 animate-bounce" />
-        <p className="text-[10px] font-black text-white/20 uppercase tracking-widest text-center">A IA COACH está analisando o seu dia...</p>
+        <p className="text-[10px] font-black text-white/20 uppercase tracking-widest text-center">A NUTRICIONISTA DIÁRIO está analisando o seu dia...</p>
       </div>
     );
   }
@@ -25,7 +25,7 @@ const DailyFeedbackCard: React.FC<DailyFeedbackCardProps> = ({ feedback, loading
           <Brain className="w-6 h-6 text-white/20 group-hover:text-emerald-500 transition-colors" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-sm font-black text-white uppercase tracking-widest">IA COACH ATIVA</h3>
+          <h3 className="text-sm font-black text-white uppercase tracking-widest">NUTRICIONISTA ATIVA</h3>
           <p className="text-[11px] text-white/40 leading-relaxed italic px-4">"Registre sua primeira refeição do dia para que eu possa analisar seu progresso e dar dicas personalizadas!"</p>
         </div>
       </div>
@@ -46,9 +46,11 @@ const DailyFeedbackCard: React.FC<DailyFeedbackCardProps> = ({ feedback, loading
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-zinc-950/40 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/10 relative overflow-hidden group hover:border-emerald-500/20 transition-all duration-700"
+      whileHover={{ scale: 1.01, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="bg-zinc-950/40 backdrop-blur-2xl p-8 rounded-[2.5rem] border border-white/10 relative overflow-hidden group hover:border-emerald-500/20"
     >
       <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 blur-[80px] rounded-full -mr-24 -mt-24 group-hover:bg-emerald-500/10 transition-all duration-700" />
       
@@ -59,7 +61,7 @@ const DailyFeedbackCard: React.FC<DailyFeedbackCardProps> = ({ feedback, loading
               <Icon className={`w-5 h-5 ${config.color}`} />
             </div>
             <div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">IA COACH • DIÁRIO</p>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">NUTRICIONISTA DIÁRIO • DIÁRIO</p>
               <h3 className="text-xl font-serif-premium font-bold text-white uppercase tracking-tight">Análise do Dia</h3>
             </div>
           </div>

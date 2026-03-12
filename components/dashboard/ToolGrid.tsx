@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from '../../types';
 import { Scan, User, LineChart, NotebookPen, Save, Droplets, Scale, Flame, Target, MessageSquare } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ActionButtonProps {
     onClick: () => void;
@@ -11,9 +12,11 @@ interface ActionButtonProps {
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({ onClick, icon, title, subtitle, premium }) => (
-    <button
+    <motion.button
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
         onClick={onClick}
-        className="relative overflow-hidden group bg-zinc-950/40 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] border border-white/10 hover:border-emerald-500/30 transition-all duration-500 shadow-xl flex flex-col items-center md:items-start text-center md:text-left h-full active:scale-[0.98]"
+        className="relative overflow-hidden group bg-zinc-950/40 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] border border-white/10 hover:border-emerald-500/30 transition-all duration-500 shadow-xl flex flex-col items-center md:items-start text-center md:text-left h-full"
     >
         {/* Hover Glow */}
         <div className="absolute -inset-20 bg-emerald-500/10 rounded-full blur-[60px] opacity-0 group-hover:opacity-40 transition-opacity duration-1000"></div>
@@ -43,7 +46,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ onClick, icon, title, subti
 
             <div className="mt-6 w-8 h-0.5 bg-white/10 group-hover:w-full group-hover:bg-emerald-500/30 transition-all duration-700"></div>
         </div>
-    </button>
+    </motion.button>
 );
 
 interface ToolGridProps {
@@ -79,7 +82,7 @@ const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate }) => {
                     <ActionButton
                         onClick={() => onNavigate('chat')}
                         icon={<MessageSquare className="w-10 h-10 md:w-12 md:h-12" />}
-                        title="Personal IA"
+                        title="Nutricionista Diário"
                         subtitle="Suporte 24/7"
                         premium={true}
                     />

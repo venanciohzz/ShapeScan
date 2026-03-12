@@ -2,6 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { User, FoodLog, View, DailyFeedback } from '../types';
 import { isSameTrackingDay } from '../services/dateUtils';
 import { getDailyFeedback } from '../services/openaiService';
+import { motion } from 'framer-motion';
+import { Flame } from 'lucide-react';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 
@@ -14,6 +16,9 @@ import MealHistory from './dashboard/MealHistory';
 import EditMealModal from './dashboard/EditMealModal';
 import DeleteMealModal from './dashboard/DeleteMealModal';
 import DailyFeedbackCard from './dashboard/DailyFeedbackCard';
+import GamificationWidget from './dashboard/GamificationWidget';
+import { db } from '../services/db';
+import { UserStats } from '../types';
 
 interface DashboardProps {
    user: User;
@@ -32,8 +37,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
    const [logToDelete, setLogToDelete] = useState<string | null>(null);
    const [dailyFeedback, setDailyFeedback] = useState<DailyFeedback | null>(null);
    const [loadingFeedback, setLoadingFeedback] = useState(false);
+   const [userStats, setUserStats] = useState<UserStats | null>(null);
+   const [loadingStats, setLoadingStats] = useState(true);
 
    const todayLogs = useMemo(() => logs.filter(log => isSameTrackingDay(log.timestamp)), [logs]);
+
+   useEffect(() => {
+      const fetchStats = async () => {
+         try {
+            const stats = await db.gamification.getStats(user.id);
+            setUserStats(stats);
+         } catch (err) {
+            console.error('Erro ao buscar estatísticas:', err);
+         } finally {
+            setLoadingStats(false);
+         }
+      };
+      fetchStats();
+   }, [user.id]);
 
    const totals = useMemo(() => ({
       consumed: todayLogs.reduce((acc, log) => acc + log.calories, 0),
@@ -89,7 +110,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
 
    return (
       <PremiumBackground className="pt-20 md:pt-28 pb-32 md:pb-12 h-screen overflow-y-auto scrollbar-hide overflow-x-hidden">
-         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-20">
+         <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-20"
+         >
 
             {/* Modais de Controle */}
             <DeleteMealModal
@@ -119,6 +145,22 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                            </div>
                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-[3px] border-zinc-950 z-20 shadow-lg"></div>
                         </div>
+                        
+                        {/* Novo Indicador de Rank Compacto */}
+                        {userStats && (
+                           <motion.div 
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="absolute -top-3 -right-3 md:-top-4 md:-right-4 z-30 flex items-center gap-1 bg-zinc-900/90 backdrop-blur-xl border border-white/10 px-2 py-1 md:px-3 md:py-1.5 rounded-2xl shadow-2xl"
+                           >
+                              <div className="flex items-center gap-1">
+                                 <Flame className={`w-3 h-3 md:w-4 md:h-4 ${userStats.currentStreak > 0 ? 'text-orange-500 fill-orange-500 animate-pulse' : 'text-zinc-600'}`} />
+                                 <span className="text-[10px] md:text-xs font-black text-white">{userStats.currentStreak}</span>
+                              </div>
+                              <div className="w-[1px] h-3 bg-white/10 mx-1"></div>
+                              <span className="text-[7px] md:text-[9px] font-black text-amber-500 uppercase tracking-tighter">NÍVEL {userStats.level}</span>
+                           </motion.div>
+                        )}
                      </div>
 
                      <div className="flex flex-col min-w-0">
@@ -142,15 +184,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                      </div>
                   </div>
 
-                  <button
+                  <motion.button
+                     whileTap={{ scale: 0.95 }}
                      onClick={onLogout}
-                     className="bg-white/5 border border-white/10 w-12 h-12 md:w-auto md:px-8 md:py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-red-500/10 hover:border-red-500/30 group/logout transition-all active:scale-90"
+                     className="bg-white/5 border border-white/10 w-12 h-12 md:w-auto md:px-8 md:py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-red-500/10 hover:border-red-500/30 group/logout transition-all"
                   >
                      <span className="hidden md:inline text-[11px] font-black uppercase tracking-[0.3em] text-zinc-400 group-hover/logout:text-red-400 transition-colors">Sair da Conta</span>
                      <svg viewBox="0 0 24 24" className="w-5 h-5 text-zinc-500 group-hover/logout:text-red-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                      </svg>
-                  </button>
+                  </motion.button>
                </div>
             </header>
 
@@ -197,7 +240,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                   />
                </div>
             </div>
-         </div>
+         </motion.div>
       </PremiumBackground>
    );
 };

@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient, User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { User, FoodLog, EvolutionRecord, SavedMeal } from '../types';
+import { User, FoodLog, EvolutionRecord, SavedMeal, UserStats } from '../types';
 import { getTrackingDateString } from './dateUtils';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -533,7 +533,111 @@ export async function incrementFreeScanTrial(userId: string): Promise<number> {
   return data;
 }
 
+// ==================== GAMIFICAÇÃO = [STREAKS, BADGES, LEVELS] = ====================
+
+export async function getUserStats(userId: string): Promise<UserStats> {
+  const { data, error } = await supabase
+    .from('user_stats')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      // Criar stats iniciais se não existirem
+      const initialStats = {
+        user_id: userId,
+        current_streak: 0,
+        longest_streak: 0,
+        total_logs: 0,
+        level: 1,
+        experience: 0,
+        badges: []
+      };
+      const { data: newData, error: insertError } = await supabase
+        .from('user_stats')
+        .insert(initialStats)
+        .select()
+        .single();
+      
+      if (insertError) throw new Error(insertError.message);
+      return mapStatsFromDB(newData);
+    }
+    throw new Error(error.message);
+  }
+
+  return mapStatsFromDB(data);
+}
+
+export async function updateStreak(userId: string): Promise<UserStats> {
+  const today = getTrackingDateString();
+  const stats = await getUserStats(userId);
+  
+  if (stats.lastActivityDate === today) return stats;
+
+  const lastDate = stats.lastActivityDate ? new Date(stats.lastActivityDate) : null;
+  const todayDate = new Date(today);
+  
+  let newStreak = 1;
+  if (lastDate) {
+    const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      newStreak = (stats.currentStreak || 0) + 1;
+    }
+  }
+
+  const updates: any = {
+    current_streak: newStreak,
+    last_activity_date: today,
+    total_logs: (stats.totalLogs || 0) + 1,
+    experience: (stats.experience || 0) + 50, // 50 XP por atividade
+    updated_at: new Date().toISOString()
+  };
+
+  if (newStreak > (stats.longestStreak || 0)) {
+    updates.longest_streak = newStreak;
+  }
+
+  // Lógica simples de nível: Cada nível precisa de 500 XP
+  updates.level = Math.floor(updates.experience / 500) + 1;
+
+  // Lógica de medalhas (badges)
+  const newBadges = [...(stats.badges || [])];
+  if (newStreak === 1 && !newBadges.includes('first_step')) newBadges.push('first_step');
+  if (newStreak === 7 && !newBadges.includes('seven_days')) newBadges.push('seven_days');
+  if (newStreak === 30 && !newBadges.includes('thirty_days')) newBadges.push('thirty_days');
+  if (updates.total_logs >= 50 && !newBadges.includes('food_master')) newBadges.push('food_master');
+  
+  updates.badges = newBadges;
+
+  const { data, error } = await supabase
+    .from('user_stats')
+    .update(updates)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return mapStatsFromDB(data);
+}
+
 // ==================== HELPERS DE MAPEAMENTO ====================
+
+function mapStatsFromDB(dbStats: any): UserStats {
+  return {
+    userId: dbStats.user_id,
+    currentStreak: dbStats.current_streak,
+    longestStreak: dbStats.longest_streak,
+    lastActivityDate: dbStats.last_activity_date,
+    totalLogs: dbStats.total_logs,
+    level: dbStats.level,
+    experience: dbStats.experience,
+    badges: dbStats.badges || [],
+    updatedAt: new Date(dbStats.updated_at).getTime(),
+  };
+}
 
 function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAdmin?: boolean): User {
   return {

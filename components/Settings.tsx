@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { User as UserType } from '../types';
+import React, { useState, useEffect } from 'react';
+import { User as UserType, UserStats } from '../types';
 import { compressImage } from '../utils/security';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 import { ArrowLeft, User, Camera, CheckCircle2, ShieldAlert, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { db } from '../services/db';
+import GamificationWidget from './dashboard/GamificationWidget';
 
 interface SettingsProps {
   user: UserType;
@@ -16,6 +18,22 @@ interface SettingsProps {
 }
 
 const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, darkMode, toggleTheme, onGoToAdmin }) => {
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const stats = await db.gamification.getStats(user.id);
+        setUserStats(stats);
+      } catch (err) {
+        console.error('Erro ao buscar estatísticas:', err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    fetchStats();
+  }, [user.id]);
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username.startsWith('@') ? user.username : `@${user.username}`);
   const [photo, setPhoto] = useState(user.photo || '');
@@ -43,9 +61,13 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
   return (
     <PremiumBackground className="flex flex-col p-6 overflow-y-auto" dim={true} intensity={1.0}>
       <div className="w-full max-w-2xl mx-auto py-12 md:py-20 relative z-10">
-        <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 mb-10 text-white group">
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
+          onClick={onBack} 
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all mb-10 text-white group"
+        >
           <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
-        </button>
+        </motion.button>
 
         <div className="mb-12">
           <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
@@ -105,9 +127,18 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
               </motion.div>
             )}
 
-            <button onClick={handleSave} className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all">
+            <motion.button 
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSave} 
+              className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:scale-[1.02] transition-all"
+            >
               Atualizar Biometria
-            </button>
+            </motion.button>
+
+            {/* Seção de Gamificação / Rank */}
+            <div className="pt-8 border-t border-white/5">
+              <GamificationWidget stats={userStats} loading={loadingStats} />
+            </div>
 
             {/* Admin Area */}
             {(user.isAdmin || user.email === 'contatobielaz@gmail.com') && (

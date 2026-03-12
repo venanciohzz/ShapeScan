@@ -1,5 +1,5 @@
 
-import { User, FoodLog, EvolutionRecord, ChatMessage, SavedMeal } from '../types';
+import { User, FoodLog, EvolutionRecord, ChatMessage, SavedMeal, UserStats } from '../types';
 import * as supabaseService from './supabaseService';
 
 const ADMIN_EMAIL = 'contatobielaz@gmail.com';
@@ -160,6 +160,16 @@ export const db = {
 
         async incrementTrial(userId: string): Promise<number> {
             return await supabaseService.incrementFreeScanTrial(userId);
+        }
+    },
+
+    gamification: {
+        async getStats(userId: string): Promise<UserStats> {
+            return await supabaseService.getUserStats(userId);
+        },
+
+        async updateStreak(userId: string): Promise<UserStats> {
+            return await supabaseService.updateStreak(userId);
         }
     }
 };

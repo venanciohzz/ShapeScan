@@ -297,7 +297,7 @@ export const analyzeShape = async (base64Image: string, metrics?: { weight?: num
   }
 };
 
-export const chatWithPersonalIA = async (message: string, history: any[], userContext: any) => {
+export const chatWithNutricionistaDiario = async (message: string, history: any[], userContext: any) => {
   const limitedHistory = history.slice(-10);
   let conversationContext = '';
   if (limitedHistory.length > 0) {
@@ -306,7 +306,7 @@ export const chatWithPersonalIA = async (message: string, history: any[], userCo
     ).join('\n');
   }
 
-  const systemPrompt = `Você é a "Personal IA" do ShapeScan (Amiga Maromba). 
+  const systemPrompt = `Você é a "Nutricionista Diário" do ShapeScan. 
 REGRAS: 1. Sem conselho médico. 2. Estilo WhatsApp (Sem markdown, texto puro). 3. Respostas curtas e motivadoras. 4. Emojis moderados.
 CONTEXTO: ${JSON.stringify(userContext.user)}. ${conversationContext}`;
 
