@@ -20,6 +20,7 @@ export async function signUp(email: string, password: string, userData: Omit<Use
     email,
     password,
     options: {
+      emailRedirectTo: "https://shapescan.com.br/quiz",
       data: {
         name: userData.name,
         username: userData.username,
@@ -113,7 +114,7 @@ export async function signOut(): Promise<void> {
 
 export async function resetPassword(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/nova-senha`,
+    redirectTo: "https://shapescan.com.br/nova-senha",
   });
   if (error) throw new Error(error.message);
 }

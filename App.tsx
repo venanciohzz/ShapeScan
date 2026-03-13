@@ -116,7 +116,7 @@ const App: React.FC = () => {
           // Redirect if needed
           if (location.pathname === '/' || location.pathname === '/auth') {
              if (!freshUser.weight || !freshUser.height) {
-               navigate('/onboarding', { replace: true });
+               navigate('/quiz', { replace: true });
              } else {
                navigate('/dashboard', { replace: true });
              }
@@ -186,7 +186,7 @@ const App: React.FC = () => {
     setUser(user);
     loadUserData(user.id);
     if (isNew || !user.weight || !user.height) {
-      navigate('/onboarding');
+      navigate('/quiz');
     } else {
       navigate('/dashboard');
     }
@@ -373,7 +373,7 @@ const App: React.FC = () => {
       'chat': '/personal-24h',
       'evolution': '/evolucao',
       'settings': '/configuracoes',
-      'quiz': '/onboarding',
+      'quiz': '/quiz',
       'plans': '/planos',
       'upgrade_pro': '/assinatura',
       'water_calc': '/meta-agua',
@@ -432,7 +432,7 @@ const App: React.FC = () => {
               {/* Protected Routes Wrapper */}
               <Route path="/*" element={user ? (
                 <Routes>
-                   <Route path="/onboarding" element={<OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />} />
+                   <Route path="/quiz" element={<OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />} />
                    <Route path="/planos" element={<PlanSelection user={user} onBack={() => navigate('/dashboard')} onSelect={async (plan) => { if (plan === 'free') { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); navigate('/dashboard'); } }} onShowToast={showToast} />} />
                    <Route path="/assinatura" element={<UpgradePro user={user} onBack={() => navigate('/dashboard')} onShowToast={showToast} />} />
                    <Route path="/dashboard" element={<Dashboard user={user} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />} />
@@ -459,7 +459,7 @@ const App: React.FC = () => {
     );
   };
 
-  const hideNavPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/onboarding', '/planos', '/assinatura', '/meta-agua', '/gasto-calorico', '/imc', '/minha-meta', '/refeicoes-salvas', '/personal-24h'];
+  const hideNavPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/quiz', '/planos', '/assinatura', '/meta-agua', '/gasto-calorico', '/imc', '/minha-meta', '/refeicoes-salvas', '/personal-24h'];
   const showMobileNav = user && !hideNavPaths.includes(location.pathname);
 
   return (
