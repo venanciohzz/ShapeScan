@@ -73,42 +73,54 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [currentView]);
 
+  const isInitializing = React.useRef(false);
+
   useEffect(() => {
     // Escuta mudanças na autenticação (importante para redirecionamento OAuth)
-    const { data: { subscription } } = db.auth.supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log(`Supabase Auth Event: ${_event}`);
+    const { data: { subscription } } = db.auth.supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`Supabase Auth Event: ${event}`);
+      
       if (session) {
-        await initSession(session.user);
-      } else {
+        // Se houver sessão, inicializamos/atualizamos o usuário
+        if (!isInitializing.current) {
+          await initSession(session.user);
+        }
+      } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
+        // Se não houver sessão, limpamos o estado e redirecionamos se necessário
         setUser(null);
-        if (location.pathname !== '/' && location.pathname !== '/como-funciona' && location.pathname !== '/sobre' && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
+        setIsSessionLoading(false);
+        const publicPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/nova-senha', '/recuperar-senha'];
+        if (!publicPaths.includes(location.pathname)) {
           navigate('/', { replace: true });
         }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [location.pathname]);
+  }, []); // Executa apenas uma vez no montamento do App
 
   const initSession = async (sessionUser?: any) => {
+    if (isInitializing.current) return;
+    
     try {
+      isInitializing.current = true;
       setIsSessionLoading(true);
+      
       const authUser = sessionUser || (await db.auth.supabase.auth.getSession()).data.session?.user;
       
       if (authUser) {
-        // Obter ou criar perfil (garante que novos usuários Google tenham registro no banco)
+        // Obter ou criar perfil
         const freshUser = await db.users.get(authUser.email);
 
         let needsUpdate = false;
         const updates: Partial<User> = {};
-
-        // Cálculos de macros e inicialização de campos legados
+// ... (mantenha os cálculos de macros)
         if ((freshUser.dailyProtein === undefined || freshUser.dailyCarbs === undefined || freshUser.dailyFat === undefined) && freshUser.weight) {
           const protein = Math.round(freshUser.weight * 2);
           const fat = Math.round(freshUser.weight * 0.8);
           const proteinCal = protein * 4;
           const fatCal = fat * 9;
-          const remainCal = freshUser.dailyCalorieGoal - (proteinCal + fatCal);
+          const remainCal = (freshUser.dailyCalorieGoal || 2000) - (proteinCal + fatCal);
           const carbs = Math.max(0, Math.round(remainCal / 4));
 
           updates.dailyProtein = freshUser.dailyProtein !== undefined ? freshUser.dailyProtein : protein;
@@ -132,30 +144,27 @@ const App: React.FC = () => {
 
         // Redirecionamento inteligente baseado no perfil
         const needsQuiz = !freshUser.weight || !freshUser.height;
-        const isPublicPath = location.pathname === '/' || location.pathname === '/entrar' || location.pathname === '/registrar';
+        const isPublicPath = ['/', '/entrar', '/registrar'].includes(location.pathname);
         
         if (needsQuiz && location.pathname !== '/quiz') {
           navigate('/quiz', { replace: true });
         } else if (!needsQuiz && (isPublicPath || location.pathname === '/quiz')) {
           navigate('/dashboard', { replace: true });
         }
-
       } else {
-        if (location.pathname !== '/' && location.pathname !== '/como-funciona' && location.pathname !== '/sobre' && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
-          navigate('/', { replace: true });
-        }
+        setIsSessionLoading(false);
       }
     } catch (e) {
-      console.error("Erro ao restaurar sessão:", e);
+      console.error("Erro na inicialização da sessão:", e);
       setUser(null);
+      setIsSessionLoading(false);
     } finally {
+      isInitializing.current = false;
+      // Note: setIsSessionLoading(false) is called in specific branches to avoid premature hide
+      // but let's ensure it's called at the very end of success too
       setIsSessionLoading(false);
     }
   };
-
-  useEffect(() => {
-    initSession();
-  }, []);
 
   const loadUserData = async (userId: string) => {
     try {
