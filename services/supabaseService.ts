@@ -201,15 +201,20 @@ export async function getProfile(userId: string): Promise<User> {
   return mapProfileToUser(data, planId, isPremium, isAdmin);
 }
 
-export async function getOrCreateProfile(userId: string): Promise<User> {
+export async function getOrCreateProfile(userId: string, authUser?: SupabaseUser): Promise<User> {
   try {
     return await getProfile(userId);
   } catch (err: any) {
     if (err.message.includes('JSON object requested, but 0 rows were returned') || err.message.includes('Perfil não encontrado')) {
-      // Tentar obter dados do usuário logado para o perfil inicial
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      const email = authUser?.email || '';
-      const name = authUser?.user_metadata?.full_name || email.split('@')[0];
+      // Usar dados providos ou tentar obter do usuário logado
+      let userDetails = authUser;
+      if (!userDetails) {
+        const { data: { user } } = await supabase.auth.getUser();
+        userDetails = user || undefined;
+      }
+      
+      const email = userDetails?.email || '';
+      const name = userDetails?.user_metadata?.full_name || email.split('@')[0];
       
       const { data, error } = await supabase
         .from('profiles')

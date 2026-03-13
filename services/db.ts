@@ -46,7 +46,7 @@ export const db = {
     },
 
     users: {
-        async get(email: string, userId?: string): Promise<User> {
+        async get(email: string, userId?: string, authUser?: any): Promise<User> {
             console.log(`db: Buscando usuário ${email} (userId: ${userId || 'não provido'})`);
             let targetId = userId;
             
@@ -61,7 +61,7 @@ export const db = {
                 console.log(`db: Sessão recuperada. ID: ${targetId}`);
             }
 
-            const user = await supabaseService.getOrCreateProfile(targetId);
+            const user = await supabaseService.getOrCreateProfile(targetId, authUser);
             console.log("db: Perfil processado com sucesso");
 
             // Garantir que admin tenha privilégios

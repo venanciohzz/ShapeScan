@@ -88,11 +88,20 @@ const App: React.FC = () => {
     }, 5000);
 
     const { data: { subscription } } = db.auth.supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log(`App: Evento Auth: ${event}`, session ? "Com sessão" : "Sem sessão");
+      
       if (session) {
         await initSession(session.user);
       } else {
+        // Se não tem sessão mas tem hash na URL, pode ser um redirect do Google sendo processado
+        // Não encerramos o loading nem limpamos o usuário ainda
+        if (window.location.hash.includes('access_token') || window.location.hash.includes('error=')) {
+          return; 
+        }
+
         setUser(null);
         setIsSessionLoading(false);
+        // Proteção de rotas públicas
         const publicPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/nova-senha', '/recuperar-senha'];
         if (!publicPaths.includes(location.pathname)) {
           navigate('/', { replace: true });
@@ -113,8 +122,9 @@ const App: React.FC = () => {
     try {
       isInitializing.current = true;
       setIsSessionLoading(true);
-
-      const freshUser = await db.users.get(sessionUser.email, sessionUser.id);
+      console.log("App: Sincronizando perfil do usuário...");
+      // Passar o usuário do auth para criar o perfil se não existir
+      const freshUser = await db.users.get(sessionUser.email, sessionUser.id, sessionUser);
       
       // Lógica de atualização de macros e campos iniciais
       let needsUpdate = false;
@@ -148,12 +158,17 @@ const App: React.FC = () => {
       await loadUserData(freshUser.id);
 
       // Redirecionamento Inteligente
-      const needsQuiz = !freshUser.weight || !freshUser.height;
-      const isPublicPath = ['/', '/entrar', '/registrar'].includes(location.pathname);
+      // Verificamos se o perfil é incompleto (novo usuário)
+      const isNewUser = !freshUser.weight || !freshUser.height;
+      const onPublicRoute = ['/', '/entrar', '/registrar'].includes(location.pathname);
       
-      if (needsQuiz && location.pathname !== '/quiz') {
-        navigate('/quiz', { replace: true });
-      } else if (!needsQuiz && (isPublicPath || location.pathname === '/quiz')) {
+      console.log(`App: Fluxo de entrada - Novo usuário? ${isNewUser}. Rota atual: ${location.pathname}`);
+
+      if (isNewUser) {
+        if (location.pathname !== '/quiz') {
+          navigate('/quiz', { replace: true });
+        }
+      } else if (onPublicRoute || location.pathname === '/quiz') {
         navigate('/dashboard', { replace: true });
       }
     } catch (e) {
