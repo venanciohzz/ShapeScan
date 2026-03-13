@@ -108,13 +108,18 @@ export async function signIn(email: string, password: string): Promise<User> {
 }
 
 export async function signInWithGoogle(): Promise<void> {
+  const origin = window.location.origin;
+  console.log("signInWithGoogle: enviando redirectTo =", origin);
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: "https://shapescan.com.br/",
+      redirectTo: origin,
     }
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("Erro no signInWithOAuth:", error);
+    throw new Error(error.message);
+  }
 }
 
 export async function signOut(): Promise<void> {

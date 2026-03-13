@@ -42,12 +42,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   };
 
   const handleGoogleLogin = async () => {
+    alert("Botão Google clicado");
+    console.log("handleGoogleLogin disparado");
     setIsLoading(true);
     setError('');
     try {
+      console.log("Chamando db.auth.signInWithGoogle...");
       await db.auth.signInWithGoogle();
+      console.log("signInWithGoogle concluído");
     } catch (err: any) {
-      console.error(err);
+      alert("Erro no login Google: " + err.message);
+      console.error("Erro capturado no handleGoogleLogin:", err);
       setError(err.message || 'Erro ao entrar com Google');
       setIsLoading(false);
     }
@@ -224,6 +229,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
           </div>
 
           <button
+            type="button"
             onClick={handleGoogleLogin}
             disabled={isLoading}
             className="w-full bg-white/5 border border-white/10 text-white py-4 rounded-full font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
