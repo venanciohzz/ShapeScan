@@ -113,13 +113,14 @@ const App: React.FC = () => {
           setUser(finalUser);
           await loadUserData(freshUser.id);
 
-          // Redirect if needed
-          if (location.pathname === '/' || location.pathname === '/auth') {
-             if (!freshUser.weight || !freshUser.height) {
-               navigate('/quiz', { replace: true });
-             } else {
-               navigate('/dashboard', { replace: true });
-             }
+          // Redirecionamento inteligente baseado no perfil
+          const needsQuiz = !freshUser.weight || !freshUser.height;
+          const isPublicPath = location.pathname === '/' || location.pathname === '/entrar' || location.pathname === '/registrar';
+          
+          if (needsQuiz && location.pathname !== '/quiz') {
+            navigate('/quiz', { replace: true });
+          } else if (!needsQuiz && (isPublicPath || location.pathname === '/quiz')) {
+            navigate('/dashboard', { replace: true });
           }
 
         } else {

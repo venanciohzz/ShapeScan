@@ -111,7 +111,7 @@ export async function signInWithGoogle(): Promise<void> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: "https://shapescan.com.br/quiz",
+      redirectTo: "https://shapescan.com.br/",
     }
   });
   if (error) throw new Error(error.message);
