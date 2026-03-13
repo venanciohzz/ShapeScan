@@ -76,31 +76,36 @@ const App: React.FC = () => {
   const isInitializing = React.useRef(false);
 
   useEffect(() => {
-    // 1. Inicialização manual imediata
-    initSession();
+    // 1. Inicia o check inicial de forma segura
+    const runInit = async () => {
+      // Timeout de segurança: se em 5s não resolveu, libera a UI
+      const timer = setTimeout(() => {
+        setIsSessionLoading(false);
+        isInitializing.current = false;
+      }, 5000);
 
-    // 2. Escuta mudanças subsequentes na autenticação
+      await initSession();
+      clearTimeout(timer);
+    };
+
+    runInit();
+
+    // 2. Escuta mudanças na autenticação
     const { data: { subscription } } = db.auth.supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`Supabase Auth Event: ${event}`);
-      
+      console.log(`Supabase Event: ${event}`);
       if (session) {
-        // Só re-inicializamos se o usuário for diferente ou se for um evento de login explícito
-        await initSession(session.user);
-      } else {
+        initSession(session.user);
+      } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
         setUser(null);
         setIsSessionLoading(false);
-        const publicPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/nova-senha', '/recuperar-senha'];
-        if (!publicPaths.includes(location.pathname)) {
-          navigate('/', { replace: true });
-        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []); // Monta o listener apenas uma vez
+  }, []);
 
   const initSession = async (sessionUser?: any) => {
-    // Proteção básica contra concorrência simples
+    // Se já estivermos inicializando e não for um usuário novo forçado, ignora
     if (isInitializing.current && !sessionUser) return;
     
     try {
@@ -110,7 +115,8 @@ const App: React.FC = () => {
       const authUser = sessionUser || (await db.auth.supabase.auth.getSession()).data.session?.user;
       
       if (authUser) {
-        const freshUser = await db.users.get(authUser.email);
+        // Obter perfil usando userId diretamente para ser mais rápido
+        const freshUser = await db.users.get(authUser.email, authUser.id);
 
         let needsUpdate = false;
         const updates: Partial<User> = {};
@@ -143,7 +149,7 @@ const App: React.FC = () => {
         setUser(finalUser);
         await loadUserData(freshUser.id);
 
-        // Redirecionamento inteligente
+        // Redirecionamento 
         const needsQuiz = !freshUser.weight || !freshUser.height;
         const isPublicPath = ['/', '/entrar', '/registrar'].includes(location.pathname);
         
@@ -153,11 +159,10 @@ const App: React.FC = () => {
           navigate('/dashboard', { replace: true });
         }
       } else {
-        // Sem usuário, garantimos que o loading pare
         setIsSessionLoading(false);
       }
     } catch (e) {
-      console.error("Erro na inicialização da sessão:", e);
+      console.error("Erro na sessão:", e);
       setUser(null);
       setIsSessionLoading(false);
     } finally {

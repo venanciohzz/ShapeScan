@@ -46,11 +46,16 @@ export const db = {
     },
 
     users: {
-        async get(email: string): Promise<User> {
-            const { data: { session } } = await supabaseService.supabase.auth.getSession();
-            if (!session?.user) throw new Error('Usuário não autenticado');
+        async get(email: string, userId?: string): Promise<User> {
+            let targetId = userId;
+            
+            if (!targetId) {
+                const { data: { session } } = await supabaseService.supabase.auth.getSession();
+                if (!session?.user) throw new Error('Usuário não autenticado');
+                targetId = session.user.id;
+            }
 
-            const user = await supabaseService.getOrCreateProfile(session.user.id);
+            const user = await supabaseService.getOrCreateProfile(targetId);
 
             // Garantir que admin tenha privilégios
             if (user.email === ADMIN_EMAIL && (!user.isPremium || !user.isAdmin)) {
