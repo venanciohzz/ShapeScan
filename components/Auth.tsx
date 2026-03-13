@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
 import { db } from '../services/db';
@@ -23,6 +23,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const [isRegistering, setIsRegistering] = useState(initialMode === 'registrar');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   // Máscara de telefone (BR)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,11 +91,42 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Erro ao conectar com o servidor.');
+      if (err.message === 'auth/confirmation-required') {
+        setNeedsConfirmation(true);
+      } else {
+        setError(err.message || 'Erro ao conectar com o servidor.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (needsConfirmation) {
+    return (
+      <PremiumBackground className="flex items-center justify-center min-h-screen p-4" dim={true} intensity={1.5}>
+        <div className="bg-zinc-950/40 backdrop-blur-3xl p-12 rounded-[3.5rem] border border-emerald-500/20 shadow-2xl text-center max-w-lg w-full">
+          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-emerald-500/30">
+            <Mail className="w-10 h-10 text-emerald-500" />
+          </div>
+          <h1 className="text-3xl font-black text-white px-2 tracking-tighter mb-4"><LetterPuller text="Verifique seu E-mail" /></h1>
+          <p className="text-zinc-400 font-medium mb-10 leading-relaxed text-sm">
+            Sua conta foi criada com sucesso! Enviamos um link de confirmação para <strong className="text-white">{email}</strong>.
+            <br /><br />
+            Por favor, verifique sua caixa de entrada (e a pasta de spam) para ativar sua conta antes de continuar.
+          </p>
+          <button 
+            onClick={() => {
+              setNeedsConfirmation(false);
+              setIsRegistering(false); // Switch to login mode
+            }} 
+            className="w-full px-8 py-5 bg-emerald-500 text-zinc-950 hover:bg-emerald-400 transition-all font-black text-xs uppercase tracking-widest rounded-[2rem] shadow-lg shadow-emerald-500/20"
+          >
+            Voltar para o Login
+          </button>
+        </div>
+      </PremiumBackground>
+    );
+  }
 
   return (
     <PremiumBackground className="flex items-center justify-center p-6" dim={true} intensity={1.0}>

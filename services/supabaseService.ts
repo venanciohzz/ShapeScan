@@ -46,6 +46,12 @@ export async function signUp(email: string, password: string, userData: Omit<Use
   if (!authData.user) throw new Error('Falha ao criar usuário');
 
   // Retornar objeto User construído com os dados enviados (já que o profile pode levar uns ms para ser criado)
+  const isConfirmed = authData.user.email_confirmed_at !== undefined && authData.user.email_confirmed_at !== null;
+  // Se exigirmos confirmação de email e ele não estiver confirmado, jogamos erro pro Auth saber
+  if (!isConfirmed) {
+      throw new Error('auth/confirmation-required');
+  }
+
   return {
     ...userData,
     id: authData.user.id,
@@ -55,7 +61,8 @@ export async function signUp(email: string, password: string, userData: Omit<Use
     isAdmin: false,
     plan: 'free',
     dailyCalorieGoal: userData.dailyCalorieGoal || 2000,
-    freeScansUsed: 0
+    freeScansUsed: 0,
+    emailConfirmed: isConfirmed
   } as User;
 }
 
@@ -663,6 +670,7 @@ function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAd
     impediments: profile.impediments || [],
     conquests: profile.conquests || [],
     targetWeight: profile.targetWeight || profile.target_weight,
+    emailConfirmed: profile.emailConfirmed || profile.email_confirmed || false,
     createdAt: new Date(profile.created_at).getTime(),
   };
 }

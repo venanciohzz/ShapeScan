@@ -52,6 +52,16 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('landing'); // Keep for legacy but sync with route
   const [previousView, setPreviousView] = useState<View>('dashboard');
 
+  /* estado novo */
+  const [isQuizLoading, setIsQuizLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 5000); // 5s for better visibility on errors
+  };
+
   // Sync currentView with route for navigation component
   useEffect(() => {
     const path = location.pathname;
@@ -73,6 +83,28 @@ const App: React.FC = () => {
     const timer = setTimeout(() => window.scrollTo(0, 0), 100);
     return () => clearTimeout(timer);
   }, [currentView]);
+
+  // Handle Hash Errors (e.g. Email Confirmation Expired)
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('error=')) {
+      const params = new URLSearchParams(hash.substring(1));
+      const errorMsg = params.get('error_description') || params.get('error') || 'Erro de autenticação';
+      const errorCode = params.get('error_code');
+      
+      let displayMessage = errorMsg;
+      if (errorCode === 'otp_expired' || errorMsg.toLowerCase().includes('expired')) {
+        displayMessage = 'O link de confirmação de e-mail expirou ou já foi usado. Tente fazer login novamente.';
+      }
+
+      showToast(displayMessage, 'error');
+      navigate('/entrar');
+      
+      // Clear hash from URL safely
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + window.location.search;
+      window.history.replaceState(null, '', cleanUrl);
+    }
+  }, [location.hash, navigate]);
 
   // Professional Optimization 1: Unified Session Loading (Removed stale cache)
   useEffect(() => {
@@ -234,11 +266,6 @@ const App: React.FC = () => {
     setWaterConsumed(0);
     navigate('/');
   };
-
-  /* estado novo */
-  const [isQuizLoading, setIsQuizLoading] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [showCelebration, setShowCelebration] = useState(false);
 
   // ... (código existente)
 
@@ -430,11 +457,6 @@ const App: React.FC = () => {
   }
 
   // Toast state moved up
-
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const renderView = () => {
     return (

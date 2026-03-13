@@ -179,7 +179,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                         {u.name?.[0]?.toUpperCase() || 'U'}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-white text-base tracking-tight">{u.name || 'Usuário Não Identificado'}</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-bold text-white text-base tracking-tight">{u.name || 'Usuário Não Identificado'}</p>
+                                                            {u.emailConfirmed ? (
+                                                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[8px] font-black uppercase tracking-widest border border-emerald-500/20">
+                                                                    <Check className="w-2.5 h-2.5" /> Verificado
+                                                                </span>
+                                                            ) : (
+                                                                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[8px] font-black uppercase tracking-widest border border-amber-500/20">
+                                                                    <X className="w-2.5 h-2.5" /> Pendente
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <p className="text-xs font-semibold text-zinc-500">{u.email}</p>
                                                     </div>
                                                 </div>
