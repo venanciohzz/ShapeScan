@@ -162,9 +162,13 @@ const App: React.FC = () => {
 
       if (isNewUser) {
         if (location.pathname !== '/quiz') {
+          console.log("App: Redirecionando para /quiz (perfil incompleto)");
           navigate('/quiz', { replace: true });
         }
-      } else if (onPublicRoute || location.pathname === '/quiz') {
+      } else if (location.pathname === '/quiz' || onPublicRoute) {
+        // Se o usuário acabou de completar o quiz, ele deve ir para /planos ou /dashboard
+        // Mas o handleQuizComplete já cuida disso. Só redirecionamos aqui se estivermos "presos" em rotas públicas ou no quiz sem necessidade.
+        console.log("App: Redirecionando para dashboard (perfil completo)");
         navigate('/dashboard', { replace: true });
       }
     } catch (e) {
@@ -248,12 +252,26 @@ const App: React.FC = () => {
   // ... (código existente)
 
   const handleQuizComplete = async (metrics: Partial<User>) => {
+    console.log("App: Iniciando handleQuizComplete...", metrics);
     if (!user) {
+      console.error("App: Erro - Usuário nulo em handleQuizComplete");
       alert("Erro: Usuário não identificado. Tente fazer login novamente.");
       return;
     }
 
     setIsQuizLoading(true);
+    
+    // Timeout de segurança: 10 segundos para não travar a UI infinitamente
+    const safetyTimeout = setTimeout(() => {
+      setIsQuizLoading(current => {
+        if (current) {
+          console.warn("App: Quiz Loading excedeu 10s. Forçando encerramento.");
+          return false;
+        }
+        return current;
+      });
+    }, 10000);
+
     try {
       const { age, height, weight, gender, goal, activityLevel } = metrics;
       const activityFactor = parseFloat(activityLevel || '1.2');
@@ -284,19 +302,28 @@ const App: React.FC = () => {
         dailyProtein: protein,
         dailyCarbs: carbs,
         dailyFat: fat,
-        // Remover atualização de plano aqui, pois é controlada pela tabela user_plans
-        // plan: (user.isAdmin ? 'lifetime' : 'free') as any, // REMOVIDO PARA EVITAR ERRO
         freeScansUsed: user.freeScansUsed || 0
       };
 
+      console.log("App: Enviando atualizações do quiz para o banco...", updates);
+      // Garantir que temos o ID correto
       const updatedUser = await db.users.update(user.email, updates);
+      console.log("App: Perfil atualizado com sucesso pós-quiz.");
+      
       setUser(updatedUser);
+      clearTimeout(safetyTimeout);
+      
+      console.log("App: Redirecionando para /planos...");
+      // Navegação explícita
       navigate('/planos');
+      
     } catch (error: any) {
-      console.error("Erro no Quiz:", error);
+      console.error("App: Erro crítico no handleQuizComplete:", error);
       alert("Erro ao salvar dados: " + (error.message || "Tente novamente."));
     } finally {
+      clearTimeout(safetyTimeout);
       setIsQuizLoading(false);
+      console.log("App: handleQuizComplete finalizado.");
     }
   };
 

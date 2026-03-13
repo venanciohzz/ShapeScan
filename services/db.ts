@@ -72,10 +72,18 @@ export const db = {
         },
 
         async update(email: string, updates: Partial<User>): Promise<User> {
-            const session = await supabaseService.getSession();
-            if (!session) throw new Error('Usuário não autenticado');
+            console.log(`db: Iniciando update para usuário ${email}...`);
+            const { data: { session } } = await supabaseService.supabase.auth.getSession();
+            const userId = session?.user?.id;
+            
+            if (!userId) {
+                console.error("db: Erro no update - Usuário não autenticado no Supabase Auth");
+                throw new Error('Usuário não autenticado');
+            }
 
-            const updatedUser = await supabaseService.updateProfile(session.id, updates);
+            console.log(`db: Chamando updateProfile para ID: ${userId}`);
+            const updatedUser = await supabaseService.updateProfile(userId, updates);
+            console.log("db: Update concluído com sucesso.");
             return updatedUser;
         }
     },

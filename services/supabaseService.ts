@@ -166,9 +166,8 @@ export async function getProfile(userId: string): Promise<User> {
   console.log(`supabaseService: Perfil ${userId} encontrado`);
   if (!data) throw new Error('Perfil não encontrado');
 
-  // Buscar plano do usuário - Usamos .limit(1) em vez de .single() para evitar travar o login
-  // caso existam registros duplicados (estabilidade crítica).
-  const { data: plans } = await supabase
+  console.log(`supabaseService: Buscando plano para ${userId}...`);
+  const { data: plans, error: planError } = await supabase
     .from('user_plans')
     .select('plan_id, active')
     .eq('user_id', userId)
@@ -176,13 +175,19 @@ export async function getProfile(userId: string): Promise<User> {
     .order('created_at', { ascending: false })
     .limit(1);
 
+  if (planError) {
+    console.error(`supabaseService: Erro ao buscar plano para ${userId}:`, planError.message);
+  }
+
   const planData = plans?.[0];
+  console.log(`supabaseService: Plano encontrado: ${planData?.plan_id || 'nenhum'}`);
 
   // Priorizar dados da tabela user_plans, mas usar os novos campos da profile como redundância/cache
   const planId = planData?.plan_id || data.plan || 'free';
   const isPremium = planData ? (planData.plan_id !== 'free') : (data.is_premium || false);
   const isAdmin = data.is_admin || false;
 
+  console.log(`supabaseService: Mapeando usuário. Premium: ${isPremium}, Plan: ${planId}`);
   return mapProfileToUser(data, planId, isPremium, isAdmin);
 }
 
