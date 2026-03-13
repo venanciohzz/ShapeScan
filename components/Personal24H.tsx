@@ -17,7 +17,7 @@ interface PersonalIAProps {
   onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, messages, setMessages, onUpgrade, onShowToast }) => {
+const Personal24H: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, messages, setMessages, onUpgrade, onShowToast }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -44,7 +44,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
             onClick={onUpgrade}
             className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(255,255,255,0.1)] hover:bg-zinc-200 active:scale-95 transition-all text-xs mb-6"
           >
-            Desbloquear Personal IA
+            Desbloquear Personal 24H
           </button>
 
           <button
@@ -185,7 +185,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
                   <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-40" />
                 </div>
                 <h1 className="text-2xl font-serif-premium font-bold text-white tracking-tight leading-none">
-                  Personal 24h
+                  Personal 24H
                 </h1>
               </div>
               <div className="flex items-center gap-2">
@@ -220,7 +220,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
                         <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
                           <Bot className="w-3 h-3 text-emerald-500" />
                         </div>
-                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">ShapeScan AI</span>
+                        <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">ShapeScan</span>
                       </>
                     ) : (
                       <>
@@ -290,7 +290,7 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Pergunte ao Personal 24h..."
+                placeholder="Pergunte ao seu Personal 24H..."
                 className="flex-1 bg-transparent py-4 px-2 outline-none text-white font-medium placeholder:text-zinc-600 text-[16px] min-w-0"
                 disabled={loading}
                 autoComplete="off"
@@ -315,4 +315,4 @@ const PersonalIA: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, 
   );
 };
 
-export default PersonalIA;
+export default Personal24H;

@@ -1,21 +1,20 @@
 import React from 'react';
-import { View } from '../types';
+import { NavLink } from 'react-router-dom';
 import { Home, ScanLine, UserSquare2, TrendingUp, MessageSquare, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface NavigationProps {
-  currentView: View;
-  onNavigate: (view: View) => void;
+  currentView: string;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
+const Navigation: React.FC<NavigationProps> = ({ currentView }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Início', icon: <Home className="w-5 h-5" /> },
-    { id: 'food_ai', label: 'Scanner', icon: <ScanLine className="w-5 h-5" /> },
-    { id: 'shape', label: 'Shape', icon: <UserSquare2 className="w-5 h-5" /> },
-    { id: 'evolution', label: 'Evolução', icon: <TrendingUp className="w-5 h-5" /> },
-    { id: 'chat', label: 'Personal 24h', icon: <MessageSquare className="w-5 h-5" /> },
-    { id: 'settings', label: 'Perfil', icon: <Settings className="w-5 h-5" /> },
+    { id: 'dashboard', path: '/dashboard', label: 'Início', icon: <Home className="w-5 h-5" /> },
+    { id: 'analise-refeicao', path: '/analise-refeicao', label: 'Refeição', icon: <ScanLine className="w-5 h-5" /> },
+    { id: 'analise-fisica', path: '/analise-fisica', label: 'Shape', icon: <UserSquare2 className="w-5 h-5" /> },
+    { id: 'evolucao', path: '/evolucao', label: 'Evolução', icon: <TrendingUp className="w-5 h-5" /> },
+    { id: 'personal-24h', path: '/personal-24h', label: 'Personal 24H', icon: <MessageSquare className="w-5 h-5" /> },
+    { id: 'perfil', path: '/perfil', label: 'Perfil', icon: <Settings className="w-5 h-5" /> },
   ];
 
   return (
@@ -26,35 +25,40 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
           <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-50 pointer-events-none"></div>
 
           {tabs.map((tab) => {
-            const isActive = (currentView === tab.id || (tab.id === 'food_ai' && currentView === 'food_manual'));
             return (
-              <button
+              <NavLink
                 key={tab.id}
-                onClick={() => onNavigate(tab.id as View)}
-                className="relative flex flex-col items-center justify-center w-12 h-12 transition-all duration-300 active:scale-90"
+                to={tab.path}
+                className={({ isActive }) => `
+                  relative flex flex-col items-center justify-center w-12 h-12 transition-all duration-300 active:scale-90
+                `}
               >
-                <div className={`
-                    relative z-10 transition-all duration-500 flex flex-col items-center justify-center
-                    ${isActive ? 'text-white scale-110' : 'text-zinc-500 hover:text-zinc-300'}
-                  `}>
-                  {tab.icon}
-                </div>
+                {({ isActive }) => (
+                  <>
+                    <div className={`
+                        relative z-10 transition-all duration-500 flex flex-col items-center justify-center
+                        ${isActive ? 'text-white scale-110' : 'text-zinc-500 hover:text-zinc-300'}
+                      `}>
+                      {tab.icon}
+                    </div>
 
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTabMobile"
-                    className="absolute inset-0 bg-emerald-500/20 rounded-2xl z-0"
-                    transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
-                  />
-                )}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabMobile"
+                        className="absolute inset-0 bg-emerald-500/20 rounded-2xl z-0"
+                        transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
+                      />
+                    )}
 
-                {isActive && (
-                  <motion.div
-                    layoutId="activeDotMobile"
-                    className="absolute -bottom-1 w-1 h-1 bg-emerald-500 rounded-full"
-                  />
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeDotMobile"
+                        className="absolute -bottom-1 w-1 h-1 bg-emerald-500 rounded-full"
+                      />
+                    )}
+                  </>
                 )}
-              </button>
+              </NavLink>
             )
           })}
         </div>
@@ -71,26 +75,29 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onNavigate }) => {
 
         <div className="pointer-events-auto bg-zinc-950/80 backdrop-blur-2xl px-3 py-3 rounded-full flex items-center gap-1 shadow-2xl border border-white/10">
           {tabs.map((tab) => {
-            const isActive = (currentView === tab.id || (tab.id === 'food_ai' && currentView === 'food_manual'));
             return (
-              <button
+              <NavLink
                 key={tab.id}
-                onClick={() => onNavigate(tab.id as View)}
-                className={`relative px-6 py-3 rounded-full flex items-center gap-3 transition-all duration-500 active:scale-95 group overflow-hidden`}
+                to={tab.path}
+                className={({ isActive }) => `relative px-6 py-3 rounded-full flex items-center gap-3 transition-all duration-500 active:scale-95 group overflow-hidden`}
               >
-                <div className={`relative z-10 flex items-center gap-2 ${isActive ? 'text-zinc-950' : 'text-zinc-400 group-hover:text-white'}`}>
-                  <div className={`transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>{tab.icon}</div>
-                  <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
-                </div>
+                {({ isActive }) => (
+                  <>
+                    <div className={`relative z-10 flex items-center gap-2 ${isActive ? 'text-zinc-950' : 'text-zinc-400 group-hover:text-white'}`}>
+                      <div className={`transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>{tab.icon}</div>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
+                    </div>
 
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTabDesktop"
-                    className="absolute inset-0 bg-white shadow-[0_0_20px_rgba(255,255,255,0.4)] z-0 rounded-full"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabDesktop"
+                        className="absolute inset-0 bg-white shadow-[0_0_20px_rgba(255,255,255,0.4)] z-0 rounded-full"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                  </>
                 )}
-              </button>
+              </NavLink>
             );
           })}
         </div>

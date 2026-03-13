@@ -208,7 +208,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     onSaveToEvolution({
       photo: undefined,
       notes: `${result.personal_ia_comment}\n\nANÁLISE REGIONAL:\nTronco: ${result.regional_analysis?.trunk?.strength || 'N/A'} | ${result.regional_analysis?.trunk?.improvement || 'N/A'}\nBraços: ${result.regional_analysis?.arms?.strength || 'N/A'} | ${result.regional_analysis?.arms?.improvement || 'N/A'}\nAbdômen: ${result.regional_analysis?.abs_waist?.strength || 'N/A'} | ${result.regional_analysis?.abs_waist?.improvement || 'N/A'}\nPernas: ${result.regional_analysis?.legs?.strength || 'N/A'} | ${result.regional_analysis?.legs?.improvement || 'N/A'}`,
-      detailedAnalysis: `${result.structural_analysis?.name || 'N/A'} | ${result.bf_classification || 'N/A'}\n\nSignificado: ${result.structural_analysis?.meaning || 'N/A'}\n\nVantagem: ${result.structural_analysis?.strength || 'N/A'}\n\nDesafio: ${result.structural_analysis?.improvement || 'N/A'}\n\nFoco 60 Dias: ${result.execution_strategy?.primary_focus_next_60_days || 'N/A'}\n\nEstratégia: ${result.execution_strategy?.training_focus?.join(', ') || 'N/A'}\n\nNutrição: ${result.nutritional_protocol?.caloric_strategy || 'N/A'} | ${result.nutritional_protocol?.protein_target || 'N/A'}`,
+      detailedAnalysis: `${result.structural_analysis?.name || 'N/A'} | ${result.bf_classification || 'N/A'}\n\nDescrição: ${result.structural_analysis?.meaning || 'N/A'}\n\nVantagem: ${result.structural_analysis?.strength || 'N/A'}\n\nDesafio: ${result.structural_analysis?.improvement || 'N/A'}\n\nFoco 60 Dias: ${result.execution_strategy?.primary_focus_next_60_days || 'N/A'}\n\nEstratégia: ${result.execution_strategy?.training_focus?.join(', ') || 'N/A'}\n\nNutrição: ${result.nutritional_protocol?.caloric_strategy || 'N/A'} | ${result.nutritional_protocol?.protein_target || 'N/A'}`,
       pointsToImprove: result.execution_strategy?.common_mistakes?.join('\n') || '',
       macroSuggestions: result.execution_strategy?.nutrition_focus || '',
       weight: w,
@@ -273,8 +273,8 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           {!result ? (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="space-y-4">
-                <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">Análise de Bioimpedância Visual</span>
-                <LetterPuller text="Shape Scan" className="text-4xl md:text-6xl text-white tracking-tighter text-balance" />
+                <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">Análise Física</span>
+                <LetterPuller text="Scanner" className="text-4xl md:text-6xl text-white tracking-tighter text-balance" />
               </div>
 
               <div className="bg-zinc-950/40 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 shadow-2xl space-y-8">
@@ -540,7 +540,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-emerald-500 via-emerald-600 to-transparent shadow-[4px_0_20px_rgba(16,185,129,0.2)]"></div>
                 <div className="relative z-10 space-y-10">
                   <div className="space-y-4">
-                    <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Veredito do Analista AI</p>
+                    <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em]">Diagnóstico de Performance</p>
                     <p className="text-white text-xl sm:text-2xl md:text-5xl font-serif-premium font-bold leading-tight tracking-tighter italic text-balance">
                       "{result.personal_ia_insight.aesthetic_diagnosis}"
                     </p>
@@ -728,7 +728,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                   <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
                     <AlertTriangle className="w-6 h-6 text-red-500" />
                   </div>
-                  <h3 className="text-[11px] font-black text-red-500 uppercase tracking-[0.3em]">Protocolo de Risco e Platô</h3>
+                  <h3 className="text-[11px] font-black text-red-500 uppercase tracking-[0.3em]">Protocolo de Performance</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {result.execution_strategy.common_mistakes.map((error, idx) => (
@@ -742,7 +742,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
               <div className="pt-12 border-t border-white/5 text-center">
                 <p className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.4em] italic opacity-60">
-                  "{result.personal_ia_comment}"
+                  {result.personal_ia_comment}
                 </p>
               </div>
 

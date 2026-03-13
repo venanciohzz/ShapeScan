@@ -166,7 +166,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       if (!analysis?.items?.length) throw new Error("Falha no cálculo.");
       setResult(analysis);
     } catch (err) {
-      onShowToast("Erro ao consultar a IA.", 'error');
+      onShowToast("Erro ao processar análise.", 'error');
     } finally {
       setLoading(false);
     }
@@ -224,7 +224,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             <LetterPuller text="Acesso Exclusivo" />
           </h2>
           <p className="text-zinc-400 font-medium text-base mb-12 leading-relaxed max-w-xs mx-auto">
-            Acesse a Inteligência Artificial para descobrir os macronutrientes exatos da sua refeição apenas tirando uma foto.
+            Acesse a nossa análise avançada para descobrir os macronutrientes exatos da sua refeição apenas tirando uma foto.
           </p>
           <motion.button 
             whileTap={{ scale: 0.97 }}
@@ -309,7 +309,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                       <LetterPuller text="Manual" />
                     </>
                   ) : (
-                    <LetterPuller text="Food Scan" />
+                    <LetterPuller text="Análise" />
                   )}
                 </h1>
               </div>
@@ -499,7 +499,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                       <div className="flex justify-between items-center">
                         <span className="text-[10px] font-black text-white uppercase tracking-widest opacity-40 flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 text-indigo-500" />
-                          Muscle Score (Hipertrofia)
+                          Muscle Score (Músculo)
                         </span>
                         <span className="text-3xl font-serif-premium font-bold text-indigo-500">{result?.muscle_score || 0}/10</span>
                       </div>
@@ -562,7 +562,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                     onClick={() => confirmAdd(true)} 
                     className="bg-zinc-900 text-white py-6 rounded-3xl font-black uppercase tracking-widest text-[9px] border border-white/10 hover:bg-zinc-800 transition-all"
                   >
-                    Set as Favorite <Save className="w-4 h-4 ml-2 inline-block" />
+                    Salvar Favorito <Save className="w-4 h-4 ml-2 inline-block" />
                   </motion.button>
                 </div>
               </div>
