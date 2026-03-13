@@ -34,6 +34,10 @@ export const db = {
 
         async updatePassword(password: string): Promise<void> {
             await supabaseService.updatePassword(password);
+        },
+
+        async signInWithGoogle(): Promise<void> {
+            await supabaseService.signInWithGoogle();
         }
     },
 
@@ -42,7 +46,7 @@ export const db = {
             const session = await supabaseService.getSession();
             if (!session) throw new Error('Usuário não autenticado');
 
-            const user = await supabaseService.getProfile(session.id);
+            const user = await supabaseService.getOrCreateProfile(session.id);
 
             // Garantir que admin tenha privilégios
             if (user.email === ADMIN_EMAIL && (!user.isPremium || !user.isAdmin)) {

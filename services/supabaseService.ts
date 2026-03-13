@@ -107,6 +107,16 @@ export async function signIn(email: string, password: string): Promise<User> {
   throw new Error(error?.message || 'Erro ao fazer login');
 }
 
+export async function signInWithGoogle(): Promise<void> {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: "https://shapescan.com.br/quiz",
+    }
+  });
+  if (error) throw new Error(error.message);
+}
+
 export async function signOut(): Promise<void> {
   const { error } = await supabase.auth.signOut();
   if (error) throw new Error(error.message);
@@ -167,6 +177,39 @@ export async function getProfile(userId: string): Promise<User> {
   const isAdmin = data.is_admin || false;
 
   return mapProfileToUser(data, planId, isPremium, isAdmin);
+}
+
+export async function getOrCreateProfile(userId: string): Promise<User> {
+  try {
+    return await getProfile(userId);
+  } catch (err: any) {
+    if (err.message.includes('JSON object requested, but 0 rows were returned') || err.message.includes('Perfil não encontrado')) {
+      // Novo usuário de OAuth, criar perfil padrão
+      const { data: { session } } = await supabase.auth.getSession();
+      const email = session?.user?.email || '';
+      const name = session?.user?.user_metadata?.full_name || email.split('@')[0];
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          email,
+          name,
+          username: email.split('@')[0],
+          is_premium: false,
+          is_admin: email === 'contatobielaz@gmail.com',
+          plan: 'free',
+          dailyCalorieGoal: 2000,
+          dailyWaterGoal: 2500
+        })
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      return mapProfileToUser(data, 'free', email === 'contatobielaz@gmail.com', email === 'contatobielaz@gmail.com');
+    }
+    throw err;
+  }
 }
 
 export async function updateProfile(userId: string, updates: Partial<User>): Promise<User> {
