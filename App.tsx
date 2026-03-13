@@ -74,6 +74,17 @@ const App: React.FC = () => {
   }, [currentView]);
 
   useEffect(() => {
+    if (window.location.hash) {
+      console.log("Hash detectado na URL:", window.location.hash);
+      const params = new URLSearchParams(window.location.hash.substring(1));
+      const error = params.get('error_description') || params.get('error');
+      if (error) {
+        alert("Erro detectado na URL: " + error);
+      }
+    }
+  }, [location]);
+
+  useEffect(() => {
     const initSession = async () => {
       try {
         const sessionUser = await db.auth.getSession();
