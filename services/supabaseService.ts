@@ -167,13 +167,18 @@ export async function getSession(): Promise<User | null> {
 // ==================== PERFIL ====================
 
 export async function getProfile(userId: string): Promise<User> {
+  console.log(`supabaseService: getProfile iniciado para ID: ${userId}`);
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error(`supabaseService: Erro ao buscar perfil ${userId}:`, error.message);
+    throw new Error(error.message);
+  }
+  console.log(`supabaseService: Perfil ${userId} encontrado`);
   if (!data) throw new Error('Perfil não encontrado');
 
   // Buscar plano do usuário - Usamos .limit(1) em vez de .single() para evitar travar o login
@@ -201,10 +206,10 @@ export async function getOrCreateProfile(userId: string): Promise<User> {
     return await getProfile(userId);
   } catch (err: any) {
     if (err.message.includes('JSON object requested, but 0 rows were returned') || err.message.includes('Perfil não encontrado')) {
-      // Novo usuário de OAuth, criar perfil padrão
-      const { data: { session } } = await supabase.auth.getSession();
-      const email = session?.user?.email || '';
-      const name = session?.user?.user_metadata?.full_name || email.split('@')[0];
+      // Tentar obter dados do usuário logado para o perfil inicial
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const email = authUser?.email || '';
+      const name = authUser?.user_metadata?.full_name || email.split('@')[0];
       
       const { data, error } = await supabase
         .from('profiles')
@@ -222,7 +227,11 @@ export async function getOrCreateProfile(userId: string): Promise<User> {
         .select()
         .single();
         
-      if (error) throw new Error(error.message);
+      if (error) {
+        // Se der erro de duplicata, tentamos buscar o perfil uma última vez
+        if (error.code === '23505') return await getProfile(userId);
+        throw new Error(error.message);
+      }
       return mapProfileToUser(data, 'free', email === 'contatobielaz@gmail.com', email === 'contatobielaz@gmail.com');
     }
     throw err;

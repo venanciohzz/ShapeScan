@@ -47,15 +47,22 @@ export const db = {
 
     users: {
         async get(email: string, userId?: string): Promise<User> {
+            console.log(`db: Buscando usuário ${email} (userId: ${userId || 'não provido'})`);
             let targetId = userId;
             
             if (!targetId) {
+                console.log("db: userId não provido, obtendo sessão do Supabase...");
                 const { data: { session } } = await supabaseService.supabase.auth.getSession();
-                if (!session?.user) throw new Error('Usuário não autenticado');
+                if (!session?.user) {
+                    console.error("db: Falha ao obter usuário - Sessão não encontrada");
+                    throw new Error('Usuário não autenticado');
+                }
                 targetId = session.user.id;
+                console.log(`db: Sessão recuperada. ID: ${targetId}`);
             }
 
             const user = await supabaseService.getOrCreateProfile(targetId);
+            console.log("db: Perfil processado com sucesso");
 
             // Garantir que admin tenha privilégios
             if (user.email === ADMIN_EMAIL && (!user.isPremium || !user.isAdmin)) {
