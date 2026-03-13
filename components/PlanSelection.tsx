@@ -90,7 +90,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                {/* FREE PLAN */}
                <div className="relative animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
                   <PlanCard
-                     title="Grátis"
+                     title="Starter"
                      price="0"
                      period=""
                      features={[
