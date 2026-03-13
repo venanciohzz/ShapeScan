@@ -34,31 +34,15 @@ export const db = {
 
         async updatePassword(password: string): Promise<void> {
             await supabaseService.updatePassword(password);
-        },
-
-        get supabase() {
-            return supabaseService.supabase;
         }
     },
 
     users: {
-        async get(email: string, userId?: string, authUser?: any): Promise<User> {
-            console.log(`db: Buscando usuário ${email} (userId: ${userId || 'não provido'})`);
-            let targetId = userId;
-            
-            if (!targetId) {
-                console.log("db: userId não provido, obtendo sessão do Supabase...");
-                const { data: { session } } = await supabaseService.supabase.auth.getSession();
-                if (!session?.user) {
-                    console.error("db: Falha ao obter usuário - Sessão não encontrada");
-                    throw new Error('Usuário não autenticado');
-                }
-                targetId = session.user.id;
-                console.log(`db: Sessão recuperada. ID: ${targetId}`);
-            }
+        async get(email: string): Promise<User> {
+            const session = await supabaseService.getSession();
+            if (!session) throw new Error('Usuário não autenticado');
 
-            const user = await supabaseService.getOrCreateProfile(targetId, authUser);
-            console.log("db: Perfil processado com sucesso");
+            const user = await supabaseService.getProfile(session.id);
 
             // Garantir que admin tenha privilégios
             if (user.email === ADMIN_EMAIL && (!user.isPremium || !user.isAdmin)) {
@@ -72,18 +56,10 @@ export const db = {
         },
 
         async update(email: string, updates: Partial<User>): Promise<User> {
-            console.log(`db: Iniciando update para usuário ${email}...`);
-            const { data: { session } } = await supabaseService.supabase.auth.getSession();
-            const userId = session?.user?.id;
-            
-            if (!userId) {
-                console.error("db: Erro no update - Usuário não autenticado no Supabase Auth");
-                throw new Error('Usuário não autenticado');
-            }
+            const session = await supabaseService.getSession();
+            if (!session) throw new Error('Usuário não autenticado');
 
-            console.log(`db: Chamando updateProfile para ID: ${userId}`);
-            const updatedUser = await supabaseService.updateProfile(userId, updates);
-            console.log("db: Update concluído com sucesso.");
+            const updatedUser = await supabaseService.updateProfile(session.id, updates);
             return updatedUser;
         }
     },

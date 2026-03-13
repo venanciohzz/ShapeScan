@@ -107,8 +107,6 @@ export async function signIn(email: string, password: string): Promise<User> {
   throw new Error(error?.message || 'Erro ao fazer login');
 }
 
-
-
 export async function signOut(): Promise<void> {
   const { error } = await supabase.auth.signOut();
   if (error) throw new Error(error.message);
@@ -135,39 +133,25 @@ export async function getSession(): Promise<User | null> {
     const profile = await getProfile(session.user.id);
     return profile;
   } catch (error) {
-    // Se não encontrar perfil, retorna o básico do Auth para que o App.tsx possa carregar
-    return { 
-      id: session.user.id, 
-      email: session.user.email || '',
-      name: session.user.user_metadata?.full_name || '',
-      username: (session.user.email || '').split('@')[0],
-      isPremium: false,
-      isAdmin: false,
-      dailyCalorieGoal: 2000,
-      plan: 'free'
-    } as User;
+    return null;
   }
 }
 
 // ==================== PERFIL ====================
 
 export async function getProfile(userId: string): Promise<User> {
-  console.log(`supabaseService: getProfile iniciado para ID: ${userId}`);
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
     .single();
 
-  if (error) {
-    console.error(`supabaseService: Erro ao buscar perfil ${userId}:`, error.message);
-    throw new Error(error.message);
-  }
-  console.log(`supabaseService: Perfil ${userId} encontrado`);
+  if (error) throw new Error(error.message);
   if (!data) throw new Error('Perfil não encontrado');
 
-  console.log(`supabaseService: Buscando plano para ${userId}...`);
-  const { data: plans, error: planError } = await supabase
+  // Buscar plano do usuário - Usamos .limit(1) em vez de .single() para evitar travar o login
+  // caso existam registros duplicados (estabilidade crítica).
+  const { data: plans } = await supabase
     .from('user_plans')
     .select('plan_id, active')
     .eq('user_id', userId)
@@ -175,62 +159,14 @@ export async function getProfile(userId: string): Promise<User> {
     .order('created_at', { ascending: false })
     .limit(1);
 
-  if (planError) {
-    console.error(`supabaseService: Erro ao buscar plano para ${userId}:`, planError.message);
-  }
-
   const planData = plans?.[0];
-  console.log(`supabaseService: Plano encontrado: ${planData?.plan_id || 'nenhum'}`);
 
   // Priorizar dados da tabela user_plans, mas usar os novos campos da profile como redundância/cache
   const planId = planData?.plan_id || data.plan || 'free';
   const isPremium = planData ? (planData.plan_id !== 'free') : (data.is_premium || false);
   const isAdmin = data.is_admin || false;
 
-  console.log(`supabaseService: Mapeando usuário. Premium: ${isPremium}, Plan: ${planId}`);
   return mapProfileToUser(data, planId, isPremium, isAdmin);
-}
-
-export async function getOrCreateProfile(userId: string, authUser?: SupabaseUser): Promise<User> {
-  try {
-    return await getProfile(userId);
-  } catch (err: any) {
-    if (err.message.includes('JSON object requested, but 0 rows were returned') || err.message.includes('Perfil não encontrado')) {
-      // Usar dados providos ou tentar obter do usuário logado
-      let userDetails = authUser;
-      if (!userDetails) {
-        const { data: { user } } = await supabase.auth.getUser();
-        userDetails = user || undefined;
-      }
-      
-      const email = userDetails?.email || '';
-      const name = userDetails?.user_metadata?.full_name || email.split('@')[0];
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          email,
-          name,
-          username: email.split('@')[0],
-          is_premium: false,
-          is_admin: email === 'contatobielaz@gmail.com',
-          plan: 'free',
-          dailyCalorieGoal: 2000,
-          dailyWaterGoal: 2500
-        })
-        .select()
-        .single();
-        
-      if (error) {
-        // Se der erro de duplicata, tentamos buscar o perfil uma última vez
-        if (error.code === '23505') return await getProfile(userId);
-        throw new Error(error.message);
-      }
-      return mapProfileToUser(data, 'free', email === 'contatobielaz@gmail.com', email === 'contatobielaz@gmail.com');
-    }
-    throw err;
-  }
 }
 
 export async function updateProfile(userId: string, updates: Partial<User>): Promise<User> {

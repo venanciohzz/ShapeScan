@@ -41,8 +41,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
     setPhone(value);
   };
 
-
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -126,7 +124,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
               {error}
             </div>
           )}
-
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {isRegistering && (

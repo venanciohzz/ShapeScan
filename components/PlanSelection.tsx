@@ -86,27 +86,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
             </div>
 
             {/* Plans Grid */}
-            <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
-               {/* FREE PLAN */}
-               <div className="relative animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
-                  <PlanCard
-                     title="Starter"
-                     price="0"
-                     period=""
-                     features={[
-                        "Test Drive (1 Análise IA)",
-                        "Acesso ao Dashboard",
-                        "Cálculo de Macros e Água",
-                        "Histórico Básico"
-                     ]}
-                     onClick={() => onSelect('free')}
-                     loading={false}
-                     highlightTag="Para Experimentar"
-                     isPro={false}
-                     ctaText="Começar Agora"
-                  />
-               </div>
-
+            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
                {/* STANDARD PLAN */}
                <div className="relative animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
                   <PlanCard
@@ -156,12 +136,21 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                   </p>
                </div>
             </div>
+
+            {/* Show "Continue Free" only if user hasn't used their 1 scan or isn't logged in yet */}
+            {(!user || (user.plan === 'free' && (user.freeScansUsed || 0) < 1)) && (
+               <div className="text-center mt-12 animate-in fade-in duration-1000 delay-700">
+                  <button onClick={() => onSelect('free')} className="text-zinc-500 hover:text-emerald-400 transition-colors text-[10px] font-black uppercase tracking-[0.3em] border-b border-white/10 hover:border-emerald-500/50 pb-1">
+                     Continuar no Plano Gratuito (1 Análise Total)
+                  </button>
+               </div>
+            )}
          </div>
       </PremiumBackground>
    );
 };
 
-const PlanCard = ({ title, price, period, features, highlightTag, onClick, loading, subtext, isPro, ctaText }: any) => (
+const PlanCard = ({ title, price, period, features, highlightTag, onClick, loading, subtext, isPro }: any) => (
    <div
       onClick={onClick}
       className={`
@@ -189,9 +178,9 @@ const PlanCard = ({ title, price, period, features, highlightTag, onClick, loadi
 
          <div className="mb-2 flex items-baseline gap-2 whitespace-nowrap">
             <span className="text-6xl md:text-7xl font-serif-premium font-bold text-white tracking-tighter drop-shadow-lg">
-               {price === '0' ? 'Grátis' : (price.includes('R$') ? price : <><span className="text-3xl font-black text-zinc-500 mr-1">R$</span>{price}</>)}
+               {price.includes('R$') ? '' : <span className="text-3xl font-black text-zinc-500 mr-1">R$</span>}{price}
             </span>
-            {price !== '0' && <span className="text-zinc-500 font-bold text-[10px] uppercase tracking-widest">{period}</span>}
+            <span className="text-zinc-500 font-bold text-[10px] uppercase tracking-widest">{period}</span>
          </div>
 
          {subtext && <p className="text-[10px] text-zinc-500 font-bold mb-8 uppercase tracking-wider">{subtext}</p>}
@@ -212,7 +201,7 @@ const PlanCard = ({ title, price, period, features, highlightTag, onClick, loadi
       </div>
 
       <button disabled={loading} className={`relative overflow-hidden w-full py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all duration-500 shadow-xl border ${isPro ? 'bg-emerald-500 text-zinc-950 border-emerald-400 hover:bg-emerald-400 hover:shadow-[0_0_30px_rgba(52,211,153,0.4)]' : 'bg-white/5 text-white border-white/10 hover:bg-white hover:text-zinc-950'} active:scale-95`}>
-         <span className="relative z-10">{loading ? 'Validando...' : (ctaText || 'Assinar Agora')}</span>
+         <span className="relative z-10">{loading ? 'Validando...' : 'Assinar Agora'}</span>
       </button>
    </div>
 );
