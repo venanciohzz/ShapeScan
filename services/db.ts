@@ -38,6 +38,10 @@ export const db = {
 
         async signInWithGoogle(): Promise<void> {
             await supabaseService.signInWithGoogle();
+        },
+
+        get supabase() {
+            return supabaseService.supabase;
         }
     },
 

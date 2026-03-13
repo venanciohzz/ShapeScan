@@ -109,28 +109,18 @@ export async function signIn(email: string, password: string): Promise<User> {
 
 export async function signInWithGoogle(): Promise<void> {
   const origin = window.location.origin;
-  alert("Iniciando signInWithGoogle no serviço. Origin: " + origin);
   console.log("signInWithGoogle: enviando redirectTo =", origin);
   
-  try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: origin,
-      }
-    });
-    
-    if (error) {
-      alert("Erro retornado pelo Supabase: " + error.message);
-      console.error("Erro no signInWithOAuth:", error);
-      throw new Error(error.message);
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: origin,
     }
-    
-    alert("Chamada signInWithOAuth enviada com sucesso. Aguardando redirecionamento...");
-    console.log("OAuth Data:", data);
-  } catch (err: any) {
-    alert("Exceção capturada no serviço: " + err.message);
-    throw err;
+  });
+  
+  if (error) {
+    console.error("Erro no signInWithOAuth:", error);
+    throw new Error(error.message);
   }
 }
 

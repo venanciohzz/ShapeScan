@@ -74,79 +74,86 @@ const App: React.FC = () => {
   }, [currentView]);
 
   useEffect(() => {
-    if (window.location.hash) {
-      console.log("Hash detectado na URL:", window.location.hash);
-      const params = new URLSearchParams(window.location.hash.substring(1));
-      const error = params.get('error_description') || params.get('error');
-      if (error) {
-        alert("Erro detectado na URL: " + error);
+    // Escuta mudanças na autenticação (importante para redirecionamento OAuth)
+    const { data: { subscription } } = db.auth.supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log(`Supabase Auth Event: ${_event}`);
+      if (session) {
+        await initSession(session.user);
+      } else {
+        setUser(null);
+        if (location.pathname !== '/' && location.pathname !== '/como-funciona' && location.pathname !== '/sobre' && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
+          navigate('/', { replace: true });
+        }
       }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [location.pathname]);
+
+  const initSession = async (sessionUser?: any) => {
+    try {
+      setIsSessionLoading(true);
+      const authUser = sessionUser || (await db.auth.supabase.auth.getSession()).data.session?.user;
+      
+      if (authUser) {
+        // Obter ou criar perfil (garante que novos usuários Google tenham registro no banco)
+        const freshUser = await db.users.get(authUser.email);
+
+        let needsUpdate = false;
+        const updates: Partial<User> = {};
+
+        // Cálculos de macros e inicialização de campos legados
+        if ((freshUser.dailyProtein === undefined || freshUser.dailyCarbs === undefined || freshUser.dailyFat === undefined) && freshUser.weight) {
+          const protein = Math.round(freshUser.weight * 2);
+          const fat = Math.round(freshUser.weight * 0.8);
+          const proteinCal = protein * 4;
+          const fatCal = fat * 9;
+          const remainCal = freshUser.dailyCalorieGoal - (proteinCal + fatCal);
+          const carbs = Math.max(0, Math.round(remainCal / 4));
+
+          updates.dailyProtein = freshUser.dailyProtein !== undefined ? freshUser.dailyProtein : protein;
+          updates.dailyFat = freshUser.dailyFat !== undefined ? freshUser.dailyFat : fat;
+          updates.dailyCarbs = freshUser.dailyCarbs !== undefined ? freshUser.dailyCarbs : carbs;
+          needsUpdate = true;
+        }
+
+        if (freshUser.freeScansUsed === undefined) {
+          updates.freeScansUsed = 0;
+          needsUpdate = true;
+        }
+
+        let finalUser = freshUser;
+        if (needsUpdate) {
+          finalUser = await db.users.update(freshUser.email, updates);
+        }
+
+        setUser(finalUser);
+        await loadUserData(freshUser.id);
+
+        // Redirecionamento inteligente baseado no perfil
+        const needsQuiz = !freshUser.weight || !freshUser.height;
+        const isPublicPath = location.pathname === '/' || location.pathname === '/entrar' || location.pathname === '/registrar';
+        
+        if (needsQuiz && location.pathname !== '/quiz') {
+          navigate('/quiz', { replace: true });
+        } else if (!needsQuiz && (isPublicPath || location.pathname === '/quiz')) {
+          navigate('/dashboard', { replace: true });
+        }
+
+      } else {
+        if (location.pathname !== '/' && location.pathname !== '/como-funciona' && location.pathname !== '/sobre' && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
+          navigate('/', { replace: true });
+        }
+      }
+    } catch (e) {
+      console.error("Erro ao restaurar sessão:", e);
+      setUser(null);
+    } finally {
+      setIsSessionLoading(false);
     }
-  }, [location]);
+  };
 
   useEffect(() => {
-    const initSession = async () => {
-      try {
-        const sessionUser = await db.auth.getSession();
-        if (sessionUser) {
-          const freshUser = await db.users.get(sessionUser.email);
-
-          let needsUpdate = false;
-          const updates: Partial<User> = {};
-
-          // Calculate Macros if ANY is missing (ensures carbs/fat are set for legacy users)
-          // Fix: Check for undefined specifically, allowing 0 as a valid goal (e.g. Keto)
-          if ((freshUser.dailyProtein === undefined || freshUser.dailyCarbs === undefined || freshUser.dailyFat === undefined) && freshUser.weight) {
-            const protein = Math.round(freshUser.weight * 2); // 2g/kg
-            const fat = Math.round(freshUser.weight * 0.8); // 0.8g/kg
-            const proteinCal = protein * 4;
-            const fatCal = fat * 9;
-            const remainCal = freshUser.dailyCalorieGoal - (proteinCal + fatCal);
-            const carbs = Math.max(0, Math.round(remainCal / 4));
-
-            updates.dailyProtein = freshUser.dailyProtein !== undefined ? freshUser.dailyProtein : protein;
-            updates.dailyFat = freshUser.dailyFat !== undefined ? freshUser.dailyFat : fat;
-            updates.dailyCarbs = freshUser.dailyCarbs !== undefined ? freshUser.dailyCarbs : carbs;
-            needsUpdate = true;
-          }
-
-          // Initialize freeScansUsed for legacy users
-          if (freshUser.freeScansUsed === undefined) {
-            updates.freeScansUsed = 0;
-            needsUpdate = true;
-          }
-
-          let finalUser = freshUser;
-          if (needsUpdate) {
-            finalUser = await db.users.update(freshUser.email, updates);
-          }
-
-          setUser(finalUser);
-          await loadUserData(freshUser.id);
-
-          // Redirecionamento inteligente baseado no perfil
-          const needsQuiz = !freshUser.weight || !freshUser.height;
-          const isPublicPath = location.pathname === '/' || location.pathname === '/entrar' || location.pathname === '/registrar';
-          
-          if (needsQuiz && location.pathname !== '/quiz') {
-            navigate('/quiz', { replace: true });
-          } else if (!needsQuiz && (isPublicPath || location.pathname === '/quiz')) {
-            navigate('/dashboard', { replace: true });
-          }
-
-        } else {
-           if (location.pathname !== '/' && location.pathname !== '/como-funciona' && location.pathname !== '/sobre' && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
-              navigate('/', { replace: true });
-           }
-        }
-      } catch (e) {
-        console.error("Erro ao restaurar sessão:", e);
-        setUser(null);
-        setCurrentView('landing');
-      } finally {
-        setIsSessionLoading(false);
-      }
-    };
     initSession();
   }, []);
 
