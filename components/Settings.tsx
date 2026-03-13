@@ -3,7 +3,7 @@ import { User as UserType, UserStats } from '../types';
 import { compressImage } from '../utils/security';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
-import { ArrowLeft, User, Camera, CheckCircle2, ShieldAlert, Trash2 } from 'lucide-react';
+import { ArrowLeft, User, Camera, CheckCircle2, ShieldAlert, Trash2, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db } from '../services/db';
 import GamificationWidget from './dashboard/GamificationWidget';
@@ -92,6 +92,23 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
                 <div className="w-32 h-32 rounded-full border border-white/10 overflow-hidden shadow-2xl bg-zinc-900 flex items-center justify-center relative z-10 group-hover:border-emerald-500/50 transition-colors duration-500">
                   {photo ? <img src={photo} alt="Perfil" className="w-full h-full object-cover" /> : <User className="w-12 h-12 text-zinc-600" />}
                 </div>
+
+                {/* Rank Indicator Badge */}
+                {userStats && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="absolute -top-2 -right-12 z-30 flex items-center gap-2 bg-zinc-900/90 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-2xl shadow-2xl"
+                  >
+                    <div className="flex items-center gap-1">
+                      <Flame className={`w-3 h-3 ${userStats.currentStreak > 0 ? 'text-orange-500 fill-orange-500 animate-pulse' : 'text-zinc-600'}`} />
+                      <span className="text-[10px] font-black text-white">{userStats.currentStreak}</span>
+                    </div>
+                    <div className="w-[1px] h-3 bg-white/10"></div>
+                    <span className="text-[8px] font-black text-amber-500 uppercase tracking-tighter">LVL {userStats.level}</span>
+                  </motion.div>
+                )}
+
                 <label className="absolute bottom-0 right-0 bg-white text-zinc-950 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer shadow-lg hover:scale-110 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all z-20 active:scale-95">
                   <Camera className="w-5 h-5" />
                   <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
