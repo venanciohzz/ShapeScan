@@ -1,0 +1,5 @@
+---
+trigger: glob
+---
+
+SEMPRE ME RESPONDA EM PORTUGUES BRASIL SEMPRE.

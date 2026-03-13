@@ -1,0 +1,164 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- PWA & Mobile Theme Colors - The "Native App" Feel -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F3F6F8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <!-- Dynamic Favicon (Emerald Square with S) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%2310b981%22 /><text x=%2250%22 y=%2270%22 font-family=%22Arial, sans-serif%22 font-size=%2260%22 font-weight=%22bold%22 fill=%22white%22 text-anchor=%22middle%22>S</text></svg>">
+
+    <title>ShapeScan | Controle de alimentação e evolução física</title>
+    <meta name="description" content="Análise nutricional e acompanhamento fitness. Transforme fotos de refeições em dados de saúde instantaneamente.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://shapescan.vercel.app/">
+    <meta property="og:title" content="ShapeScan | Controle seu corpo e alimentação">
+    <meta property="og:description" content="Análise nutricional por foto, evolução corporal e personal trainer 24h. Tudo em um só lugar.">
+    <meta property="og:image" content="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://shapescan.vercel.app/">
+    <meta property="twitter:title" content="ShapeScan | Controle seu corpo e alimentação">
+    <meta property="twitter:description" content="Análise nutricional por foto, evolução corporal e personal trainer 24h. Tudo em um só lugar.">
+    <meta property="twitter:image" content="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden; /* Critical for mobile 3D effects */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      /* Global Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(16, 185, 129, 0.3); 
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(16, 185, 129, 0.8); 
+      }
+
+      /* Utilities */
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* SHAPESCAN PREMIUM DESIGN SYSTEM */
+      
+      /* Light Mode Glass - Crisp, White, Deep Shadows */
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.85); /* More opacity for contrast */
+        backdrop-filter: blur(24px) saturate(180%);
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 1); /* Solid white border */
+        box-shadow: 
+          0 4px 6px -1px rgba(0, 0, 0, 0.02),
+          0 10px 30px -5px rgba(0, 0, 0, 0.05), /* Deep soft shadow */
+          inset 0 0 0 1px rgba(255, 255, 255, 0.5); /* Inner light ring */
+      }
+
+      /* Dark Mode Glass - Remains moody and dark */
+      .dark .glass-panel {
+        background: rgba(20, 20, 20, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        box-shadow: none;
+      }
+
+      /* Secondary Card Style */
+      .glass-card {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      }
+      .dark .glass-card {
+        background: rgba(30, 30, 30, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: none;
+      }
+
+      /* Premium Inputs - Updated for Dark Mode Visibility */
+      .input-premium {
+        background: #ffffff;
+        border: 1px solid #E5E7EB;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
+      }
+      .input-premium:focus {
+        border-color: #10B981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+      }
+      .dark .input-premium {
+        background: rgba(255, 255, 255, 0.05); /* Slightly lighter background */
+        border: 1px solid rgba(255, 255, 255, 0.1); /* Visible border */
+        color: white;
+        box-shadow: none;
+      }
+      .dark .input-premium:focus {
+        border-color: #10B981;
+        background: rgba(0, 0, 0, 0.4);
+      }
+
+      /* AUTOFILL FIXES - Critical for Dark Mode */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover, 
+      input:-webkit-autofill:focus, 
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px white inset !important;
+        -webkit-text-fill-color: black !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+      
+      .dark input:-webkit-autofill,
+      .dark input:-webkit-autofill:hover, 
+      .dark input:-webkit-autofill:focus, 
+      .dark input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #18181b inset !important; /* Zinc-900 */
+        -webkit-text-fill-color: white !important;
+        caret-color: white;
+      }
+
+      /* Prevent iOS Zoom on focus */
+      @media screen and (max-width: 768px) {
+        input, select, textarea {
+          font-size: 16px !important;
+        }
+      }
+
+      .grid-bg {
+        background-size: 40px 40px;
+        background-image: linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
+      }
+      .dark .grid-bg {
+        background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      }
+    </style>
+
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-[#F3F6F8] dark:bg-zinc-950 transition-colors duration-300 antialiased selection:bg-emerald-500 selection:text-white overflow-x-hidden">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
