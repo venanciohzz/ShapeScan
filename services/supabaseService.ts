@@ -143,7 +143,17 @@ export async function getSession(): Promise<User | null> {
     const profile = await getProfile(session.user.id);
     return profile;
   } catch (error) {
-    return null;
+    // Se não encontrar perfil, retorna o básico do Auth para que o App.tsx possa carregar
+    return { 
+      id: session.user.id, 
+      email: session.user.email || '',
+      name: session.user.user_metadata?.full_name || '',
+      username: (session.user.email || '').split('@')[0],
+      isPremium: false,
+      isAdmin: false,
+      dailyCalorieGoal: 2000,
+      plan: 'free'
+    } as User;
   }
 }
 
