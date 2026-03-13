@@ -26,6 +26,14 @@ export const db = {
             if (!user) {
                 await supabaseService.signOut();
             }
+        },
+
+        async resetPassword(email: string): Promise<void> {
+            await supabaseService.resetPassword(email);
+        },
+
+        async updatePassword(password: string): Promise<void> {
+            await supabaseService.updatePassword(password);
         }
     },
 

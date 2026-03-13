@@ -26,6 +26,8 @@ const Settings = React.lazy(() => lazyRetry(() => import('./components/Settings'
 const SavedMeals = React.lazy(() => lazyRetry(() => import('./components/SavedMeals')));
 const AdminDashboard = React.lazy(() => lazyRetry(() => import('./components/AdminDashboard')));
 const AppDemo = React.lazy(() => lazyRetry(() => import('./components/AppDemo')));
+const PasswordRecovery = React.lazy(() => lazyRetry(() => import('./components/PasswordRecovery')));
+const ResetPassword = React.lazy(() => lazyRetry(() => import('./components/ResetPassword')));
 import SuccessCelebration from './components/ui/SuccessCelebration';
 const { BMICalculator, DailyCalorieCalculator } = { 
   BMICalculator: React.lazy(() => lazyRetry(() => import('./components/Calculators').then(m => ({ default: m.BMICalculator })))),
@@ -424,6 +426,8 @@ const App: React.FC = () => {
               <Route path="/sobre" element={<About onBack={() => navigate('/')} onRegister={() => { setAuthMode('registrar'); navigate('/registrar'); }} />} />
               <Route path="/entrar" element={<Auth initialMode="entrar" onLogin={handleLogin} onBack={() => navigate('/')} />} />
               <Route path="/registrar" element={<Auth initialMode="registrar" onLogin={handleLogin} onBack={() => navigate('/')} />} />
+              <Route path="/recuperar-senha" element={<PasswordRecovery />} />
+              <Route path="/nova-senha" element={<ResetPassword />} />
 
               {/* Protected Routes Wrapper */}
               <Route path="/*" element={user ? (

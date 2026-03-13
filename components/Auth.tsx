@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
 import { db } from '../services/db';
 import { sanitizeInput } from '../utils/security';
@@ -13,6 +14,7 @@ interface AuthProps {
 }
 
 const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -200,7 +202,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
             </button>
           </form>
 
-          <div className="mt-10 text-center">
+          <div className="mt-8 text-center space-y-4">
+            <button
+              onClick={() => navigate('/recuperar-senha')}
+              disabled={isLoading}
+              className="block w-full text-emerald-500/70 font-bold text-[10px] uppercase tracking-[0.2em] hover:text-emerald-400 transition-colors"
+            >
+              Esqueci minha senha
+            </button>
+            
             <button
               onClick={() => setIsRegistering(!isRegistering)}
               disabled={isLoading}
