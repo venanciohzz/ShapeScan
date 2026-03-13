@@ -15,9 +15,6 @@ import MealHistory from './dashboard/MealHistory';
 import EditMealModal from './dashboard/EditMealModal';
 import DeleteMealModal from './dashboard/DeleteMealModal';
 import DailyFeedbackCard from './dashboard/DailyFeedbackCard';
-import GamificationWidget from './dashboard/GamificationWidget';
-import { db } from '../services/db';
-import { UserStats } from '../types';
 
 interface DashboardProps {
    user: User;
