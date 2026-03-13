@@ -68,32 +68,57 @@ const calculateMuscleScore = (protein: number, carbs: number, fat: number): numb
 };
 
 const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
-  const { data: { session } } = await supabase.auth.getSession();
+  // Always get the MOST RECENT session to avoid using an expired token
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
-  if (!session) {
-    throw new Error('401: Sessão expirada ou não encontrada. Por favor, saia e entre novamente.');
+  if (sessionError || !session) {
+    console.error('[openaiService] Auth session error or not found:', sessionError);
+    throw new Error('401: Sua sessão expirou. Por favor, saia e entre novamente no aplicativo.');
   }
 
-  const { data, error } = await supabase.functions.invoke('ai-analyzer', {
-    body: payload,
-    headers: {
-      Authorization: `Bearer ${session.access_token}`
+  try {
+    // Log for debugging (remove in production if too noisy)
+    console.log(`[openaiService] Invoking ai-analyzer for ${payload.type}...`);
+
+    const { data, error } = await supabase.functions.invoke('ai-analyzer', {
+      body: payload,
+    });
+
+    if (error) {
+      console.error('[openaiService] Edge Function invoke error:', error);
+      
+      // If it's a 401 from the function call itself, it's definitely a session issue
+      if (error.status === 401 || (error.message && error.message.includes('401'))) {
+        throw new Error('401: Sessão inválida. Por favor, faça login novamente para reautenticar.');
+      }
+      
+      // Handle the case where the function itself returned a 406 or other status
+      if (error.status === 406) {
+        throw new Error('Erro de configuração no servidor (406). Por favor, contate o suporte.');
+      }
+
+      throw new Error(error.message || 'Erro de conexão com o servidor de IA. Tente novamente.');
     }
-  });
 
-  if (error) {
-    throw new Error(error.message || 'Erro desconhecido na análise de IA');
+    if (data?.isError) {
+      console.error('[openaiService] AI Business Logic Error:', data.error);
+      throw new Error(data.error || 'Não foi possível completar a análise no momento.');
+    }
+
+    if (!data || data.text === undefined) {
+       console.error('[openaiService] Unexpected response structure:', data);
+       throw new Error('O servidor retornou uma resposta inválida. Tente novamente em instantes.');
+    }
+
+    if (data.usage) {
+      console.log(`[AI Usage] Tokens: ${data.usage.total_tokens || 'N/A'}`);
+    }
+
+    return data.text;
+  } catch (err: any) {
+    console.error('[openaiService] Exception in callAIAnalyzer:', err);
+    throw err;
   }
-
-  if (data?.isError) {
-    throw new Error(data.error || 'Erro na lógica da IA');
-  }
-
-  if (data?.usage) {
-    console.log(`[AI Usage] Prompt: ${data.usage.prompt_tokens} | Completion: ${data.usage.completion_tokens} | Total: ${data.usage.total_tokens}`);
-  }
-
-  return data.text;
 };
 
 const extractJson = (text: string): string => {
@@ -125,24 +150,40 @@ const safeParseFloat = (val: any): number => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
-export const analyzePlate = async (base64Image: string, userDescription?: string, userGoal?: string): Promise<FoodAnalysisResult> => {
+export const analyzePlate = async (
+  base64Image: string,
+  userDescription?: string,
+  userGoal?: string,
+  userWeight?: number,
+  userHeight?: number,
+  userGender?: 'male' | 'female'
+): Promise<FoodAnalysisResult> => {
   try {
     const descriptionContext = userDescription ? `O usuário descreveu a refeição como: "${userDescription}".` : '';
-    const prompt = `Analise a refeição. ${descriptionContext}
-Identifique alimentos, estime peso(g) e calcule macros.
-Objetivo: ${userGoal || 'Manutenção'}`;
+
+    // Contexto físico do usuário para calibrar as porções
+    const weightCtx = userWeight ? `${userWeight}kg` : 'não informado';
+    const heightCtx = userHeight ? `${userHeight}m` : 'não informado';
+    const sexCtx = userGender === 'male' ? 'Masculino' : userGender === 'female' ? 'Feminino' : 'não informado';
+    const goalCtx = userGoal || 'Manutenção';
+
+    const prompt = `Analise a refeição na imagem. ${descriptionContext}
+Perfil do usuário: Peso ${weightCtx} | Altura ${heightCtx} | Sexo ${sexCtx} | Objetivo: ${goalCtx}.
+Use o perfil para calibrar se as porções são adequadas, excessivas ou insuficientes para esse usuário.
+Identifique alimentos, estime peso(g) e calcule macros.`;
 
     const plateLimits: Record<string, number> = { "P": 350, "M": 550, "G": 750 };
     const plateSizeHint = userDescription?.toLowerCase().includes("prato grande") ? "G" : "M";
 
-    const systemPrompt = `Você é um analista nutricional especializado em estimativa visual de alimentos (Personal 24h).
-Seu objetivo é analisar imagens de refeições e estimar pesos e macros de forma REALISTA (culinária brasileira).
+    const systemPrompt = `Você é um analista nutricional especializado em estimativa visual de alimentos para culinária brasileira.
+Seu objetivo é analisar imagens de refeições e estimar pesos e macros de forma REALISTA, calibrando as porções ao perfil físico do usuário.
 
 PRINCÍPIOS:
-1. ESTIMATIVA POR ETAPAS: Analise internamente (não mostre): identificar alimentos -> estimar peso -> calcular macros.
-2. ÂNCORAS BR: Arroz (110-150g), Feijão (80-120g), Proteína/Carne (100-150g).
-3. TOP-DOWN: Reduza estimativa de peso em 10-20% devido à compressão visual.
-4. SEGURANÇA: Se não detectar comida, retorne {"error": "no_food_detected"}.
+1. CALIBRAÇÃO POR PERFIL: use o peso e sexo do usuário para ajustar as porções (ex: usuário de 60kg precisa de menos carbs que um de 100kg em bulking).
+2. ESTIMATIVA POR ETAPAS: identifique alimentos → estime peso → calcule macros.
+3. ÂNCORAS BR: Arroz (110-150g), Feijão (80-120g), Proteína/Carne (100-150g).
+4. TOP-DOWN: Reduza estimativa de peso em 10-20% devido à compressão visual.
+5. SEGURANÇA: Se não detectar comida, retorne {"error": "no_food_detected"}.
 
 RESPOSTA (JSON APENAS):
 {
@@ -222,22 +263,38 @@ RESPOSTA (JSON APENAS):
 
     return result;
   } catch (error: any) {
+    console.error('[openaiService] Error in analyzePlate:', error);
     return { 
-      dish_name: "Erro na análise", items: [], calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, totalWeight: 0, score: 0, 
-      observation: "Não foi possível analisar. Tente uma foto mais clara.",
-      mealName: "Erro", reasoning: "Erro"
+      dish_name: "Erro na análise", 
+      items: [], 
+      calories: 0, 
+      protein_g: 0, 
+      carbs_g: 0, 
+      fat_g: 0, 
+      totalWeight: 0, 
+      score: 0, 
+      observation: error.message || "Não foi possível analisar. Tente uma foto mais clara.",
+      mealName: "Erro", 
+      reasoning: "Falha na comunicação com a IA: " + (error.message || "Erro desconhecido")
     };
   }
 };
 
 export const getManualFoodMacros = async (foodDescription: string, userGoal?: string): Promise<FoodAnalysisResult> => {
   try {
-    const prompt = `Analise a refeição e estime macros. Refeição: "${foodDescription}"
-Retorne JSON com: food_items, total_calories, total_protein_g, total_carbs_g, total_fat_g, health_score, dish_category, goal_analysis, observation.
+    // Prompt user limpo — sem duplicar instruções do systemPrompt
+    const goalContext = userGoal ? `Objetivo do usuário: ${userGoal}.` : '';
+    const prompt = `Analise a refeição descrita abaixo e retorne as informações nutricionais estimadas.
+Refeição: "${foodDescription}"
+${goalContext}
 Limite máximo de 8 ingredientes.`;
 
-    const systemPrompt = `Você é um analista nutricional especializado em estimativa de alimentos com foco em REALISMO e CONSISTÊNCIA.
-REGRAS: 1. Use porções comuns BR. 2. Estime por etapas internamente. 3. JSON APENAS (food_items, total_calories, total_protein_g, total_carbs_g, total_fat_g, health_score, dish_category, goal_analysis, observation).`;
+    const systemPrompt = `Você é um analista nutricional especializado em estimativa de alimentos com foco em REALISMO e CONSISTÊNCIA para culinária brasileira.
+REGRAS:
+1. Use porções comuns BR (ex: colher de arroz = 80g, concha de feijão = 100g, filé médio = 120g).
+2. Estime por etapas internamente: identificar → pesar → calcular macros.
+3. Use o objetivo do usuário para contextualizar o campo goal_analysis.
+4. Retorne APENAS JSON válido com os campos: dish_name, food_items, total_calories, total_protein_g, total_carbs_g, total_fat_g, health_score (0-10), dish_category, goal_analysis (bulking/cutting), observation.`;
 
     let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'food' });
     if (typeof text !== 'string') text = JSON.stringify(text);
@@ -281,14 +338,43 @@ REGRAS: 1. Use porções comuns BR. 2. Estime por etapas internamente. 3. JSON A
     result.totalFat = result.fat_g; result.reasoning = result.observation;
 
     return result;
-  } catch (error) {
-    return { dish_name: "Erro ao calcular", items: [], calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0, totalWeight: 0, score: 0, observation: "Erro ao calcular." };
+  } catch (error: any) {
+    console.error('[openaiService] Error in getManualFoodMacros:', error);
+    return { 
+      dish_name: "Erro na análise", 
+      items: [], 
+      calories: 0, 
+      protein_g: 0, 
+      carbs_g: 0, 
+      fat_g: 0, 
+      totalWeight: 0, 
+      score: 0, 
+      observation: "Erro ao analisar texto: " + (error.message || "Tente descrever de outra forma."),
+      mealName: "Erro",
+      reasoning: error.message || "Erro"
+    };
   }
 };
 
 export const analyzeShape = async (base64Image: string, metrics?: { weight?: number, height?: number, goal?: string }): Promise<ShapeAnalysisResult> => {
   try {
-    const prompt = `Analise o shape (simetria, volume, definição). Objetivo: ${metrics?.goal || 'Geral'}.`;
+    // Prompt user estruturado com dados completos do usuário para análise personalizada
+    const weight = metrics?.weight ? `${metrics.weight}kg` : 'não informado';
+    const height = metrics?.height ? `${metrics.height}m` : 'não informado';
+    const goal = metrics?.goal || 'Geral';
+    const prompt = `Analise o shape corporal nesta imagem considerando os dados do usuário:
+
+Peso: ${weight}
+Altura: ${height}
+Objetivo: ${goal}
+
+Analize com foco nos seguintes pontos:
+• Nível de gordura corporal (estime a faixa de % de BF visualmente)
+• Massa muscular visível e desenvolvimento
+• Proporções (ombro/cintura, equilíbrio entre grupos musculares)
+• Pontos fracos estru turais que limitam o desenvolvimento
+• Recomendações específicas de treino para o objetivo: ${goal}
+• Protocolo nutricional alinhado ao objetivo e ao perfil físico atual`;
 
     const systemPrompt = `Especialista em bioimpedância visual. Analise por etapas internamente.
 REGRAS:
@@ -365,19 +451,49 @@ export const chatWithPersonal24h = async (message: string, history: any[], userC
   const limitedHistory = history.slice(-10);
   let conversationContext = '';
   if (limitedHistory.length > 0) {
-    conversationContext = '\n\nHistórico:\n' + limitedHistory.map(msg =>
-      `${msg.role === 'user' ? 'U' : 'AI'}: ${msg.content}`
+    conversationContext = '\n\nHistórico recente:\n' + limitedHistory.map(msg =>
+      `${msg.role === 'user' ? 'Usuário' : 'Personal'}: ${msg.content}`
     ).join('\n');
   }
 
-  const systemPrompt = `Você é o "Personal 24h" do ShapeScan. 
-REGRAS: 1. S/ conselho médico. 2. Estilo WhatsApp (sem markdown). 3. Curto e motivador. 4. NÃO REPETIR info recente.
-CONTEXTO: ${JSON.stringify(userContext.user)}. ${conversationContext}`;
+  const u = userContext.user;
+  const userInfo = u ? `Nome: ${u.name || 'atleta'} | Objetivo: ${u.goal || 'não informado'} | Peso: ${u.weight || '?'}kg | Altura: ${u.height || '?'}m` : '';
+
+  const systemPrompt = `Você é o Personal 24H do ShapeScan — um personal trainer brasileiro top, carismático e muito motivador.
+
+PERSONALIDADE:
+- Fale como um amigo de academia que manja muito: energia alta, brincalhão mas certeiro
+- Use gírias brasileiras naturais (mano, cara, bora, saudade, boa demais, tá ligado?)
+- Seja direto e prático — sem enrolação
+- Humor leve e motivação constante — nunca robótico
+- Curto e poderoso — máximo 3-4 frases por resposta
+
+EMOJIS (use bastante, em TODA resposta):
+- Motivação: 💪🔥🚀⚡🏆🎯💥
+- Treino: 🏋️‍♂️🤸‍♂️🏃‍♂️💦🧠
+- Comida/dieta: 🍗🥦🥚🍳🥩🫙
+- Celebração: 🎉✅👊🙌😎🤙
+- Diversão/gíria: 😂🫡🫣👀🤯🥵
+- Coloque pelo menos 2-3 emojis por resposta, misturados no texto naturalmente
+
+EXPERTISE (responda com autoridade):
+- Treino de musculação, hipertrofia, cutting, recomposição corporal
+- Dieta, macros, timing de nutrição, protocolo de bulking/cutting
+- Motivação, mindset, consistência
+- Dicas práticas do dia a dia de academia
+
+REGRAS RÍGIDAS:
+- NUNCA retorne JSON, dicionários ou markdown
+- NUNCA use asteriscos, sublinhados ou formatação especial
+- NUNCA dê conselho médico ou de suplementação com dosagem
+- Responda APENAS em texto corrido, natural, como numa conversa
+
+CONTEXTO DO USUÁRIO: ${userInfo}${conversationContext}`;
 
   try {
     return await callAIAnalyzer({ prompt: message, systemPrompt, type: 'chat' });
   } catch (error: any) {
-    return `Erro: ${error.message || "Tente novamente mais tarde."}`;
+    return `Essa aqui travou, mas não desiste não! Manda de novo que eu tô na área. 💪`;
   }
 };
 
@@ -386,25 +502,34 @@ export const getDailyFeedback = async (
   goals: { calories: number, protein: number, carbs: number, fat: number },
   userGoal: string
 ): Promise<any> => {
-  const prompt = `Analise o resumo nutricional do dia e forneça um feedback inteligente.
-Consumido: ${consumed.calories.toFixed(0)}kcal, P:${consumed.protein.toFixed(0)}g, C:${consumed.carbs.toFixed(0)}g, G:${consumed.fat.toFixed(0)}g
-Metas: ${goals.calories.toFixed(0)}kcal, P:${goals.protein.toFixed(0)}g, C:${goals.carbs.toFixed(0)}g, G:${goals.fat.toFixed(0)}g
-Objetivo do Usuário: ${userGoal}
+  const calDiff = consumed.calories - goals.calories;
+  const protDiff = consumed.protein - goals.protein;
 
-Retorne um JSON válido contendo:
+  const prompt = `Analise o resumo nutricional do dia do usuário e retorne um feedback JSON.
+
+Consumido hoje: ${consumed.calories.toFixed(0)}kcal | Proteína: ${consumed.protein.toFixed(0)}g | Carbs: ${consumed.carbs.toFixed(0)}g | Gordura: ${consumed.fat.toFixed(0)}g
+Meta diária: ${goals.calories.toFixed(0)}kcal | Proteína: ${goals.protein.toFixed(0)}g | Carbs: ${goals.carbs.toFixed(0)}g | Gordura: ${goals.fat.toFixed(0)}g
+Saldo calórico: ${calDiff >= 0 ? '+' : ''}${calDiff.toFixed(0)}kcal | Saldo proteína: ${protDiff >= 0 ? '+' : ''}${protDiff.toFixed(0)}g
+Objetivo: ${userGoal}
+
+Retorne APENAS JSON válido:
 {
-  "status": "excellent",
-  "protein_feedback": "mensagem curta sobre proteína",
-  "energy_feedback": "mensagem curta sobre calorias e energia",
-  "general_advice": "dica prática final",
-  "score": 85
-}
-(status pode ser: excellent, good, average, bad. score de 0 a 100)`;
+  "status": "excellent" | "good" | "average" | "bad",
+  "protein_feedback": "feedback curto sobre proteína (max 15 palavras)",
+  "energy_feedback": "feedback curto sobre calorias (max 15 palavras)",
+  "general_advice": "dica prática motivadora alinhada ao objetivo (max 20 palavras)",
+  "score": 0-100
+}`;
 
-  const systemPrompt = `Você é um coach de nutrição esportiva. Analise os totais do dia contra as metas e o objetivo do usuário. Seja direto, motivador e técnico. Responda apenas o JSON.`;
+  // IMPORTANTE: type 'food' força response_format json_object na Edge Function
+  // getDailyFeedback precisa de JSON — nunca usar type 'chat' aqui
+  const systemPrompt = `Você é um coach de nutrição esportiva brasileiro especializado em análise de macros.
+Seja técnico, direto e motivador. Avalie o dia do usuário considerando seu objetivo específico (${userGoal}).
+Respostas nos campos de texto devem ser curtas, energéticas e em português.
+Retorne APENAS o JSON, sem texto antes ou depois.`;
 
   try {
-    let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'chat' });
+    let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'food' }); // 'food' força JSON na Edge Function
     if (typeof text !== 'string') text = JSON.stringify(text);
     return JSON.parse(extractJson(text));
   } catch (error) {

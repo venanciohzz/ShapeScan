@@ -60,51 +60,28 @@ export async function signUp(email: string, password: string, userData: Omit<Use
 }
 
 export async function signIn(email: string, password: string): Promise<User> {
-  // Tentar login normal
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
-  // Se login funcionou, retornar perfil
   if (!error && data.user) {
     const profile = await getProfile(data.user.id);
     return profile;
   }
 
-  // Se erro foi "Invalid login credentials", verificar se é perfil existente sem Auth
+  // Traduzir erros comuns do Supabase Auth para mensagens amigáveis
   if (error?.message.includes('Invalid login credentials')) {
-    // Buscar perfil existente por email
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('email', email.toLowerCase())
-      .single();
-
-    if (profileData) {
-      // Perfil existe mas não tem Auth - criar conta Auth
-      const { data: newAuthData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (signUpError) throw new Error(signUpError.message);
-      if (!newAuthData.user) throw new Error('Falha ao criar autenticação');
-
-      // Atualizar ID do perfil para corresponder ao Auth
-      const oldId = profileData.id;
-      const newId = newAuthData.user.id;
-
-      // Atualizar todas as referências
-      await migrateUserData(oldId, newId);
-
-      // Buscar perfil atualizado
-      const profile = await getProfile(newId);
-      return profile;
-    }
+    throw new Error('E-mail ou senha incorretos. Verifique seus dados e tente novamente.');
+  }
+  if (error?.message.includes('Email not confirmed')) {
+    throw new Error('Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.');
+  }
+  if (error?.message.includes('Too many requests')) {
+    throw new Error('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
   }
 
-  throw new Error(error?.message || 'Erro ao fazer login');
+  throw new Error(error?.message || 'Erro ao fazer login. Tente novamente.');
 }
 
 export async function signOut(): Promise<void> {

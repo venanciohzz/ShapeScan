@@ -62,12 +62,13 @@ const Personal24H: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack,
   useEffect(() => {
     // Only add welcome message if chat is completely empty
     if (messages.length === 0) {
+      const firstName = (user.name || 'atleta').split(' ')[0];
       const welcomeOptions = [
-        `Fala ${user.name.split(' ')[0]}! Bora pra cima? 🚀`,
-        `E aí ${user.name.split(' ')[0]}! Como estamos na meta hoje? 💪`,
-        `Opa ${user.name.split(' ')[0]}! Pronto para o próximo nível? 🔥`,
-        `Diz aí ${user.name.split(' ')[0]}! No que posso te ajudar a evoluir agora? 📈`,
-        `Salve ${user.name.split(' ')[0]}! Qual o plano de hoje? Treino, dieta ou só um gás? ⚡`
+        `Fala ${firstName}! Bora pra cima? 🚀`,
+        `E aí ${firstName}! Como estamos na meta hoje? 💪`,
+        `Opa ${firstName}! Pronto para o próximo nível? 🔥`,
+        `Diz aí ${firstName}! No que posso te ajudar a evoluir agora? 📈`,
+        `Salve ${firstName}! Qual o plano de hoje? Treino, dieta ou só um gás? ⚡`
       ];
 
       let welcome = welcomeOptions[Math.floor(Math.random() * welcomeOptions.length)];

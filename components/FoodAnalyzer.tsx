@@ -89,15 +89,15 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
   };
 
   const incrementUsage = async () => {
+    // Incremento controlado pela Edge Function — esta função é mantida apenas para sincronizar
+    // o estado local do usuário (freeScansUsed) após confirmar sucesso
     if (user.isAdmin) return { success: true };
     if (user.plan === 'free') {
-      const newCount = await db.usage.incrementTrial(user.id);
-      onUpdateUser({ ...user, freeScansUsed: newCount });
-      return { success: true, count: newCount };
-    } else {
-      const result = await db.usage.incrementDaily(user.id, 'food');
-      return result;
+      // Apenas atualizar contagem local para UX imediata
+      onUpdateUser({ ...user, freeScansUsed: (user.freeScansUsed || 0) + 1 });
+      return { success: true };
     }
+    return { success: true };
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,19 +137,22 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
           const compressedBase64 = await compressImage(rawBase64);
           setPreviewImage(compressedBase64);
           const apiBase64 = compressedBase64.split(',')[1];
-          const data = await analyzePlate(apiBase64, mealDescription, user.goal);
+          const data = await analyzePlate(apiBase64, mealDescription, user.goal, user.weight, user.height, user.gender);
           if (!data || !data.items) throw new Error("Não foi possível identificar alimentos.");
           
-          const usageResult = await incrementUsage();
-          if (usageResult && usageResult.success === false) {
-            setLimitModalType('daily');
-            setShowLimitModal(true);
-            return;
-          }
+          // Edge Function já incrementou o uso atomicamente
+          // Sincronizar apenas o estado local para UX imediata
+          await incrementUsage();
           
           setResult(data);
         } catch (err: any) {
           console.error("Erro no scanner:", err);
+          // Se a Edge Function retornou limite atingido, mostrar modal
+          if (err.isLimitReached) {
+            setLimitModalType(err.showPaywall ? 'free' : 'daily');
+            setShowLimitModal(true);
+            return;
+          }
           let msg = err.message || "Falha na análise";
           onShowToast(msg, 'error');
           setPreviewImage(null);

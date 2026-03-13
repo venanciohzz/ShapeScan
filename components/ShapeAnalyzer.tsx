@@ -107,9 +107,10 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
   };
 
   const incrementUsage = async () => {
+    // O incremento é feito atomicamente pela Edge Function.
+    // Esta função existe apenas para compatibilidade futura.
     if (user.isAdmin) return { success: true };
-    const result = await db.usage.incrementDaily(user.id, 'shape');
-    return result;
+    return { success: true };
   };
 
   const validateAndCoherenceResult = (data: ShapeAnalysisResult, currentWeight: number): ShapeAnalysisResult => {
@@ -188,12 +189,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           const analysis = await analyzeShape(apiBase64, metrics);
           const validAnalysis = validateAndCoherenceResult(analysis, w);
           setResult(validAnalysis);
-          
-          const usageResult = await incrementUsage();
-          if (usageResult && usageResult.success === false) {
-            setShowLimitModal(true);
-            return;
-          }
+          // Edge Function já incrementou o uso atomicamente
         } catch (err: any) {
           onShowToast(err.message || "Falha na análise", 'error');
         } finally {

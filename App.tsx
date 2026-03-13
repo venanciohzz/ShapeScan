@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import { motion, AnimatePresence } from 'framer-motion';
 import { View, User, FoodLog, EvolutionRecord, ChatMessage } from './types';
 import { db } from './services/db';
+import { supabase } from './services/supabaseService';
 import { lazyRetry } from './src/utils/lazyRetry';
 
 // Lazy loading for better performance
@@ -73,22 +74,7 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [currentView]);
 
-  // Professional Optimization 1: LocalStorage Cache for Instant Loading
-  useEffect(() => {
-    const cachedProfile = localStorage.getItem('shapescan_user_profile');
-    if (cachedProfile) {
-      try {
-        const parsed = JSON.parse(cachedProfile);
-        setUser(parsed);
-        // If we have a cached user, we can stop the overall "session loading" spinner
-        // so the dashboard renders immediately with cached data.
-        setIsSessionLoading(false);
-      } catch (e) {
-        console.error("Erro ao carregar cache:", e);
-      }
-    }
-  }, []);
-
+  // Professional Optimization 1: Unified Session Loading (Removed stale cache)
   useEffect(() => {
     const initSession = async () => {
       try {
@@ -97,13 +83,11 @@ const App: React.FC = () => {
         if (sessionUser) {
           const userId = sessionUser.id;
           
-          // Optimization 2 & 3: Save to cache and load rest in background
+          // Optimization: Update cache ONLY after verification
           localStorage.setItem('shapescan_user_profile', JSON.stringify(sessionUser));
-          
-          // Only set user again if different from cache or if no cache existed
           setUser(sessionUser);
           
-          // Optimization 4: Lazy load secondary data (don't block session loading)
+          // Optimization: Lazy load secondary data (don't block session loading)
           loadUserDataBackground(userId);
 
           let needsUpdate = false;
@@ -150,6 +134,7 @@ const App: React.FC = () => {
         }
       } catch (e) {
         console.error("Erro ao restaurar sessão:", e);
+        localStorage.removeItem('shapescan_user_profile');
         setUser(null);
       } finally {
         setIsSessionLoading(false);
@@ -172,6 +157,18 @@ const App: React.FC = () => {
     };
 
     initSession();
+
+    // Listener para mudanças de estado de autenticação (ex: expiração de sessão)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event: string, session: unknown) => {
+        if (event === 'SIGNED_OUT' || (!session && !isSessionLoading)) {
+          setUser(null);
+          localStorage.removeItem('shapescan_user_profile');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const loadUserData = async (userId: string) => {
