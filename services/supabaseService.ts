@@ -107,22 +107,7 @@ export async function signIn(email: string, password: string): Promise<User> {
   throw new Error(error?.message || 'Erro ao fazer login');
 }
 
-export async function signInWithGoogle(): Promise<void> {
-  const origin = window.location.origin;
-  console.log("signInWithGoogle: enviando redirectTo =", origin);
-  
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: origin,
-    }
-  });
-  
-  if (error) {
-    console.error("Erro no signInWithOAuth:", error);
-    throw new Error(error.message);
-  }
-}
+
 
 export async function signOut(): Promise<void> {
   const { error } = await supabase.auth.signOut();

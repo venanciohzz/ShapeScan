@@ -93,11 +93,7 @@ const App: React.FC = () => {
       if (session) {
         await initSession(session.user);
       } else {
-        // Se não tem sessão mas tem hash na URL, pode ser um redirect do Google sendo processado
-        // Não encerramos o loading nem limpamos o usuário ainda
-        if (window.location.hash.includes('access_token') || window.location.hash.includes('error=')) {
-          return; 
-        }
+
 
         setUser(null);
         setIsSessionLoading(false);

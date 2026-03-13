@@ -36,10 +36,6 @@ export const db = {
             await supabaseService.updatePassword(password);
         },
 
-        async signInWithGoogle(): Promise<void> {
-            await supabaseService.signInWithGoogle();
-        },
-
         get supabase() {
             return supabaseService.supabase;
         }
