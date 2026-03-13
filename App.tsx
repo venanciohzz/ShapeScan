@@ -76,17 +76,17 @@ const App: React.FC = () => {
   const isInitializing = React.useRef(false);
 
   useEffect(() => {
-    // Escuta mudanças na autenticação (importante para redirecionamento OAuth)
+    // 1. Inicialização manual imediata
+    initSession();
+
+    // 2. Escuta mudanças subsequentes na autenticação
     const { data: { subscription } } = db.auth.supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`Supabase Auth Event: ${event}`);
       
       if (session) {
-        // Se houver sessão, inicializamos/atualizamos o usuário
-        if (!isInitializing.current) {
-          await initSession(session.user);
-        }
-      } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
-        // Se não houver sessão, limpamos o estado e redirecionamos se necessário
+        // Só re-inicializamos se o usuário for diferente ou se for um evento de login explícito
+        await initSession(session.user);
+      } else {
         setUser(null);
         setIsSessionLoading(false);
         const publicPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/nova-senha', '/recuperar-senha'];
@@ -97,10 +97,11 @@ const App: React.FC = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []); // Executa apenas uma vez no montamento do App
+  }, []); // Monta o listener apenas uma vez
 
   const initSession = async (sessionUser?: any) => {
-    if (isInitializing.current) return;
+    // Proteção básica contra concorrência simples
+    if (isInitializing.current && !sessionUser) return;
     
     try {
       isInitializing.current = true;
@@ -109,12 +110,12 @@ const App: React.FC = () => {
       const authUser = sessionUser || (await db.auth.supabase.auth.getSession()).data.session?.user;
       
       if (authUser) {
-        // Obter ou criar perfil
         const freshUser = await db.users.get(authUser.email);
 
         let needsUpdate = false;
         const updates: Partial<User> = {};
-// ... (mantenha os cálculos de macros)
+
+        // Cálculos de macros e inicialização de campos legados
         if ((freshUser.dailyProtein === undefined || freshUser.dailyCarbs === undefined || freshUser.dailyFat === undefined) && freshUser.weight) {
           const protein = Math.round(freshUser.weight * 2);
           const fat = Math.round(freshUser.weight * 0.8);
@@ -142,7 +143,7 @@ const App: React.FC = () => {
         setUser(finalUser);
         await loadUserData(freshUser.id);
 
-        // Redirecionamento inteligente baseado no perfil
+        // Redirecionamento inteligente
         const needsQuiz = !freshUser.weight || !freshUser.height;
         const isPublicPath = ['/', '/entrar', '/registrar'].includes(location.pathname);
         
@@ -152,6 +153,7 @@ const App: React.FC = () => {
           navigate('/dashboard', { replace: true });
         }
       } else {
+        // Sem usuário, garantimos que o loading pare
         setIsSessionLoading(false);
       }
     } catch (e) {
@@ -160,8 +162,6 @@ const App: React.FC = () => {
       setIsSessionLoading(false);
     } finally {
       isInitializing.current = false;
-      // Note: setIsSessionLoading(false) is called in specific branches to avoid premature hide
-      // but let's ensure it's called at the very end of success too
       setIsSessionLoading(false);
     }
   };
