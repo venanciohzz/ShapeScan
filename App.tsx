@@ -76,109 +76,85 @@ const App: React.FC = () => {
   const isInitializing = React.useRef(false);
 
   useEffect(() => {
-    // Timer de segurança (Fail-safe)
-    const timeoutTimer = setTimeout(() => {
-      setIsSessionLoading(prev => {
-        if (prev) {
-          console.warn("App: Timeout de 5s - Forçando liberação da UI");
-          return false;
+    const initSession = async () => {
+      try {
+        setIsSessionLoading(true);
+        const { data: { session } } = await db.auth.supabase.auth.getSession();
+        
+        if (session) {
+          console.log("App: Sessão encontrada, inicializando...");
+          const freshUser = await db.users.get(session.user.email || '', session.user.id, session.user);
+
+          let needsUpdate = false;
+          const updates: Partial<User> = {};
+
+          if ((freshUser.dailyProtein === undefined || freshUser.dailyCarbs === undefined || freshUser.dailyFat === undefined) && freshUser.weight) {
+            const protein = Math.round(freshUser.weight * 2);
+            const fat = Math.round(freshUser.weight * 0.8);
+            const proteinCal = protein * 4;
+            const fatCal = fat * 9;
+            const remainCal = (freshUser.dailyCalorieGoal || 2000) - (proteinCal + fatCal);
+            const carbs = Math.max(0, Math.round(remainCal / 4));
+
+            updates.dailyProtein = freshUser.dailyProtein !== undefined ? freshUser.dailyProtein : protein;
+            updates.dailyFat = freshUser.dailyFat !== undefined ? freshUser.dailyFat : fat;
+            updates.dailyCarbs = freshUser.dailyCarbs !== undefined ? freshUser.dailyCarbs : carbs;
+            needsUpdate = true;
+          }
+
+          if (freshUser.freeScansUsed === undefined) {
+            updates.freeScansUsed = 0;
+            needsUpdate = true;
+          }
+
+          let finalUser = freshUser;
+          if (needsUpdate) {
+            finalUser = await db.users.update(freshUser.email, updates);
+          }
+
+          setUser(finalUser);
+          await loadUserData(freshUser.id);
+
+          // Redirecionamento Simples e Estável
+          const isNewUser = !finalUser.weight || !finalUser.height;
+          const onPublicRoute = ['/', '/entrar', '/registrar'].includes(location.pathname);
+
+          if (isNewUser) {
+            if (location.pathname !== '/quiz') navigate('/quiz', { replace: true });
+          } else if (onPublicRoute || location.pathname === '/quiz') {
+            navigate('/dashboard', { replace: true });
+          }
+        } else {
+          setIsSessionLoading(false);
+          // Redirecionar para home se não estiver em rota pública
+          const publicPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/nova-senha', '/recuperar-senha'];
+          if (!publicPaths.includes(location.pathname)) {
+            navigate('/', { replace: true });
+          }
         }
-        return prev;
-      });
-    }, 5000);
-
-    const { data: { subscription } } = db.auth.supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`App: Evento Auth: ${event}`, session ? "Com sessão" : "Sem sessão");
-      
-      if (session) {
-        await initSession(session.user);
-      } else {
-
-
+      } catch (e) {
+        console.error("App: Erro na inicialização da sessão:", e);
         setUser(null);
         setIsSessionLoading(false);
-        // Proteção de rotas públicas
-        const publicPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/nova-senha', '/recuperar-senha'];
-        if (!publicPaths.includes(location.pathname)) {
-          navigate('/', { replace: true });
-        }
+      } finally {
+        setIsSessionLoading(false);
       }
-      
-      clearTimeout(timeoutTimer);
+    };
+
+    initSession();
+
+    const { data: { subscription } } = db.auth.supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`App: Evento Auth: ${event}`);
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        navigate('/', { replace: true });
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session) initSession();
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []); // Sem dependências para estabilidade total
-
-  const initSession = async (sessionUser: any) => {
-    // Evita processamento duplo se o perfil já estiver carregado e for o mesmo usuário
-    if (user?.id === sessionUser.id && !isInitializing.current) return;
-    if (isInitializing.current) return;
-
-    try {
-      isInitializing.current = true;
-      setIsSessionLoading(true);
-      console.log("App: Sincronizando perfil do usuário...");
-      // Passar o usuário do auth para criar o perfil se não existir
-      const freshUser = await db.users.get(sessionUser.email, sessionUser.id, sessionUser);
-      
-      // Lógica de atualização de macros e campos iniciais
-      let needsUpdate = false;
-      const updates: Partial<User> = {};
-
-      if ((freshUser.dailyProtein === undefined || freshUser.dailyCarbs === undefined || freshUser.dailyFat === undefined) && freshUser.weight) {
-        const protein = Math.round(freshUser.weight * 2);
-        const fat = Math.round(freshUser.weight * 0.8);
-        const proteinCal = protein * 4;
-        const fatCal = fat * 9;
-        const remainCal = (freshUser.dailyCalorieGoal || 2000) - (proteinCal + fatCal);
-        const carbs = Math.max(0, Math.round(remainCal / 4));
-
-        updates.dailyProtein = freshUser.dailyProtein !== undefined ? freshUser.dailyProtein : protein;
-        updates.dailyFat = freshUser.dailyFat !== undefined ? freshUser.dailyFat : fat;
-        updates.dailyCarbs = freshUser.dailyCarbs !== undefined ? freshUser.dailyCarbs : carbs;
-        needsUpdate = true;
-      }
-
-      if (freshUser.freeScansUsed === undefined) {
-        updates.freeScansUsed = 0;
-        needsUpdate = true;
-      }
-
-      let finalUser = freshUser;
-      if (needsUpdate) {
-        finalUser = await db.users.update(freshUser.email, updates);
-      }
-
-      setUser(finalUser);
-      await loadUserData(freshUser.id);
-
-      // Redirecionamento Inteligente
-      // Verificamos se o perfil é incompleto (novo usuário)
-      const isNewUser = !freshUser.weight || !freshUser.height;
-      const onPublicRoute = ['/', '/entrar', '/registrar'].includes(location.pathname);
-      
-      console.log(`App: Fluxo de entrada - Novo usuário? ${isNewUser}. Rota atual: ${location.pathname}`);
-
-      if (isNewUser) {
-        if (location.pathname !== '/quiz') {
-          console.log("App: Redirecionando para /quiz (perfil incompleto)");
-          navigate('/quiz', { replace: true });
-        }
-      } else if (location.pathname === '/quiz' || onPublicRoute) {
-        // Se o usuário acabou de completar o quiz, ele deve ir para /planos ou /dashboard
-        // Mas o handleQuizComplete já cuida disso. Só redirecionamos aqui se estivermos "presos" em rotas públicas ou no quiz sem necessidade.
-        console.log("App: Redirecionando para dashboard (perfil completo)");
-        navigate('/dashboard', { replace: true });
-      }
-    } catch (e) {
-      console.error("App: Falha na sincronização de sessão:", e);
-      setUser(null);
-    } finally {
-      isInitializing.current = false;
-      setIsSessionLoading(false);
-    }
-  };
+  }, [navigate]); // Dependência mínima para estabilidade
 
   const loadUserData = async (userId: string) => {
     try {
