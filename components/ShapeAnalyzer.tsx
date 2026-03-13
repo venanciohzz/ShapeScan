@@ -331,19 +331,45 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
               </div>
 
               {loading && (
-                <div className="py-12 space-y-12">
-                  <div className="bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[3.5rem] p-12 shadow-2xl space-y-10">
+                <div className="space-y-12 pb-32">
+                  {/* DIAGNÓSTICO: BANNER E BIOTIPO SKELETON */}
+                  <div className="bg-zinc-950/20 backdrop-blur-3xl border border-white/5 rounded-[3.5rem] p-12 space-y-10">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-12">
                       <div className="space-y-4">
-                        <Skeleton className="h-20 w-48 rounded-2xl" />
+                        <Skeleton className="h-40 w-48 rounded-2xl" />
                         <Skeleton className="h-4 w-64 rounded-full" />
                       </div>
-                      <Skeleton className="w-full md:w-64 h-32 rounded-[2.5rem]" />
+                      <div className="flex-1 md:max-w-sm space-y-6">
+                        <Skeleton className="h-24 w-full rounded-[2.5rem]" />
+                        <Skeleton className="h-12 w-full rounded-full" />
+                      </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <Skeleton className="h-64 rounded-[3rem]" />
-                    <Skeleton className="h-64 rounded-[3rem]" />
+
+                  {/* PERFORMANCE GERAL SKELETON */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Skeleton className="h-40 rounded-[2.5rem]" />
+                    <Skeleton className="h-40 rounded-[2.5rem]" />
+                    <Skeleton className="h-40 rounded-[2.5rem]" />
+                  </div>
+
+                  {/* COMPOSIÇÃO E PROJEÇÃO SKELETON */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Skeleton className="h-80 rounded-[3rem]" />
+                    <Skeleton className="h-80 rounded-[3rem]" />
+                  </div>
+
+                  {/* INSIGHT ESTRATÉGICO SKELETON */}
+                  <Skeleton className="h-64 w-full rounded-[3.5rem]" />
+
+                  {/* PROTOCOLOS SKELETON */}
+                  <div className="space-y-8">
+                    <Skeleton className="h-8 w-48 rounded-full" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <Skeleton className="h-24 rounded-3xl" />
+                      <Skeleton className="h-24 rounded-3xl" />
+                      <Skeleton className="h-24 rounded-3xl" />
+                    </div>
                   </div>
                 </div>
               )}

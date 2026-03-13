@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { UserStats } from '../../types';
-import { Flame, Star, Trophy, Target, Award, Zap } from 'lucide-react';
+import { Flame, Star, Trophy, Target, Award, Zap, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface GamificationWidgetProps {
@@ -29,9 +29,11 @@ const GamificationWidget: React.FC<GamificationWidgetProps> = ({ stats, loading 
 
     const availableBadges = [
         { id: 'first_step', icon: <Target className="w-5 h-5" />, label: 'Primeiro Passo', description: 'Iniciou sua jornada' },
+        { id: 'consistency_starter', icon: <Activity className="w-5 h-5" />, label: 'Consistência', description: '3 dias de foco seguidos' },
         { id: 'seven_days', icon: <Zap className="w-5 h-5" />, label: 'Semana Focada', description: '7 dias de constância' },
-        { id: 'thirty_days', icon: <Trophy className="w-5 h-5" />, label: 'Imparável', description: '30 dias de foco' },
-        { id: 'food_master', icon: <Award className="w-5 h-5" />, label: 'Master Chef', description: '50 registros de comida' },
+        { id: 'level_up', icon: <Star className="w-5 h-5" />, label: 'Evolução', description: 'Alcançou 1000 XP' },
+        { id: 'scanner_pro', icon: <Award className="w-5 h-5" />, label: 'Scanner Pro', description: '10 registros realizados' },
+        { id: 'food_master', icon: <Trophy className="w-5 h-5" />, label: 'Master Chef', description: '50 registros de comida' },
     ];
 
     return (

@@ -4,6 +4,7 @@ import { User } from '../../types';
 import OnboardingLayout from './OnboardingLayout';
 import PremiumPicker from './PremiumPicker';
 import LetterPuller from '../ui/LetterPuller';
+import { Check, CheckCircle2 } from 'lucide-react';
 
 interface OnboardingQuizProps {
     onComplete: (metrics: Partial<User>) => void;
@@ -93,6 +94,9 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 
     return (
         <OnboardingLayout progress={step / totalSteps} onBack={prev} showBack={step > 1}>
+            <div className="absolute top-8 right-6 text-[10px] font-black text-zinc-500 uppercase tracking-widest z-50">
+                Passo {step} <span className="text-zinc-700">/ {totalSteps}</span>
+            </div>
 
             {/* STEP 1: GENDER */}
             {step === 1 && (
@@ -131,13 +135,19 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         </h2>
                         <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">Seja sincero com sua rotina</p>
                     </div>
-                    <div className="space-y-4">
-                        {['0-2', '3-5', '6 ou mais'].map(opt => (
-                            <SelectionButton
-                                key={opt}
-                                label={`${opt} treinos por semana`}
-                                active={data.frequency === opt}
-                                onClick={() => setData({ ...data, frequency: opt })}
+                    <div className="grid grid-cols-1 gap-4">
+                        {[
+                            { id: '0-2', label: '0 a 2 vezes', sub: 'Iniciante ou vida corrida', icon: '🐢' },
+                            { id: '3-5', label: '3 a 5 vezes', sub: 'Consistência moderada', icon: '👟' },
+                            { id: '6 ou mais', label: '6 ou mais', sub: 'Atleta ou alta intensidade', icon: '⚡' }
+                        ].map(opt => (
+                            <PremiumCard
+                                key={opt.id}
+                                title={opt.label}
+                                subtitle={opt.sub}
+                                icon={opt.icon}
+                                active={data.frequency === opt.id}
+                                onClick={() => setData({ ...data, frequency: opt.id })}
                             />
                         ))}
                     </div>
@@ -214,11 +224,11 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
                         </h2>
                         <p className="text-zinc-400 drop-shadow-sm text-sm md:text-base font-medium uppercase tracking-[0.2em]">O plano será moldado aqui</p>
                     </div>
-                    <div className="space-y-4">
-                        <PremiumCard title="Perder gordura" icon="🔥" active={data.goal === 'lose'} onClick={() => setData({ ...data, goal: 'lose' })} />
-                        <PremiumCard title="Manter peso" icon="⚖️" active={data.goal === 'maintain'} onClick={() => setData({ ...data, goal: 'maintain' })} />
-                        <PremiumCard title="Recomposição" icon="🧬" active={data.goal === 'recomp'} onClick={() => setData({ ...data, goal: 'recomp' })} />
-                        <PremiumCard title="Ganhar massa" icon="💪" active={data.goal === 'gain'} onClick={() => setData({ ...data, goal: 'gain' })} />
+                    <div className="grid grid-cols-1 gap-4">
+                        <PremiumCard title="Perder gordura" subtitle="Foco em queima e definição" icon="🔥" active={data.goal === 'lose'} onClick={() => setData({ ...data, goal: 'lose' })} />
+                        <PremiumCard title="Manter peso" subtitle="Foco em saúde e longevidade" icon="⚖️" active={data.goal === 'maintain'} onClick={() => setData({ ...data, goal: 'maintain' })} />
+                        <PremiumCard title="Recomposição" subtitle="Queimar gordura e ganhar massa" icon="🧬" active={data.goal === 'recomp'} onClick={() => setData({ ...data, goal: 'recomp' })} />
+                        <PremiumCard title="Ganhar massa" subtitle="Foco em volume e hipertrofia" icon="💪" active={data.goal === 'gain'} onClick={() => setData({ ...data, goal: 'gain' })} />
                     </div>
                 </div>
             )}
@@ -546,12 +556,12 @@ const SelectionButton = ({ label, active, onClick }: { label: string, active: bo
 const CheckOption = ({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full p-6 rounded-[2rem] border font-bold text-left transition-all duration-500 flex items-center gap-6 active:scale-[0.98] ${active ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-white/[0.03] border-white/10 text-zinc-400 drop-shadow-sm hover:bg-white/[0.07] hover:text-white'}`}
+        className={`w-full p-6 sm:p-7 rounded-[2.5rem] border transition-all duration-500 flex items-center gap-5 active:scale-[0.98] group relative overflow-hidden ${active ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' : 'bg-white/[0.03] border-white/5 text-zinc-500 hover:bg-white/[0.07] hover:border-white/10'}`}
     >
-        <div className={`w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all duration-500 ${active ? 'bg-emerald-500 border-emerald-500 rotate-[360deg]' : 'border-white/10'}`}>
-            {active && <span className="text-white text-sm">✓</span>}
+        <div className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all duration-500 ${active ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'border-white/10 group-hover:border-white/20'}`}>
+            <Check className={`w-4 h-4 transition-all duration-500 ${active ? 'text-white scale-110' : 'text-transparent scale-50'}`} strokeWidth={4} />
         </div>
-        <span className="text-lg">{label}</span>
+        <span className={`text-lg font-serif-premium font-bold transition-colors duration-500 ${active ? 'text-white' : ''}`}>{label}</span>
     </button>
 );
 

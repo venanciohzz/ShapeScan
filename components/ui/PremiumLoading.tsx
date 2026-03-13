@@ -47,7 +47,7 @@ const PremiumLoading: React.FC<PremiumLoadingProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className={`fixed inset-0 z-[500] bg-black flex flex-col items-center justify-center overscroll-none ${className}`}
+                    className={`fixed inset-0 z-[500] bg-black/40 backdrop-blur-md flex flex-col items-center justify-center overscroll-none ${className}`}
                 >
                     {/* Subtle Background Glow */}
                     <div className="absolute inset-0 z-0 opacity-30">

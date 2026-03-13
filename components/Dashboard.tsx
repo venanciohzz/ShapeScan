@@ -228,6 +228,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
 
                {/* Lado Direito: Ferramentas e Histórico */}
                <div className="w-full md:w-[40%] space-y-8">
+                  <GamificationWidget stats={userStats} loading={loadingStats} />
                   <DailyFeedbackCard feedback={dailyFeedback} loading={loadingFeedback} />
                   
                   <ToolGrid onNavigate={onNavigate} />

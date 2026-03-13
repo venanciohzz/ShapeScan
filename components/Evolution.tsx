@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { User, EvolutionRecord } from '../types';
+import { User, EvolutionRecord, FoodLog } from '../types';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 import {
@@ -16,10 +16,13 @@ import {
   Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import EvolutionCharts from './EvolutionCharts';
+
 
 interface EvolutionProps {
   user: User;
   records: EvolutionRecord[];
+  logs: FoodLog[];
   onBack: () => void;
   onAdd: (record: Omit<EvolutionRecord, 'id'>) => void;
   onDelete: (id: string) => void;
@@ -27,131 +30,9 @@ interface EvolutionProps {
   onUpgrade: () => void;
 }
 
-const WeightChart = ({ records }: { records: EvolutionRecord[] }) => {
-  const dataPoints = useMemo(() => {
-    return [...records]
-      .filter(r => r.weight !== undefined && r.weight !== null && !isNaN(r.weight))
-      .sort((a, b) => a.date - b.date)
-      .map(r => ({ date: r.date, val: r.weight! }));
-  }, [records]);
 
-  if (dataPoints.length < 2) {
-    const hasRecordsButNoWeight = records.length >= 2 && dataPoints.length < 2;
 
-    return (
-      <div className="w-full bg-zinc-950/40 backdrop-blur-3xl rounded-[2.5rem] p-10 mb-10 border border-white/5 shadow-2xl text-center border-dashed flex flex-col items-center justify-center min-h-[250px] relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent"></div>
-        <TrendingUp className="w-12 h-12 text-zinc-700 mb-4 opacity-50" />
-        <p className="text-white font-black text-xs uppercase tracking-[0.3em] mb-2">
-          {hasRecordsButNoWeight ? "Dados de Peso Ausentes" : "Matriz de Evolução"}
-        </p>
-        <p className="text-zinc-500 font-medium text-[11px] max-w-xs leading-relaxed uppercase tracking-widest">
-          {hasRecordsButNoWeight
-            ? "Você tem registros salvos, mas precisamos do seu peso em pelo menos 2 deles para projetar o gráfico."
-            : "Sincronize pelo menos 2 registros com peso para visualizar sua trajetória física."}
-        </p>
-      </div>
-    );
-  }
-
-  let minVal = Math.min(...dataPoints.map(d => d.val));
-  let maxVal = Math.max(...dataPoints.map(d => d.val));
-  const paddingY = (maxVal - minVal) === 0 ? 2 : (maxVal - minVal) * 0.2;
-  minVal = minVal - paddingY;
-  maxVal = maxVal + paddingY;
-  const range = maxVal - minVal;
-
-  const width = 800;
-  const height = 300;
-  const paddingX = 40;
-  const paddingTopBottom = 40;
-
-  const coordinates = dataPoints.map((pt, i) => {
-    const x = paddingX + (i / (dataPoints.length - 1)) * (width - (paddingX * 2));
-    const y = height - paddingTopBottom - ((pt.val - minVal) / range) * (height - (paddingTopBottom * 2));
-    return { x, y, val: pt.val, date: pt.date };
-  });
-
-  const pointsString = coordinates.map(c => `${c.x},${c.y}`).join(' ');
-  const areaString = `${pointsString} ${coordinates[coordinates.length - 1].x},${height} ${coordinates[0].x},${height}`;
-
-  return (
-    <div className="w-full bg-zinc-950/40 backdrop-blur-3xl rounded-[2.5rem] p-8 mb-10 border border-white/5 shadow-2xl relative overflow-hidden group">
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
-
-      <div className="flex justify-between items-center mb-8 px-2">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-emerald-500" />
-          <h3 className="text-white font-black uppercase text-[10px] tracking-[0.3em]">Trajetória Metabólica</h3>
-        </div>
-        {dataPoints.length > 0 && (
-          <div className="bg-emerald-500/10 px-4 py-2 rounded-2xl border border-emerald-500/20">
-            <span className="text-[10px] font-black text-emerald-500 tracking-widest">
-              {dataPoints[0].val}KG ➝ {dataPoints[dataPoints.length - 1].val}KG
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="w-full relative" style={{ aspectRatio: '16/7' }}>
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible">
-          <defs>
-            <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#10B981" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-            </linearGradient>
-            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="8" stdDeviation="8" floodColor="#10B981" floodOpacity="0.2" />
-            </filter>
-          </defs>
-
-          <polygon points={areaString} fill="url(#chartGradient)" />
-          <line x1={paddingX} y1={height - paddingTopBottom} x2={width - paddingX} y2={height - paddingTopBottom} stroke="white" strokeOpacity="0.03" strokeWidth="1" />
-
-          <polyline
-            points={pointsString}
-            fill="none"
-            stroke="#10B981"
-            strokeWidth="6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            filter="url(#shadow)"
-          />
-
-          {coordinates.map((coord, i) => (
-            <g key={i}>
-              <circle cx={coord.x} cy={coord.y} r="10" fill="#09090b" stroke="#10B981" strokeWidth="4" />
-              <text
-                x={coord.x}
-                y={coord.y - 25}
-                textAnchor="middle"
-                fill="white"
-                fontSize="16"
-                fontWeight="900"
-                className="font-serif-premium tracking-tighter"
-              >
-                {coord.val}
-              </text>
-              <text
-                x={coord.x}
-                y={height + 25}
-                textAnchor="middle"
-                fill="#52525b"
-                fontSize="11"
-                fontWeight="900"
-                className="uppercase tracking-widest"
-              >
-                {new Date(coord.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
-              </text>
-            </g>
-          ))}
-        </svg>
-      </div>
-    </div>
-  );
-};
-
-const Evolution: React.FC<EvolutionProps> = ({ user, records, onBack, onAdd, onDelete, onEdit, onUpgrade }) => {
+const Evolution: React.FC<EvolutionProps> = ({ user, records, logs, onBack, onAdd, onDelete, onEdit, onUpgrade }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<EvolutionRecord>>({ date: Date.now(), weight: undefined, height: undefined, bf: undefined, notes: '' });
@@ -262,7 +143,7 @@ const Evolution: React.FC<EvolutionProps> = ({ user, records, onBack, onAdd, onD
 
         {!isAdding ? (
           <div className="space-y-10">
-            <WeightChart records={records} />
+            <EvolutionCharts records={records} logs={logs} user={user} />
 
             <button
               onClick={() => setIsAdding(true)}

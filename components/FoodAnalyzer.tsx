@@ -371,25 +371,60 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
               )}
 
               {loading && (
-                <div className="space-y-12 pb-32 animate-pulse">
-                  <div className="space-y-8">
-                    <div className="space-y-4">
-                      <Skeleton className="h-4 w-32 rounded-full" />
-                      <Skeleton className="h-16 w-3/4 rounded-2xl" />
+                <div className="space-y-12 pb-32">
+                  <div className="w-full aspect-video rounded-[3rem] overflow-hidden border border-white/5 bg-white/5">
+                    <Skeleton className="w-full h-full" />
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <Skeleton className="h-4 w-32 rounded-full" />
+                        <Skeleton className="h-16 w-3/4 rounded-2xl" />
+                        <Skeleton className="h-6 w-24 rounded-full" />
+                      </div>
+                      <div className="flex items-baseline gap-4">
+                        <Skeleton className="h-24 w-48 rounded-2xl" />
+                        <Skeleton className="h-8 w-16 rounded-lg" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-6">
+                        <Skeleton className="h-24 rounded-3xl" />
+                        <Skeleton className="h-24 rounded-3xl" />
+                        <Skeleton className="h-24 rounded-3xl" />
+                      </div>
                     </div>
-                    <div className="flex items-baseline gap-4">
-                      <Skeleton className="h-20 w-40 rounded-2xl" />
-                      <Skeleton className="h-8 w-16 rounded-lg" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-6">
-                      <Skeleton className="h-24 rounded-3xl" />
-                      <Skeleton className="h-24 rounded-3xl" />
-                      <Skeleton className="h-24 rounded-3xl" />
+                    
+                    <div className="bg-zinc-950/20 backdrop-blur-xl p-10 rounded-[3rem] border border-white/5 space-y-8">
+                       <div className="space-y-6">
+                          <div className="space-y-4">
+                             <div className="flex justify-between">
+                                <Skeleton className="h-4 w-32 rounded-full" />
+                                <Skeleton className="h-8 w-16 rounded-full" />
+                             </div>
+                             <Skeleton className="h-1.5 w-full rounded-full" />
+                          </div>
+                          <div className="space-y-4">
+                             <div className="flex justify-between">
+                                <Skeleton className="h-4 w-32 rounded-full" />
+                                <Skeleton className="h-8 w-16 rounded-full" />
+                             </div>
+                             <Skeleton className="h-1.5 w-full rounded-full" />
+                          </div>
+                          <div className="space-y-4 pt-6 border-t border-white/5">
+                             <Skeleton className="h-20 w-full rounded-2xl" />
+                          </div>
+                       </div>
                     </div>
                   </div>
+
                   <div className="space-y-6">
-                    <Skeleton className="h-40 w-full rounded-[2.5rem]" />
-                    <Skeleton className="h-64 w-full rounded-[2.5rem]" />
+                    <Skeleton className="h-4 w-40 rounded-full" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Skeleton className="h-32 rounded-[2.5rem]" />
+                      <Skeleton className="h-32 rounded-[2.5rem]" />
+                      <Skeleton className="h-32 rounded-[2.5rem]" />
+                      <Skeleton className="h-32 rounded-[2.5rem]" />
+                    </div>
                   </div>
                 </div>
               )}

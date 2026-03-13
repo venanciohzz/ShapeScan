@@ -610,6 +610,11 @@ export async function updateStreak(userId: string): Promise<UserStats> {
   if (newStreak === 30 && !newBadges.includes('thirty_days')) newBadges.push('thirty_days');
   if (updates.total_logs >= 50 && !newBadges.includes('food_master')) newBadges.push('food_master');
   
+  // Novas medalhas estratégicas
+  if (updates.experience >= 1000 && !newBadges.includes('level_up')) newBadges.push('level_up');
+  if (updates.total_logs >= 10 && !newBadges.includes('scanner_pro')) newBadges.push('scanner_pro');
+  if (newStreak >= 3 && !newBadges.includes('consistency_starter')) newBadges.push('consistency_starter');
+  
   updates.badges = newBadges;
 
   const { data, error } = await supabase
