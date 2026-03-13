@@ -137,11 +137,11 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                </div>
             </div>
 
-            {/* Show "Continue Free" only if user hasn't used their 1 scan or isn't logged in yet */}
-            {(!user || (user.plan === 'free' && (user.freeScansUsed || 0) < 1)) && (
+            {/* Show "Continue Free" option */}
+            {(user?.plan === 'free' || !user) && (
                <div className="text-center mt-12 animate-in fade-in duration-1000 delay-700">
                   <button onClick={() => onSelect('free')} className="text-zinc-500 hover:text-emerald-400 transition-colors text-[10px] font-black uppercase tracking-[0.3em] border-b border-white/10 hover:border-emerald-500/50 pb-1">
-                     Continuar no Plano Gratuito (1 Análise Total)
+                     {user?.freeScansUsed && user.freeScansUsed >= 1 ? 'Continuar para o Dashboard' : 'Continuar no Plano Gratuito (1 Análise Total)'}
                   </button>
                </div>
             )}
