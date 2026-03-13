@@ -261,16 +261,18 @@ const App: React.FC = () => {
 
     setIsQuizLoading(true);
     
-    // Timeout de segurança: 10 segundos para não travar a UI infinitamente
+    // Timeout de segurança: 8 segundos para não travar a UI e garantir o redirecionamento
     const safetyTimeout = setTimeout(() => {
       setIsQuizLoading(current => {
         if (current) {
-          console.warn("App: Quiz Loading excedeu 10s. Forçando encerramento.");
+          console.warn("App: Quiz Loading excedeu 8s. Forçando redirecionamento por segurança.");
+          // Se o usuário ainda estiver em loading, navegamos de qualquer forma
+          navigate('/planos');
           return false;
         }
         return current;
       });
-    }, 10000);
+    }, 8000);
 
     try {
       const { age, height, weight, gender, goal, activityLevel } = metrics;
@@ -306,23 +308,35 @@ const App: React.FC = () => {
       };
 
       console.log("App: Enviando atualizações do quiz para o banco...", updates);
-      // Garantir que temos o ID correto
-      const updatedUser = await db.users.update(user.email, updates);
-      console.log("App: Perfil atualizado com sucesso pós-quiz.");
       
-      setUser(updatedUser);
+      // Executamos a atualização, mas não deixamos o erro travar a navegação final
+      try {
+        const updatedUser = await db.users.update(user.email, updates);
+        console.log("App: Perfil atualizado com sucesso pós-quiz.");
+        setUser(updatedUser);
+      } catch (dbError) {
+        console.error("App: Erro ao salvar dados no banco, mas prosseguindo com fluxo:", dbError);
+      }
+      
       clearTimeout(safetyTimeout);
       
-      console.log("App: Redirecionando para /planos...");
-      // Navegação explícita
-      navigate('/planos');
+      // Só navegamos aqui se o loading ainda estiver ativo (timeout não disparou)
+      setIsQuizLoading(current => {
+        if (current) {
+          console.log("App: Redirecionando para /planos (sucesso no tempo)");
+          navigate('/planos');
+          return false;
+        }
+        return current;
+      });
       
     } catch (error: any) {
       console.error("App: Erro crítico no handleQuizComplete:", error);
-      alert("Erro ao salvar dados: " + (error.message || "Tente novamente."));
-    } finally {
-      clearTimeout(safetyTimeout);
+      // Se der um erro muito grave antes do update, avisamos e paramos
+      alert("Erro ao processar dados: " + (error.message || "Tente novamente."));
       setIsQuizLoading(false);
+      clearTimeout(safetyTimeout);
+    } finally {
       console.log("App: handleQuizComplete finalizado.");
     }
   };
