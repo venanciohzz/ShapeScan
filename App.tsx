@@ -81,8 +81,14 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
     // Reinforce scroll to top for mobile browsers after render
     const timer = setTimeout(() => window.scrollTo(0, 0), 100);
+    
+    // Meta Pixel Tracking
+    if (typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'PageView');
+    }
+    
     return () => clearTimeout(timer);
-  }, [currentView]);
+  }, [location.pathname]);
 
   // Handle Hash Errors (e.g. Email Confirmation Expired)
   useEffect(() => {
