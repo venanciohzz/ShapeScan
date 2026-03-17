@@ -82,10 +82,16 @@ const App: React.FC = () => {
     // Reinforce scroll to top for mobile browsers after render
     const timer = setTimeout(() => window.scrollTo(0, 0), 100);
     
-    // Meta Pixel Tracking
-    if (typeof (window as any).fbq === 'function') {
-      (window as any).fbq('track', 'PageView');
-    }
+    // Meta Pixel Tracking with Retry Logic
+    const firePageView = (retryCount = 0) => {
+      if (typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'PageView');
+      } else if (retryCount < 20) { // Try for 2 seconds max
+        setTimeout(() => firePageView(retryCount + 1), 100);
+      }
+    };
+    
+    firePageView();
     
     return () => clearTimeout(timer);
   }, [location.pathname]);
