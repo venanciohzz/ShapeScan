@@ -82,45 +82,9 @@ const App: React.FC = () => {
     // Reinforce scroll to top for mobile browsers after render
     const timer = setTimeout(() => window.scrollTo(0, 0), 100);
     
-    // Dynamic Meta Pixel Injection
-    const initFacebookPixel = () => {
-      if (document.getElementById('facebook-jssdk')) return; // Already loaded
-
-      const f = window as any;
-      if (f.fbq) return;
-
-      const n: any = (f.fbq = function () {
-        n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
-      });
-      if (!f._fbq) f._fbq = n;
-      n.push = n;
-      n.loaded = !0;
-      n.version = '2.0';
-      n.queue = [];
-
-      const t = document.createElement('script');
-      t.id = 'facebook-jssdk';
-      t.async = !0;
-      t.src = 'https://connect.facebook.net/en_US/fbevents.js';
-      
-      t.onload = () => {
-        f.fbq('init', '583419800291181');
-        f.fbq('track', 'PageView');
-      };
-
-      const s = document.getElementsByTagName('script')[0];
-      if (s && s.parentNode) {
-        s.parentNode.insertBefore(t, s);
-      } else {
-        document.head.appendChild(t);
-      }
-    };
-
-    // Initialize or track
+    // Meta Pixel PageView for SPA routing
     if (typeof (window as any).fbq === 'function') {
       (window as any).fbq('track', 'PageView');
-    } else {
-      initFacebookPixel();
     }
     
     return () => clearTimeout(timer);
