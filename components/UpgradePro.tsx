@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { PlanType, getCheckoutUrl } from '../services/paymentConfig';
+import { PlanType, PAYMENT_CONFIG } from '../services/paymentConfig';
 import { User } from '../types';
+import StripeCheckout from './ui/StripeCheckout';
 
 interface UpgradeProProps {
    user?: User | null;
@@ -9,28 +10,18 @@ interface UpgradeProProps {
 }
 
 const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) => {
-   const [loading, setLoading] = useState<PlanType | null>(null);
+   const [stripePriceId, setStripePriceId] = useState<string | null>(null);
 
    const handleSubscribe = async (plan: PlanType) => {
       if (!user) return;
-      setLoading(plan);
-
-      try {
-         const checkoutUrl = getCheckoutUrl(plan, user.email, user.id);
-
-         if (!checkoutUrl) {
-            onShowToast("Plano não disponível.", 'error');
-            setLoading(null);
-            return;
-         }
-
-         // Redirecionar para checkout Cakto
-         window.location.href = checkoutUrl;
-
-      } catch (error) {
-         console.error("Erro:", error);
-         setLoading(null);
+      
+      const config = PAYMENT_CONFIG[plan];
+      if (!config || !config.stripePriceId) {
+         onShowToast("Plano não disponível para Stripe no momento.", 'error');
+         return;
       }
+
+      setStripePriceId(config.stripePriceId);
    };
 
    return (
@@ -122,7 +113,6 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
                {/* Monthly Option */}
                <button
                   onClick={() => handleSubscribe('pro_monthly')}
-                  disabled={loading === 'pro_monthly'}
                   className="bg-zinc-900 border border-white/10 p-6 rounded-3xl hover:border-emerald-500 transition-all group relative overflow-hidden"
                >
                   <div className="relative z-10 text-left">
@@ -132,20 +122,16 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
                         <span className="text-zinc-500 text-sm font-bold">/mês</span>
                      </div>
                      <div className="mt-4 flex items-center justify-between">
-                        <p className={`font-bold text-xs ${loading === 'pro_monthly' ? 'text-zinc-500' : 'text-emerald-500 group-hover:underline'}`}>
-                           {loading === 'pro_monthly' ? 'Processando...' : 'Assinar Mensal →'}
-                        </p>
-                        {loading === 'pro_monthly' && (
-                           <div className="w-4 h-4 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
-                        )}
-                     </div>
-                  </div>
-               </button>
+                         <p className={`font-bold text-xs ${stripePriceId === PAYMENT_CONFIG.pro_monthly.stripePriceId ? 'text-zinc-500' : 'text-emerald-500 group-hover:underline'}`}>
+                            {stripePriceId === PAYMENT_CONFIG.pro_monthly.stripePriceId ? 'Processando...' : 'Assinar Mensal →'}
+                         </p>
+                      </div>
+                   </div>
+                </button>
 
                {/* Annual Option */}
                <button
                   onClick={() => handleSubscribe('pro_annual')}
-                  disabled={loading === 'pro_annual'}
                   className="bg-gradient-to-br from-emerald-900/20 to-zinc-900 border border-emerald-500/50 p-6 rounded-3xl hover:bg-emerald-900/30 transition-all group relative overflow-hidden shadow-lg shadow-emerald-900/20"
                >
                   <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl">Economize</div>
@@ -156,18 +142,25 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
                         <span className="text-zinc-500 text-sm font-bold">/ano</span>
                      </div>
                      <div className="mt-4 flex items-center justify-between">
-                        <p className={`font-bold text-xs ${loading === 'pro_annual' ? 'text-zinc-500' : 'text-white group-hover:underline'}`}>
-                           {loading === 'pro_annual' ? 'Processando...' : 'Assinar Anual →'}
-                        </p>
-                        {loading === 'pro_annual' && (
-                           <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                        )}
-                     </div>
+                         <p className={`font-bold text-xs ${stripePriceId === PAYMENT_CONFIG.pro_annual.stripePriceId ? 'text-zinc-500' : 'text-white group-hover:underline'}`}>
+                            {stripePriceId === PAYMENT_CONFIG.pro_annual.stripePriceId ? 'Processando...' : 'Assinar Anual →'}
+                         </p>
+                      </div>
                   </div>
                </button>
-            </div>
-         </div>
-      </div>
+             </div>
+          </div>
+
+          {/* Stripe Checkout Overlay */}
+          {stripePriceId && user && (
+             <StripeCheckout 
+                priceId={stripePriceId}
+                userId={user.id}
+                email={user.email}
+                onClose={() => setStripePriceId(null)}
+             />
+          )}
+       </div>
    );
 };
 

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { PlanType, getCheckoutUrl } from '../services/paymentConfig';
+import { PlanType, getCheckoutUrl, PAYMENT_CONFIG } from '../services/paymentConfig';
 import { User } from '../types';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
+import StripeCheckout from './ui/StripeCheckout';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 interface PlanSelectionProps {
@@ -13,29 +14,19 @@ interface PlanSelectionProps {
 }
 
 const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, onShowToast }) => {
-   const [loadingPlan, setLoadingPlan] = useState<PlanType | null>(null);
    const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+   const [stripePriceId, setStripePriceId] = useState<string | null>(null);
 
    const handleSubscribe = async (plan: PlanType) => {
       if (!user) { onShowToast("Erro: Usuário não identificado.", 'error'); return; }
-      setLoadingPlan(plan);
-
-      try {
-         const checkoutUrl = getCheckoutUrl(plan, user.email, user.id);
-
-         if (!checkoutUrl) {
-            onShowToast("Plano não disponível.", 'error');
-            setLoadingPlan(null);
-            return;
-         }
-
-         // Redirecionar para checkout Cakto
-         window.location.href = checkoutUrl;
-
-      } catch (error) {
-         console.error("Erro:", error);
-         setLoadingPlan(null);
+      
+      const config = PAYMENT_CONFIG[plan];
+      if (!config || !config.stripePriceId) {
+         onShowToast("Plano não disponível para Stripe no momento.", 'error');
+         return;
       }
+
+      setStripePriceId(config.stripePriceId);
    };
 
    return (
@@ -100,7 +91,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                         "Relatórios Detalhados"
                      ]}
                      onClick={() => handleSubscribe(billingCycle === 'monthly' ? 'monthly' : 'annual')}
-                     loading={loadingPlan === 'monthly' || loadingPlan === 'annual'}
+                     loading={false}
                      highlightTag={billingCycle === 'monthly' ? "Mais Escolhido" : "Melhor Custo-Benefício"}
                      isPro={false}
                   />
@@ -121,7 +112,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                         "Acesso a Betas"
                      ]}
                      onClick={() => handleSubscribe(billingCycle === 'monthly' ? 'pro_monthly' : 'pro_annual')}
-                     loading={loadingPlan === 'pro_monthly' || loadingPlan === 'pro_annual'}
+                     loading={false}
                      highlightTag={billingCycle === 'annual' ? "Economia Máxima" : "Alta Performance"}
                      isPro={true}
                   />
@@ -144,6 +135,16 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                      Continuar no Plano Gratuito (1 Análise Total)
                   </button>
                </div>
+            )}
+
+            {/* Stripe Checkout Overlay */}
+            {stripePriceId && user && (
+               <StripeCheckout 
+                  priceId={stripePriceId}
+                  userId={user.id}
+                  email={user.email}
+                  onClose={() => setStripePriceId(null)}
+               />
             )}
          </div>
       </PremiumBackground>

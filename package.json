@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@fontsource/playfair-display": "^5.2.8",
+    "@stripe/react-stripe-js": "^5.6.1",
+    "@stripe/stripe-js": "^8.11.0",
     "@supabase/supabase-js": "^2.47.0",
     "@types/three": "^0.183.1",
     "clsx": "^2.1.1",
