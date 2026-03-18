@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-    paths:
-      - 'supabase/functions/**'
   workflow_dispatch:
 
 jobs:
@@ -22,11 +20,11 @@ jobs:
           version: latest
 
       - name: Deploy stripe-checkout
-        run: supabase functions deploy stripe-checkout --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: supabase functions deploy stripe-checkout --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --debug
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy stripe-webhook
-        run: supabase functions deploy stripe-webhook --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --no-verify-jwt
+        run: supabase functions deploy stripe-webhook --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --no-verify-jwt --debug
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
