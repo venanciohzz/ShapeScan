@@ -1,8 +1,10 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import {
-  EmbeddedCheckoutProvider,
-  EmbeddedCheckout
+import { 
+  Elements, 
+  PaymentElement, 
+  useStripe, 
+  useElements 
 } from '@stripe/react-stripe-js';
 import { supabase } from '../../services/supabaseService';
 
@@ -14,14 +16,10 @@ interface StripeCheckoutProps {
   userId: string;
   email: string;
   onClose: () => void;
+  planName?: string;   // Nome do plano, ex: "Standard Mensal"
+  planPrice?: string;  // Valor formatado, ex: "29,90"
+  planPeriod?: string; // Período, ex: "/mês" ou "/ano"
 }
-
-import { 
-  Elements, 
-  PaymentElement, 
-  useStripe, 
-  useElements 
-} from '@stripe/react-stripe-js';
 
 const PaymentForm = ({ onCancel }: { onCancel: () => void }) => {
   const stripe = useStripe();
@@ -95,7 +93,15 @@ const PaymentForm = ({ onCancel }: { onCancel: () => void }) => {
   );
 };
 
-const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email, onClose }) => {
+const StripeCheckout: React.FC<StripeCheckoutProps> = ({ 
+  priceId, 
+  userId, 
+  email, 
+  onClose,
+  planName = 'ShapeScan Premium',
+  planPrice = '29,90',
+  planPeriod = '/mês'
+}) => {
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -177,13 +183,14 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email,
               </div>
               <h3 className="text-xl font-black tracking-tight text-white uppercase italic">Checkout Seguro</h3>
             </div>
-            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-11">ShapeScan Premium</p>
+            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-11">{planName}</p>
           </div>
 
           <div className="flex flex-col md:items-end">
             <span className="text-zinc-500 text-[8px] font-black uppercase tracking-widest mb-1">Total a Pagar</span>
+            {/* Valor dinâmico baseado no plano selecionado */}
             <div className="text-2xl font-black text-white tracking-tighter">
-              R$ 29,90<span className="text-zinc-500 text-sm font-bold">/mês</span>
+              R$ {planPrice}<span className="text-zinc-500 text-sm font-bold">{planPeriod}</span>
             </div>
           </div>
         </div>

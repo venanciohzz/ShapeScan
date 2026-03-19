@@ -16,6 +16,7 @@ interface PlanSelectionProps {
 const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, onShowToast }) => {
    const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
    const [stripePriceId, setStripePriceId] = useState<string | null>(null);
+   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
    const handleSubscribe = async (plan: PlanType) => {
       if (!user) { onShowToast("Erro: Usuário não identificado.", 'error'); return; }
@@ -27,6 +28,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
       }
 
       setStripePriceId(config.stripePriceId);
+      setSelectedPlan(plan);
    };
 
    return (
@@ -138,14 +140,19 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
             )}
 
             {/* Stripe Checkout Overlay */}
-            {stripePriceId && user && (
-               <StripeCheckout 
-                  priceId={stripePriceId}
-                  userId={user.id}
-                  email={user.email}
-                  onClose={() => setStripePriceId(null)}
-               />
-            )}
+            {stripePriceId && user && selectedPlan && (
+            <StripeCheckout 
+               priceId={stripePriceId}
+               userId={user.id}
+               email={user.email}
+               planName={PAYMENT_CONFIG[selectedPlan]?.name}
+               planPrice={billingCycle === 'monthly'
+                  ? (selectedPlan === 'pro_monthly' ? '44,90' : '29,90')
+                  : (selectedPlan === 'pro_annual' ? '347' : '247')}
+               planPeriod={billingCycle === 'monthly' ? '/mês' : '/ano'}
+               onClose={() => { setStripePriceId(null); setSelectedPlan(null); }}
+            />
+         )}
          </div>
       </PremiumBackground>
    );

@@ -1,6 +1,5 @@
-// Trigger deployment
+// Trigger deployment v2 - Fixed: anti-duplicate + userId propagation to PaymentIntent
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Stripe from 'npm:stripe@^14.21.0';
 
 const corsHeaders = {
@@ -10,9 +9,8 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  console.log(`[Stripe Checkout] Received ${req.method} request to ${req.url}`);
+  console.log(`[Stripe Checkout] Received ${req.method} request`);
 
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -29,12 +27,10 @@ Deno.serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // 1. Get request body
-    let body;
+    let body: any;
     try {
       body = await req.json();
     } catch (e) {
-      console.error('[Stripe Checkout] Error parsing request body:', e);
       throw new Error('Corpo da requisição inválido');
     }
 
@@ -47,46 +43,107 @@ Deno.serve(async (req) => {
 
     console.log(`[Stripe Checkout] Processing for user ${userId} (${email})`);
 
-    // 2. Find or Create Customer
-    const customers = await stripe.customers.list({ email: email, limit: 1 });
-    let customer;
-    if (customers.data.length > 0) {
-      customer = customers.data[0];
+    // ============================================================
+    // 1. FIND OR CREATE STRIPE CUSTOMER
+    // Busca primeiro por metadata.supabase_user_id para evitar duplicatas
+    // mesmo que o email mude.
+    // ============================================================
+    let customer: Stripe.Customer | null = null;
+
+    // Buscar por supabase_user_id nos metadados (mais confiável)
+    const customersByMetadata = await stripe.customers.search({
+      query: `metadata['supabase_user_id']:'${userId}'`,
+      limit: 1,
+    });
+
+    if (customersByMetadata.data.length > 0) {
+      customer = customersByMetadata.data[0];
+      console.log(`[Stripe Checkout] Customer found by userId metadata: ${customer.id}`);
     } else {
-      customer = await stripe.customers.create({
-        email: email,
-        name: email.split('@')[0], // PIX requires a name
-        preferred_locales: ['pt-BR'],
-        metadata: { supabase_user_id: userId },
-      });
+      // Fallback: buscar por email
+      const customersByEmail = await stripe.customers.list({ email, limit: 1 });
+      if (customersByEmail.data.length > 0) {
+        customer = customersByEmail.data[0];
+        // Garantir que o metadata está atualizado
+        if (!customer.metadata?.supabase_user_id) {
+          customer = await stripe.customers.update(customer.id, {
+            metadata: { supabase_user_id: userId }
+          }) as Stripe.Customer;
+        }
+        console.log(`[Stripe Checkout] Customer found by email: ${customer.id}`);
+      } else {
+        // Criar novo customer
+        customer = await stripe.customers.create({
+          email,
+          name: email.split('@')[0],
+          preferred_locales: ['pt-BR'],
+          metadata: { supabase_user_id: userId },
+        }) as Stripe.Customer;
+        console.log(`[Stripe Checkout] New customer created: ${customer.id}`);
+      }
     }
 
-    // 3. Create Subscription (Note: currency is tied to the Price object, ensure it's BRL in Stripe)
+    // ============================================================
+    // 2. CANCELAR ASSINATURAS INCOMPLETAS ANTERIORES
+    // Evita cobrança duplicada por tentativas repetidas no mesmo plano.
+    // Somente cancela assinaturas "incomplete" (nunca foram pagas).
+    // ============================================================
+    const existingIncomplete = await stripe.subscriptions.list({
+      customer: customer.id,
+      status: 'incomplete',
+      limit: 10,
+    });
+
+    for (const sub of existingIncomplete.data) {
+      // Verificar se é o mesmo priceId para evitar cancelar assinaturas de outros planos
+      const hasSamePrice = sub.items.data.some(item => item.price.id === priceId);
+      if (hasSamePrice) {
+        await stripe.subscriptions.cancel(sub.id);
+        console.log(`[Stripe Checkout] Cancelled incomplete subscription: ${sub.id}`);
+      }
+    }
+
+    // ============================================================
+    // 3. CRIAR ASSINATURA COM METADATA COMPLETO
+    // ============================================================
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
       payment_behavior: 'default_incomplete',
-      payment_settings: { 
+      payment_settings: {
         save_default_payment_method: 'on_subscription',
       },
       expand: ['latest_invoice.payment_intent'],
-      metadata: { userId: userId },
+      // CRÍTICO: userId nos metadados da subscription
+      metadata: { userId, supabase_user_id: userId },
     });
 
-    let paymentIntent = (subscription.latest_invoice as any).payment_intent;
+    const paymentIntent = (subscription.latest_invoice as any)?.payment_intent;
 
     if (!paymentIntent) {
       throw new Error('Falha ao gerar intenção de pagamento para a assinatura.');
     }
 
-    // 4. Return the client secret directly
-    // Stripe will automatically handle the payment methods configured in your Dashboard (Cards, Apple Pay, Google Pay)
-    console.log(`[Stripe Checkout] Subscription created: ${subscription.id}`);
+    // ============================================================
+    // 4. PROPAGAR userId PARA OS METADADOS DO PAYMENT INTENT
+    // CRÍTICO: O webhook escuta payment_intent.succeeded e precisa
+    // do userId nos metadados do PaymentIntent, não da Subscription.
+    // O Stripe NÃO herda automaticamente os metadados da Subscription.
+    // ============================================================
+    const updatedPI = await stripe.paymentIntents.update(paymentIntent.id, {
+      metadata: {
+        userId,
+        supabase_user_id: userId,
+        subscription_id: subscription.id,
+      },
+    });
+
+    console.log(`[Stripe Checkout] Subscription created: ${subscription.id} | PI: ${paymentIntent.id} | userId set: ${userId}`);
 
     return new Response(
-      JSON.stringify({ 
-        clientSecret: paymentIntent.client_secret,
-        subscriptionId: subscription.id 
+      JSON.stringify({
+        clientSecret: updatedPI.client_secret,
+        subscriptionId: subscription.id,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -96,13 +153,13 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error('[Stripe Checkout] Error:', error.message);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message,
         isError: true,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
+        status: 500,
       }
     );
   }

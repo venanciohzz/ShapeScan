@@ -112,6 +112,53 @@ const App: React.FC = () => {
     }
   }, [location.hash, navigate]);
 
+  // ============================================================
+  // HANDLER DE RETORNO PÓS-PAGAMENTO STRIPE
+  // Quando o Stripe redireciona para /dashboard?payment=success,
+  // utilizamos polling com retry exponencial para aguardar o webhook
+  // processar e ativar o plano (tolerante a latência do webhook).
+  // ============================================================
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('payment') === 'success' && user) {
+      console.log('[App] Retorno pós-pagamento detectado. Iniciando polling de ativação do plano...');
+
+      // Polling com retry exponencial: 2s → 4s → 8s → 16s (max 4 tentativas)
+      const pollForPremium = async () => {
+        const delays = [2000, 4000, 8000, 16000];
+        const { getProfile } = await import('./services/supabaseService');
+        
+        for (let attempt = 0; attempt < delays.length; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+          try {
+            const updatedUser = await getProfile(user.id);
+            setUser(updatedUser);
+            localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+
+            if (updatedUser.isPremium) {
+              console.log(`[App] Plano premium ativado! (tentativa ${attempt + 1})`);
+              showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
+              return; // Sai do loop — plano ativo
+            }
+
+            console.log(`[App] Plano ainda não ativo (tentativa ${attempt + 1}/${delays.length}). Aguardando...`);
+          } catch (e) {
+            console.error(`[App] Erro ao verificar plano (tentativa ${attempt + 1}):`, e);
+          }
+        }
+
+        // Após todas as tentativas, informar usuário
+        showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
+      };
+
+      pollForPremium();
+
+      // Limpar o parâmetro da URL sem recarregar a página
+      const cleanUrl = window.location.protocol + '//' + window.location.host + '/dashboard';
+      window.history.replaceState(null, '', cleanUrl);
+    }
+  }, [location.search]);
+
   // Professional Optimization 1: Unified Session Loading (Removed stale cache)
   useEffect(() => {
     const initSession = async () => {
@@ -196,10 +243,26 @@ const App: React.FC = () => {
 
     initSession();
 
-    // Listener para mudanças de estado de autenticação (ex: expiração de sessão)
+    // Listener para mudanças de estado de autenticação
+    // TOKEN_REFRESHED: re-fetcha perfil para manter isPremium/plano atualizado
+    // SIGNED_IN: garante que o perfil está sincronizado após login
+    // SIGNED_OUT: limpa estado local
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event: string, session: unknown) => {
-        if (event === 'SIGNED_OUT' || (!session && !isSessionLoading)) {
+      async (event: string, session: any) => {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          localStorage.removeItem('shapescan_user_profile');
+        } else if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session?.user?.id) {
+          // Re-fetchar perfil para garantir que isPremium e plano estão atualizados
+          try {
+            const { getProfile } = await import('./services/supabaseService');
+            const freshProfile = await getProfile(session.user.id);
+            setUser(freshProfile);
+            localStorage.setItem('shapescan_user_profile', JSON.stringify(freshProfile));
+          } catch (e) {
+            console.error('[App] onAuthStateChange: erro ao re-fetchar perfil:', e);
+          }
+        } else if (!session && !isSessionLoading) {
           setUser(null);
           localStorage.removeItem('shapescan_user_profile');
         }
