@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import {
   EmbeddedCheckoutProvider,
@@ -17,26 +17,44 @@ interface StripeCheckoutProps {
 }
 
 const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email, onClose }) => {
+  const [error, setError] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+
   const fetchClientSecret = useCallback(async () => {
-    // Call the Supabase Edge Function to create a Checkout Session
-    const { data, error } = await supabase.functions.invoke('stripe-checkout', {
-      body: { 
-        priceId, 
-        userId, 
-        email, 
-        returnUrl: window.location.origin + '/dashboard' 
-      },
-    });
+    try {
+      setIsInitializing(true);
+      setError(null);
+      
+      const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
+        body: { 
+          priceId, 
+          userId, 
+          email, 
+          returnUrl: window.location.origin + '/dashboard' 
+        },
+      });
 
-    if (error) {
-      console.error('Error fetching client secret:', error);
-      throw new Error(error.message);
+      if (invokeError) {
+        console.error('Error fetching client secret:', invokeError);
+        throw new Error(invokeError.message || 'Falha ao conectar com o provedor de pagamento.');
+      }
+
+      if (!data?.clientSecret) {
+        throw new Error('Não foi possível gerar a chave de checkout.');
+      }
+
+      setIsInitializing(false);
+      return data.clientSecret;
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      setError(err.message || 'Ocorreu um erro inesperado ao carregar o checkout.');
+      setIsInitializing(false);
+      throw err;
     }
-
-    return data.clientSecret;
   }, [priceId, userId, email]);
 
-  const options = { fetchClientSecret };
+  // Stable options object to prevent unnecessary re-initialization
+  const options = useMemo(() => ({ fetchClientSecret }), [fetchClientSecret]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-zinc-950/90 backdrop-blur-xl animate-in fade-in duration-500 overflow-y-auto">
@@ -44,8 +62,8 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email,
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-zinc-100 dark:border-zinc-800">
           <div>
-            <h3 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white uppercase">Checkout Seguro</h3>
-            <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1">Sua evolução começa aqui</p>
+            <h3 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white uppercase text-left">Checkout Seguro</h3>
+            <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1 text-left">Sua evolução começa aqui</p>
           </div>
           <button 
             onClick={onClose}
@@ -56,13 +74,39 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email,
         </div>
 
         {/* Stripe Embedded Checkout Container */}
-        <div id="checkout" className="flex-1 p-4 md:p-8">
-          <EmbeddedCheckoutProvider
-            stripe={stripePromise}
-            options={options}
-          >
-            <EmbeddedCheckout />
-          </EmbeddedCheckoutProvider>
+        <div id="checkout" className="flex-1 p-4 md:p-8 flex flex-col items-center justify-center min-h-[400px]">
+          {error ? (
+            <div className="text-center p-8 animate-in zoom-in duration-300">
+              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-4xl">⚠️</span>
+              </div>
+              <h4 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Ops! Algo deu errado</h4>
+              <p className="text-zinc-500 dark:text-zinc-400 mb-8 max-w-sm mx-auto">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-xs tracking-widest rounded-2xl transition-all active:scale-95 shadow-lg shadow-emerald-500/20"
+              >
+                Tentar Novamente
+              </button>
+            </div>
+          ) : (
+            <>
+              {isInitializing && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-zinc-900 z-10">
+                  <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px]">Preparando checkout seguro...</p>
+                </div>
+              )}
+              <div className="w-full">
+                <EmbeddedCheckoutProvider
+                  stripe={stripePromise}
+                  options={options}
+                >
+                  <EmbeddedCheckout />
+                </EmbeddedCheckoutProvider>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Footer info */}

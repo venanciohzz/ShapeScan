@@ -6,6 +6,7 @@ import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 Deno.serve(async (req) => {
@@ -17,7 +18,8 @@ Deno.serve(async (req) => {
   try {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) {
-      throw new Error('STRIPE_SECRET_KEY is not set');
+      console.error('[Stripe Checkout] STRIPE_SECRET_KEY is not set');
+      throw new Error('Configuração do servidor incompleta (Stripe Key)');
     }
 
     const stripe = new Stripe(stripeKey, {
@@ -25,11 +27,20 @@ Deno.serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // 1. Get request body
-    const { priceId, userId, email, returnUrl } = await req.json();
+    // 1. Get request body with validation
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      console.error('[Stripe Checkout] Error parsing request body:', e);
+      throw new Error('Corpo da requisição inválido');
+    }
+
+    const { priceId, userId, email, returnUrl } = body;
 
     if (!priceId || !userId || !email) {
-      throw new Error('Missing required parameters: priceId, userId, email');
+      console.error('[Stripe Checkout] Missing parameters:', { priceId, userId, email });
+      throw new Error('Parâmetros obrigatórios ausentes: priceId, userId, email');
     }
 
     console.log(`[Stripe Checkout] Creating session for user ${userId} (${email}) with price ${priceId}`);
@@ -44,11 +55,10 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ],
-      mode: 'subscription', // or 'payment' for lifetime if applicable
+      mode: 'subscription',
       customer_email: email,
       client_reference_id: userId,
       return_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
-      // metadata: { userId } // redundant with client_reference_id but safe
     });
 
     console.log(`[Stripe Checkout] Session created: ${session.id}`);
@@ -61,7 +71,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('[Stripe Checkout] Error:', error);
+    console.error('[Stripe Checkout] Error:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
