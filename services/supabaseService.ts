@@ -95,10 +95,20 @@ export async function signOut(): Promise<void> {
   const { error } = await supabase.auth.signOut();
   if (error) throw new Error(error.message);
 }
-
 export async function resetPassword(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: "https://shapescan.com.br/nova-senha",
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function resendConfirmationEmail(email: string): Promise<void> {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: email,
+    options: {
+      emailRedirectTo: "https://shapescan.com.br/quiz",
+    }
   });
   if (error) throw new Error(error.message);
 }

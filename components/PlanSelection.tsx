@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlanType, getCheckoutUrl, PAYMENT_CONFIG } from '../services/paymentConfig';
+import { PlanType, PAYMENT_CONFIG } from '../services/paymentConfig';
 import { User } from '../types';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';

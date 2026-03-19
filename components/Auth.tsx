@@ -24,6 +24,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   // Máscara de telefone (BR)
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,6 +103,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
     }
   };
 
+  const handleResendEmail = async () => {
+    setResendLoading(true);
+    setError('');
+    try {
+      await db.auth.resendConfirmationEmail(email);
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 5000);
+    } catch (err: any) {
+      setError(err.message || 'Erro ao reenviar e-mail.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   if (needsConfirmation) {
     return (
       <PremiumBackground className="flex items-center justify-center min-h-screen p-4" dim={true} intensity={1.5}>
@@ -114,15 +130,29 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
             <br /><br />
             Por favor, verifique sua caixa de entrada (e a pasta de spam) para ativar sua conta antes de continuar.
           </p>
-          <button 
-            onClick={() => {
-              setNeedsConfirmation(false);
-              setIsRegistering(false); // Switch to login mode
-            }} 
-            className="w-full px-8 py-5 bg-emerald-500 text-zinc-950 hover:bg-emerald-400 transition-all font-black text-xs uppercase tracking-widest rounded-[2rem] shadow-lg shadow-emerald-500/20"
-          >
-            Voltar para o Login
-          </button>
+          <div className="space-y-4">
+            <button 
+              onClick={handleResendEmail}
+              disabled={resendLoading || resendSuccess}
+              className={`w-full px-8 py-5 transition-all font-black text-xs uppercase tracking-widest rounded-[2rem] border ${
+                resendSuccess 
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
+                : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
+              }`}
+            >
+              {resendLoading ? 'Enviando...' : resendSuccess ? 'E-mail Enviado! ✨' : 'Reenviar E-mail de Confirmação'}
+            </button>
+
+            <button 
+              onClick={() => {
+                setNeedsConfirmation(false);
+                setIsRegistering(false); // Switch to login mode
+              }} 
+              className="w-full px-8 py-4 text-zinc-500 hover:text-zinc-300 transition-all font-bold text-[10px] uppercase tracking-widest"
+            >
+              Voltar para o Login
+            </button>
+          </div>
         </div>
       </PremiumBackground>
     );

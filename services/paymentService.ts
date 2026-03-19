@@ -1,6 +1,7 @@
 
 import { User } from '../types';
-import { PAYMENT_CONFIG, PlanType, getCheckoutUrl } from './paymentConfig';
+import { PAYMENT_CONFIG, PlanType } from './paymentConfig';
+import { supabase } from './supabaseService';
 
 export type { PlanType };
 
@@ -11,22 +12,37 @@ interface CheckoutSessionRequest {
 }
 
 interface CheckoutSessionResponse {
-  checkoutUrl: string;
+  clientSecret: string;
 }
 
 /**
- * LÓGICA DE INTEGRAÇÃO COM GATEWAY CAKTO
+ * LÓGICA DE INTEGRAÇÃO COM STRIPE INVISIBLE CHECKOUT
+ * Substitui a integração antiga com Cakto
  */
-export const createCheckoutSession = async ({ email, userId, plan }: CheckoutSessionRequest): Promise<CheckoutSessionResponse> => {
-  console.log(`[PaymentService] Iniciando checkout para: ${email} | Plano: ${plan}`);
+export const createStripeCheckoutSession = async ({ email, userId, plan }: CheckoutSessionRequest): Promise<CheckoutSessionResponse> => {
+  console.log(`[PaymentService] Iniciando checkout Stripe para: ${email} | Plano: ${plan}`);
 
-  const checkoutUrl = getCheckoutUrl(plan, email, userId);
+  const config = PAYMENT_CONFIG[plan];
+  
+  if (!config || !config.stripePriceId) {
+    throw new Error("ID de preço Stripe não configurado para este plano.");
+  }
 
-  if (!checkoutUrl) {
-    throw new Error("Link de checkout não configurado para este plano.");
+  const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+    body: { 
+      priceId: config.stripePriceId, 
+      userId, 
+      email, 
+      returnUrl: window.location.origin + '/dashboard' 
+    },
+  });
+
+  if (error) {
+    console.error('[PaymentService] Erro ao invocar stripe-checkout:', error);
+    throw new Error(error.message);
   }
 
   return {
-    checkoutUrl: checkoutUrl
+    clientSecret: data.clientSecret
   };
 };

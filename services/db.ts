@@ -34,6 +34,10 @@ export const db = {
 
         async updatePassword(password: string): Promise<void> {
             await supabaseService.updatePassword(password);
+        },
+
+        async resendConfirmationEmail(email: string): Promise<void> {
+            await supabaseService.resendConfirmationEmail(email);
         }
     },
 
