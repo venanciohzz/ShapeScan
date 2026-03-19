@@ -16,164 +16,208 @@ interface StripeCheckoutProps {
   onClose: () => void;
 }
 
-const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email, onClose }) => {
-  const [error, setError] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+import { 
+  Elements, 
+  PaymentElement, 
+  useStripe, 
+  useElements 
+} from '@stripe/react-stripe-js';
 
-  const fetchClientSecret = useCallback(async () => {
-    try {
-      setIsInitializing(true);
-      setError(null);
-      
-      const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
-        headers: {
-          'apikey': (import.meta as any).env.VITE_SUPABASE_ANON_KEY
-        },
-        body: { 
-          priceId, 
-          userId, 
-          email, 
-          returnUrl: window.location.origin + '/dashboard' 
-        },
-      });
+const PaymentForm = ({ onCancel }: { onCancel: () => void }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-      if (invokeError) {
-        console.error('Error fetching client secret:', invokeError);
-        throw new Error(invokeError.message || 'Falha ao conectar com o provedor de pagamento.');
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-      if (data?.isError) {
-        console.error('Stripe Edge Function error:', data.error);
-        throw new Error(data.error || 'O servidor de pagamentos retornou um erro inesperado.');
-      }
+    if (!stripe || !elements) return;
 
-      if (!data?.clientSecret) {
-        throw new Error('Não foi possível gerar a chave de checkout.');
-      }
+    setIsProcessing(true);
+    setErrorMessage(null);
 
-      setIsInitializing(false);
-      return data.clientSecret;
-    } catch (err: any) {
-      console.error('Checkout error:', err);
-      setError(err.message || 'Ocorreu um erro inesperado ao carregar o checkout.');
-      setIsInitializing(false);
-      throw err;
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: window.location.origin + '/dashboard?payment=success',
+      },
+    });
+
+    if (error) {
+      setErrorMessage(error.message || 'Ocorreu um erro ao processar o pagamento.');
     }
-  }, [priceId, userId, email]);
-
-  // Stable options object to prevent unnecessary re-initialization
-  const options = useMemo(() => ({ fetchClientSecret }), [fetchClientSecret]);
+    
+    setIsProcessing(false);
+  };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/80 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto overflow-x-hidden">
-      <div className="relative w-full max-w-5xl bg-zinc-950 border border-zinc-800 rounded-[2rem] shadow-2xl overflow-hidden min-h-[700px] flex flex-col my-auto origin-center animate-in zoom-in-95 duration-500 ease-out">
-        
-        {/* Abstract Background Decoration */}
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px]"></div>
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-500/5 rounded-full blur-[100px]"></div>
+    <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+      <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-3xl backdrop-blur-sm">
+        <PaymentElement options={{
+          layout: 'tabs',
+        }} />
+      </div>
 
+      {errorMessage && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs font-bold flex items-center gap-3 animate-in zoom-in duration-300">
+          <span>⚠️</span> {errorMessage}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-4 pt-2">
+        <button
+          disabled={isProcessing || !stripe}
+          className="group relative w-full px-8 py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-all duration-300 active:scale-95 shadow-xl shadow-emerald-500/20 overflow-hidden"
+        >
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            {isProcessing ? (
+              <>
+                <div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin"></div>
+                Processando...
+              </>
+            ) : (
+              <>Assinar Agora <span className="text-lg group-hover:translate-x-1 transition-transform">→</span></>
+            )}
+          </span>
+        </button>
+        
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isProcessing}
+          className="w-full py-4 text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase tracking-[0.2em] transition-colors"
+        >
+          Cancelar e Voltar
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email, onClose }) => {
+  const [error, setError] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const initializeCheckout = async () => {
+      try {
+        setIsInitializing(true);
+        setError(null);
+        
+        const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
+          headers: {
+            'apikey': (import.meta as any).env.VITE_SUPABASE_ANON_KEY
+          },
+          body: { priceId, userId, email },
+        });
+
+        if (invokeError) throw new Error(invokeError.message);
+        if (data?.isError) throw new Error(data.error);
+        if (!data?.clientSecret) throw new Error('Falha ao obter chave de pagamento.');
+
+        setClientSecret(data.clientSecret);
+      } catch (err: any) {
+        console.error('Initialization error:', err);
+        setError(err.message || 'Erro ao carregar o checkout.');
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeCheckout();
+  }, [priceId, userId, email]);
+
+  const appearance = {
+    theme: 'night' as const,
+    variables: {
+      colorPrimary: '#10b981',
+      colorBackground: 'transparent',
+      colorText: '#ffffff',
+      colorSecondaryText: '#a1a1aa',
+      colorDanger: '#ef4444',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      spacingUnit: '4px',
+      borderRadius: '16px',
+    },
+    rules: {
+      '.Input': {
+        border: '1px solid #27272a',
+        backgroundColor: '#18181b',
+        transition: 'border 0.2s ease, box-shadow 0.2s ease',
+      },
+      '.Input:focus': {
+        border: '1px solid #10b981',
+        boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.1)',
+      },
+      '.Label': {
+        fontSize: '10px',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        marginBottom: '8px',
+        color: '#71717a',
+      },
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md animate-in fade-in duration-500 overflow-y-auto">
+      <div className="relative w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95 duration-500">
+        
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0"></div>
+        
         {/* Header */}
-        <div className="relative z-10 flex items-start justify-between p-8 md:p-10">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <span className="text-zinc-950 font-black text-xl italic select-none">S</span>
-              </div>
-              <h3 className="text-2xl font-black tracking-tight text-white uppercase italic">Checkout Seguro</h3>
+        <div className="p-10 pb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <span className="text-zinc-950 font-black italic">S</span>
             </div>
-            <p className="text-zinc-400 text-xs font-bold uppercase tracking-[0.3em] ml-13">Finalize sua assinatura</p>
+            <h3 className="text-xl font-black tracking-tight text-white uppercase italic">Checkout Seguro</h3>
           </div>
-          
-          <button 
-            onClick={onClose}
-            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 transition-all active:scale-95 text-zinc-400 group"
-          >
-            <span className="text-2xl group-hover:rotate-90 transition-transform">✕</span>
-          </button>
+          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-11">Ative sua conta premium</p>
         </div>
 
-        {/* Stripe Embedded Checkout Container */}
-        <div id="checkout" className="relative z-10 flex-1 px-4 md:px-10 pb-10 flex flex-col min-h-[500px]">
+        <div className="px-10 pb-10 flex-1">
           {error ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 animate-in fly-in-bottom duration-500">
-              <div className="w-24 h-24 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-center justify-center mx-auto mb-8">
-                <span className="text-5xl">⚠️</span>
+            <div className="py-20 text-center animate-in zoom-in duration-300">
+              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+                <span className="text-4xl text-red-500">⚠️</span>
               </div>
-              <h4 className="text-2xl font-black text-white mb-3 uppercase tracking-tight">Ops! Algo deu errado</h4>
-              <p className="text-zinc-400 mb-10 max-w-sm mx-auto font-medium leading-relaxed">{error}</p>
+              <h4 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Erro no Checkout</h4>
+              <p className="text-zinc-400 mb-8 max-w-xs mx-auto text-sm">{error}</p>
               <button 
-                onClick={() => window.location.reload()}
-                className="group relative px-10 py-5 bg-white hover:bg-emerald-500 text-black font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-all duration-300 active:scale-95 shadow-xl hover:shadow-emerald-500/30 overflow-hidden"
+                onClick={onClose}
+                className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-zinc-800 transition-all"
               >
-                <span className="relative z-10 flex items-center gap-2">
-                  Tentar Novamente <span className="text-lg group-hover:translate-x-1 transition-transform">→</span>
-                </span>
+                Voltar
               </button>
             </div>
-          ) : (
-            <div className="flex-1 bg-zinc-900/50 rounded-3xl border border-zinc-800/50 p-1 md:p-6 backdrop-blur-sm relative overflow-hidden group">
-              {isInitializing && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/80 backdrop-blur-xl z-20 transition-all duration-500">
-                  <div className="relative">
-                    <div className="w-16 h-16 border-4 border-emerald-500/10 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                  <div className="mt-8 text-center space-y-2">
-                    <p className="text-white font-black uppercase tracking-[0.3em] text-xs">Protegendo sua conexão</p>
-                    <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Criptografia de ponta a ponta ativa</p>
-                  </div>
-                </div>
-              )}
-              
-              <div className="w-full min-h-full transition-opacity duration-700 delay-150" style={{ opacity: isInitializing ? 0 : 1 }}>
-                <EmbeddedCheckoutProvider
-                  stripe={stripePromise}
-                  options={options}
-                >
-                  <div className="stripe-custom-wrapper">
-                    <EmbeddedCheckout />
-                  </div>
-                </EmbeddedCheckoutProvider>
+          ) : isInitializing ? (
+            <div className="py-32 flex flex-col items-center justify-center">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-emerald-500/10 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
+              <p className="mt-6 text-zinc-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Criptografando conexão...</p>
             </div>
+          ) : clientSecret && (
+            <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
+              <PaymentForm onCancel={onClose} />
+            </Elements>
           )}
         </div>
 
-        {/* Footer info */}
-        <div className="relative z-10 p-8 bg-zinc-900/30 border-t border-zinc-800/50">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-10 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-              <div className="flex items-center gap-2">
-                <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest leading-none">Security by</span>
-                <span className="text-white text-lg font-black tracking-tighter italic">stripe</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-6">
-              <div className="flex -space-x-2">
-                {['visa', 'mastercard', 'amex'].map(card => (
-                  <div key={card} className="w-10 h-6 bg-zinc-800 border border-zinc-700 rounded-md flex items-center justify-center overflow-hidden">
-                    <div className={`w-6 h-4 bg-zinc-500/20 rounded-sm`}></div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em]">
-                Pagamento processado em ambiente 100% seguro
-              </p>
-            </div>
+        <div className="p-6 bg-zinc-900/30 border-t border-zinc-800/50 flex items-center justify-center gap-6 grayscale opacity-40">
+          <div className="flex items-center gap-1">
+            <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Secure by</span>
+            <span className="text-white font-black text-sm tracking-tighter">stripe</span>
           </div>
+          <div className="h-4 w-px bg-zinc-800"></div>
+          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">SSL 256-BIT ENCRYPTION</p>
         </div>
       </div>
-      
-      {/* Custom Styles to "force" integration as much as possible */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .stripe-custom-wrapper iframe {
-          border-radius: 1.5rem !important;
-        }
-        /* Note: Stripe Embedded Checkout is limited in CSS overrides via parent, 
-           most branding should be done in Stripe Dashboard */
-      `}} />
     </div>
   );
 };

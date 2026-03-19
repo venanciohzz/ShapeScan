@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // 1. Get request body with validation
+    // 1. Get request body
     let body;
     try {
       body = await req.json();
@@ -38,55 +38,65 @@ Deno.serve(async (req) => {
       throw new Error('Corpo da requisição inválido');
     }
 
-    const { priceId, userId, email, returnUrl } = body;
+    const { priceId, userId, email } = body;
 
     if (!priceId || !userId || !email) {
       console.error('[Stripe Checkout] Missing parameters:', { priceId, userId, email });
       throw new Error('Parâmetros obrigatórios ausentes: priceId, userId, email');
     }
 
-    console.log(`[Stripe Checkout] Creating session for user ${userId} (${email}) with price ${priceId}`);
+    console.log(`[Stripe Checkout] Processing for user ${userId} (${email})`);
 
-    // 2. Create Checkout Session in embedded mode
-    const session = await stripe.checkout.sessions.create({
-      ui_mode: 'embedded',
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: 'subscription',
-      customer_email: email,
-      client_reference_id: userId,
-      return_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
+    // 2. Find or Create Customer
+    const customers = await stripe.customers.list({ email: email, limit: 1 });
+    let customer;
+    if (customers.data.length > 0) {
+      customer = customers.data[0];
+    } else {
+      customer = await stripe.customers.create({
+        email: email,
+        metadata: { supabase_user_id: userId },
+      });
+    }
+
+    // 3. Create Subscription
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ price: priceId }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
+      metadata: { userId: userId },
     });
 
-    console.log(`[Stripe Checkout] Session created: ${session.id}`);
+    const paymentIntent = (subscription.latest_invoice as any).payment_intent;
+
+    if (!paymentIntent) {
+      throw new Error('Falha ao gerar intenção de pagamento para a assinatura.');
+    }
+
+    console.log(`[Stripe Checkout] Subscription created: ${subscription.id}`);
 
     return new Response(
-      JSON.stringify({ clientSecret: session.client_secret }),
+      JSON.stringify({ 
+        clientSecret: paymentIntent.client_secret,
+        subscriptionId: subscription.id 
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
   } catch (error: any) {
-    console.error('[Stripe Checkout] Error message:', error.message);
-    console.error('[Stripe Checkout] Full error:', error);
-    
-    // Fallback: return 200 with error so frontend can see the message
-    // (helps debug without dashboard access)
+    console.error('[Stripe Checkout] Error:', error.message);
     return new Response(
       JSON.stringify({ 
         error: error.message,
         isError: true,
-        code: error.code // Stripe error code if available
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200, // Return 200 to see the JSON
+        status: 200,
       }
     );
   }
