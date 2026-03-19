@@ -56,11 +56,12 @@ Deno.serve(async (req) => {
       customer = await stripe.customers.create({
         email: email,
         name: email.split('@')[0], // PIX requires a name
+        preferred_locales: ['pt-BR'],
         metadata: { supabase_user_id: userId },
       });
     }
 
-    // 3. Create Subscription
+    // 3. Create Subscription (Note: currency is tied to the Price object, ensure it's BRL in Stripe)
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
@@ -78,13 +79,10 @@ Deno.serve(async (req) => {
       throw new Error('Falha ao gerar intenção de pagamento para a assinatura.');
     }
 
-    // 4. Force Automatic Payment Methods on the PaymentIntent
-    // This often fixes PIX not showing up for subscriptions in Brazil
+    // 4. Force specific payment methods on the PaymentIntent
+    // For subscriptions ending in PIX, you often need to override the API defaults on the fly
     paymentIntent = await stripe.paymentIntents.update(paymentIntent.id, {
-      automatic_payment_methods: {
-        enabled: true,
-        allow_redirects: 'always',
-      },
+      payment_method_types: ['card', 'pix'],
     });
 
     console.log(`[Stripe Checkout] Subscription created and PI updated for PIX: ${subscription.id}`);
