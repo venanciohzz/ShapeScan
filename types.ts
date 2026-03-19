@@ -57,6 +57,7 @@ export interface User {
   photo?: string;
   isPremium: boolean;
   isAdmin: boolean;
+  isPendingPayment?: boolean; // Estado intermediário: pagamento enviado, aguardando webhook confirmar
   dailyCalorieGoal: number;
   dailyWaterGoal?: number;
   // Macro Goals
@@ -78,6 +79,7 @@ export interface User {
   targetWeight?: number | null;
   createdAt?: number;
 }
+
 
 export interface ShapeAnalysisResult {
   structural_analysis: {

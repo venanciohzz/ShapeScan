@@ -113,6 +113,23 @@ export async function resendConfirmationEmail(email: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+// ==================== PENDING PAYMENT (ESTADO INTERMEDIÁRIO) ====================
+
+/**
+ * Grava o estado pending_payment=true no user_plans.
+ * Chamado ANTES do redirect Stripe para evitar UX estranho de delay.
+ * O webhook limpa esse estado ao confirmar o pagamento.
+ */
+export async function setUserPendingPayment(userId: string, planId: string): Promise<void> {
+  const { error } = await supabase
+    .from('user_plans')
+    .upsert({ user_id: userId, plan_id: planId, active: true, pending_payment: true }, { onConflict: 'user_id' });
+  if (error) {
+    console.error('[supabaseService] Erro ao gravar pending_payment:', error.message);
+    // Não prop agamos o erro — é melhor continuar o fluxo do que bloquear o checkout
+  }
+}
+
 export async function updatePassword(password: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ password });
   if (error) throw new Error(error.message);
@@ -143,11 +160,10 @@ export async function getProfile(userId: string): Promise<User> {
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Perfil não encontrado');
 
-  // Buscar plano do usuário - Usamos .limit(1) em vez de .single() para evitar travar o login
-  // caso existam registros duplicados (estabilidade crítica).
+  // Buscar plano do usuário
   const { data: plans } = await supabase
     .from('user_plans')
-    .select('plan_id, active')
+    .select('plan_id, active, pending_payment')
     .eq('user_id', userId)
     .eq('active', true)
     .order('created_at', { ascending: false })
@@ -155,12 +171,12 @@ export async function getProfile(userId: string): Promise<User> {
 
   const planData = plans?.[0];
 
-  // Priorizar dados da tabela user_plans, mas usar os novos campos da profile como redundância/cache
   const planId = planData?.plan_id || data.plan || 'free';
   const isPremium = planData ? (planData.plan_id !== 'free') : (data.is_premium || false);
   const isAdmin = data.is_admin || false;
+  const isPendingPayment = planData?.pending_payment ?? false;
 
-  return mapProfileToUser(data, planId, isPremium, isAdmin);
+  return mapProfileToUser(data, planId, isPremium, isAdmin, isPendingPayment);
 }
 
 export async function updateProfile(userId: string, updates: Partial<User>): Promise<User> {
@@ -653,7 +669,7 @@ function mapStatsFromDB(dbStats: any): UserStats {
   };
 }
 
-function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAdmin?: boolean): User {
+function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAdmin?: boolean, isPendingPayment?: boolean): User {
   return {
     id: profile.id,
     email: profile.email,
@@ -663,6 +679,7 @@ function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAd
     photo: profile.photo,
     isPremium: isPremium ?? profile.is_premium ?? false,
     isAdmin: isAdmin ?? profile.is_admin ?? false,
+    isPendingPayment: isPendingPayment ?? false,
     dailyCalorieGoal: profile.dailyCalorieGoal || profile.daily_calorie_goal || 2000,
     dailyWaterGoal: profile.dailyWaterGoal || profile.daily_water_goal,
     dailyProtein: profile.dailyProtein || profile.daily_protein,

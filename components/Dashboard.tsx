@@ -160,6 +160,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                </div>
             </header>
 
+            {/* Banner de Ativação de Plano (pending_payment) */}
+            {user.isPendingPayment && !user.isPremium && (
+               <div className="mb-8 p-5 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-4 animate-pulse">
+                  <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div>
+                     <p className="text-emerald-400 font-black text-sm uppercase tracking-widest">Ativando seu plano…</p>
+                     <p className="text-emerald-400/60 text-xs font-medium mt-0.5">Seu pagamento foi recebido. O acesso será liberado em instantes.</p>
+                  </div>
+               </div>
+            )}
+
             {/* Grid Principal */}
             <div className="flex flex-col md:flex-row gap-8 items-start">
 
