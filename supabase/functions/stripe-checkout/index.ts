@@ -61,25 +61,6 @@ Deno.serve(async (req) => {
       customer_email: email,
       client_reference_id: userId,
       return_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
-      appearance: {
-        theme: 'night',
-        variables: {
-          colorPrimary: '#10b981',
-          colorBackground: '#09090b',
-          colorText: '#ffffff',
-          colorSecondaryText: '#a1a1aa',
-          colorDanger: '#ef4444',
-          fontFamily: 'Inter, system-ui, sans-serif',
-          spacingUnit: '4px',
-          borderRadius: '12px',
-        },
-        rules: {
-          '.Input': {
-            backgroundColor: '#18181b',
-            border: '1px solid #27272a',
-          },
-        }
-      },
     });
 
     console.log(`[Stripe Checkout] Session created: ${session.id}`);
