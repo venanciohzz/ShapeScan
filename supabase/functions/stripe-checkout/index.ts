@@ -1,7 +1,7 @@
 // Trigger deployment
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
+import Stripe from 'npm:stripe@^14.21.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +10,8 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  console.log(`[Stripe Checkout] Received ${req.method} request to ${req.url}`);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -59,6 +61,25 @@ Deno.serve(async (req) => {
       customer_email: email,
       client_reference_id: userId,
       return_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
+      appearance: {
+        theme: 'night',
+        variables: {
+          colorPrimary: '#10b981',
+          colorBackground: '#09090b',
+          colorText: '#ffffff',
+          colorSecondaryText: '#a1a1aa',
+          colorDanger: '#ef4444',
+          fontFamily: 'Inter, system-ui, sans-serif',
+          spacingUnit: '4px',
+          borderRadius: '12px',
+        },
+        rules: {
+          '.Input': {
+            backgroundColor: '#18181b',
+            border: '1px solid #27272a',
+          },
+        }
+      },
     });
 
     console.log(`[Stripe Checkout] Session created: ${session.id}`);
@@ -70,13 +91,21 @@ Deno.serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
-    console.error('[Stripe Checkout] Error:', error.message);
+  } catch (error: any) {
+    console.error('[Stripe Checkout] Error message:', error.message);
+    console.error('[Stripe Checkout] Full error:', error);
+    
+    // Fallback: return 200 with error so frontend can see the message
+    // (helps debug without dashboard access)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        isError: true,
+        code: error.code // Stripe error code if available
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 200, // Return 200 to see the JSON
       }
     );
   }
