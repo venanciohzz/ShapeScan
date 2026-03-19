@@ -79,13 +79,9 @@ Deno.serve(async (req) => {
       throw new Error('Falha ao gerar intenção de pagamento para a assinatura.');
     }
 
-    // 4. Force specific payment methods on the PaymentIntent
-    // For subscriptions ending in PIX, you often need to override the API defaults on the fly
-    paymentIntent = await stripe.paymentIntents.update(paymentIntent.id, {
-      payment_method_types: ['card', 'pix'],
-    });
-
-    console.log(`[Stripe Checkout] Subscription created and PI updated for PIX: ${subscription.id}`);
+    // 4. Return the client secret directly
+    // Stripe will automatically handle the payment methods configured in your Dashboard (Cards, Apple Pay, Google Pay)
+    console.log(`[Stripe Checkout] Subscription created: ${subscription.id}`);
 
     return new Response(
       JSON.stringify({ 
