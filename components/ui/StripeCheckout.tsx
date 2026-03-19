@@ -164,22 +164,31 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email,
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md animate-in fade-in duration-500 overflow-y-auto">
-      <div className="relative w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95 duration-500">
+      <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95 duration-500">
         
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0"></div>
         
-        {/* Header */}
-        <div className="p-10 pb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <span className="text-zinc-950 font-black italic">S</span>
+        {/* Header & Summary */}
+        <div className="p-10 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-900">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <span className="text-zinc-950 font-black italic">S</span>
+              </div>
+              <h3 className="text-xl font-black tracking-tight text-white uppercase italic">Checkout Seguro</h3>
             </div>
-            <h3 className="text-xl font-black tracking-tight text-white uppercase italic">Checkout Seguro</h3>
+            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-11">ShapeScan Premium</p>
           </div>
-          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-11">Ative sua conta premium</p>
+
+          <div className="flex flex-col md:items-end">
+            <span className="text-zinc-500 text-[8px] font-black uppercase tracking-widest mb-1">Total a Pagar</span>
+            <div className="text-2xl font-black text-white tracking-tighter">
+              R$ 29,90<span className="text-zinc-500 text-sm font-bold">/mês</span>
+            </div>
+          </div>
         </div>
 
-        <div className="px-10 pb-10 flex-1">
+        <div className="px-10 py-10 flex-1">
           {error ? (
             <div className="py-20 text-center animate-in zoom-in duration-300">
               <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
@@ -200,22 +209,45 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({ priceId, userId, email,
                 <div className="w-12 h-12 border-4 border-emerald-500/10 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p className="mt-6 text-zinc-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Criptografando conexão...</p>
+              <p className="mt-6 text-zinc-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Preparando ambiente seguro...</p>
             </div>
           ) : clientSecret && (
-            <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
-              <PaymentForm onCancel={onClose} />
-            </Elements>
+            <div className="flex flex-col gap-8">
+              <div className="flex items-center gap-4 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+                <div className="text-emerald-500">🛡️</div>
+                <div className="text-[10px] text-zinc-400 font-medium leading-tight">
+                  <span className="text-emerald-500 font-bold block mb-0.5 uppercase tracking-wider">Pagamento Protegido</span>
+                  Suas informações são criptografadas e processadas pelo Stripe.
+                </div>
+              </div>
+
+              <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
+                <PaymentForm onCancel={onClose} />
+              </Elements>
+            </div>
           )}
         </div>
 
-        <div className="p-6 bg-zinc-900/30 border-t border-zinc-800/50 flex items-center justify-center gap-6 grayscale opacity-40">
-          <div className="flex items-center gap-1">
-            <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Secure by</span>
-            <span className="text-white font-black text-sm tracking-tighter">stripe</span>
+        <div className="p-8 bg-zinc-900/30 border-t border-zinc-800/50">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4 grayscale opacity-40">
+              <div className="flex items-center gap-1">
+                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Secure</span>
+                <span className="text-white font-black text-sm tracking-tighter">stripe</span>
+              </div>
+              <div className="h-4 w-px bg-zinc-800"></div>
+              <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">PCI-DSS COMPLIANT</p>
+            </div>
+
+            <div className="flex items-center gap-3 opacity-30 grayscale blur-[0.5px]">
+              <div className="w-8 h-5 bg-zinc-800 rounded"></div>
+              <div className="w-8 h-5 bg-zinc-800 rounded"></div>
+              <div className="w-8 h-5 bg-zinc-800 rounded"></div>
+              <div className="flex items-center gap-1 border border-zinc-800 rounded px-1.5 py-0.5">
+                <span className="text-[7px] font-black text-zinc-600 uppercase italic">PIX</span>
+              </div>
+            </div>
           </div>
-          <div className="h-4 w-px bg-zinc-800"></div>
-          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">SSL 256-BIT ENCRYPTION</p>
         </div>
       </div>
     </div>
