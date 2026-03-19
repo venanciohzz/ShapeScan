@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     }
 
     const stripe = new Stripe(stripeKey, {
-      apiVersion: '2023-10-16',
+      apiVersion: '2024-12-18.acacia',
       httpClient: Stripe.createFetchHttpClient(),
     });
 
@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
     } else {
       customer = await stripe.customers.create({
         email: email,
+        name: email.split('@')[0], // PIX requires a name
         metadata: { supabase_user_id: userId },
       });
     }
@@ -71,13 +72,22 @@ Deno.serve(async (req) => {
       metadata: { userId: userId },
     });
 
-    const paymentIntent = (subscription.latest_invoice as any).payment_intent;
+    let paymentIntent = (subscription.latest_invoice as any).payment_intent;
 
     if (!paymentIntent) {
       throw new Error('Falha ao gerar intenção de pagamento para a assinatura.');
     }
 
-    console.log(`[Stripe Checkout] Subscription created: ${subscription.id}`);
+    // 4. Force Automatic Payment Methods on the PaymentIntent
+    // This often fixes PIX not showing up for subscriptions in Brazil
+    paymentIntent = await stripe.paymentIntents.update(paymentIntent.id, {
+      automatic_payment_methods: {
+        enabled: true,
+        allow_redirects: 'always',
+      },
+    });
+
+    console.log(`[Stripe Checkout] Subscription created and PI updated for PIX: ${subscription.id}`);
 
     return new Response(
       JSON.stringify({ 
