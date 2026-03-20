@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
+  const userRef = React.useRef<User | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
   const [evolutionRecords, setEvolutionRecords] = useState<EvolutionRecord[]>([]);
@@ -159,6 +160,11 @@ const App: React.FC = () => {
     }
   }, [location.search]);
 
+  // Sincronizar userRef para uso em listeners e callbacks assíncronos
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   // Professional Optimization 1: Unified Session Loading (Removed stale cache)
   useEffect(() => {
     const initSession = async () => {
@@ -171,7 +177,7 @@ const App: React.FC = () => {
           console.warn(`[App] ⚠️ Timeout de segurança atingido aos ${Date.now() - startTime}ms. Forçando encerramento do loading.`);
           setIsSessionLoading(false);
         }
-      }, 2000); // Reduzido para 2 segundos para melhor performance percepível
+      }, 5000); // Aumentado para 5s para maior resiliência em conexões lentas no boot
 
       try {
         console.log('[App] Buscando sessão atual...');
@@ -180,49 +186,9 @@ const App: React.FC = () => {
         
         if (sessionUser) {
           const userId = sessionUser.id;
-          
-          // Optimization: Update cache ONLY after verification
           localStorage.setItem('shapescan_user_profile', JSON.stringify(sessionUser));
           setUser(sessionUser);
-          
-          // Optimization: Lazy load secondary data (don't block session loading)
           loadUserDataBackground(userId);
-
-          let needsUpdate = false;
-          const updates: Partial<User> = {};
-
-          if ((sessionUser.dailyProtein === undefined || sessionUser.dailyCarbs === undefined || sessionUser.dailyFat === undefined) && sessionUser.weight) {
-            const protein = Math.round(sessionUser.weight * 2);
-            const fat = Math.round(sessionUser.weight * 0.8);
-            const proteinCal = protein * 4;
-            const fatCal = fat * 9;
-            const remainCal = sessionUser.dailyCalorieGoal - (proteinCal + fatCal);
-            const carbs = Math.max(0, Math.round(remainCal / 4));
-
-            updates.dailyProtein = sessionUser.dailyProtein !== undefined ? sessionUser.dailyProtein : protein;
-            updates.dailyFat = sessionUser.dailyFat !== undefined ? sessionUser.dailyFat : fat;
-            updates.dailyCarbs = sessionUser.dailyCarbs !== undefined ? sessionUser.dailyCarbs : carbs;
-            needsUpdate = true;
-          }
-
-          if (sessionUser.freeScansUsed === undefined) {
-            updates.freeScansUsed = 0;
-            needsUpdate = true;
-          }
-
-          if (needsUpdate) {
-            db.users.update(sessionUser.email, updates)
-              .then(updatedUser => {
-                setUser(updatedUser);
-                localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
-              })
-              .catch(err => console.error('[App] Background update error:', err));
-            
-            // Assume the local updates immediately for better UX
-            const shallowUpdated = { ...sessionUser, ...updates };
-            setUser(shallowUpdated);
-            localStorage.setItem('shapescan_user_profile', JSON.stringify(shallowUpdated));
-          }
 
           if (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar') {
              if (!sessionUser.weight || !sessionUser.height) {
@@ -240,13 +206,7 @@ const App: React.FC = () => {
         }
       } catch (e: any) {
         console.error("[App] ❌ Erro crítico ao restaurar sessão:", e);
-        
-        // Se o erro for de token inválido, limpamos o cache local
-        if (e?.message?.toLowerCase().includes('refresh token') || e?.message?.toLowerCase().includes('database error')) {
-          console.warn('[App] Erro de autenticação terminal detectado. Limpando perfil local.');
-          localStorage.removeItem('shapescan_user_profile');
-        }
-        
+        localStorage.removeItem('shapescan_user_profile');
         setUser(null);
       } finally {
         console.log(`[App] ✅ initSession finalizada em ${Date.now() - startTime}ms.`);
@@ -271,18 +231,26 @@ const App: React.FC = () => {
     };
 
     initSession();
+  }, []); // Apenas no mount
 
-    // Listener para mudanças de estado de autenticação
-    // TOKEN_REFRESHED: re-fetcha perfil para manter isPremium/plano atualizado
-    // SIGNED_IN: garante que o perfil está sincronizado após login
-    // SIGNED_OUT: limpa estado local
+  // Separar o listener de eventos para não depender do ciclo do initSession
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: string, session: any) => {
+        console.log(`[App] 🔄 Auth Event: ${event}`, session ? `Sessão ativa: ${session.user.email}` : 'Sem sessão');
+
         if (event === 'SIGNED_OUT') {
+          console.log('[App] 🚪 Usuário deslogado via evento.');
           setUser(null);
           localStorage.removeItem('shapescan_user_profile');
         } else if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session?.user?.id) {
-          // Re-fetchar perfil para garantir que isPremium e plano estão atualizados
+          // Evitar re-fetch se já temos o usuário (vindo do login explícito)
+          if (userRef.current?.id === session.user.id && event === 'SIGNED_IN') {
+             console.log('[App] ℹ️ SIGNED_IN detectado mas perfil já carregado via Ref. Pulando fetch redundante.');
+             return;
+          }
+
+          console.log('[App] 🔄 Re-fetching perfil por evento:', event);
           try {
             const { getProfile } = await import('./services/supabaseService');
             const freshProfile = await getProfile(session.user.id);
@@ -291,15 +259,15 @@ const App: React.FC = () => {
           } catch (e) {
             console.error('[App] onAuthStateChange: erro ao re-fetchar perfil:', e);
           }
-        } else if (!session && !isSessionLoading) {
-          setUser(null);
-          localStorage.removeItem('shapescan_user_profile');
         }
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      console.log('[App] 🔌 Encerrando subscription do auth listener.');
+      subscription.unsubscribe();
+    }
+  }, []); // Apenas no mount
 
   const loadUserData = async (userId: string) => {
     try {

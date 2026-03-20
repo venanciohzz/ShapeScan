@@ -66,45 +66,61 @@ export async function signUp(email: string, password: string, userData: Omit<Use
   } as User;
 }
 export async function signIn(email: string, password: string): Promise<User> {
-  console.log('[SupabaseService] 🔑 Tentando signInWithPassword...');
+  console.log('[SupabaseService] 🔑 Iniciando processo de signIn para:', email);
   const start = Date.now();
   
-  // Timeout de 20s para o login
+  // Garantir limpeza total antes de tentar novo login para evitar conflitos de sessão/refresh token
+  try {
+    console.log('[SupabaseService] 🧹 Limpando sessões residuais antes de novo login...');
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+  } catch (e) {
+    console.warn('[SupabaseService] Aviso ao limpar sessão local:', e);
+  }
+
+  // Timeout de 25s para o login (um pouco mais tolerante para cold starts)
   const timeoutPromise = new Promise((_, reject) => 
-    setTimeout(() => reject(new Error('Tempo de autenticação expirado. Verifique sua conexão.')), 20000)
+    setTimeout(() => reject(new Error('Tempo de autenticação expirado. Verifique sua conexão.')), 25000)
   );
 
   try {
+    console.log('[SupabaseService] 🔌 Chamando signInWithPassword...');
     const signInPromise = supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
-    console.log(`[SupabaseService] ⏱️ signInWithPassword respondeu em ${Date.now() - start}ms`);
+    const result = await Promise.race([signInPromise, timeoutPromise]) as any;
+    const { data, error } = result;
 
-    if (!error && data.user) {
-      console.log('[SupabaseService] 👤 Buscando perfil do usuário...');
+    console.log(`[SupabaseService] ⏱️ signInWithPassword finalizado em ${Date.now() - start}ms`);
+
+    if (error) {
+       console.error('[SupabaseService] ❌ Erro retornado pelo Supabase Auth:', error);
+       
+       // Traduzir erros comuns do Supabase Auth para mensagens amigáveis
+       if (error.message.includes('Invalid login credentials')) {
+         throw new Error('E-mail ou senha incorretos. Verifique seus dados e tente novamente.');
+       }
+       if (error.message.includes('Email not confirmed')) {
+         throw new Error('Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.');
+       }
+       if (error.message.includes('Too many requests')) {
+         throw new Error('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
+       }
+       throw new Error(error.message || 'Erro ao fazer login. Tente novamente.');
+    }
+
+    if (data.user) {
+      console.log('[SupabaseService] ✅ Auth OK. Buscando perfil completo...');
       const pStart = Date.now();
       const profile = await getProfile(data.user.id);
-      console.log(`[SupabaseService] ⏱️ getProfile respondeu em ${Date.now() - pStart}ms`);
+      console.log(`[SupabaseService] 🏁 Login concluído com sucesso em ${Date.now() - start}ms (Perfil em ${Date.now() - pStart}ms)`);
       return profile;
     }
 
-    // Traduzir erros comuns do Supabase Auth para mensagens amigáveis
-    if (error?.message.includes('Invalid login credentials')) {
-      throw new Error('E-mail ou senha incorretos. Verifique seus dados e tente novamente.');
-    }
-    if (error?.message.includes('Email not confirmed')) {
-      throw new Error('Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.');
-    }
-    if (error?.message.includes('Too many requests')) {
-      throw new Error('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
-    }
-
-    throw new Error(error?.message || 'Erro ao fazer login. Tente novamente.');
+    throw new Error('Falha inesperada: Nenhuma sessão retornada.');
   } catch (err: any) {
-    console.error('[SupabaseService] Erro no fluxo de Login:', err);
+    console.error('[SupabaseService] 💥 Erro no fluxo de Login:', err);
     throw err;
   }
 }
@@ -219,14 +235,17 @@ export async function getSession(): Promise<User | null> {
 
 export async function getProfile(userId: string): Promise<User> {
   console.log(`[SupabaseService] 🔍 getProfile iniciada para ${userId}`);
-  const { data, error } = await supabase
+  
+  const profilePromise = supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
     .single();
 
+  const { data, error } = await profilePromise;
+
   if (error) {
-    console.error('[SupabaseService] ❌ Erro ao buscar perfil:', error.message);
+    console.error(`[SupabaseService] ❌ Erro ao buscar perfil (${userId}):`, error.message);
     throw new Error(error.message);
   }
   if (!data) throw new Error('Perfil não encontrado');
