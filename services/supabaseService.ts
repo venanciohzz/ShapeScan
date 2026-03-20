@@ -136,9 +136,21 @@ export async function updatePassword(password: string): Promise<void> {
 }
 
 export async function getSession(): Promise<User | null> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const start = Date.now();
+  console.log('[SupabaseService] 🛠️ getSession: Chamando supabase.auth.getSession()...');
+  const { data: { session }, error } = await supabase.auth.getSession();
+  
+  if (error) {
+    console.error('[SupabaseService] ❌ Erro em getSession:', error.message);
+    return null;
+  }
 
-  if (!session?.user) return null;
+  console.log(`[SupabaseService] ⏱️ getSession respondeu em ${Date.now() - start}ms.`);
+
+  if (!session?.user) {
+    console.log('[SupabaseService] ℹ️ Nenhuma sessão ativa encontrada.');
+    return null;
+  }
 
   try {
     const profile = await getProfile(session.user.id);

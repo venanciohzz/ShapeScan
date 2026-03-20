@@ -69,7 +69,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
          }
       };
 
-      const timer = setTimeout(fetchDailyFeedback, 1000);
+      // Performance: delay aumentado para não bloquear o carregamento inicial do Dashboard.
+      // A IA faz uma chamada de rede pesada (Edge Function → OpenAI) — melhor esperar a UI estar estável.
+      const timer = setTimeout(fetchDailyFeedback, 5000);
       return () => clearTimeout(timer);
    }, [todayLogs.length, user.dailyCalorieGoal, user.goal]);
 

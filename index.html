@@ -32,7 +32,12 @@
     <meta property="twitter:image" content="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- ⚡ PERFORMANCE: Google Fonts não-bloqueante (media=print trick elimina render-blocking) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"></noscript>
+    <!-- DNS prefetch para CDN externo do NeonFlow -->
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <style>
       body {
         font-family: 'Inter', sans-serif;
@@ -153,31 +158,30 @@
         background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
                           linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
       }
-    </style>
+</style>
 
 <link rel="stylesheet" href="/index.css">
-
-
-    <!-- Meta Pixel Code -->
-    <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '583419800291181');
-    fbq('track', 'PageView');
-    </script>
-    <!-- End Meta Pixel Code -->
 </head>
-  <body class="bg-[#F3F6F8] dark:bg-zinc-950 transition-colors duration-300 antialiased selection:bg-emerald-500 selection:text-white overflow-x-hidden">
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=583419800291181&ev=PageView&noscript=1"
-    /></noscript>
-    <div id="root"></div>
+<body class="bg-[#F3F6F8] dark:bg-zinc-950 transition-colors duration-300 antialiased selection:bg-emerald-500 selection:text-white overflow-x-hidden">
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
+
+  <!-- ⚡ PERFORMANCE: Meta Pixel Code no final do body -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '583419800291181');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=583419800291181&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
 </body>
 </html>

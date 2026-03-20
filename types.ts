@@ -77,6 +77,7 @@ export interface User {
   impediments?: string[];
   conquests?: string[];
   targetWeight?: number | null;
+  emailConfirmed?: boolean;
   createdAt?: number;
 }
 

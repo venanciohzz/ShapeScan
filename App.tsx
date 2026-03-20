@@ -162,8 +162,21 @@ const App: React.FC = () => {
   // Professional Optimization 1: Unified Session Loading (Removed stale cache)
   useEffect(() => {
     const initSession = async () => {
+      console.log('[App] 🚀 Iniciando initSession...');
+      const startTime = Date.now();
+
+      // Professional Optimization 2: Safety timeout to prevent infinite loading
+      const safetyTimeout = setTimeout(() => {
+        if (isSessionLoading) {
+          console.warn(`[App] ⚠️ Timeout de segurança atingido aos ${Date.now() - startTime}ms. Forçando encerramento do loading.`);
+          setIsSessionLoading(false);
+        }
+      }, 8000); 
+
       try {
+        console.log('[App] Buscando sessão atual...');
         const sessionUser = await db.auth.getSession();
+        console.log(`[App] Sessão obtida em ${Date.now() - startTime}ms. Usuário:`, sessionUser ? sessionUser.email : 'Visitante');
         
         if (sessionUser) {
           const userId = sessionUser.id;
@@ -198,9 +211,17 @@ const App: React.FC = () => {
           }
 
           if (needsUpdate) {
-            const updatedUser = await db.users.update(sessionUser.email, updates);
-            setUser(updatedUser);
-            localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+            db.users.update(sessionUser.email, updates)
+              .then(updatedUser => {
+                setUser(updatedUser);
+                localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+              })
+              .catch(err => console.error('[App] Background update error:', err));
+            
+            // Assume the local updates immediately for better UX
+            const shallowUpdated = { ...sessionUser, ...updates };
+            setUser(shallowUpdated);
+            localStorage.setItem('shapescan_user_profile', JSON.stringify(shallowUpdated));
           }
 
           if (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar') {
@@ -217,11 +238,19 @@ const App: React.FC = () => {
               navigate('/', { replace: true });
            }
         }
-      } catch (e) {
-        console.error("Erro ao restaurar sessão:", e);
-        localStorage.removeItem('shapescan_user_profile');
+      } catch (e: any) {
+        console.error("[App] ❌ Erro crítico ao restaurar sessão:", e);
+        
+        // Se o erro for de token inválido, limpamos o cache local
+        if (e?.message?.toLowerCase().includes('refresh token') || e?.message?.toLowerCase().includes('database error')) {
+          console.warn('[App] Erro de autenticação terminal detectado. Limpando perfil local.');
+          localStorage.removeItem('shapescan_user_profile');
+        }
+        
         setUser(null);
       } finally {
+        console.log(`[App] ✅ initSession finalizada em ${Date.now() - startTime}ms.`);
+        clearTimeout(safetyTimeout);
         setIsSessionLoading(false);
       }
     };
