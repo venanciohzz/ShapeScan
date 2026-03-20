@@ -96,17 +96,31 @@ export async function signOut(): Promise<void> {
   if (error) throw new Error(error.message);
 }
 export async function resetPassword(email: string): Promise<void> {
-  const { data, error } = await supabase.functions.invoke('send-reset-password', {
-    body: { email }
-  });
-  
-  if (error) {
-    console.error('[SupabaseService] Erro ao chamar send-reset-password:', error);
-    throw new Error(error.message || 'Erro ao enviar e-mail de recuperação.');
-  }
+  // Timeout de 10 segundos para evitar carregamento infinito no frontend
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Timeout: O servidor demorou muito para responder.')), 10000)
+  );
 
-  if (data?.error) {
-    throw new Error(data.message || data.error);
+  try {
+    const invokePromise = supabase.functions.invoke('send-reset-password', {
+      body: { email }
+    });
+
+    const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
+    
+    if (error) {
+      console.error('[SupabaseService] Erro ao chamar send-reset-password:', error);
+      throw new Error(error.message || 'Erro ao enviar e-mail de recuperação.');
+    }
+
+    if (data?.error) {
+      throw new Error(data.message || data.error);
+    }
+  } catch (err: any) {
+    if (err.message.includes('Timeout')) {
+       console.warn('[SupabaseService] Chamada de resetPassword expirou.');
+    }
+    throw err;
   }
 }
 

@@ -18,12 +18,22 @@ const PasswordRecovery: React.FC = () => {
     setIsLoading(true);
     setError('');
 
+    // Timeout local de 8s para garantir que a UI destrave mesmo que o serviço falhe silenciosamente
+    const uiTimeout = setTimeout(() => {
+      if (isLoading) {
+        setIsLoading(false);
+        setError('O servidor está demorando para responder. Verifique sua conexão ou tente novamente em instantes.');
+      }
+    }, 8000);
+
     try {
       await db.auth.resetPassword(email);
+      clearTimeout(uiTimeout);
       setIsSent(true);
     } catch (err: any) {
+      clearTimeout(uiTimeout);
       console.error(err);
-      setError(err.message || 'Erro ao enviar e-mail de recuperação.');
+      setError(err.message || 'Erro ao enviar e-mail de recuperação. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -69,12 +79,20 @@ const PasswordRecovery: React.FC = () => {
               <p className="text-zinc-300 font-medium leading-relaxed">
                 Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.
               </p>
-              <button
-                onClick={() => navigate('/entrar')}
-                className="w-full bg-white text-zinc-950 py-5 rounded-full font-bold text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all"
-              >
-                Voltar ao Login
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={() => setIsSent(false)}
+                  className="w-full bg-white/5 border border-white/10 text-white py-4 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                >
+                  Enviar novamente
+                </button>
+                <button
+                  onClick={() => navigate('/entrar')}
+                  className="w-full bg-white text-zinc-950 py-5 rounded-full font-bold text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  Voltar ao Login
+                </button>
+              </div>
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">

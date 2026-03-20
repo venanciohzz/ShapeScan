@@ -171,7 +171,7 @@ const App: React.FC = () => {
           console.warn(`[App] ⚠️ Timeout de segurança atingido aos ${Date.now() - startTime}ms. Forçando encerramento do loading.`);
           setIsSessionLoading(false);
         }
-      }, 8000); 
+      }, 2000); // Reduzido para 2 segundos para melhor performance percepível
 
       try {
         console.log('[App] Buscando sessão atual...');
