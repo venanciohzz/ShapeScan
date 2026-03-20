@@ -96,10 +96,18 @@ export async function signOut(): Promise<void> {
   if (error) throw new Error(error.message);
 }
 export async function resetPassword(email: string): Promise<void> {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: "https://shapescan.com.br/nova-senha",
+  const { data, error } = await supabase.functions.invoke('send-reset-password', {
+    body: { email }
   });
-  if (error) throw new Error(error.message);
+  
+  if (error) {
+    console.error('[SupabaseService] Erro ao chamar send-reset-password:', error);
+    throw new Error(error.message || 'Erro ao enviar e-mail de recuperação.');
+  }
+
+  if (data?.error) {
+    throw new Error(data.message || data.error);
+  }
 }
 
 export async function resendConfirmationEmail(email: string): Promise<void> {
