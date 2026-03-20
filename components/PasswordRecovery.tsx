@@ -18,26 +18,13 @@ const PasswordRecovery: React.FC = () => {
     setIsLoading(true);
     setError('');
 
-    let isRequestFinished = false;
-
-    // Timeout local de 20s para garantir que a UI destrave mesmo que o serviço falhe silenciosamente
-    const uiTimeout = setTimeout(() => {
-      if (!isRequestFinished) {
-        setIsLoading(false);
-        setError('O servidor está demorando para responder (cold start). Verifique sua conexão ou tente novamente em instantes.');
-      }
-    }, 20000);
-
     try {
       await db.auth.resetPassword(email);
-      isRequestFinished = true;
-      clearTimeout(uiTimeout);
       setIsSent(true);
     } catch (err: any) {
-      isRequestFinished = true;
-      clearTimeout(uiTimeout);
-      console.error(err);
-      setError(err.message || 'Erro ao enviar e-mail de recuperação. Tente novamente.');
+      console.error('[PasswordRecovery] Erro:', err);
+      // Se for timeout, a mensagem já vem amigável do serviço
+      setError(err.message || 'Erro ao enviar e-mail de recuperação. Tente novamente em instantes.');
     } finally {
       setIsLoading(false);
     }

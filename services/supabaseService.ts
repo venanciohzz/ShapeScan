@@ -96,30 +96,46 @@ export async function signOut(): Promise<void> {
   if (error) throw new Error(error.message);
 }
 export async function resetPassword(email: string): Promise<void> {
-  // Timeout de 30 segundos para evitar carregamento infinito, mas permitindo cold starts
-  const timeoutPromise = new Promise((_, reject) => 
-    setTimeout(() => reject(new Error('Timeout: O servidor demorou muito para responder (cold start). Tente mais uma vez.')), 30000)
-  );
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout real
 
   try {
-    const invokePromise = supabase.functions.invoke('send-reset-password', {
-      body: { email }
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error('Configuração do Supabase ausente no ambiente.');
+    }
+
+    console.log(`[SupabaseService] Enviando recuperação para ${email} via Direct Fetch...`);
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ email }),
+      signal: controller.signal
     });
 
-    const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
-    
-    if (error) {
-      console.error('[SupabaseService] Erro ao chamar send-reset-password:', error);
-      throw new Error(error.message || 'Erro ao enviar e-mail de recuperação.');
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[SupabaseService] Erro na Edge Function:', errorData);
+      throw new Error(errorData.error || errorData.message || `Erro do servidor: ${response.status}`);
     }
 
-    if (data?.error) {
-      throw new Error(data.message || data.error);
-    }
+    const data = await response.json();
+    console.log('[SupabaseService] Sucesso no envio:', data);
   } catch (err: any) {
-    if (err.message.includes('Timeout')) {
-       console.warn('[SupabaseService] Chamada de resetPassword expirou.');
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      console.warn('[SupabaseService] Timeout de 30s atingido e requisição abortada.');
+      throw new Error('Timeout: O servidor demorou muito para responder (cold start). Verifique sua conexão ou tente novamente.');
     }
+    console.error('[SupabaseService] Erro crítico em resetPassword:', err);
     throw err;
   }
 }
