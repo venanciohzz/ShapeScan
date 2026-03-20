@@ -65,30 +65,48 @@ export async function signUp(email: string, password: string, userData: Omit<Use
     emailConfirmed: isConfirmed
   } as User;
 }
-
 export async function signIn(email: string, password: string): Promise<User> {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  console.log('[SupabaseService] 🔑 Tentando signInWithPassword...');
+  const start = Date.now();
+  
+  // Timeout de 20s para o login
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Tempo de autenticação expirado. Verifique sua conexão.')), 20000)
+  );
 
-  if (!error && data.user) {
-    const profile = await getProfile(data.user.id);
-    return profile;
-  }
+  try {
+    const signInPromise = supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  // Traduzir erros comuns do Supabase Auth para mensagens amigáveis
-  if (error?.message.includes('Invalid login credentials')) {
-    throw new Error('E-mail ou senha incorretos. Verifique seus dados e tente novamente.');
-  }
-  if (error?.message.includes('Email not confirmed')) {
-    throw new Error('Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.');
-  }
-  if (error?.message.includes('Too many requests')) {
-    throw new Error('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
-  }
+    const { data, error } = await Promise.race([signInPromise, timeoutPromise]) as any;
+    console.log(`[SupabaseService] ⏱️ signInWithPassword respondeu em ${Date.now() - start}ms`);
 
-  throw new Error(error?.message || 'Erro ao fazer login. Tente novamente.');
+    if (!error && data.user) {
+      console.log('[SupabaseService] 👤 Buscando perfil do usuário...');
+      const pStart = Date.now();
+      const profile = await getProfile(data.user.id);
+      console.log(`[SupabaseService] ⏱️ getProfile respondeu em ${Date.now() - pStart}ms`);
+      return profile;
+    }
+
+    // Traduzir erros comuns do Supabase Auth para mensagens amigáveis
+    if (error?.message.includes('Invalid login credentials')) {
+      throw new Error('E-mail ou senha incorretos. Verifique seus dados e tente novamente.');
+    }
+    if (error?.message.includes('Email not confirmed')) {
+      throw new Error('Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.');
+    }
+    if (error?.message.includes('Too many requests')) {
+      throw new Error('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
+    }
+
+    throw new Error(error?.message || 'Erro ao fazer login. Tente novamente.');
+  } catch (err: any) {
+    console.error('[SupabaseService] Erro no fluxo de Login:', err);
+    throw err;
+  }
 }
 
 export async function signOut(): Promise<void> {
@@ -161,10 +179,9 @@ export async function resendConfirmationEmail(email: string): Promise<void> {
 export async function setUserPendingPayment(userId: string, planId: string): Promise<void> {
   const { error } = await supabase
     .from('user_plans')
-    .upsert({ user_id: userId, plan_id: planId, active: true, pending_payment: true }, { onConflict: 'user_id' });
+    .upsert({ user_id: userId, plan_id: planId, active: true }, { onConflict: 'user_id' });
   if (error) {
-    console.error('[supabaseService] Erro ao gravar pending_payment:', error.message);
-    // Não prop agamos o erro — é melhor continuar o fluxo do que bloquear o checkout
+    console.error('[supabaseService] Erro ao gravar plano (plano pode estar duplicado ou inconsistente):', error.message);
   }
 }
 
@@ -201,30 +218,40 @@ export async function getSession(): Promise<User | null> {
 // ==================== PERFIL ====================
 
 export async function getProfile(userId: string): Promise<User> {
+  console.log(`[SupabaseService] 🔍 getProfile iniciada para ${userId}`);
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', userId)
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('[SupabaseService] ❌ Erro ao buscar perfil:', error.message);
+    throw new Error(error.message);
+  }
   if (!data) throw new Error('Perfil não encontrado');
 
-  // Buscar plano do usuário
-  const { data: plans } = await supabase
+  console.log('[SupabaseService] 💳 Buscando planos do usuário...');
+
+  // Buscar plano do usuário (temporariamente removi pending_payment para evitar erro 400)
+  const { data: plans, error: planError } = await supabase
     .from('user_plans')
-    .select('plan_id, active, pending_payment')
+    .select('plan_id, active')
     .eq('user_id', userId)
     .eq('active', true)
     .order('created_at', { ascending: false })
     .limit(1);
+
+  if (planError) {
+    console.error('[SupabaseService] ⚠️ Erro ao carregar plano (provavelmente coluna pending_payment faltando):', planError.message);
+  }
 
   const planData = plans?.[0];
 
   const planId = planData?.plan_id || data.plan || 'free';
   const isPremium = planData ? (planData.plan_id !== 'free') : (data.is_premium || false);
   const isAdmin = data.is_admin || false;
-  const isPendingPayment = planData?.pending_payment ?? false;
+  const isPendingPayment = false; // Temporariamente false enquanto a coluna não existe
 
   return mapProfileToUser(data, planId, isPremium, isAdmin, isPendingPayment);
 }
