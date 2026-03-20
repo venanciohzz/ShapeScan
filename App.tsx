@@ -167,8 +167,28 @@ const App: React.FC = () => {
     userRef.current = user;
   }, [user]);
 
+  // ============================================================
+  // 🛠️ FERRAMENTAS DE EMERGÊNCIA (AUTH FIX)
+  // ============================================================
+  const forceCleanSession = async () => {
+    console.warn('[App] 🚨 Executando reset forçado de sessão corrompida...');
+    localStorage.removeItem('supabase.auth.token');
+    localStorage.removeItem('shapescan_user_profile');
+    sessionStorage.clear();
+    // Tenta avisar o Supabase, mas prossegue mesmo se falhar (rede/cors)
+    try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
+    setUser(null);
+    setIsSessionLoading(false);
+    navigate('/', { replace: true });
+    window.location.reload(); // Hard reset p/ garantir estado limpo
+  };
+
   // Professional Optimization 1: Unified Session Loading (Removed stale cache)
   useEffect(() => {
+    console.log('Auth Debug:', {
+      hasToken: !!localStorage.getItem('supabase.auth.token')
+    });
+
     const initSession = async () => {
       console.log('[App] 🚀 Iniciando initSession...');
       const startTime = Date.now();
@@ -205,10 +225,12 @@ const App: React.FC = () => {
         const sessionUser = sessionResult.user;
 
         if (sessionResult.timedOut) {
-          console.warn('[App] ⚠️ Auth timeout — conexão lenta ou Supabase indisponível. Redirecionando para home.');
-        } else {
-          console.log(`[App] Sessão obtida em ${Date.now() - startTime}ms. Usuário:`, sessionUser ? (sessionUser as any).email : 'Visitante');
+          console.warn('[App] ⚠️ Auth timeout — Conexão lenta. Limpando possíveis tokens corrompidos p/ segurança.');
+          await forceCleanSession();
+          return;
         }
+
+        console.log(`[App] Sessão obtida em ${Date.now() - startTime}ms. Usuário:`, sessionUser ? (sessionUser as any).email : 'Visitante');
 
         if (sessionUser) {
           const userId = sessionUser.id;
@@ -224,16 +246,17 @@ const App: React.FC = () => {
              }
           }
         } else {
-           localStorage.removeItem('shapescan_user_profile');
-           const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha'];
-           if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
-              navigate('/', { replace: true });
-           }
+            // Se tentou carregar e não veio nada, garante que a chave sumiu do localStorage
+            localStorage.removeItem('supabase.auth.token');
+            localStorage.removeItem('shapescan_user_profile');
+            const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha'];
+            if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
+               navigate('/', { replace: true });
+            }
         }
       } catch (e: any) {
-        console.error("[App] ❌ Erro crítico ao restaurar sessão:", e);
-        localStorage.removeItem('shapescan_user_profile');
-        setUser(null);
+        console.error("[App] ❌ Sessão possivelmente corrompida detectada:", e);
+        await forceCleanSession();
       } finally {
         console.log(`[App] ✅ initSession finalizada em ${Date.now() - startTime}ms.`);
         clearTimeout(safetyTimeout);
@@ -296,17 +319,8 @@ const App: React.FC = () => {
             timestamp: new Date().toISOString(),
           }));
 
-          setUser(null);
-          localStorage.removeItem('shapescan_user_profile');
-
-          // Redirecionar SOMENTE se estiver em rota protegida
-          const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha', '/entrar', '/registrar'];
-          const currentPath = window.location.pathname;
-          if (!publicPaths.some(p => currentPath.startsWith(p))) {
-            console.log('[App] 🚪 Sessão expirada em rota protegida. Redirecionando para /.');
-            navigate('/', { replace: true });
-          }
-
+          // Reset total em caso de SIGNED_OUT real
+          await forceCleanSession();
         } else if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session?.user?.id) {
           // Evitar re-fetch se já temos o usuário com o mesmo ID (login explícito já fez o fetch)
           if (userRef.current?.id === session.user.id && event === 'SIGNED_IN') {
@@ -678,6 +692,16 @@ const App: React.FC = () => {
       </div>
       <SuccessCelebration show={showCelebration} onComplete={() => setShowCelebration(false)} />
       {showMobileNav && <Navigation currentView={currentView} />}
+
+      {/* Botão de Emergência Oculto (Debug/Fix) */}
+      <div className="fixed bottom-0 right-0 p-4 opacity-5 hover:opacity-100 transition-opacity z-[9999]">
+        <button 
+          onClick={forceCleanSession}
+          className="text-[10px] bg-red-500/20 text-red-500 px-2 py-1 rounded border border-red-500/50"
+        >
+          Resetar sessão
+        </button>
+      </div>
     </div>
   );
 };
