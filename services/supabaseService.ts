@@ -96,9 +96,9 @@ export async function signOut(): Promise<void> {
   if (error) throw new Error(error.message);
 }
 export async function resetPassword(email: string): Promise<void> {
-  // Timeout de 10 segundos para evitar carregamento infinito no frontend
+  // Timeout de 30 segundos para evitar carregamento infinito, mas permitindo cold starts
   const timeoutPromise = new Promise((_, reject) => 
-    setTimeout(() => reject(new Error('Timeout: O servidor demorou muito para responder.')), 10000)
+    setTimeout(() => reject(new Error('Timeout: O servidor demorou muito para responder (cold start). Tente mais uma vez.')), 30000)
   );
 
   try {

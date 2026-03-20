@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
 
         // 1. Parse Request
         const { email } = await req.json();
+        const t0 = Date.now();
 
         if (!email) {
             throw new Error("E-mail é obrigatório");
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
         console.log(`Solicitação de recuperação de senha para: ${email}`);
 
         // 2. Gerar link de recuperação via Admin API
-        // 'recovery' é o tipo para redefinição de senha
+        const t1 = Date.now();
         const { data, error: linkError } = await supabase.auth.admin.generateLink({
             type: 'recovery',
             email: email,
@@ -37,6 +38,8 @@ Deno.serve(async (req) => {
                 redirectTo: "https://shapescan.com.br/nova-senha"
             }
         });
+        const t2 = Date.now();
+        console.log(`Link gerado em ${t2 - t1}ms`);
 
         if (linkError) {
           console.error("Erro ao gerar link:", linkError);
@@ -53,6 +56,7 @@ Deno.serve(async (req) => {
 
         // 3. Enviar Email via Resend
         console.log(`Enviando e-mail de recuperação para ${email}...`);
+        const t3 = Date.now();
         
         const emailHtml = `
             <!DOCTYPE html>
@@ -110,6 +114,10 @@ Deno.serve(async (req) => {
                 html: emailHtml,
             }),
         });
+
+        const t4 = Date.now();
+        console.log(`Email enviado via Resend em ${t4 - t3}ms`);
+        console.log(`Tempo total da função: ${t4 - t0}ms`);
 
         const resendData = await resendResponse.json();
 
