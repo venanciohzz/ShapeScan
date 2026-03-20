@@ -1,6 +1,7 @@
 // Trigger deployment v2 - Fixed: anti-duplicate + userId propagation to PaymentIntent
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from 'npm:stripe@^14.21.0';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,27 @@ Deno.serve(async (req) => {
 
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  // ============================================================
+  // VALIDAÇÃO JWT: Bloquear acesso não autenticado
+  // Previne geração de checkouts spoofados por injeção no body
+  // ============================================================
+  const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    console.error('[Stripe Checkout] Missing Authorization header');
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+  if (authError || !user) {
+    console.error('[Stripe Checkout] Invalid JWT:', authError?.message);
+    return new Response('Unauthorized', { status: 401 });
   }
 
   try {
@@ -34,14 +56,17 @@ Deno.serve(async (req) => {
       throw new Error('Corpo da requisição inválido');
     }
 
-    const { priceId, userId, email } = body;
+    const { priceId } = body;
+    // Forçar uso do ID e Email atestados pelo JWT, não pelo body (segurança)
+    const userId = user.id;
+    const email = user.email || body.email;
 
     if (!priceId || !userId || !email) {
       console.error('[Stripe Checkout] Missing parameters:', { priceId, userId, email });
       throw new Error('Parâmetros obrigatórios ausentes: priceId, userId, email');
     }
 
-    console.log(`[Stripe Checkout] Processing for user ${userId} (${email})`);
+    console.log(`[Stripe Checkout] Processing for verified user ${userId} (${email})`);
 
     // ============================================================
     // 1. FIND OR CREATE STRIPE CUSTOMER

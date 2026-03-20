@@ -68,14 +68,10 @@ export async function signUp(email: string, password: string, userData: Omit<Use
 export async function signIn(email: string, password: string): Promise<User> {
   console.log('[SupabaseService] 🔑 Iniciando processo de signIn para:', email);
   const start = Date.now();
-  
-  // Garantir limpeza total antes de tentar novo login para evitar conflitos de sessão/refresh token
-  try {
-    console.log('[SupabaseService] 🧹 Limpando sessões residuais antes de novo login...');
-    await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
-  } catch (e) {
-    console.warn('[SupabaseService] Aviso ao limpar sessão local:', e);
-  }
+
+  // NOTA: NÃO chamamos signOut() aqui pois isso dispararia SIGNED_OUT no onAuthStateChange
+  // causando loop: login → SIGNED_OUT → user=null → loading infinito.
+  // O Supabase substitui automaticamente a sessão ao fazer novo signInWithPassword.
 
   // Timeout de 25s para o login (um pouco mais tolerante para cold starts)
   const timeoutPromise = new Promise((_, reject) => 
@@ -162,6 +158,14 @@ export async function resetPassword(email: string): Promise<void> {
     }
 
     const data = await response.json();
+
+    // Verificar campo 'error' no body mesmo quando status é 200
+    // (a Edge Function pode retornar 200 com error no body em alguns casos)
+    if (data.error) {
+      console.error('[SupabaseService] Erro no body da resposta:', data.error);
+      throw new Error(data.error);
+    }
+
     console.log('[SupabaseService] Sucesso no envio:', data);
   } catch (err: any) {
     clearTimeout(timeoutId);

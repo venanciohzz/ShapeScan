@@ -126,6 +126,43 @@ Deno.serve(async (req) => {
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
     // ============================================================
+    // IDEMPOTÊNCIA — INSERT ATÔMICO (sem SELECT prévio)
+    // ============================================================
+    // Padrão correto para race condition real:
+    //   1. Dois requests chegam simultaneamente com o mesmo event.id
+    //   2. Ambos tentam INSERT
+    //   3. O banco garante atomicidade via PRIMARY KEY constraint
+    //   4. O primeiro vence → processa; o segundo recebe 23505 → retorna 200 imediatamente
+    //
+    // O SELECT prévio NÃO protege: dois requests podem passar pelo SELECT
+    // antes de qualquer INSERT ocorrer (TOCTOU race). O INSERT direto é atômico.
+    //
+    // REGRA: nenhuma lógica de negócio executa ANTES deste bloco.
+    // ============================================================
+    const { error: idempotencyError } = await supabase
+      .from('stripe_events')
+      .insert({ id: event.id, type: event.type });
+
+    if (idempotencyError) {
+      if (idempotencyError.code === '23505') {
+        // unique_violation → event.id já existe → evento duplicado ou race condition
+        log('info', event.type, 'skipped', {
+          eventId: event.id,
+          reason: 'Duplicate event — idempotency lock (23505). Already processed or concurrent request won the race.',
+        });
+        return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
+      }
+      // Erro inesperado no INSERT (ex: tabela não existe, permissão) → logar e continuar
+      // para não bloquear pagamentos por problema de infra de monitoramento
+      log('error', event.type, 'error', {
+        eventId: event.id,
+        reason: 'Idempotency INSERT failed (unexpected error) — continuing to process to avoid blocking payment',
+        detail: idempotencyError.message,
+        code: idempotencyError.code,
+      });
+    }
+
+    // ============================================================
     // EVENTO: invoice.payment_succeeded
     // ============================================================
     if (event.type === 'invoice.payment_succeeded') {
@@ -232,7 +269,7 @@ Deno.serve(async (req) => {
         return new Response('OK - Missing userId', { status: 200 });
       }
 
-      log('warn', event.type, 'processed', { userId, invoiceId: invoice.id, reason: 'Payment failed - Stripe will retry' });
+      log('warn', event.type, 'processed', { userId, invoiceId: invoice.id, reason: 'Payment failed - registering and downgrading user' });
 
       // Registrar falha
       await supabase.from('payments').insert({
@@ -251,6 +288,28 @@ Deno.serve(async (req) => {
         if (error) log('error', event.type, 'error', { reason: error.message, userId });
       });
 
+      // ============================================================
+      // DOWNGRADE: Se o pagamento falhar, rebaixar o usuário para free.
+      // Isso evita que assinantes mantenham acesso premium com pagamento recusado.
+      // O Stripe tentará automaticamente cobrar novamente (retry policy).
+      // ============================================================
+      try {
+        const downgradeData: any = { user_id: userId, plan_id: 'free', active: true };
+        const { error: downgradeError } = await supabase.from('user_plans').upsert({
+          ...downgradeData,
+          pending_payment: false
+        }, { onConflict: 'user_id' });
+
+        if (downgradeError && downgradeError.message.includes('pending_payment')) {
+          await supabase.from('user_plans').upsert(downgradeData, { onConflict: 'user_id' });
+        } else if (downgradeError) {
+          throw downgradeError;
+        }
+        log('info', event.type, 'processed', { userId, action: 'downgraded_to_free', invoiceId: invoice.id });
+      } catch (downgradeErr) {
+        log('error', event.type, 'error', { reason: 'Downgrade failed', detail: String(downgradeErr), userId });
+      }
+
       // Email de falha
       try {
         const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
@@ -259,6 +318,46 @@ Deno.serve(async (req) => {
         }
       } catch (emailErr) {
         log('error', event.type, 'error', { reason: 'Failed to send email', detail: String(emailErr), userId });
+      }
+    }
+
+    // ============================================================
+    // EVENTO: customer.subscription.updated (UPGRADE/DOWNGRADE VIA PORTAL)
+    // Disparado quando usuário muda de plano pelo portal do Stripe.
+    // ============================================================
+    if (event.type === 'customer.subscription.updated') {
+      const sub = event.data.object as Stripe.Subscription;
+      const userId = sub.metadata?.userId || sub.metadata?.supabase_user_id;
+
+      if (!userId) {
+        log('warn', event.type, 'skipped', { reason: 'userId not found in subscription metadata', subscriptionId: sub.id });
+      } else {
+        const priceId = sub.items.data[0]?.price?.id;
+        const planId = priceId ? priceToPlan[priceId] : null;
+
+        if (!planId) {
+          log('warn', event.type, 'skipped', { reason: 'Unknown priceId in subscription.updated', priceId, userId });
+        } else if (sub.status === 'active') {
+          try {
+            const syncData: any = { user_id: userId, plan_id: planId, active: true };
+            const { error: syncError } = await supabase.from('user_plans').upsert({
+              ...syncData,
+              pending_payment: false
+            }, { onConflict: 'user_id' });
+
+            if (syncError && syncError.message.includes('pending_payment')) {
+              await supabase.from('user_plans').upsert(syncData, { onConflict: 'user_id' });
+            } else if (syncError) {
+              throw syncError;
+            }
+
+            log('info', event.type, 'processed', { userId, planId, subscriptionStatus: sub.status });
+          } catch (err) {
+            log('error', event.type, 'error', { reason: 'Subscription update sync failed', detail: String(err), userId });
+          }
+        } else {
+          log('info', event.type, 'skipped', { reason: `Subscription status is '${sub.status}', no plan update`, userId });
+        }
       }
     }
 

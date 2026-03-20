@@ -101,7 +101,19 @@ Deno.serve(async (req) => {
             </html>
         `;
 
-        const resendResponse = await fetch('https://api.resend.com/emails', {
+        // 4. RETRY LEVE: Resiliência contra timeout isolados ou instabilidade da rede no edge
+        const fetchRetry = async (url: string, options: any, retries = 1) => {
+            try { return await fetch(url, options); }
+            catch (err) {
+                if (retries > 0) {
+                    console.warn('[Retry] Falha na request externa. Tentando novamente...', err);
+                    return await fetch(url, options); 
+                }
+                throw err;
+            }
+        };
+
+        const resendResponse = await fetchRetry('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -113,7 +125,7 @@ Deno.serve(async (req) => {
                 subject: 'Link para redefinir sua senha — ShapeScan',
                 html: emailHtml,
             }),
-        });
+        }, 1);
 
         const t4 = Date.now();
         console.log(`Email enviado via Resend em ${t4 - t3}ms`);
@@ -136,15 +148,16 @@ Deno.serve(async (req) => {
             status: 200
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(`Edge Function Exception: ${error.message}`);
         
+        // IMPORTANTE: Retornar status 500 para que o frontend detecte o erro via response.ok
         return new Response(JSON.stringify({ 
           error: error.message,
           message: "Ocorreu um erro ao processar sua solicitação." 
         }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 // Retornamos 200 para evitar vazamento de existência de e-mail se necessário
+            status: 500 // Correto: status de erro real para que o cliente detecte
         });
     }
 });

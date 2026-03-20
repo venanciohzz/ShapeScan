@@ -40,6 +40,8 @@ const App: React.FC = () => {
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const userRef = React.useRef<User | null>(null);
+  // Ref para evitar que onAuthStateChange interfira durante o carregamento inicial
+  const isSessionLoadingRef = React.useRef(true);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
   const [evolutionRecords, setEvolutionRecords] = useState<EvolutionRecord[]>([]);
@@ -181,9 +183,33 @@ const App: React.FC = () => {
 
       try {
         console.log('[App] Buscando sessão atual...');
-        const sessionUser = await db.auth.getSession();
-        console.log(`[App] Sessão obtida em ${Date.now() - startTime}ms. Usuário:`, sessionUser ? sessionUser.email : 'Visitante');
-        
+
+        // ============================================================
+        // TIMEOUT DEFENSIVO: getSession compete com 8s de timeout.
+        // Se o Supabase/rede demorar mais que isso, tratar como visitante.
+        // Isso previne loading infinito em conexões lentas ou cold starts.
+        // O safety timeout do useEffect (5s) continua como fallback final.
+        // ============================================================
+        const sessionTimeout = new Promise<{ user: null; timedOut: true }>((resolve) =>
+          setTimeout(() => {
+            console.warn('[App] ⏱️ getSession timeout (8s) — tratando como visitante.');
+            resolve({ user: null, timedOut: true });
+          }, 8000)
+        );
+
+        const sessionResult = await Promise.race([
+          db.auth.getSession().then(user => ({ user, timedOut: false as const })),
+          sessionTimeout,
+        ]);
+
+        const sessionUser = sessionResult.user;
+
+        if (sessionResult.timedOut) {
+          console.warn('[App] ⚠️ Auth timeout — conexão lenta ou Supabase indisponível. Redirecionando para home.');
+        } else {
+          console.log(`[App] Sessão obtida em ${Date.now() - startTime}ms. Usuário:`, sessionUser ? (sessionUser as any).email : 'Visitante');
+        }
+
         if (sessionUser) {
           const userId = sessionUser.id;
           localStorage.setItem('shapescan_user_profile', JSON.stringify(sessionUser));
@@ -211,6 +237,7 @@ const App: React.FC = () => {
       } finally {
         console.log(`[App] ✅ initSession finalizada em ${Date.now() - startTime}ms.`);
         clearTimeout(safetyTimeout);
+        isSessionLoadingRef.current = false; // Libera o guard do onAuthStateChange
         setIsSessionLoading(false);
       }
     };
@@ -239,14 +266,51 @@ const App: React.FC = () => {
       async (event: string, session: any) => {
         console.log(`[App] 🔄 Auth Event: ${event}`, session ? `Sessão ativa: ${session.user.email}` : 'Sem sessão');
 
+        // ⚠️ GUARD: Ignorar eventos durante o carregamento inicial da sessão.
+        // O initSession já cuida do estado inicial. Reagir aqui causaria race condition.
+        if (isSessionLoadingRef.current) {
+          console.log(`[App] ⏳ Ignorando evento '${event}' durante initSession.`);
+          return;
+        }
+
         if (event === 'SIGNED_OUT') {
-          console.log('[App] 🚪 Usuário deslogado via evento.');
+          // ============================================================
+          // PROTEÇÃO CONTRA FALSO-POSITIVO DE SIGNED_OUT
+          // O Supabase pode emitir SIGNED_OUT durante refresh de token ou
+          // em race conditions. Fazemos getSession() para confirmar que a
+          // sessão realmente não existe antes de deslogar o usuário.
+          // ============================================================
+          const { data: sessionCheck } = await supabase.auth.getSession();
+
+          if (sessionCheck?.session) {
+            // Sessão ainda existe — este é um SIGNED_OUT espúrio. Ignorar.
+            console.log('[App] ⚠️ SIGNED_OUT ignorado: sessão ainda válida (falso-positivo).');
+            return;
+          }
+
+          console.log(JSON.stringify({
+            service: 'auth',
+            event: 'SIGNED_OUT',
+            userId: userRef.current?.id || null,
+            path: window.location.pathname,
+            timestamp: new Date().toISOString(),
+          }));
+
           setUser(null);
           localStorage.removeItem('shapescan_user_profile');
+
+          // Redirecionar SOMENTE se estiver em rota protegida
+          const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha', '/entrar', '/registrar'];
+          const currentPath = window.location.pathname;
+          if (!publicPaths.some(p => currentPath.startsWith(p))) {
+            console.log('[App] 🚪 Sessão expirada em rota protegida. Redirecionando para /.');
+            navigate('/', { replace: true });
+          }
+
         } else if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session?.user?.id) {
-          // Evitar re-fetch se já temos o usuário (vindo do login explícito)
+          // Evitar re-fetch se já temos o usuário com o mesmo ID (login explícito já fez o fetch)
           if (userRef.current?.id === session.user.id && event === 'SIGNED_IN') {
-             console.log('[App] ℹ️ SIGNED_IN detectado mas perfil já carregado via Ref. Pulando fetch redundante.');
+             console.log('[App] ℹ️ SIGNED_IN: perfil já carregado (mesmo userId). Pulando fetch redundante.');
              return;
           }
 
@@ -263,9 +327,23 @@ const App: React.FC = () => {
       }
     );
 
+    // ============================================================
+    // HARDENING FINAL: Sincronização entre abas (multi-tab logout)
+    // Se o usuário deslogar numa aba, as outras abas recarregam p/ bloquear acesso
+    // ============================================================
+    const handleStorageChange = (event: StorageEvent) => {
+      // Monitora o token oficial do supabase
+      if (event.key?.includes('supabase.auth.token') && !event.newValue) {
+         console.warn('[App] 🔄 Sync multi-tab: estado de logout detectado. Recarregando app...');
+         window.location.assign('/');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       console.log('[App] 🔌 Encerrando subscription do auth listener.');
       subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     }
   }, []); // Apenas no mount
 
@@ -324,13 +402,16 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    await db.auth.setSession(null);
+    // Limpar estado local ANTES de chamar signOut para evitar flash de conteúdo
     setUser(null);
     setFoodLogs([]);
     setEvolutionRecords([]);
     setChatHistory([]);
     setWaterConsumed(0);
-    navigate('/');
+    localStorage.removeItem('shapescan_user_profile');
+    navigate('/', { replace: true });
+    // signOut após navegação — o evento SIGNED_OUT chegará, mas o guard de rota já redirecionou
+    await supabase.auth.signOut().catch(e => console.warn('[App] Erro no signOut:', e));
   };
 
   // ... (código existente)
