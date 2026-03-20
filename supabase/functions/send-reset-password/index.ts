@@ -43,12 +43,12 @@ Deno.serve(async (req) => {
 
         if (linkError) {
           console.error("Erro ao gerar link:", linkError);
-          // Retornamos 200 para evitar user enumeration, mas logamos o erro
+          // Retornamos erro real para depuração agora que sabemos que não está chegando
           return new Response(JSON.stringify({ 
-            message: "Se o e-mail estiver cadastrado, você receberá instruções." 
+            error: `Erro ao gerar link: ${linkError.message || 'Usuário possivelmente não encontrado'}` 
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200
+            status: 400
           });
         }
 
