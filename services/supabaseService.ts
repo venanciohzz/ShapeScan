@@ -233,25 +233,37 @@ export async function getProfile(userId: string): Promise<User> {
 
   console.log('[SupabaseService] 💳 Buscando planos do usuário...');
 
-  // Buscar plano do usuário (temporariamente removi pending_payment para evitar erro 400)
-  const { data: plans, error: planError } = await supabase
+  // Buscar plano do usuário (com tratamento resiliente para colunas faltantes)
+  let planQuery = supabase
     .from('user_plans')
-    .select('plan_id, active')
+    .select('plan_id, active, pending_payment')
     .eq('user_id', userId)
-    .eq('active', true)
+    .eq('active', true);
+    
+  let { data: plans, error: planError } = await planQuery
     .order('created_at', { ascending: false })
     .limit(1);
 
-  if (planError) {
-    console.error('[SupabaseService] ⚠️ Erro ao carregar plano (provavelmente coluna pending_payment faltando):', planError.message);
+  // Se der erro de "coluna não existe", tenta novamente sem a coluna pending_payment
+  if (planError && planError.message.includes('pending_payment')) {
+    console.warn('[SupabaseService] Coluna pending_payment não encontrada. Rodando fallback...');
+    const fallback = await supabase
+      .from('user_plans')
+      .select('plan_id, active')
+      .eq('user_id', userId)
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    plans = fallback.data as any;
+  } else if (planError) {
+    console.error('[SupabaseService] Erro ao carregar plano:', planError.message);
   }
 
   const planData = plans?.[0];
-
   const planId = planData?.plan_id || data.plan || 'free';
   const isPremium = planData ? (planData.plan_id !== 'free') : (data.is_premium || false);
   const isAdmin = data.is_admin || false;
-  const isPendingPayment = false; // Temporariamente false enquanto a coluna não existe
+  const isPendingPayment = (planData as any)?.pending_payment ?? false;
 
   return mapProfileToUser(data, planId, isPremium, isAdmin, isPendingPayment);
 }
