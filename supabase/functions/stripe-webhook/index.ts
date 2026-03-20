@@ -177,16 +177,28 @@ Deno.serve(async (req) => {
         log('warn', event.type, 'skipped', { reason: 'Duplicate invoice', invoiceId: stripeInvoiceId, userId });
       }
 
-      // Ativar plano (remove pending_payment, ativa premium)
-      const { error: planError } = await supabase.from('user_plans').upsert({
+      // Tenta ativar o plano. Se a coluna pending_payment estiver faltando, tenta sem ela.
+      const planUpdateData: any = {
         user_id: userId,
         plan_id: planId,
         active: true,
-        pending_payment: false,   // ← limpa o estado intermediário
-      }, { onConflict: 'user_id' });
+      };
 
-      if (planError) {
-        log('error', event.type, 'error', { reason: planError.message, userId, planId });
+      // Tentar atualizar com pending_payment para limpar o estado se a coluna existir
+      try {
+        const { error: pError } = await supabase.from('user_plans').upsert({
+          ...planUpdateData,
+          pending_payment: false
+        }, { onConflict: 'user_id' });
+        
+        if (pError && pError.message.includes('pending_payment')) {
+          // Fallback se a coluna não existir
+          await supabase.from('user_plans').upsert(planUpdateData, { onConflict: 'user_id' });
+        } else if (pError) {
+          throw pError;
+        }
+      } catch (err) {
+        log('error', event.type, 'error', { reason: 'Plan activation failed', detail: String(err), userId });
       }
 
       log('info', event.type, 'processed', { userId, planId, amount, invoiceId: stripeInvoiceId });
@@ -258,18 +270,26 @@ Deno.serve(async (req) => {
       const userId = sub.metadata?.userId;
 
       if (userId) {
-        const { error } = await supabase.from('user_plans').upsert({
+        const cleanPlanData: any = {
           user_id: userId,
           plan_id: 'free',
           active: true,
-          pending_payment: false,
-        }, { onConflict: 'user_id' });
+        };
 
-        if (error) {
-          log('error', event.type, 'error', { reason: error.message, userId });
-        } else {
-          log('info', event.type, 'processed', { userId, newPlan: 'free' });
+        try {
+          const { error: cError } = await supabase.from('user_plans').upsert({
+            ...cleanPlanData,
+            pending_payment: false
+          }, { onConflict: 'user_id' });
+          
+          if (cError && cError.message.includes('pending_payment')) {
+            await supabase.from('user_plans').upsert(cleanPlanData, { onConflict: 'user_id' });
+          }
+        } catch (err) {
+          log('error', event.type, 'error', { reason: 'Subscription deletion sync failed', detail: String(err), userId });
         }
+        
+        log('info', event.type, 'processed', { userId, newPlan: 'free' });
       } else {
         log('warn', event.type, 'skipped', { reason: 'userId not found in subscription metadata', subscriptionId: sub.id });
       }
