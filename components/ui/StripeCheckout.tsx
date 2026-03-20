@@ -22,7 +22,7 @@ interface StripeCheckoutProps {
   planPeriod?: string; // Período, ex: "/mês" ou "/ano"
 }
 
-const PaymentForm = ({ onCancel, userId, planId }: { onCancel: () => void; userId: string; planId: string }) => {
+const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () => void; userId: string; planId: string; planPeriod: string }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -69,6 +69,9 @@ const PaymentForm = ({ onCancel, userId, planId }: { onCancel: () => void; userI
       )}
 
       <div className="flex flex-col gap-4 pt-2">
+        <p className="text-center text-[10px] text-zinc-500 font-medium px-4 leading-relaxed">
+          Sua assinatura tem renovação automática {planPeriod?.includes('ano') ? 'anual' : 'mensal'}. Você pode cancelar a qualquer momento sem taxas adicionais.
+        </p>
         <button
           disabled={isProcessing || !stripe}
           className="group relative w-full px-8 py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-all duration-300 active:scale-95 shadow-xl shadow-emerald-500/20 overflow-hidden"
@@ -110,30 +113,65 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  // Trava anti-dupla: previne execuções simultâneas (React Strict Mode)
+  const isInitializingRef = React.useRef(false);
 
   useEffect(() => {
     const initializeCheckout = async () => {
+      // Se já está rodando, ignora (protege contra dupla execução do React Strict Mode)
+      if (isInitializingRef.current) {
+        console.log('[StripeCheckout] Inicialização já em andamento, ignorando segunda chamada.');
+        return;
+      }
+      isInitializingRef.current = true;
+
       try {
         setIsInitializing(true);
         setError(null);
         
+        console.log('[StripeCheckout] Iniciando checkout para priceId:', priceId);
+
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !userData?.user) {
+          throw new Error('Usuário não autenticado. O checkout requer login ativo.');
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session?.access_token) {
+          throw new Error('Usuário não autenticado');
+        }
+
+        console.log('[StripeCheckout] Token JWT obtido, invocando Edge Function...');
         const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
-          headers: {
-            'apikey': (import.meta as any).env.VITE_SUPABASE_ANON_KEY
-          },
-          body: { priceId, userId, email },
+          body: { priceId },
         });
 
-        if (invokeError) throw new Error(invokeError.message);
+        if (invokeError) {
+          console.error('[StripeCheckout] Edge Function ERROR:', invokeError);
+          // Tenta extrair o body real do erro (ex: mensagem do Stripe)
+          let errorMessage = invokeError.message || 'Erro ao iniciar checkout';
+          try {
+            if (invokeError.context && typeof invokeError.context.json === 'function') {
+              const body = await invokeError.context.json();
+              errorMessage = body?.error || body?.message || errorMessage;
+              console.error('[StripeCheckout] Edge Function error body:', body);
+            }
+          } catch (_) { /* seguro ignorar */ }
+          throw new Error(errorMessage);
+        }
+
         if (data?.isError) throw new Error(data.error);
         if (!data?.clientSecret) throw new Error('Falha ao obter chave de pagamento.');
 
         setClientSecret(data.clientSecret);
       } catch (err: any) {
-        console.error('Initialization error:', err);
+        console.error('[StripeCheckout] Initialization error:', err);
         setError(err.message || 'Erro ao carregar o checkout.');
       } finally {
         setIsInitializing(false);
+        isInitializingRef.current = false; // Libera o lock para próximas tentativas
       }
     };
 
@@ -186,7 +224,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
               <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <span className="text-zinc-950 font-black italic">S</span>
               </div>
-              <h3 className="text-xl font-black tracking-tight text-white uppercase italic">Checkout Seguro</h3>
+              <h3 className="text-xl font-black tracking-tight text-white uppercase italic">Assinatura ShapeScan</h3>
             </div>
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-11">{planName}</p>
           </div>
@@ -226,38 +264,37 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
           ) : clientSecret && (
             <div className="flex flex-col gap-8">
               <div className="flex items-center gap-4 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
-                <div className="text-emerald-500">🛡️</div>
+                <div className="text-emerald-500 animate-pulse">🛡️</div>
                 <div className="text-[10px] text-zinc-400 font-medium leading-tight">
-                  <span className="text-emerald-500 font-bold block mb-0.5 uppercase tracking-wider">Pagamento Protegido</span>
-                  Suas informações são criptografadas e processadas pelo Stripe.
+                  <span className="text-emerald-500 font-bold block mb-0.5 uppercase tracking-wider">Compra 100% Segura</span>
+                  Suas informações são encriptadas de ponta a ponta e processadas confidencialmente pela Stripe.
                 </div>
               </div>
 
               <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
-                <PaymentForm onCancel={onClose} userId={userId} planId={priceId} />
+                <PaymentForm onCancel={onClose} userId={userId} planId={priceId} planPeriod={planPeriod} />
               </Elements>
             </div>
           )}
         </div>
 
-        <div className="p-8 bg-zinc-900/30 border-t border-zinc-800/50">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4 grayscale opacity-40">
-              <div className="flex items-center gap-1">
-                <span className="text-[8px] font-black uppercase tracking-widest text-zinc-500">Secure</span>
-                <span className="text-white font-black text-sm tracking-tighter">stripe</span>
-              </div>
-              <div className="h-4 w-px bg-zinc-800"></div>
-              <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">PCI-DSS COMPLIANT</p>
-            </div>
+        <div className="px-10 py-6 bg-zinc-900/50 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Garantia ShapeScan</span>
+          </div>
 
-            <div className="flex items-center gap-3 opacity-30 grayscale blur-[0.5px]">
-              <div className="w-8 h-5 bg-zinc-800 rounded"></div>
-              <div className="w-8 h-5 bg-zinc-800 rounded"></div>
-              <div className="w-8 h-5 bg-zinc-800 rounded"></div>
-              <div className="flex items-center gap-1 border border-zinc-800 rounded px-1.5 py-0.5">
-                <span className="text-[7px] font-black text-zinc-600 uppercase italic">PIX</span>
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800/50 border border-zinc-700/50 rounded text-[9px] font-black text-zinc-500 tracking-wider">
+              CARTÕES
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800/50 border border-zinc-700/50 rounded text-[9px] font-black text-zinc-500 tracking-wider">
+              APPLE PAY
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800/50 border border-zinc-700/50 rounded text-[9px] font-black text-zinc-500 tracking-wider">
+              GOOGLE PAY
             </div>
           </div>
         </div>

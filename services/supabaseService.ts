@@ -73,27 +73,15 @@ export async function signIn(email: string, password: string): Promise<User> {
   // causando loop: login → SIGNED_OUT → user=null → loading infinito.
   // O Supabase substitui automaticamente a sessão ao fazer novo signInWithPassword.
 
-  // Timeout de 25s para o login (um pouco mais tolerante para cold starts)
-  const timeoutPromise = new Promise((_, reject) => 
-    setTimeout(() => reject(new Error('Tempo de autenticação expirado. Verifique sua conexão.')), 25000)
-  );
-
   try {
     console.log('[SupabaseService] 🔌 Chamando signInWithPassword...');
-    const signInPromise = supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    const result = await Promise.race([signInPromise, timeoutPromise]) as any;
-    const { data, error } = result;
-
-    console.log(`[SupabaseService] ⏱️ signInWithPassword finalizado em ${Date.now() - start}ms`);
-
     if (error) {
        console.error('[SupabaseService] ❌ Erro retornado pelo Supabase Auth:', error);
-       
-       // Traduzir erros comuns do Supabase Auth para mensagens amigáveis
        if (error.message.includes('Invalid login credentials')) {
          throw new Error('E-mail ou senha incorretos. Verifique seus dados e tente novamente.');
        }
@@ -107,11 +95,28 @@ export async function signIn(email: string, password: string): Promise<User> {
     }
 
     if (data.user) {
-      console.log('[SupabaseService] ✅ Auth OK. Buscando perfil completo...');
-      const pStart = Date.now();
-      const profile = await getProfile(data.user.id);
-      console.log(`[SupabaseService] 🏁 Login concluído com sucesso em ${Date.now() - start}ms (Perfil em ${Date.now() - pStart}ms)`);
-      return profile;
+      console.log('[SupabaseService] ✅ Auth OK. Buscando perfil completo em bg/fallback...');
+      
+      try {
+        const profile = await getProfile(data.user.id);
+        console.log(`[SupabaseService] 🏁 Login com perfil concluído.`);
+        return profile;
+      } catch (profileError) {
+        console.warn('[SupabaseService] ⚠️ Erro crítico ao carregar perfil. O Auth passou, ativando fallback temporário:', profileError);
+        // O login NÃO pode depender do DB do Profile estar perfeitamente íntegro.
+        return {
+          id: data.user.id,
+          email: data.user.email || email,
+          name: 'Usuário',
+          username: 'usuario_' + data.user.id.substring(0, 5),
+          phone: '',
+          isPremium: false,
+          isAdmin: false,
+          isPendingPayment: false,
+          plan: 'free',
+          dailyCalorieGoal: 2000,
+        } as User;
+      }
     }
 
     throw new Error('Falha inesperada: Nenhuma sessão retornada.');
@@ -125,6 +130,7 @@ export async function signOut(): Promise<void> {
   const { error } = await supabase.auth.signOut();
   if (error) throw new Error(error.message);
 }
+
 export async function resetPassword(email: string): Promise<void> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout real
@@ -159,8 +165,6 @@ export async function resetPassword(email: string): Promise<void> {
 
     const data = await response.json();
 
-    // Verificar campo 'error' no body mesmo quando status é 200
-    // (a Edge Function pode retornar 200 com error no body em alguns casos)
     if (data.error) {
       console.error('[SupabaseService] Erro no body da resposta:', data.error);
       throw new Error(data.error);
@@ -191,11 +195,6 @@ export async function resendConfirmationEmail(email: string): Promise<void> {
 
 // ==================== PENDING PAYMENT (ESTADO INTERMEDIÁRIO) ====================
 
-/**
- * Grava o estado pending_payment=true no user_plans.
- * Chamado ANTES do redirect Stripe para evitar UX estranho de delay.
- * O webhook limpa esse estado ao confirmar o pagamento.
- */
 export async function setUserPendingPayment(userId: string, planId: string): Promise<void> {
   const { error } = await supabase
     .from('user_plans')
@@ -227,11 +226,24 @@ export async function getSession(): Promise<User | null> {
     return null;
   }
 
+  // Desacoplamento do Profile: Auth não cai se o Database Profile falhar.
   try {
     const profile = await getProfile(session.user.id);
     return profile;
   } catch (error) {
-    return null;
+    console.error('[SupabaseService] ⚠️ Sessão Auth VÁLIDA mas getProfile() FALHOU. Entregando usuário em Fallback para não quebrar UI.', error);
+    return {
+      id: session.user.id,
+      email: session.user.email || '',
+      name: 'Usuário',
+      username: 'usuario_' + session.user.id.substring(0, 5),
+      phone: '',
+      isPremium: false,
+      isAdmin: false,
+      isPendingPayment: false,
+      plan: 'free',
+      dailyCalorieGoal: 2000,
+    } as User;
   }
 }
 

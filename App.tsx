@@ -171,16 +171,17 @@ const App: React.FC = () => {
   // 🛠️ FERRAMENTAS DE EMERGÊNCIA (AUTH FIX)
   // ============================================================
   const forceCleanSession = async () => {
-    console.warn('[App] 🚨 Executando reset forçado de sessão corrompida...');
-    localStorage.removeItem('supabase.auth.token');
+    console.warn('[App] 🚨 Executando reset forçado de sessão...');
+    
+    // Deixar a biblioteca do Supabase cuidar da própria chave:
+    await supabase.auth.signOut();
+    
     localStorage.removeItem('shapescan_user_profile');
     sessionStorage.clear();
-    // Tenta avisar o Supabase, mas prossegue mesmo se falhar (rede/cors)
-    try { await supabase.auth.signOut(); } catch (e) { /* ignore */ }
+    
     setUser(null);
     setIsSessionLoading(false);
     navigate('/', { replace: true });
-    window.location.reload(); // Hard reset p/ garantir estado limpo
   };
 
   // Professional Optimization 1: Unified Session Loading (Removed stale cache)
@@ -193,13 +194,8 @@ const App: React.FC = () => {
       console.log('[App] 🚀 Iniciando initSession...');
       const startTime = Date.now();
 
-      // Professional Optimization 2: Safety timeout to prevent infinite loading
-      const safetyTimeout = setTimeout(() => {
-        if (isSessionLoading) {
-          console.warn(`[App] ⚠️ Timeout de segurança atingido aos ${Date.now() - startTime}ms. Forçando encerramento do loading.`);
-          setIsSessionLoading(false);
-        }
-      }, 5000); // Aumentado para 5s para maior resiliência em conexões lentas no boot
+      // Timers de expiração removidos a pedido do usuário
+
 
       try {
         console.log('[App] Buscando sessão atual...');
@@ -210,44 +206,25 @@ const App: React.FC = () => {
         // Isso previne loading infinito em conexões lentas ou cold starts.
         // O safety timeout do useEffect (5s) continua como fallback final.
         // ============================================================
-        const sessionTimeout = new Promise<{ user: null; timedOut: true }>((resolve) =>
-          setTimeout(() => {
-            console.warn('[App] ⏱️ getSession timeout (8s) — tratando como visitante.');
-            resolve({ user: null, timedOut: true });
-          }, 8000)
-        );
-
-        const sessionResult = await Promise.race([
-          db.auth.getSession().then(user => ({ user, timedOut: false as const })),
-          sessionTimeout,
-        ]);
-
-        const sessionUser = sessionResult.user;
-
-        if (sessionResult.timedOut) {
-          console.warn('[App] ⚠️ Auth timeout — Conexão lenta. Limpando possíveis tokens corrompidos p/ segurança.');
-          await forceCleanSession();
-          return;
-        }
-
-        console.log(`[App] Sessão obtida em ${Date.now() - startTime}ms. Usuário:`, sessionUser ? (sessionUser as any).email : 'Visitante');
-
-        if (sessionUser) {
-          const userId = sessionUser.id;
-          localStorage.setItem('shapescan_user_profile', JSON.stringify(sessionUser));
-          setUser(sessionUser);
-          loadUserDataBackground(userId);
+        // Use APENAS a sessão oficial do Supabase para inicializar
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session) {
+          const authUser = data.session.user;
+          console.log(`[App] Sessão Auth Válida encontrada:`, authUser.email);
+          
+          // Libera o carregamento da UI imediatamente (UX instantânea)
+          setIsSessionLoading(false);
+          isSessionLoadingRef.current = false;
+          
+          // Carrega o perfil em background puro
+          loadProfileSafely(authUser.id, authUser.email || '');
 
           if (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar') {
-             if (!sessionUser.weight || !sessionUser.height) {
-               navigate('/quiz', { replace: true });
-             } else {
-               navigate('/dashboard', { replace: true });
-             }
+             navigate('/dashboard', { replace: true });
           }
         } else {
-            // Se tentou carregar e não veio nada, garante que a chave sumiu do localStorage
-            localStorage.removeItem('supabase.auth.token');
+            console.log('[App] Nenhuma sessão ativa encontrada (Visitante).');
             localStorage.removeItem('shapescan_user_profile');
             const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha'];
             if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
@@ -255,14 +232,47 @@ const App: React.FC = () => {
             }
         }
       } catch (e: any) {
-        console.error("[App] ❌ Sessão possivelmente corrompida detectada:", e);
-        await forceCleanSession();
+        console.error("[App] ❌ Erro não tratado durante initSession:", e);
       } finally {
-        console.log(`[App] ✅ initSession finalizada em ${Date.now() - startTime}ms.`);
-        clearTimeout(safetyTimeout);
-        isSessionLoadingRef.current = false; // Libera o guard do onAuthStateChange
+        console.log(`[App] ✅ initSession finalizada.`);
+        isSessionLoadingRef.current = false;
         setIsSessionLoading(false);
       }
+    };
+
+    const loadProfileSafely = async (userId: string, email: string) => {
+      try {
+        const { getProfile } = await import('./services/supabaseService');
+        const profile = await getProfile(userId);
+        
+        setUser(profile);
+        localStorage.setItem('shapescan_user_profile', JSON.stringify(profile));
+        
+        // Se precisar preencher infos do form inicial
+        if (!profile.weight || !profile.height) {
+            navigate('/quiz', { replace: true });
+        }
+      } catch (err) {
+        console.warn("[App] ⚠️ Erro ao carregar perfil do DB. Fallback ativado:", err);
+        // Fallback seguro: O Client tá logado mas o BD falhou em dar os meta-dados
+        const fallbackProfile = {
+          id: userId,
+          email: email,
+          name: 'Usuário',
+          username: 'usuario_' + userId.substring(0, 5),
+          phone: '',
+          isPremium: false,
+          isAdmin: false,
+          isPendingPayment: false,
+          plan: 'free',
+          dailyCalorieGoal: 2000,
+        } as User;
+        
+        setUser(fallbackProfile);
+      }
+      
+      // Continua carregando dados em BG
+      loadUserDataBackground(userId);
     };
 
     const loadUserDataBackground = async (userId: string) => {
@@ -297,30 +307,9 @@ const App: React.FC = () => {
         }
 
         if (event === 'SIGNED_OUT') {
-          // ============================================================
-          // PROTEÇÃO CONTRA FALSO-POSITIVO DE SIGNED_OUT
-          // O Supabase pode emitir SIGNED_OUT durante refresh de token ou
-          // em race conditions. Fazemos getSession() para confirmar que a
-          // sessão realmente não existe antes de deslogar o usuário.
-          // ============================================================
-          const { data: sessionCheck } = await supabase.auth.getSession();
-
-          if (sessionCheck?.session) {
-            // Sessão ainda existe — este é um SIGNED_OUT espúrio. Ignorar.
-            console.log('[App] ⚠️ SIGNED_OUT ignorado: sessão ainda válida (falso-positivo).');
-            return;
-          }
-
-          console.log(JSON.stringify({
-            service: 'auth',
-            event: 'SIGNED_OUT',
-            userId: userRef.current?.id || null,
-            path: window.location.pathname,
-            timestamp: new Date().toISOString(),
-          }));
-
-          // Reset total em caso de SIGNED_OUT real
-          await forceCleanSession();
+          console.log('[Auth] Usuário deslogado centralmente.');
+          setUser(null);
+          navigate('/', { replace: true });
         } else if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session?.user?.id) {
           // Evitar re-fetch se já temos o usuário com o mesmo ID (login explícito já fez o fetch)
           if (userRef.current?.id === session.user.id && event === 'SIGNED_IN') {
@@ -416,16 +405,18 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    // Limpar estado local ANTES de chamar signOut para evitar flash de conteúdo
+    // Limpar estado local 
     setUser(null);
     setFoodLogs([]);
     setEvolutionRecords([]);
     setChatHistory([]);
     setWaterConsumed(0);
     localStorage.removeItem('shapescan_user_profile');
+
+    // Usar signOut oficial e esperar apenas o processo natural
+    await supabase.auth.signOut();
+
     navigate('/', { replace: true });
-    // signOut após navegação — o evento SIGNED_OUT chegará, mas o guard de rota já redirecionou
-    await supabase.auth.signOut().catch(e => console.warn('[App] Erro no signOut:', e));
   };
 
   // ... (código existente)
