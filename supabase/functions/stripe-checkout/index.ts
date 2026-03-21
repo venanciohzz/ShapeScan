@@ -37,9 +37,10 @@ Deno.serve(async (req) => {
   });
 
   let user: { id: string; email: string };
+  const token = authHeader.replace('Bearer ', '');
 
   try {
-    const { data, error } = await supabaseClient.auth.getUser();
+    const { data, error } = await supabaseClient.auth.getUser(token);
     if (error) throw error;
     if (!data.user) throw new Error('No user returned');
     user = { id: data.user.id, email: data.user.email || '' };
