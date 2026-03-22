@@ -123,44 +123,64 @@ const App: React.FC = () => {
   // ============================================================
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('payment') === 'success' && user) {
+    const isPaymentSuccessParams = params.get('payment') === 'success';
+    const isAwaitingStripePayment = localStorage.getItem('awaiting_stripe_payment') === 'true';
+
+    // Dispara se veio do Stripe (URL param) OU se flag do localStorage constatar pending (fechou aba ou app)
+    if ((isPaymentSuccessParams || isAwaitingStripePayment) && user) {
       console.log('[App] Retorno pós-pagamento detectado. Iniciando polling de ativação do plano...');
 
-      // Polling com retry exponencial: 2s → 4s → 8s → 16s (max 4 tentativas)
+      // Polling com strict timeout de 60s (MAX_POLL_TIME = 60_000, POLL_INTERVAL = 3000)
       const pollForPremium = async () => {
-        const delays = [2000, 4000, 8000, 16000];
-        const { getProfile } = await import('./services/supabaseService');
+        const MAX_POLL_TIME = 60_000;
+        const POLL_INTERVAL = 3000;
+        let elapsed = 0;
         
-        for (let attempt = 0; attempt < delays.length; attempt++) {
-          await new Promise(resolve => setTimeout(resolve, delays[attempt]));
+        const { getProfile } = await import('./services/supabaseService');
+
+        const interval = setInterval(async () => {
+          elapsed += POLL_INTERVAL;
+          
           try {
             const updatedUser = await getProfile(user.id);
-            setUser(updatedUser);
-            localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+            
+            if (updatedUser) {
+              setUser(updatedUser);
+              localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
 
-            if (updatedUser.isPremium) {
-              console.log(`[App] Plano premium ativado! (tentativa ${attempt + 1})`);
-              showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
-              return; // Sai do loop — plano ativo
+              if (updatedUser.isPremium) {
+                console.log(`[App] Plano premium ativado! (${elapsed / 1000}s)`);
+                showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
+                clearInterval(interval);
+                localStorage.removeItem('awaiting_stripe_payment');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+              }
             }
-
-            console.log(`[App] Plano ainda não ativo (tentativa ${attempt + 1}/${delays.length}). Aguardando...`);
+            console.log(`[App] Plano ainda não ativo (${elapsed / 1000}s/60s). Aguardando...`);
           } catch (e) {
-            console.error(`[App] Erro ao verificar plano (tentativa ${attempt + 1}):`, e);
+            console.error(`[App] Erro ao verificar plano:`, e);
           }
-        }
 
-        // Após todas as tentativas, informar usuário
-        showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
+          if (elapsed >= MAX_POLL_TIME) {
+            clearInterval(interval);
+            console.log('[App] Fim do polling (timeout atingido).');
+            showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
+            localStorage.removeItem('awaiting_stripe_payment');
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }, POLL_INTERVAL);
       };
 
       pollForPremium();
 
-      // Limpar o parâmetro da URL sem recarregar a página
-      const cleanUrl = window.location.protocol + '//' + window.location.host + '/dashboard';
-      window.history.replaceState(null, '', cleanUrl);
+      if (isPaymentSuccessParams) {
+        // Limpar o parâmetro da URL sem recarregar a página
+        const cleanUrl = window.location.protocol + '//' + window.location.host + '/dashboard';
+        window.history.replaceState(null, '', cleanUrl);
+      }
     }
-  }, [location.search]);
+  }, [location.search, user]);
 
   // Sincronizar userRef para uso em listeners e callbacks assíncronos
   useEffect(() => {
@@ -685,14 +705,16 @@ const App: React.FC = () => {
       {showMobileNav && <Navigation currentView={currentView} />}
 
       {/* Botão de Emergência Oculto (Debug/Fix) */}
-      <div className="fixed bottom-0 right-0 p-4 opacity-5 hover:opacity-100 transition-opacity z-[9999]">
-        <button 
-          onClick={forceCleanSession}
-          className="text-[10px] bg-red-500/20 text-red-500 px-2 py-1 rounded border border-red-500/50"
-        >
-          Resetar sessão
-        </button>
-      </div>
+      {(import.meta as any).env?.DEV && (
+        <div className="fixed bottom-0 right-0 p-4 opacity-5 hover:opacity-100 transition-opacity z-[9999]">
+          <button 
+            onClick={forceCleanSession}
+            className="text-[10px] bg-red-500/20 text-red-500 px-2 py-1 rounded border border-red-500/50"
+          >
+            Resetar sessão
+          </button>
+        </div>
+      )}
     </div>
   );
 };

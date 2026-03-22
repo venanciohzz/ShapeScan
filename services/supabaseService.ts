@@ -2,8 +2,8 @@ import { createClient, SupabaseClient, User as SupabaseUser, Session } from '@su
 import { User, FoodLog, EvolutionRecord, SavedMeal, UserStats } from '../types';
 import { getTrackingDateString } from './dateUtils';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Variáveis de ambiente do Supabase não configuradas');
@@ -136,8 +136,8 @@ export async function resetPassword(email: string): Promise<void> {
   const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout real
 
   try {
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const SUPABASE_URL = (import.meta as any).env.VITE_SUPABASE_URL;
+    const SUPABASE_ANON_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       throw new Error('Configuração do Supabase ausente no ambiente.');
@@ -193,16 +193,7 @@ export async function resendConfirmationEmail(email: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-// ==================== PENDING PAYMENT (ESTADO INTERMEDIÁRIO) ====================
-
-export async function setUserPendingPayment(userId: string, planId: string): Promise<void> {
-  const { error } = await supabase
-    .from('user_plans')
-    .upsert({ user_id: userId, plan_id: planId, active: true }, { onConflict: 'user_id' });
-  if (error) {
-    console.error('[supabaseService] Erro ao gravar plano (plano pode estar duplicado ou inconsistente):', error.message);
-  }
-}
+// ==================== REMOVIDO: PENDING PAYMENT (ESTADO INTERMEDIÁRIO) ====================
 
 export async function updatePassword(password: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ password });
@@ -271,7 +262,7 @@ export async function getProfile(userId: string): Promise<User> {
   // Buscar plano do usuário (com tratamento resiliente para colunas faltantes)
   let planQuery = supabase
     .from('user_plans')
-    .select('plan_id, active, pending_payment')
+    .select('plan_id, active')
     .eq('user_id', userId)
     .eq('active', true);
     
@@ -279,28 +270,16 @@ export async function getProfile(userId: string): Promise<User> {
     .order('created_at', { ascending: false })
     .limit(1);
 
-  // Se der erro de "coluna não existe", tenta novamente sem a coluna pending_payment
-  if (planError && planError.message.includes('pending_payment')) {
-    console.warn('[SupabaseService] Coluna pending_payment não encontrada. Rodando fallback...');
-    const fallback = await supabase
-      .from('user_plans')
-      .select('plan_id, active')
-      .eq('user_id', userId)
-      .eq('active', true)
-      .order('created_at', { ascending: false })
-      .limit(1);
-    plans = fallback.data as any;
-  } else if (planError) {
+  if (planError) {
     console.error('[SupabaseService] Erro ao carregar plano:', planError.message);
   }
 
   const planData = plans?.[0];
   const planId = planData?.plan_id || data.plan || 'free';
-  const isPremium = planData ? (planData.plan_id !== 'free') : (data.is_premium || false);
+  const isPremium = planData ? (planData.plan_id !== 'free') : false;
   const isAdmin = data.is_admin || false;
-  const isPendingPayment = (planData as any)?.pending_payment ?? false;
 
-  return mapProfileToUser(data, planId, isPremium, isAdmin, isPendingPayment);
+  return mapProfileToUser(data, planId, isPremium, isAdmin);
 }
 
 export async function updateProfile(userId: string, updates: Partial<User>): Promise<User> {
@@ -793,7 +772,7 @@ function mapStatsFromDB(dbStats: any): UserStats {
   };
 }
 
-function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAdmin?: boolean, isPendingPayment?: boolean): User {
+function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAdmin?: boolean): User {
   return {
     id: profile.id,
     email: profile.email,
@@ -801,9 +780,9 @@ function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAd
     username: profile.username,
     phone: profile.phone,
     photo: profile.photo,
-    isPremium: isPremium ?? profile.is_premium ?? false,
+    isPremium: isPremium ?? false,
     isAdmin: isAdmin ?? profile.is_admin ?? false,
-    isPendingPayment: isPendingPayment ?? false,
+    isPendingPayment: false,
     dailyCalorieGoal: profile.dailyCalorieGoal || profile.daily_calorie_goal || 2000,
     dailyWaterGoal: profile.dailyWaterGoal || profile.daily_water_goal,
     dailyProtein: profile.dailyProtein || profile.daily_protein,

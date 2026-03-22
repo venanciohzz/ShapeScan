@@ -74,10 +74,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
           name: cleanName,
           username: cleanUser,
           phone: cleanPhone,
-          isPremium: isAdmin,
-          isAdmin: isAdmin,
+          isPremium: false,
+          isAdmin: false,
           dailyCalorieGoal: 2000,
-          plan: isAdmin ? 'lifetime' : 'free',
+          plan: 'free',
           dailyWaterGoal: 2500 // Default seguro
         };
 

@@ -162,8 +162,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                </div>
             </header>
 
-            {/* Banner de Ativação de Plano (pending_payment) */}
-            {user.isPendingPayment && !user.isPremium && (
+            {/* Banner de Ativação de Plano (pending_payment legacy) */}
+            {localStorage.getItem('awaiting_stripe_payment') === 'true' && !user.isPremium && (
                <div className="mb-8 p-5 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-4 animate-pulse">
                   <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin shrink-0" />
                   <div>

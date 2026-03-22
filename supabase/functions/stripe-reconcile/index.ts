@@ -12,13 +12,18 @@ const priceToPlan: Record<string, string> = {
   'price_1TCCjEB2Kj43d7TH1MzK5ixE': 'pro_annual',
 };
 
-function log(level: 'info' | 'warn' | 'error', message: string, details: Record<string, any> = {}) {
-  console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](
-    JSON.stringify({ service: 'stripe-reconcile', level, message, timestamp: new Date().toISOString(), ...details })
-  );
+function createLogger(traceId: string) {
+  return function log(level: 'info' | 'warn' | 'error', message: string, details: Record<string, any> = {}) {
+    console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](
+      JSON.stringify({ service: 'stripe-reconcile', traceId, level, message, timestamp: new Date().toISOString(), ...details })
+    );
+  };
 }
 
 Deno.serve(async (req) => {
+  const traceId = crypto.randomUUID();
+  const log = createLogger(traceId);
+
   // Proteger endpoint (apenas chamadas internas via cron ou Authorization header)
   const authHeader = req.headers.get('Authorization');
   const cronSecret = Deno.env.get('CRON_SECRET');
@@ -97,9 +102,9 @@ Deno.serve(async (req) => {
     // ============================================================
     const { data: dbPlans, error: dbError } = await supabase
       .from('user_plans')
-      .select('user_id, plan_id, active')
+      .select('user_id, plan_id, active, plan_origin')
       .eq('active', true)
-      .neq('plan_id', 'free');
+      .eq('plan_origin', 'stripe');
 
     if (dbError) {
       log('error', 'Erro ao buscar planos do banco', { reason: dbError.message });
@@ -128,8 +133,9 @@ Deno.serve(async (req) => {
 
       log('warn', 'Divergência detectada — ativando plano', { userId, stripeplan: planId, dbPlan: dbPlan || 'none' });
 
+      const nowTs = Math.floor(Date.now() / 1000);
       const { error } = await supabase.from('user_plans').upsert(
-        { user_id: userId, plan_id: planId, active: true, pending_payment: false },
+        { user_id: userId, plan_id: planId, active: true, last_stripe_event_ts: nowTs },
         { onConflict: 'user_id' }
       );
 
@@ -147,8 +153,9 @@ Deno.serve(async (req) => {
       if (!activeSubscriptions.has(userId)) {
         log('warn', 'Plano pago sem subscription ativa — rebaixando para free', { userId, dbPlan });
 
+        const nowTs = Math.floor(Date.now() / 1000);
         const { error } = await supabase.from('user_plans').upsert(
-          { user_id: userId, plan_id: 'free', active: true, pending_payment: false },
+          { user_id: userId, plan_id: 'free', active: false, last_stripe_event_ts: nowTs },
           { onConflict: 'user_id' }
         );
 

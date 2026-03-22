@@ -7,7 +7,6 @@ import {
   useElements 
 } from '@stripe/react-stripe-js';
 import { supabase } from '../../services/supabaseService';
-import { setUserPendingPayment } from '../../services/supabaseService';
 
 // Initialize Stripe with the publishable key
 const stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -36,9 +35,8 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () =>
     setIsProcessing(true);
     setErrorMessage(null);
 
-    // Gravar pending_payment ANTES do redirect
-    // Isso permite que o App.tsx mostre UX imediata sem depender do webhook
-    await setUserPendingPayment(userId, planId);
+    // Gravar flag local ANTES do redirect para ativar o polling no retorno
+    localStorage.setItem('awaiting_stripe_payment', 'true');
 
     const { error } = await stripe.confirmPayment({
       elements,

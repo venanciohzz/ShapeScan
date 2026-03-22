@@ -27,30 +27,37 @@ const planNames: Record<string, string> = {
 // LOG ESTRUTURADO — Rastreabilidade total de cada evento
 // Formato JSON padronizado: event, userId, status, timestamp
 // ============================================================
-function log(
-  level: 'info' | 'warn' | 'error',
-  event: string,
-  status: 'received' | 'processed' | 'skipped' | 'error',
-  details: Record<string, any> = {}
-) {
-  const entry = {
-    service: 'stripe-webhook',
-    level,
-    event,
-    status,
-    timestamp: new Date().toISOString(),
-    ...details,
+// ============================================================
+// LOG ESTRUTURADO — Rastreabilidade total de cada evento
+// Formato JSON padronizado: event, userId, status, timestamp
+// ============================================================
+function createLogger(traceId: string) {
+  return function log(
+    level: 'info' | 'warn' | 'error',
+    event: string,
+    status: 'received' | 'processed' | 'skipped' | 'error',
+    details: Record<string, any> = {}
+  ) {
+    const entry = {
+      service: 'stripe-webhook',
+      traceId,
+      level,
+      event,
+      status,
+      timestamp: new Date().toISOString(),
+      ...details,
+    };
+    if (level === 'error') {
+      console.error(JSON.stringify(entry));
+    } else if (level === 'warn') {
+      console.warn(JSON.stringify(entry));
+    } else {
+      console.log(JSON.stringify(entry));
+    }
   };
-  if (level === 'error') {
-    console.error(JSON.stringify(entry));
-  } else if (level === 'warn') {
-    console.warn(JSON.stringify(entry));
-  } else {
-    console.log(JSON.stringify(entry));
-  }
 }
 
-async function sendEmail(to: string, subject: string, html: string, resendApiKey: string) {
+async function sendEmail(log: any, to: string, subject: string, html: string, resendApiKey: string) {
   if (!resendApiKey) return;
   try {
     await fetch('https://api.resend.com/emails', {
@@ -104,7 +111,30 @@ function paymentFailedEmail(customerName: string) {
   </div>`;
 }
 
+// ============================================================
+// ADVANCED SAFEGUARDS HELPERS
+// ============================================================
+async function validatePlan(supabase: any, userId: string, targetPlan: string) {
+  for (let i = 0; i < 3; i++) {
+    const { data } = await supabase
+      .from('user_plans')
+      .select('active, plan_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (data?.active && data?.plan_id === targetPlan) return true;
+
+    await new Promise(r => setTimeout(r, 500));
+  }
+  return false;
+}
+
+// Remoção isEventOutOfOrder - Lógica movida para Update Atômico (.lt) no DB
+
 Deno.serve(async (req) => {
+  const traceId = crypto.randomUUID();
+  const log = createLogger(traceId);
+
   const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
   const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
   const resendApiKey = Deno.env.get('RESEND_API_KEY') || '';
@@ -193,46 +223,32 @@ Deno.serve(async (req) => {
       const amount = invoice.amount_paid;
       const stripeInvoiceId = invoice.id;
 
-      // Deduplicação
-      const { data: existingPayment } = await supabase
-        .from('payments')
-        .select('id')
-        .eq('user_id', userId)
-        .filter('metadata->stripe_invoice_id', 'eq', stripeInvoiceId)
-        .limit(1);
-
-      if (!existingPayment || existingPayment.length === 0) {
-        await supabase.from('payments').insert({
-          user_id: userId,
-          plan_id: planId,
-          amount,
-          status: 'approved',
-          provider: 'stripe',
-          metadata: { stripe_invoice_id: stripeInvoiceId, stripe_subscription_id: subscriptionId, stripe_customer_id: invoice.customer }
-        });
-      } else {
-        log('warn', event.type, 'skipped', { reason: 'Duplicate invoice', invoiceId: stripeInvoiceId, userId });
-      }
-
-      // Tenta ativar o plano. Se a coluna pending_payment estiver faltando, tenta sem ela.
-      const planUpdateData: any = {
-        user_id: userId,
-        plan_id: planId,
-        active: true,
-      };
-
-      // Tentar atualizar com pending_payment para limpar o estado se a coluna existir
+      // Tenta ativar o plano atomicamente contra Order Race Condition.
       try {
-        const { error: pError } = await supabase.from('user_plans').upsert({
-          ...planUpdateData,
-          pending_payment: false
-        }, { onConflict: 'user_id' });
-        
-        if (pError && pError.message.includes('pending_payment')) {
-          // Fallback se a coluna não existir
-          await supabase.from('user_plans').upsert(planUpdateData, { onConflict: 'user_id' });
-        } else if (pError) {
-          throw pError;
+        const { data: updatedData, error: pError } = await supabase.from('user_plans')
+          .update({
+            plan_id: planId,
+            active: true,
+            last_stripe_event_ts: event.created,
+          })
+          .eq('user_id', userId)
+          .lt('last_stripe_event_ts', event.created)
+          .select();
+
+        if (pError) throw pError;
+
+        if (updatedData && updatedData.length === 0) {
+          log('info', event.type, 'skipped', { reason: 'Out of order or already updated via race condition', eventTs: event.created, userId });
+          return new Response('OK - Duplicate/Older event', { status: 200 });
+        }
+
+        // Post-webhook validation with retry
+        const isValid = await validatePlan(supabase, userId, planId);
+
+        if (!isValid) {
+          log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: planId });
+        } else {
+          log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, planId });
         }
       } catch (err) {
         log('error', event.type, 'error', { reason: 'Plan activation failed', detail: String(err), userId });
@@ -244,7 +260,7 @@ Deno.serve(async (req) => {
       if (amount > 0) {
         const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
         if (customer.email) {
-          await sendEmail(customer.email, `✅ ShapeScan — Pagamento Confirmado`, purchaseConfirmationEmail(customer.name || 'Atleta', planNames[planId], amount), resendApiKey);
+          await sendEmail(log, customer.email, `✅ ShapeScan — Pagamento Confirmado`, purchaseConfirmationEmail(customer.name || 'Atleta', planNames[planId], amount), resendApiKey);
         }
       }
     }
@@ -269,43 +285,36 @@ Deno.serve(async (req) => {
         return new Response('OK - Missing userId', { status: 200 });
       }
 
-      log('warn', event.type, 'processed', { userId, invoiceId: invoice.id, reason: 'Payment failed - registering and downgrading user' });
-
-      // Registrar falha
-      await supabase.from('payments').insert({
-        user_id: userId,
-        plan_id: 'free',
-        amount: 0,
-        status: 'failed',
-        provider: 'stripe',
-        metadata: {
-          stripe_invoice_id: invoice.id,
-          stripe_subscription_id: subscriptionId,
-          stripe_customer_id: invoice.customer,
-          failure_message: (invoice as any).last_payment_error?.message || 'Cobrança recusada'
-        }
-      }).then(({ error }) => {
-        if (error) log('error', event.type, 'error', { reason: error.message, userId });
-      });
-
       // ============================================================
       // DOWNGRADE: Se o pagamento falhar, rebaixar o usuário para free.
-      // Isso evita que assinantes mantenham acesso premium com pagamento recusado.
       // O Stripe tentará automaticamente cobrar novamente (retry policy).
       // ============================================================
       try {
-        const downgradeData: any = { user_id: userId, plan_id: 'free', active: true };
-        const { error: downgradeError } = await supabase.from('user_plans').upsert({
-          ...downgradeData,
-          pending_payment: false
-        }, { onConflict: 'user_id' });
+        const { data: updatedData, error: downgradeError } = await supabase.from('user_plans')
+          .update({
+            plan_id: 'free',
+            active: false,
+            last_stripe_event_ts: event.created,
+          })
+          .eq('user_id', userId)
+          .lt('last_stripe_event_ts', event.created)
+          .select();
 
-        if (downgradeError && downgradeError.message.includes('pending_payment')) {
-          await supabase.from('user_plans').upsert(downgradeData, { onConflict: 'user_id' });
-        } else if (downgradeError) {
-          throw downgradeError;
+        if (downgradeError) throw downgradeError;
+
+        if (updatedData && updatedData.length === 0) {
+          log('info', event.type, 'skipped', { reason: 'Out of order or already updated via race condition', eventTs: event.created, userId });
+          return new Response('OK - Duplicate/Older event', { status: 200 });
         }
-        log('info', event.type, 'processed', { userId, action: 'downgraded_to_free', invoiceId: invoice.id });
+        
+        // Post-webhook validation with retry
+        const isValid = await validatePlan(supabase, userId, 'free');
+
+        if (!isValid) {
+          log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: 'free' });
+        } else {
+          log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, action: 'downgrade' });
+        }
       } catch (downgradeErr) {
         log('error', event.type, 'error', { reason: 'Downgrade failed', detail: String(downgradeErr), userId });
       }
@@ -314,7 +323,7 @@ Deno.serve(async (req) => {
       try {
         const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
         if (customer.email) {
-          await sendEmail(customer.email, `⚠️ ShapeScan — Problema no Pagamento`, paymentFailedEmail(customer.name || 'Atleta'), resendApiKey);
+          await sendEmail(log, customer.email, `⚠️ ShapeScan — Problema no Pagamento`, paymentFailedEmail(customer.name || 'Atleta'), resendApiKey);
         }
       } catch (emailErr) {
         log('error', event.type, 'error', { reason: 'Failed to send email', detail: String(emailErr), userId });
@@ -339,16 +348,30 @@ Deno.serve(async (req) => {
           log('warn', event.type, 'skipped', { reason: 'Unknown priceId in subscription.updated', priceId, userId });
         } else if (sub.status === 'active') {
           try {
-            const syncData: any = { user_id: userId, plan_id: planId, active: true };
-            const { error: syncError } = await supabase.from('user_plans').upsert({
-              ...syncData,
-              pending_payment: false
-            }, { onConflict: 'user_id' });
+            const { data: updatedData, error: syncError } = await supabase.from('user_plans')
+              .update({
+                plan_id: planId,
+                active: true,
+                last_stripe_event_ts: event.created,
+              })
+              .eq('user_id', userId)
+              .lt('last_stripe_event_ts', event.created)
+              .select();
 
-            if (syncError && syncError.message.includes('pending_payment')) {
-              await supabase.from('user_plans').upsert(syncData, { onConflict: 'user_id' });
-            } else if (syncError) {
-              throw syncError;
+            if (syncError) throw syncError;
+
+            if (updatedData && updatedData.length === 0) {
+              log('info', event.type, 'skipped', { reason: 'Out of order or already updated via race condition', eventTs: event.created, userId });
+              return new Response('OK - Duplicate/Older event', { status: 200 });
+            }
+
+            // Post-webhook validation with retry
+            const isValid = await validatePlan(supabase, userId, planId);
+
+            if (!isValid) {
+              log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: planId });
+            } else {
+              log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, action: 'update_plan' });
             }
 
             log('info', event.type, 'processed', { userId, planId, subscriptionStatus: sub.status });
@@ -369,21 +392,33 @@ Deno.serve(async (req) => {
       const userId = sub.metadata?.userId;
 
       if (userId) {
-        const cleanPlanData: any = {
-          user_id: userId,
-          plan_id: 'free',
-          active: true,
-        };
-
         try {
-          const { error: cError } = await supabase.from('user_plans').upsert({
-            ...cleanPlanData,
-            pending_payment: false
-          }, { onConflict: 'user_id' });
-          
-          if (cError && cError.message.includes('pending_payment')) {
-            await supabase.from('user_plans').upsert(cleanPlanData, { onConflict: 'user_id' });
+          const { data: updatedData, error: cError } = await supabase.from('user_plans')
+            .update({
+              plan_id: 'free',
+              active: false,
+              last_stripe_event_ts: event.created,
+            })
+            .eq('user_id', userId)
+            .lt('last_stripe_event_ts', event.created)
+            .select();
+
+          if (cError) throw cError;
+
+          if (updatedData && updatedData.length === 0) {
+            log('info', event.type, 'skipped', { reason: 'Out of order or already updated via race condition', eventTs: event.created, userId });
+            return new Response('OK - Duplicate/Older event', { status: 200 });
           }
+
+          // Post-webhook validation with retry
+          const isValid = await validatePlan(supabase, userId, 'free');
+
+          if (!isValid) {
+            log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: 'free' });
+          } else {
+            log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, action: 'deleted' });
+          }
+
         } catch (err) {
           log('error', event.type, 'error', { reason: 'Subscription deletion sync failed', detail: String(err), userId });
         }
