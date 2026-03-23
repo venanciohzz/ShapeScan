@@ -111,6 +111,14 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [couponCodeInput, setCouponCodeInput] = useState('');
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
+  const [pricingOverview, setPricingOverview] = useState<{
+    originalPrice: number;
+    finalPrice: number;
+    discount: number;
+  } | null>(null);
+
   // Trava anti-dupla: previne execuções simultâneas (React Strict Mode)
   const isInitializingRef = React.useRef(false);
 
@@ -143,7 +151,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
         console.log('[StripeCheckout] Token JWT obtido, invocando Edge Function...');
         const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
-          body: { priceId },
+          body: { priceId, couponCode: appliedCouponCode },
         });
 
         if (invokeError) {
@@ -161,7 +169,18 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         }
 
         if (data?.isError) throw new Error(data.error);
-        if (!data?.clientSecret) throw new Error('Falha ao obter chave de pagamento.');
+
+        if (data?.pricing) {
+          setPricingOverview(data.pricing);
+        }
+        
+        if (data?.isFree) {
+          console.log('[StripeCheckout] Assinatura gratuita ativada com sucesso!');
+          window.location.href = '/dashboard?payment=success';
+          return;
+        }
+
+        if (!data?.clientSecret) throw new Error('Falha ao obter chave de pagamento ou recusa do cupom.');
 
         setClientSecret(data.clientSecret);
       } catch (err: any) {
@@ -174,7 +193,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     };
 
     initializeCheckout();
-  }, [priceId, userId, email]);
+  }, [priceId, userId, email, appliedCouponCode]);
 
   const appearance = {
     theme: 'night' as const,
@@ -230,9 +249,25 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
           <div className="flex flex-col md:items-end">
             <span className="text-zinc-500 text-[8px] font-black uppercase tracking-widest mb-1">Total a Pagar</span>
             {/* Valor dinâmico baseado no plano selecionado */}
-            <div className="text-2xl font-black text-white tracking-tighter">
-              R$ {planPrice}<span className="text-zinc-500 text-sm font-bold">{planPeriod}</span>
-            </div>
+            {pricingOverview && pricingOverview.discount > 0 ? (
+              <div className="flex flex-col items-end">
+                <span className="line-through text-zinc-500 text-sm font-bold mb-0.5">
+                  R$ {pricingOverview.originalPrice.toFixed(2).replace('.', ',')}
+                </span>
+                <div className="text-2xl font-black text-emerald-400 tracking-tighter flex items-end gap-1">
+                  <span>R$ {pricingOverview.finalPrice.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-zinc-500 text-sm font-bold mb-1">{planPeriod}</span>
+                </div>
+                <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded mt-1">
+                  Desconto de R$ {pricingOverview.discount.toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+            ) : (
+              <div className="text-2xl font-black text-white tracking-tighter">
+                R$ {planPrice}
+                <span className="text-zinc-500 text-sm font-bold">{planPeriod}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -260,7 +295,41 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
               <p className="mt-6 text-zinc-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Preparando ambiente seguro...</p>
             </div>
           ) : clientSecret && (
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-6">
+              {/* Cupom Section */}
+              <div className="flex flex-col gap-2">
+                 <div className="flex items-center gap-2">
+                     <input 
+                       type="text" 
+                       value={couponCodeInput}
+                       onChange={e => setCouponCodeInput(e.target.value)}
+                       placeholder="Código de desconto"
+                       className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                       disabled={isInitializing}
+                     />
+                   <button 
+                     type="button"
+                     onClick={() => {
+                       setAppliedCouponCode(couponCodeInput);
+                       isInitializingRef.current = false; // Reset lock
+                       setClientSecret(null); // Force re-render of elements
+                     }}
+                     disabled={!couponCodeInput || isInitializing}
+                     className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase px-6 py-3.5 rounded-xl transition-colors disabled:opacity-50"
+                   >
+                     Aplicar
+                   </button>
+                 </div>
+                 {appliedCouponCode && (
+                    <div className="text-xs font-bold px-2 flex items-center gap-1 text-emerald-500">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Cupom aplicado com sucesso!</span>
+                    </div>
+                 )}
+              </div>
+
               <div className="flex items-center gap-4 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
                 <div className="text-emerald-500 animate-pulse">🛡️</div>
                 <div className="text-[10px] text-zinc-400 font-medium leading-tight">

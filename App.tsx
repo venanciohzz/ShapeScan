@@ -233,12 +233,8 @@ const App: React.FC = () => {
           const authUser = data.session.user;
           console.log(`[App] Sessão Auth Válida encontrada:`, authUser.email);
           
-          // Libera o carregamento da UI imediatamente (UX instantânea)
-          setIsSessionLoading(false);
-          isSessionLoadingRef.current = false;
-          
-          // Carrega o perfil em background puro
-          loadProfileSafely(authUser.id, authUser.email || '');
+          // Carrega o perfil do DB e só então libera o loading
+          await loadProfileSafely(authUser.id, authUser.email || '');
 
           if (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar') {
              navigate('/dashboard', { replace: true });
@@ -253,10 +249,10 @@ const App: React.FC = () => {
         }
       } catch (e: any) {
         console.error("[App] ❌ Erro não tratado durante initSession:", e);
+        setIsSessionLoading(false);
+        isSessionLoadingRef.current = false;
       } finally {
         console.log(`[App] ✅ initSession finalizada.`);
-        isSessionLoadingRef.current = false;
-        setIsSessionLoading(false);
       }
     };
 
@@ -289,6 +285,10 @@ const App: React.FC = () => {
         } as User;
         
         setUser(fallbackProfile);
+      } finally {
+        // Libera o loading DA SESSÃO E DA UI agora que o user (ou fallback) está definido
+        setIsSessionLoading(false);
+        isSessionLoadingRef.current = false;
       }
       
       // Continua carregando dados em BG

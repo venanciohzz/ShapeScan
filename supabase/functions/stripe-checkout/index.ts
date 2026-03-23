@@ -71,8 +71,8 @@ Deno.serve(async (req) => {
     try { body = JSON.parse(rawBody); }
     catch { throw new Error('Body não é JSON válido'); }
 
-    const { priceId } = body;
-    console.log('[BODY] priceId:', priceId);
+    const { priceId, couponCode } = body;
+    console.log('[BODY] priceId:', priceId, '| couponCode:', couponCode);
 
     if (!priceId || typeof priceId !== 'string') {
       throw new Error('priceId inválido ou ausente');
@@ -135,14 +135,20 @@ Deno.serve(async (req) => {
 
     let subscription: Stripe.Subscription;
     try {
-      subscription = await stripe.subscriptions.create({
+      const subscriptionParams: Stripe.SubscriptionCreateParams = {
         customer: customer.id,
         items: [{ price: priceId }],
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
         expand: ['latest_invoice.payment_intent'],
         metadata: { userId, supabase_user_id: userId },
-      });
+      };
+
+      if (couponCode && typeof couponCode === 'string') {
+        subscriptionParams.coupon = couponCode.trim();
+      }
+
+      subscription = await stripe.subscriptions.create(subscriptionParams);
     } catch (stripeCreateErr: any) {
       console.error('[CREATE] Erro ao criar subscription:', {
         message: stripeCreateErr.message,
@@ -159,6 +165,27 @@ Deno.serve(async (req) => {
     console.log('[INVOICE] ID:', invoice?.id, '| Status:', invoice?.status);
 
     if (!invoice) throw new Error('Invoice não retornada pela Stripe');
+
+    const subtotal = invoice.subtotal || 0;
+    const amountDue = invoice.amount_due !== undefined ? invoice.amount_due : invoice.total || 0;
+    const pricing = {
+      originalPrice: subtotal / 100,
+      finalPrice: amountDue / 100,
+      discount: (subtotal - amountDue) / 100
+    };
+
+    // Tratamento para cupons de 100% de desconto ou faturas com amount_due === 0
+    if (amountDue === 0 || invoice.status === 'paid') {
+      console.log('[SUCCESS] Assinatura gratuita/zerada ativa, pulando Stripe Elements:', subscription.id);
+      return new Response(
+        JSON.stringify({
+          isFree: true,
+          subscriptionId: subscription.id,
+          pricing
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
 
     const paymentIntent = invoice.payment_intent;
     console.log('[PI] ID:', paymentIntent?.id, '| Status:', (paymentIntent as any)?.status);
@@ -183,6 +210,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         clientSecret: updatedPI.client_secret,
         subscriptionId: subscription.id,
+        pricing
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
