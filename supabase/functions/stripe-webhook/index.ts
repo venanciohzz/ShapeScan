@@ -35,7 +35,7 @@ function createLogger(traceId: string) {
   return function log(
     level: 'info' | 'warn' | 'error',
     event: string,
-    status: 'received' | 'processed' | 'skipped' | 'error',
+    status: 'received' | 'processed' | 'skipped' | 'error' | 'extracted_metadata' | 'before_upsert',
     details: Record<string, any> = {}
   ) {
     const entry = {
@@ -151,7 +151,19 @@ Deno.serve(async (req) => {
     const body = await req.text();
     const event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret);
 
-    log('info', event.type, 'received', { eventId: event.id });
+    log('info', event.type, 'received', { 
+      eventId: event.id,
+      object: event.data.object ? 'present' : 'missing',
+    });
+
+    // Log EXTREMAMENTE detalhado do metadata (conforme solicitado pelo usuário)
+    const obj = event.data.object as any;
+    log('info', 'metadata_audit', 'received', {
+      invoiceId: obj.id,
+      subscriptionId: obj.subscription,
+      subscriptionMetadata: obj.subscription_details?.metadata || 'none',
+      invoiceMetadata: obj.metadata || 'none',
+    });
 
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
@@ -205,7 +217,17 @@ Deno.serve(async (req) => {
       }
 
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      const userId = subscription.metadata?.userId || invoice.metadata?.userId || (invoice.subscription_details?.metadata?.userId);
+      const userId = subscription.metadata?.userId || 
+                     subscription.metadata?.supabase_user_id || 
+                     invoice.metadata?.userId || 
+                     invoice.metadata?.supabase_user_id ||
+                     (invoice.subscription_details?.metadata?.userId);
+
+      log('info', event.type, 'extracted_metadata', { 
+        userId, 
+        planFromMetadata: subscription.metadata?.plan,
+        subscriptionId 
+      });
 
       const validPlans = ['monthly', 'annual', 'pro_monthly', 'pro_annual', 'lifetime', 'free'];
 
@@ -231,6 +253,8 @@ Deno.serve(async (req) => {
       const amount = invoice.amount_paid;
       const stripeInvoiceId = invoice.id;
 
+      log('info', event.type, 'before_upsert', { userId, planId, amount });
+
       // PROTEÇÃO DE CONCORRÊNCIA: Verifica timestamp antes do Upsert
       const { data: existingPlan } = await supabase
         .from('user_plans')
@@ -249,7 +273,6 @@ Deno.serve(async (req) => {
             user_id: userId,
             plan_id: planId,
             active: true,
-            plan_origin: 'stripe',
             last_stripe_event_ts: event.created,
           }, { onConflict: 'user_id' });
 
@@ -272,8 +295,14 @@ Deno.serve(async (req) => {
             amount: amount
           });
         }
-      } catch (err) {
-        log('error', event.type, 'error', { reason: 'Plan activation failed', detail: String(err), userId });
+      } catch (err: any) {
+        log('error', event.type, 'error', { 
+          reason: 'Plan activation failed', 
+          detail: String(err), 
+          code: err?.code,
+          hint: err?.hint,
+          userId 
+        });
       }
 
       log('info', event.type, 'processed', { userId, planId, amount, invoiceId: stripeInvoiceId });
@@ -328,7 +357,6 @@ Deno.serve(async (req) => {
             user_id: userId,
             plan_id: 'free',
             active: false,
-            plan_origin: 'stripe',
             last_stripe_event_ts: event.created,
           }, { onConflict: 'user_id' });
 
@@ -414,7 +442,6 @@ Deno.serve(async (req) => {
                 user_id: userId,
                 plan_id: planId,
                 active: true,
-                plan_origin: 'stripe',
                 last_stripe_event_ts: event.created,
               }, { onConflict: 'user_id' });
 
@@ -473,7 +500,6 @@ Deno.serve(async (req) => {
               user_id: userId,
               plan_id: 'free',
               active: false,
-              plan_origin: 'stripe',
               last_stripe_event_ts: event.created,
             }, { onConflict: 'user_id' });
 

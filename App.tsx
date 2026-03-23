@@ -143,6 +143,7 @@ const App: React.FC = () => {
           
           try {
             const updatedUser = await getProfile(user.id);
+            console.log(`[App] Polling: Perfil recuperado. isPremium: ${updatedUser?.isPremium}, Plan: ${updatedUser?.plan}`);
             
             if (updatedUser) {
               setUser(updatedUser);
