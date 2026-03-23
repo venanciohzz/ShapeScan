@@ -15,6 +15,7 @@ interface StripeCheckoutProps {
   priceId: string;
   userId: string;
   email: string;
+  plan: string;
   onClose: () => void;
   planName?: string;   // Nome do plano, ex: "Standard Mensal"
   planPrice?: string;  // Valor formatado, ex: "29,90"
@@ -103,6 +104,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   priceId, 
   userId, 
   email, 
+  plan,
   onClose,
   planName = 'ShapeScan Premium',
   planPrice = '29,90',
@@ -151,7 +153,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
         console.log('[StripeCheckout] Token JWT obtido, invocando Edge Function...');
         const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
-          body: { priceId, couponCode: appliedCouponCode },
+          body: { priceId, couponCode: appliedCouponCode, plan },
         });
 
         if (invokeError) {

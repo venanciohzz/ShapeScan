@@ -207,40 +207,53 @@ Deno.serve(async (req) => {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const userId = subscription.metadata?.userId || invoice.metadata?.userId || (invoice.subscription_details?.metadata?.userId);
 
+      const validPlans = ['monthly', 'annual', 'pro_monthly', 'pro_annual', 'lifetime', 'free'];
+
       if (!userId) {
-        log('error', event.type, 'error', { reason: 'userId not found', invoiceId: invoice.id, subscriptionId });
-        return new Response('Missing userId', { status: 200 });
+        log('error', event.type, 'error', { reason: 'CRITICAL: userId not found', invoiceId: invoice.id, subscriptionId });
+        return new Response('Missing userId', { status: 200 }); // Erro definitivo
       }
 
+      // CORREÇÃO: Tentar recuperar o plano do Metadata injetado no Checkout
+      let planId = subscription.metadata?.plan;
       const priceId = invoice.lines.data[0]?.price?.id;
-      const planId = priceId ? priceToPlan[priceId] : null;
-
+      
       if (!planId) {
-        log('error', event.type, 'error', { reason: 'Unknown priceId — no action taken', priceId, userId });
-        return new Response('OK - Unknown price', { status: 200 });
+         // Fallback para assinaturas antigas ou hardcoded (legado)
+         planId = priceId ? priceToPlan[priceId] : null;
+      }
+
+      if (!planId || !validPlans.includes(planId)) {
+        log('error', event.type, 'error', { reason: 'CRITICAL: Invalid or unknown planId', priceId, planId, userId });
+        return new Response('Invalid planId', { status: 200 }); // Erro definitivo
       }
 
       const amount = invoice.amount_paid;
       const stripeInvoiceId = invoice.id;
 
-      // Tenta ativar o plano atomicamente contra Order Race Condition.
+      // PROTEÇÃO DE CONCORRÊNCIA: Verifica timestamp antes do Upsert
+      const { data: existingPlan } = await supabase
+        .from('user_plans')
+        .select('last_stripe_event_ts')
+        .eq('user_id', userId)
+        .single();
+        
+      if (existingPlan && existingPlan.last_stripe_event_ts >= event.created) {
+        log('warn', event.type, 'skipped', { reason: 'Outdated or duplicate event', eventTs: event.created, dbTs: existingPlan.last_stripe_event_ts });
+        return new Response('Ignored outdated event', { status: 200 });
+      }
+
+      // UPSERT SEGURO: Cria a linha se ela não existir e evita falha silenciosa de timestamp .lt
       try {
-        const { data: updatedData, error: pError } = await supabase.from('user_plans')
-          .update({
+        const { error: pError } = await supabase.from('user_plans').upsert({
+            user_id: userId,
             plan_id: planId,
             active: true,
+            plan_origin: 'stripe',
             last_stripe_event_ts: event.created,
-          })
-          .eq('user_id', userId)
-          .lt('last_stripe_event_ts', event.created)
-          .select();
+          }, { onConflict: 'user_id' });
 
         if (pError) throw pError;
-
-        if (updatedData && updatedData.length === 0) {
-          log('info', event.type, 'skipped', { reason: 'Out of order or already updated via race condition', eventTs: event.created, userId });
-          return new Response('OK - Duplicate/Older event', { status: 200 });
-        }
 
         // Post-webhook validation with retry
         const isValid = await validatePlan(supabase, userId, planId);
@@ -249,6 +262,15 @@ Deno.serve(async (req) => {
           log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: planId });
         } else {
           log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, planId });
+          
+          // Auditoria de negócios
+          await supabase.from('billing_audit').insert({
+            user_id: userId,
+            event_type: event.type,
+            status: 'success',
+            plan_id: planId,
+            amount: amount
+          });
         }
       } catch (err) {
         log('error', event.type, 'error', { reason: 'Plan activation failed', detail: String(err), userId });
@@ -281,8 +303,20 @@ Deno.serve(async (req) => {
       const userId = subscription.metadata?.userId || invoice.metadata?.userId;
 
       if (!userId) {
-        log('error', event.type, 'error', { reason: 'userId not found', invoiceId: invoice.id });
-        return new Response('OK - Missing userId', { status: 200 });
+        log('error', event.type, 'error', { reason: 'CRITICAL: userId not found', invoiceId: invoice.id });
+        return new Response('Missing userId', { status: 200 }); // Erro definitivo
+      }
+
+      // PROTEÇÃO DE CONCORRÊNCIA
+      const { data: existingPlan } = await supabase
+        .from('user_plans')
+        .select('last_stripe_event_ts')
+        .eq('user_id', userId)
+        .single();
+        
+      if (existingPlan && existingPlan.last_stripe_event_ts >= event.created) {
+        log('warn', event.type, 'skipped', { reason: 'Outdated event' });
+        return new Response('Ignored outdated event', { status: 200 });
       }
 
       // ============================================================
@@ -290,22 +324,15 @@ Deno.serve(async (req) => {
       // O Stripe tentará automaticamente cobrar novamente (retry policy).
       // ============================================================
       try {
-        const { data: updatedData, error: downgradeError } = await supabase.from('user_plans')
-          .update({
+        const { error: downgradeError } = await supabase.from('user_plans').upsert({
+            user_id: userId,
             plan_id: 'free',
             active: false,
+            plan_origin: 'stripe',
             last_stripe_event_ts: event.created,
-          })
-          .eq('user_id', userId)
-          .lt('last_stripe_event_ts', event.created)
-          .select();
+          }, { onConflict: 'user_id' });
 
         if (downgradeError) throw downgradeError;
-
-        if (updatedData && updatedData.length === 0) {
-          log('info', event.type, 'skipped', { reason: 'Out of order or already updated via race condition', eventTs: event.created, userId });
-          return new Response('OK - Duplicate/Older event', { status: 200 });
-        }
         
         // Post-webhook validation with retry
         const isValid = await validatePlan(supabase, userId, 'free');
@@ -314,6 +341,15 @@ Deno.serve(async (req) => {
           log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: 'free' });
         } else {
           log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, action: 'downgrade' });
+          
+          // Auditoria de negócios
+          await supabase.from('billing_audit').insert({
+            user_id: userId,
+            event_type: event.type,
+            status: 'success',
+            plan_id: 'free',
+            amount: 0
+          });
         }
       } catch (downgradeErr) {
         log('error', event.type, 'error', { reason: 'Downgrade failed', detail: String(downgradeErr), userId });
@@ -340,48 +376,72 @@ Deno.serve(async (req) => {
 
       if (!userId) {
         log('warn', event.type, 'skipped', { reason: 'userId not found in subscription metadata', subscriptionId: sub.id });
-      } else {
-        const priceId = sub.items.data[0]?.price?.id;
-        const planId = priceId ? priceToPlan[priceId] : null;
+        return new Response('Missing userId', { status: 200 }); // Erro definitivo
+      }
 
-        if (!planId) {
-          log('warn', event.type, 'skipped', { reason: 'Unknown priceId in subscription.updated', priceId, userId });
-        } else if (sub.status === 'active') {
-          try {
-            const { data: updatedData, error: syncError } = await supabase.from('user_plans')
-              .update({
+      if (sub.status !== 'active') {
+        log('info', event.type, 'skipped', { reason: `Subscription status is '${sub.status}', ignored`, userId });
+        return new Response('Ignored - Not active', { status: 200 });
+      }
+
+      let planId = sub.metadata?.plan;
+      
+      if (!planId) {
+        const priceId = sub.items.data[0]?.price?.id;
+         planId = priceId ? priceToPlan[priceId] : null;
+      }
+
+      const validPlans = ['monthly', 'annual', 'pro_monthly', 'pro_annual', 'lifetime', 'free'];
+      if (!planId || !validPlans.includes(planId)) {
+        log('error', event.type, 'error', { reason: 'Invalid or unknown planId in subscription.updated', planId, userId });
+        return new Response('Invalid plan', { status: 200 }); // Erro definitivo
+      }
+
+      // PROTEÇÃO DE CONCORRÊNCIA E OTIMIZAÇÃO DE UPDATE DUPLO (Race Condition com o Invoice)
+      const { data: existingPlan } = await supabase
+        .from('user_plans')
+        .select('active, plan_id, last_stripe_event_ts')
+        .eq('user_id', userId)
+        .single();
+
+      if (existingPlan && existingPlan.active && existingPlan.plan_id === planId && existingPlan.last_stripe_event_ts >= event.created) {
+        log('info', event.type, 'skipped', { reason: 'No plan change or outdated event', userId });
+        return new Response('Ignored - Up to date', { status: 200 });
+      }
+
+      try {
+            const { error: syncError } = await supabase.from('user_plans').upsert({
+                user_id: userId,
                 plan_id: planId,
                 active: true,
+                plan_origin: 'stripe',
                 last_stripe_event_ts: event.created,
-              })
-              .eq('user_id', userId)
-              .lt('last_stripe_event_ts', event.created)
-              .select();
+              }, { onConflict: 'user_id' });
 
             if (syncError) throw syncError;
 
-            if (updatedData && updatedData.length === 0) {
-              log('info', event.type, 'skipped', { reason: 'Out of order or already updated via race condition', eventTs: event.created, userId });
-              return new Response('OK - Duplicate/Older event', { status: 200 });
-            }
+          // Post-webhook validation with retry
+          const isValid = await validatePlan(supabase, userId, planId);
 
-            // Post-webhook validation with retry
-            const isValid = await validatePlan(supabase, userId, planId);
-
-            if (!isValid) {
-              log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: planId });
-            } else {
-              log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, action: 'update_plan' });
-            }
-
-            log('info', event.type, 'processed', { userId, planId, subscriptionStatus: sub.status });
-          } catch (err) {
-            log('error', event.type, 'error', { reason: 'Subscription update sync failed', detail: String(err), userId });
+          if (!isValid) {
+            log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: planId });
+          } else {
+            log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, action: 'update_plan' });
+            
+            // Auditoria de negócios
+            await supabase.from('billing_audit').insert({
+              user_id: userId,
+              event_type: event.type,
+              status: 'success',
+              plan_id: planId,
+              amount: 0
+            });
           }
-        } else {
-          log('info', event.type, 'skipped', { reason: `Subscription status is '${sub.status}', no plan update`, userId });
+
+          log('info', event.type, 'processed', { userId, planId, subscriptionStatus: sub.status });
+        } catch (err) {
+          log('error', event.type, 'error', { reason: 'Subscription update sync failed', detail: String(err), userId });
         }
-      }
     }
 
     // ============================================================
@@ -391,24 +451,33 @@ Deno.serve(async (req) => {
       const sub = event.data.object as Stripe.Subscription;
       const userId = sub.metadata?.userId;
 
-      if (userId) {
-        try {
-          const { data: updatedData, error: cError } = await supabase.from('user_plans')
-            .update({
+      if (!userId) {
+        log('warn', event.type, 'skipped', { reason: 'userId not found in subscription metadata', subscriptionId: sub.id });
+        return new Response('Missing userId', { status: 200 }); // Erro definitivo
+      }
+
+      // PROTEÇÃO DE CONCORRÊNCIA
+      const { data: existingPlan } = await supabase
+        .from('user_plans')
+        .select('last_stripe_event_ts')
+        .eq('user_id', userId)
+        .single();
+        
+      if (existingPlan && existingPlan.last_stripe_event_ts >= event.created) {
+        log('warn', event.type, 'skipped', { reason: 'Outdated event' });
+        return new Response('Ignored outdated event', { status: 200 });
+      }
+
+      try {
+          const { error: cError } = await supabase.from('user_plans').upsert({
+              user_id: userId,
               plan_id: 'free',
               active: false,
+              plan_origin: 'stripe',
               last_stripe_event_ts: event.created,
-            })
-            .eq('user_id', userId)
-            .lt('last_stripe_event_ts', event.created)
-            .select();
+            }, { onConflict: 'user_id' });
 
           if (cError) throw cError;
-
-          if (updatedData && updatedData.length === 0) {
-            log('info', event.type, 'skipped', { reason: 'Out of order or already updated via race condition', eventTs: event.created, userId });
-            return new Response('OK - Duplicate/Older event', { status: 200 });
-          }
 
           // Post-webhook validation with retry
           const isValid = await validatePlan(supabase, userId, 'free');
@@ -417,6 +486,15 @@ Deno.serve(async (req) => {
             log('error', 'post_webhook_validation_failed', 'error', { attempts: 3, userId, targetPlan: 'free' });
           } else {
             log('info', 'post_webhook_validation', 'processed', { status: 'ok', userId, action: 'deleted' });
+            
+            // Auditoria de negócios
+            await supabase.from('billing_audit').insert({
+              user_id: userId,
+              event_type: event.type,
+              status: 'success',
+              plan_id: 'free',
+              amount: 0
+            });
           }
 
         } catch (err) {
@@ -424,9 +502,6 @@ Deno.serve(async (req) => {
         }
         
         log('info', event.type, 'processed', { userId, newPlan: 'free' });
-      } else {
-        log('warn', event.type, 'skipped', { reason: 'userId not found in subscription metadata', subscriptionId: sub.id });
-      }
     }
 
     return new Response(JSON.stringify({ received: true }), { status: 200 });

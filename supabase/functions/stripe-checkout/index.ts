@@ -54,6 +54,32 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ── Body ────────────────────────────────────────────────────────────────
+    const rawBody = await req.text();
+    console.log('[BODY] Raw:', rawBody);
+
+    let body: any;
+    try { body = JSON.parse(rawBody); }
+    catch { throw new Error('Body não é JSON válido'); }
+
+    const { priceId, couponCode, plan } = body;
+
+    // ── Prevenção de Múltiplas Assinaturas (Recompra Indesejada) ─────────────
+    const { data: userPlan } = await supabaseClient
+      .from('user_plans')
+      .select('active, plan_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // Permite fluxo de upgrade/downgrade (plano atual diferente do solicitado)
+    if (userPlan?.active && userPlan?.plan_id === plan) {
+      console.warn('[CHECKOUT] Blocked: User already has this plan active', { userId: user.id, planId: userPlan.plan_id });
+      return new Response(JSON.stringify({ error: 'Você já possui essa assinatura ativa.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // ── Stripe ─────────────────────────────────────────────────────────────
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) throw new Error('STRIPE_SECRET_KEY não configurada');
@@ -63,17 +89,7 @@ Deno.serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // ── Body ────────────────────────────────────────────────────────────────
-    const rawBody = await req.text();
-    console.log('[BODY] Raw:', rawBody);
-
-    let body: any;
-    try { body = JSON.parse(rawBody); }
-    catch { throw new Error('Body não é JSON válido'); }
-
-    const { priceId, couponCode } = body;
-    console.log('[BODY] priceId:', priceId, '| couponCode:', couponCode);
-
+    // ── Validação Inicial ──────────────────────────────────────────────────
     if (!priceId || typeof priceId !== 'string') {
       throw new Error('priceId inválido ou ausente');
     }
@@ -141,7 +157,7 @@ Deno.serve(async (req) => {
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
         expand: ['latest_invoice.payment_intent'],
-        metadata: { userId, supabase_user_id: userId },
+        metadata: { userId, supabase_user_id: userId, plan }, // CRÍTICO: Passar o plano no metadata!
       };
 
       if (couponCode && typeof couponCode === 'string') {

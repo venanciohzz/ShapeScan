@@ -146,6 +146,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                userId={user.id}
                email={user.email}
                planName={PAYMENT_CONFIG[selectedPlan]?.name}
+               plan={selectedPlan}
                planPrice={billingCycle === 'monthly'
                   ? (selectedPlan === 'pro_monthly' ? '44,90' : '29,90')
                   : (selectedPlan === 'pro_annual' ? '347' : '247')}

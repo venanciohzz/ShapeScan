@@ -11,6 +11,7 @@ interface UpgradeProProps {
 
 const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) => {
    const [stripePriceId, setStripePriceId] = useState<string | null>(null);
+   const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
    const handleSubscribe = async (plan: PlanType) => {
       if (!user) return;
@@ -22,6 +23,7 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
       }
 
       setStripePriceId(config.stripePriceId);
+      setSelectedPlan(plan);
    };
 
    return (
@@ -152,12 +154,13 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
           </div>
 
           {/* Stripe Checkout Overlay */}
-          {stripePriceId && user && (
+          {stripePriceId && selectedPlan && user && (
              <StripeCheckout 
                 priceId={stripePriceId}
                 userId={user.id}
                 email={user.email}
-                onClose={() => setStripePriceId(null)}
+                plan={selectedPlan}
+                onClose={() => { setStripePriceId(null); setSelectedPlan(null); }}
              />
           )}
        </div>
