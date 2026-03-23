@@ -115,6 +115,8 @@ function paymentFailedEmail(customerName: string) {
 // ADVANCED SAFEGUARDS HELPERS
 // ============================================================
 async function validatePlan(supabase: any, userId: string, targetPlan: string) {
+  const isFreePlan = targetPlan === 'free';
+  
   for (let i = 0; i < 3; i++) {
     const { data } = await supabase
       .from('user_plans')
@@ -122,7 +124,12 @@ async function validatePlan(supabase: any, userId: string, targetPlan: string) {
       .eq('user_id', userId)
       .single();
 
-    if (data?.active && data?.plan_id === targetPlan) return true;
+    if (data) {
+      const planMatches = data.plan_id === targetPlan;
+      const statusMatches = isFreePlan ? (data.active === false) : (data.active === true);
+      
+      if (planMatches && statusMatches) return true;
+    }
 
     await new Promise(r => setTimeout(r, 500));
   }

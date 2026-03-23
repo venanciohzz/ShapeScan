@@ -59,6 +59,9 @@ const App: React.FC = () => {
   const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  
+  // Ref para controlar o estado do polling de pagamento e evitar loops exponenciais
+  const isPollingPremiumRef = React.useRef(false);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -127,10 +130,10 @@ const App: React.FC = () => {
     const isAwaitingStripePayment = localStorage.getItem('awaiting_stripe_payment') === 'true';
 
     // Dispara se veio do Stripe (URL param) OU se flag do localStorage constatar pending (fechou aba ou app)
-    if ((isPaymentSuccessParams || isAwaitingStripePayment) && user) {
+    if ((isPaymentSuccessParams || isAwaitingStripePayment) && user && !isPollingPremiumRef.current) {
       console.log('[App] Retorno pós-pagamento detectado. Iniciando polling de ativação do plano...');
+      isPollingPremiumRef.current = true;
 
-      // Polling com strict timeout de 60s (MAX_POLL_TIME = 60_000, POLL_INTERVAL = 3000)
       const pollForPremium = async () => {
         const MAX_POLL_TIME = 60_000;
         const POLL_INTERVAL = 3000;
@@ -143,28 +146,32 @@ const App: React.FC = () => {
           
           try {
             const updatedUser = await getProfile(user.id);
-            console.log(`[App] Polling: Perfil recuperado. isPremium: ${updatedUser?.isPremium}, Plan: ${updatedUser?.plan}`);
+            console.log(`[App] Polling: Perfil recuperado (${elapsed / 1000}s). isPremium: ${updatedUser?.isPremium}`);
             
             if (updatedUser) {
-              setUser(updatedUser);
-              localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+              // Só dispara set state se houver mudança real para evitar re-render desnecessário
+              if (updatedUser.isPremium !== user.isPremium || updatedUser.plan !== user.plan) {
+                setUser(updatedUser);
+                localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+              }
 
               if (updatedUser.isPremium) {
                 console.log(`[App] Plano premium ativado! (${elapsed / 1000}s)`);
                 showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
                 clearInterval(interval);
+                isPollingPremiumRef.current = false;
                 localStorage.removeItem('awaiting_stripe_payment');
                 window.history.replaceState({}, document.title, window.location.pathname);
                 return;
               }
             }
-            console.log(`[App] Plano ainda não ativo (${elapsed / 1000}s/60s). Aguardando...`);
           } catch (e) {
             console.error(`[App] Erro ao verificar plano:`, e);
           }
 
           if (elapsed >= MAX_POLL_TIME) {
             clearInterval(interval);
+            isPollingPremiumRef.current = false;
             console.log('[App] Fim do polling (timeout atingido).');
             showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
             localStorage.removeItem('awaiting_stripe_payment');
