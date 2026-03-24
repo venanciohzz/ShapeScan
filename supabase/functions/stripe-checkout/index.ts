@@ -116,6 +116,16 @@ Deno.serve(async (req) => {
       console.log('[CUSTOMER] Novo customer criado:', customer.id);
     }
 
+    // [BILLING ROBUSTNES] Vincular o customer_id ao perfil para fallbacks do webhook
+    const { error: customerSyncError } = await supabaseClient
+      .from('profiles')
+      .update({ stripe_customer_id: customer.id })
+      .eq('id', userId);
+      
+    if (customerSyncError) {
+      console.warn('[CUSTOMER] Erro ao sincronizar stripe_customer_id:', customerSyncError.message);
+    }
+
     // ── Cancelar subscriptions incompletas ──────────────────────────────────
     console.log('[SUBSCRIPTIONS] Listando subscriptions incomplete para customer:', customer.id);
     const existingIncomplete = await stripe.subscriptions.list({
