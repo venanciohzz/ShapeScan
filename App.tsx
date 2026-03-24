@@ -42,7 +42,8 @@ const App: React.FC = () => {
   const userRef = React.useRef<User | null>(null);
   // Ref para evitar que onAuthStateChange interfira durante o carregamento inicial
   const isSessionLoadingRef = React.useRef(true);
-  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
+  const [isSessionLoading, setIsSessionLoading] = useState(true); // Keep for legacy if needed, but we'll use authState
   const [foodLogs, setFoodLogs] = useState<FoodLog[]>([]);
   const [evolutionRecords, setEvolutionRecords] = useState<EvolutionRecord[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -219,6 +220,8 @@ const App: React.FC = () => {
 
   // Professional Optimization 1: Unified Session Loading (Removed stale cache)
   useEffect(() => {
+    let resolved = false;
+    
     console.log('Auth Debug:', {
       hasToken: !!localStorage.getItem('supabase.auth.token')
     });
@@ -246,8 +249,15 @@ const App: React.FC = () => {
           const authUser = data.session.user;
           console.log(`[App] Sessão Auth Válida encontrada:`, authUser.email);
           
+          if (resolved) return;
+
           // Carrega o perfil do DB e só então libera o loading
           await loadProfileSafely(authUser.id, authUser.email || '');
+          
+          if (!resolved) {
+            setAuthState('authenticated');
+            resolved = true;
+          }
 
           if (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar') {
              navigate('/dashboard', { replace: true });
@@ -256,9 +266,13 @@ const App: React.FC = () => {
           console.log('[App] ℹ️ Nenhuma sessão ativa encontrada (Visitante).');
           localStorage.removeItem('shapescan_user_profile');
           
+          if (resolved) return;
+
           // Libera o loading para visitantes
+          setAuthState('unauthenticated');
           setIsSessionLoading(false);
           isSessionLoadingRef.current = false;
+          resolved = true;
 
           const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha'];
           if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
@@ -267,8 +281,12 @@ const App: React.FC = () => {
         }
       } catch (e: any) {
         console.error("[App] ❌ Erro não tratado durante initSession:", e);
-        setIsSessionLoading(false);
-        isSessionLoadingRef.current = false;
+        if (!resolved) {
+          setAuthState('unauthenticated');
+          setIsSessionLoading(false);
+          isSessionLoadingRef.current = false;
+          resolved = true;
+        }
       } finally {
         console.log(`[App] ✅ initSession finalizada em ${Date.now() - startTime}ms.`);
       }
@@ -333,10 +351,12 @@ const App: React.FC = () => {
     // se o Supabase ou a rede travarem (ex: Cold Start de Edge Functions)
     // ============================================================
     const safetyTimeout = setTimeout(() => {
-      if (isSessionLoadingRef.current) {
-        console.warn('[App] ⚠️ Safety Timeout (6s) atingido! Forçando encerramento do loader.');
+      if (!resolved) {
+        console.warn('[App] ⚠️ Safety Timeout (6s) atingido! Forçando encerramento do loader (Unauthenticated Fallback).');
+        setAuthState('unauthenticated');
         setIsSessionLoading(false);
         isSessionLoadingRef.current = false;
+        resolved = true;
       }
     }, 6000);
 
@@ -652,7 +672,7 @@ const App: React.FC = () => {
     navigate(path);
   };
 
-  if (isSessionLoading) {
+  if (authState === 'loading') {
     return (
       <div className="min-h-[100dvh] bg-[#F3F6F8] dark:bg-zinc-950 flex items-center justify-center">
         <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
