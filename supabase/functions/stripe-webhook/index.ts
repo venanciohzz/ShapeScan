@@ -282,16 +282,14 @@ Deno.serve(async (req) => {
         return new Response('Ignored outdated event', { status: 200 });
       }
 
-      // UPSERT SEGURO: Inclui plan_origin explicitamente para evitar conflito com trigger de imutabilidade
-      // Se não existir, v_origin será 'stripe' (padrão para novos assinantes via Webhook)
-      const v_origin = existingPlan?.plan_origin || 'stripe';
-
+      // UPSERT SEGURO: Cria a linha se ela não existir. 
+      // Não incluímos plan_origin aqui para permitir que o Postgres use o default ('stripe') no INSERT 
+      // e ignore a coluna no UPDATE, evitando disparar a trigger de imutabilidade.
       try {
         const { error: pError } = await supabase.from('user_plans').upsert({
             user_id: userId,
             plan_id: planId,
             active: true,
-            plan_origin: v_origin,
             last_stripe_event_ts: event.created,
           }, { onConflict: 'user_id' });
 
