@@ -224,7 +224,7 @@ const App: React.FC = () => {
     });
 
     const initSession = async () => {
-      console.log('[App] 🚀 Iniciando initSession...');
+      console.log('[App] 🚀 INIT_SESSION_START');
       const startTime = Date.now();
 
       // Timers de expiração removidos a pedido do usuário
@@ -253,19 +253,24 @@ const App: React.FC = () => {
              navigate('/dashboard', { replace: true });
           }
         } else {
-            console.log('[App] Nenhuma sessão ativa encontrada (Visitante).');
-            localStorage.removeItem('shapescan_user_profile');
-            const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha'];
-            if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
-               navigate('/', { replace: true });
-            }
+          console.log('[App] ℹ️ Nenhuma sessão ativa encontrada (Visitante).');
+          localStorage.removeItem('shapescan_user_profile');
+          
+          // Libera o loading para visitantes
+          setIsSessionLoading(false);
+          isSessionLoadingRef.current = false;
+
+          const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha'];
+          if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
+             navigate('/', { replace: true });
+          }
         }
       } catch (e: any) {
         console.error("[App] ❌ Erro não tratado durante initSession:", e);
         setIsSessionLoading(false);
         isSessionLoadingRef.current = false;
       } finally {
-        console.log(`[App] ✅ initSession finalizada.`);
+        console.log(`[App] ✅ initSession finalizada em ${Date.now() - startTime}ms.`);
       }
     };
 
@@ -323,7 +328,21 @@ const App: React.FC = () => {
       }
     };
 
+    // ============================================================
+    // SAFETY TIMEOUT: Hardening para evitar loading infinito 
+    // se o Supabase ou a rede travarem (ex: Cold Start de Edge Functions)
+    // ============================================================
+    const safetyTimeout = setTimeout(() => {
+      if (isSessionLoadingRef.current) {
+        console.warn('[App] ⚠️ Safety Timeout (6s) atingido! Forçando encerramento do loader.');
+        setIsSessionLoading(false);
+        isSessionLoadingRef.current = false;
+      }
+    }, 6000);
+
     initSession();
+
+    return () => clearTimeout(safetyTimeout);
   }, []); // Apenas no mount
 
   // Separar o listener de eventos para não depender do ciclo do initSession
