@@ -146,7 +146,12 @@ const App: React.FC = () => {
           
           try {
             const updatedUser = await getProfile(user.id);
-            console.log(`[App] Polling: Perfil recuperado (${elapsed / 1000}s). isPremium: ${updatedUser?.isPremium}`);
+            console.log(`[App] Debug Polling:`, { 
+              elapsed: `${elapsed/1000}s`, 
+              isPremium: updatedUser?.isPremium, 
+              plan: updatedUser?.plan,
+              fullUser: updatedUser 
+            });
             
             if (updatedUser) {
               // Só dispara set state se houver mudança real para evitar re-render desnecessário

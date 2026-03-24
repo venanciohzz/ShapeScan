@@ -35,7 +35,7 @@ function createLogger(traceId: string) {
   return function log(
     level: 'info' | 'warn' | 'error',
     event: string,
-    status: 'received' | 'processed' | 'skipped' | 'error' | 'extracted_metadata' | 'before_upsert',
+    status: 'received' | 'processed' | 'skipped' | 'error' | 'extracted_metadata' | 'before_upsert' | 'fetch_error' | 'upsert_failed',
     details: Record<string, any> = {}
   ) {
     const entry = {
@@ -263,27 +263,48 @@ Deno.serve(async (req) => {
       log('info', event.type, 'before_upsert', { userId, planId, amount });
 
       // PROTEÇÃO DE CONCORRÊNCIA: Verifica timestamp antes do Upsert
-      const { data: existingPlan } = await supabase
+      const { data: existingPlan, error: fetchError } = await supabase
         .from('user_plans')
-        .select('last_stripe_event_ts')
+        .select('last_stripe_event_ts, plan_origin')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
         
+      if (fetchError) {
+        log('warn', event.type, 'fetch_error', { userId, reason: fetchError.message });
+      }
+
       if (existingPlan && existingPlan.last_stripe_event_ts >= event.created) {
-        log('warn', event.type, 'skipped', { reason: 'Outdated or duplicate event', eventTs: event.created, dbTs: existingPlan.last_stripe_event_ts });
+        log('warn', event.type, 'skipped', { 
+          reason: 'Outdated or duplicate event', 
+          eventTs: event.created, 
+          dbTs: existingPlan.last_stripe_event_ts 
+        });
         return new Response('Ignored outdated event', { status: 200 });
       }
 
-      // UPSERT SEGURO: Cria a linha se ela não existir e evita falha silenciosa de timestamp .lt
+      // UPSERT SEGURO: Inclui plan_origin explicitamente para evitar conflito com trigger de imutabilidade
+      // Se não existir, v_origin será 'stripe' (padrão para novos assinantes via Webhook)
+      const v_origin = existingPlan?.plan_origin || 'stripe';
+
       try {
         const { error: pError } = await supabase.from('user_plans').upsert({
             user_id: userId,
             plan_id: planId,
             active: true,
+            plan_origin: v_origin,
             last_stripe_event_ts: event.created,
           }, { onConflict: 'user_id' });
 
-        if (pError) throw pError;
+        if (pError) {
+          log('error', event.type, 'upsert_failed', { 
+            userId, 
+            planId, 
+            errorCode: pError.code, 
+            errorDetail: pError.message,
+            hint: pError.hint
+          });
+          throw pError;
+        }
 
         // Post-webhook validation with retry
         const isValid = await validatePlan(supabase, userId, planId);
