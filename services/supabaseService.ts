@@ -275,8 +275,10 @@ export async function getProfile(userId: string): Promise<User> {
   }
 
   const planData = plans?.[0];
+  // planId falls back to profiles.plan (synced by trigger) if user_plans has no active row
   const planId = planData?.plan_id || data.plan || 'free';
-  const isPremium = planData ? (planData.plan_id !== 'free') : false;
+  // isPremium derived from planId so profiles.plan fallback is also honoured
+  const isPremium = planId !== 'free';
   const isAdmin = data.is_admin || false;
 
   return mapProfileToUser(data, planId, isPremium, isAdmin);

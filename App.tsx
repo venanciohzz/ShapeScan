@@ -122,16 +122,21 @@ const App: React.FC = () => {
   // ============================================================
   // HANDLER DE RETORNO PÓS-PAGAMENTO STRIPE
   // Quando o Stripe redireciona para /dashboard?payment=success,
-  // utilizamos polling com retry exponencial para aguardar o webhook
-  // processar e ativar o plano (tolerante a latência do webhook).
+  // utilizamos polling para aguardar o webhook processar e ativar
+  // o plano (tolerante a latência do webhook).
+  // Dependência: user?.id (não user inteiro) para não re-triggerar
+  // ao actualizar o estado do user durante o polling.
   // ============================================================
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const isPaymentSuccessParams = params.get('payment') === 'success';
     const isAwaitingStripePayment = localStorage.getItem('awaiting_stripe_payment') === 'true';
 
-    // Dispara se veio do Stripe (URL param) OU se flag do localStorage constatar pending (fechou aba ou app)
-    if ((isPaymentSuccessParams || isAwaitingStripePayment) && user && !isPollingPremiumRef.current) {
+    // Capturar userId pelo ref para evitar closure stale dentro do intervalo
+    const currentUserId = userRef.current?.id;
+
+    // Dispara se veio do Stripe (URL param) OU se flag do localStorage constatar pending
+    if ((isPaymentSuccessParams || isAwaitingStripePayment) && currentUserId && !isPollingPremiumRef.current) {
       console.log('[App] Retorno pós-pagamento detectado. Iniciando polling de ativação do plano...');
       isPollingPremiumRef.current = true;
 
@@ -139,24 +144,24 @@ const App: React.FC = () => {
         const MAX_POLL_TIME = 60_000;
         const POLL_INTERVAL = 3000;
         let elapsed = 0;
-        
+
         const { getProfile } = await import('./services/supabaseService');
 
         const interval = setInterval(async () => {
           elapsed += POLL_INTERVAL;
-          
+
           try {
-            const updatedUser = await getProfile(user.id);
-            console.log(`[App] Debug Polling:`, { 
-              elapsed: `${elapsed/1000}s`, 
-              isPremium: updatedUser?.isPremium, 
+            // Usa currentUserId (capturado por closure no início do effect — nunca muda)
+            const updatedUser = await getProfile(currentUserId);
+            console.log(`[App] Debug Polling:`, {
+              elapsed: `${elapsed/1000}s`,
+              isPremium: updatedUser?.isPremium,
               plan: updatedUser?.plan,
-              fullUser: updatedUser 
             });
-            
+
             if (updatedUser) {
-              // Só dispara set state se houver mudança real para evitar re-render desnecessário
-              if (updatedUser.isPremium !== user.isPremium || updatedUser.plan !== user.plan) {
+              const currentPlan = userRef.current?.plan;
+              if (updatedUser.isPremium || updatedUser.plan !== currentPlan) {
                 setUser(updatedUser);
                 localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
               }
@@ -194,7 +199,9 @@ const App: React.FC = () => {
         window.history.replaceState(null, '', cleanUrl);
       }
     }
-  }, [location.search, user]);
+  // user?.id: re-trigger apenas quando o ID muda (null→uuid após login),
+  // evitando re-trigger desnecessário ao actualizar propriedades do user durante polling.
+  }, [location.search, user?.id]);
 
   // Sincronizar userRef para uso em listeners e callbacks assíncronos
   useEffect(() => {

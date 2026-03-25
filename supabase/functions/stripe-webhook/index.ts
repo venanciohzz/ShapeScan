@@ -137,6 +137,8 @@ async function handleDowngrade(supabase: any, log: any, event: Stripe.Event, use
   } catch (err) { log('error', event.type, 'error', { reason: 'Downgrade failed', detail: String(err), userId }); }
 }
 
+declare const EdgeRuntime: any;
+
 Deno.serve(async (req) => {
   const traceId = crypto.randomUUID();
   const log = createLogger(traceId);
@@ -152,89 +154,164 @@ Deno.serve(async (req) => {
     const body = await req.text();
     const event = await stripe.webhooks.constructEventAsync(body, signature, endpointSecret);
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const obj = event.data.object as any;
 
     log('info', event.type, 'received', { eventId: event.id });
+    
+    // Idempotência: Verificar se o evento já foi processado
     const { error: idxErr } = await supabase.from('stripe_events').insert({ id: event.id, type: event.type });
-    if (idxErr?.code === '23505') return new Response(JSON.stringify({ duplicate: true }), { status: 200 });
-
-    const userId = await resolveUserId(event, stripe, supabase);
-    if (userId && !(await isEventNewer(event, userId, supabase))) {
-      log('warn', event.type, 'ignored_out_of_order', { userId, eventCreated: event.created });
-      return new Response('Ignored out of order', { status: 200 });
+    if (idxErr?.code === '23505') {
+      log('info', event.type, 'duplicate_ignored', { eventId: event.id });
+      return new Response(JSON.stringify({ duplicate: true }), { status: 200 });
     }
 
-    switch (event.type) {
-      case 'invoice.payment_succeeded': {
-        if (!userId) break;
-        const invoice = event.data.object as Stripe.Invoice;
-        if (!(await canUpgradeUser(userId, supabase, log, { pi: invoice.payment_intent as string, sub: invoice.subscription as string }))) break;
-        
-        let planId = invoice.subscription ? (await stripe.subscriptions.retrieve(invoice.subscription as string)).metadata?.plan : null;
-        if (!planId) planId = priceToPlan[invoice.lines.data[0]?.price?.id || ''];
-        
-        if (planId) {
-          await supabase.from('user_plans').upsert({ user_id: userId, plan_id: planId, active: true, last_stripe_event_ts: event.created }, { onConflict: 'user_id' });
-          await supabase.from('billing_audit').insert({
-            user_id: userId, event_type: event.type, status: 'success', plan_id: planId, amount: invoice.amount_paid,
-            stripe_event_id: event.id, event_created: event.created, payment_intent_id: invoice.payment_intent as string, invoice_id: invoice.id, subscription_id: invoice.subscription as string
-          });
-          if (invoice.amount_paid > 0) {
-            const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
-            if (customer.email) await sendEmail(log, customer.email, `✅ ShapeScan — Pagamento Confirmado`, purchaseConfirmationEmail(customer.name || 'Atleta', planNames[planId], invoice.amount_paid), resendApiKey);
-          }
+    // ── RETORNO IMEDIATO 200 PARA O STRIPE ──────────────────────────────────────
+    // A lógica de processamento é disparada em "background" (Fire-and-forget seguro)
+    // No Supabase Edge Runtime, usamos EdgeRuntime.waitUntil para garantir que a 
+    // instância não morra antes de terminar o processamento.
+    const processPromise = (async () => {
+      try {
+        const userId = await resolveUserId(event, stripe, supabase);
+        if (userId && !(await isEventNewer(event, userId, supabase))) {
+          log('warn', event.type, 'ignored_out_of_order', { userId, eventCreated: event.created });
+          return;
         }
-        break;
-      }
-      case 'invoice.payment_failed': {
-        if (!userId) break;
-        const invoice = event.data.object as Stripe.Invoice;
-        if (invoice.subscription) {
-          const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
-          if (sub.status === 'canceled' || sub.status === 'unpaid') await handleDowngrade(supabase, log, event, userId, 'payment_failed_final');
-          else await supabase.from('billing_audit').insert({
-            user_id: userId, event_type: 'payment_failed_retrying', status: 'pending', stripe_event_id: event.id, event_created: event.created,
-            payment_intent_id: invoice.payment_intent as string, invoice_id: invoice.id, subscription_id: invoice.subscription as string
-          });
-        }
-        break;
-      }
-      case 'charge.refunded':
-      case 'refund.created':
-      case 'invoice.payment_refunded':
-      case 'customer.subscription.deleted': if (userId) await handleDowngrade(supabase, log, event, userId, 'automatic_revocation'); break;
 
-      case 'charge.dispute.created':
-        if (userId) await supabase.from('billing_audit').insert({
-          user_id: userId, event_type: 'dispute_opened', status: 'pending', stripe_event_id: event.id, event_created: event.created,
-          payment_intent_id: obj.payment_intent, invoice_id: obj.invoice || null, subscription_id: obj.subscription || null
-        });
-        break;
-      case 'charge.dispute.closed': {
-        if (!userId) break;
-        const dispute = event.data.object as Stripe.Dispute;
-        if (dispute.status === 'lost') await handleDowngrade(supabase, log, event, userId, 'dispute_lost');
-        else await supabase.from('billing_audit').insert({
-          user_id: userId, event_type: 'dispute_won', status: 'success', stripe_event_id: event.id, event_created: event.created,
-          payment_intent_id: obj.payment_intent, invoice_id: obj.invoice || null, subscription_id: obj.subscription || null
-        });
-        break;
-      }
-      case 'customer.subscription.updated': {
-        if (!userId) break;
-        const sub = event.data.object as Stripe.Subscription;
-        if (sub.status === 'canceled' || sub.status === 'unpaid') await handleDowngrade(supabase, log, event, userId, 'subscription_update_revocation');
-        else if (sub.status === 'active') {
-          if (!(await canUpgradeUser(userId, supabase, log, { sub: sub.id }))) break;
-          const planId = sub.metadata?.plan || priceToPlan[sub.items.data[0]?.price?.id || ''];
-          if (planId) {
-             await supabase.from('user_plans').upsert({ user_id: userId, plan_id: planId, active: true, last_stripe_event_ts: event.created }, { onConflict: 'user_id' });
-             await supabase.from('billing_audit').insert({ user_id: userId, event_type: event.type, status: 'success', plan_id: planId, stripe_event_id: event.id, event_created: event.created, subscription_id: sub.id });
+        const obj = event.data.object as any;
+
+        switch (event.type) {
+          case 'invoice.payment_succeeded': {
+            if (!userId) break;
+            const invoice = event.data.object as Stripe.Invoice;
+            if (!(await canUpgradeUser(userId, supabase, log, { pi: invoice.payment_intent as string, sub: invoice.subscription as string }))) break;
+
+            let planId = invoice.subscription ? (await stripe.subscriptions.retrieve(invoice.subscription as string)).metadata?.plan : null;
+            if (!planId) planId = priceToPlan[invoice.lines.data[0]?.price?.id || ''];
+
+            if (planId) {
+              // Primary upsert: include subscription_id (requires migration 20260324_add_subscription_id_to_profiles)
+              let { error: upsertError } = await supabase.from('user_plans').upsert({
+                user_id: userId,
+                plan_id: planId,
+                active: true,
+                last_stripe_event_ts: event.created,
+                subscription_id: invoice.subscription as string
+              }, { onConflict: 'user_id' });
+
+              // Fallback: column(s) missing (error 42703) — strip extended fields and retry with bare minimum
+              if (upsertError?.code === '42703') {
+                log('warn', event.type, 'upsert_fallback', { userId, reason: 'extended column missing, retrying with bare minimum' });
+                const { error: retryError } = await supabase.from('user_plans').upsert({
+                  user_id: userId,
+                  plan_id: planId,
+                  active: true,
+                }, { onConflict: 'user_id' });
+                if (retryError) {
+                  log('error', event.type, 'upsert_failed', { userId, planId, error: retryError.message, code: retryError.code });
+                  break;
+                }
+                upsertError = null;
+              } else if (upsertError) {
+                log('error', event.type, 'upsert_failed', { userId, planId, error: upsertError.message, code: upsertError.code });
+                break;
+              }
+
+              log('info', event.type, 'plan_activated', { userId, planId });
+
+              // Non-critical: audit log — failures are logged but do not block plan activation
+              const { error: auditError } = await supabase.from('billing_audit').insert({
+                user_id: userId, event_type: event.type, status: 'success', plan_id: planId, amount: invoice.amount_paid,
+                stripe_event_id: event.id, event_created: event.created, payment_intent_id: invoice.payment_intent as string, invoice_id: invoice.id, subscription_id: invoice.subscription as string
+              });
+              if (auditError) log('warn', event.type, 'audit_insert_failed', { userId, error: auditError.message, code: auditError.code });
+
+              if (invoice.amount_paid > 0) {
+                const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
+                if (customer.email) await sendEmail(log, customer.email, `✅ ShapeScan — Pagamento Confirmado`, purchaseConfirmationEmail(customer.name || 'Atleta', planNames[planId], invoice.amount_paid), resendApiKey);
+              }
+            }
+            break;
+          }
+          case 'invoice.payment_failed': {
+            if (!userId) break;
+            const invoice = event.data.object as Stripe.Invoice;
+            if (invoice.subscription) {
+              const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+              if (sub.status === 'canceled' || sub.status === 'unpaid') await handleDowngrade(supabase, log, event, userId, 'payment_failed_final');
+              else await supabase.from('billing_audit').insert({
+                user_id: userId, event_type: 'payment_failed_retrying', status: 'pending', stripe_event_id: event.id, event_created: event.created,
+                payment_intent_id: invoice.payment_intent as string, invoice_id: invoice.id, subscription_id: invoice.subscription as string
+              });
+            }
+            break;
+          }
+          case 'charge.refunded':
+          case 'refund.created':
+          case 'invoice.payment_refunded':
+          case 'customer.subscription.deleted': if (userId) await handleDowngrade(supabase, log, event, userId, 'automatic_revocation'); break;
+
+          case 'charge.dispute.created':
+            if (userId) await supabase.from('billing_audit').insert({
+              user_id: userId, event_type: 'dispute_opened', status: 'pending', stripe_event_id: event.id, event_created: event.created,
+              payment_intent_id: obj.payment_intent, invoice_id: obj.invoice || null, subscription_id: obj.subscription || null
+            });
+            break;
+          case 'charge.dispute.closed': {
+            if (!userId) break;
+            const dispute = event.data.object as Stripe.Dispute;
+            if (dispute.status === 'lost') await handleDowngrade(supabase, log, event, userId, 'dispute_lost');
+            else await supabase.from('billing_audit').insert({
+              user_id: userId, event_type: 'dispute_won', status: 'success', stripe_event_id: event.id, event_created: event.created,
+              payment_intent_id: obj.payment_intent, invoice_id: obj.invoice || null, subscription_id: obj.subscription || null
+            });
+            break;
+          }
+          case 'customer.subscription.updated': {
+            if (!userId) break;
+            const sub = event.data.object as Stripe.Subscription;
+            if (sub.status === 'canceled' || sub.status === 'unpaid') await handleDowngrade(supabase, log, event, userId, 'subscription_update_revocation');
+            else if (sub.status === 'active') {
+              if (!(await canUpgradeUser(userId, supabase, log, { sub: sub.id }))) break;
+              const planId = sub.metadata?.plan || priceToPlan[sub.items.data[0]?.price?.id || ''];
+              if (planId) {
+                let { error: subUpsertError } = await supabase.from('user_plans').upsert({
+                  user_id: userId,
+                  plan_id: planId,
+                  active: true,
+                  last_stripe_event_ts: event.created,
+                  subscription_id: sub.id
+                }, { onConflict: 'user_id' });
+
+                if (subUpsertError?.code === '42703') {
+                  log('warn', event.type, 'upsert_fallback', { userId, reason: 'subscription_id column missing' });
+                  const { error: retryError } = await supabase.from('user_plans').upsert({
+                    user_id: userId, plan_id: planId, active: true, last_stripe_event_ts: event.created,
+                  }, { onConflict: 'user_id' });
+                  if (retryError) { log('error', event.type, 'upsert_failed', { userId, planId, error: retryError.message }); break; }
+                  subUpsertError = null;
+                } else if (subUpsertError) {
+                  log('error', event.type, 'upsert_failed', { userId, planId, error: subUpsertError.message }); break;
+                }
+
+                const { error: auditErr } = await supabase.from('billing_audit').insert({ user_id: userId, event_type: event.type, status: 'success', plan_id: planId, stripe_event_id: event.id, event_created: event.created, subscription_id: sub.id });
+                if (auditErr) log('warn', event.type, 'audit_insert_failed', { userId, error: auditErr.message });
+              }
+            }
+            break;
           }
         }
-        break;
+      } catch (err: any) {
+        log('error', 'async_process', 'failed', { message: err.message });
       }
+    })();
+
+    if (typeof EdgeRuntime !== 'undefined') {
+      EdgeRuntime.waitUntil(processPromise);
     }
+
     return new Response(JSON.stringify({ received: true }), { status: 200 });
-  } catch (err: any) { log('error', 'critical', 'panic', { reason: err.message }); return new Response(`Error: ${err.message}`, { status: 400 }); }
+
+  } catch (err: any) { 
+    log('error', 'critical', 'panic', { reason: err.message }); 
+    return new Response(`Error: ${err.message}`, { status: 400 }); 
+  }
 });
