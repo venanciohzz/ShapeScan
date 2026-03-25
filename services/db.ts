@@ -2,8 +2,6 @@
 import { User, FoodLog, EvolutionRecord, ChatMessage, SavedMeal, UserStats } from '../types';
 import * as supabaseService from './supabaseService';
 
-const ADMIN_EMAIL = 'contatobielaz@gmail.com';
-
 export const db = {
     auth: {
         async signIn(email: string, password: string): Promise<User> {
@@ -47,15 +45,7 @@ export const db = {
             if (!session) throw new Error('Usuário não autenticado');
 
             const user = await supabaseService.getProfile(session.id);
-
-            // Garantir que admin tenha privilégios
-            if (user.email === ADMIN_EMAIL && (!user.isPremium || !user.isAdmin)) {
-                user.isAdmin = true;
-                user.isPremium = true;
-                user.plan = 'lifetime';
-                await this.update(user.email, user);
-            }
-
+            // is_admin e isPremium vêm do banco via getProfile — não há hardcode de email aqui.
             return user;
         },
 
@@ -162,17 +152,12 @@ export const db = {
     },
 
     usage: {
+        // Lê o contador diário atual (apenas leitura — sem modificar)
         async getDaily(userId: string, type: 'food' | 'shape'): Promise<number> {
             return await supabaseService.getDailyUsage(userId, type);
         },
-
-        async incrementDaily(userId: string, type: 'food' | 'shape'): Promise<{ success: boolean; count?: number; limit?: number; error?: string }> {
-            return await supabaseService.incrementDailyUsage(userId, type);
-        },
-
-        async incrementTrial(userId: string): Promise<number> {
-            return await supabaseService.incrementFreeScanTrial(userId);
-        }
+        // O incremento é feito atomicamente pela Edge Function ai-analyzer.
+        // Não existe método de incremento no frontend por design de segurança.
     },
 
     gamification: {

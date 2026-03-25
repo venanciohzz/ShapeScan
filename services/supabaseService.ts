@@ -627,41 +627,9 @@ export async function getDailyUsage(userId: string, type: 'food' | 'shape'): Pro
   return data?.count || 0;
 }
 
-/**
- * Incrementa o uso diário de um recurso usando RPC securizada que valida limites no backend
- */
-export async function incrementDailyUsage(userId: string, type: 'food' | 'shape'): Promise<{ success: boolean; count?: number; limit?: number; error?: string }> {
-  const { data, error } = await supabase.rpc('increment_usage_with_limit', {
-    scan_type: type
-  });
-
-  if (error) {
-    console.error('Erro ao incrementar uso via RPC:', error);
-    throw new Error(error.message);
-  }
-
-  if (data && data.success === false) {
-    console.warn(`Limite de uso atingido para ${type}:`, data);
-  }
-
-  return data;
-}
-
-/**
- * Incrementa o contador de trial (scans gratuitos) do usuário via RPC
- */
-export async function incrementFreeScanTrial(userId: string): Promise<number> {
-  const { data, error } = await supabase.rpc('increment_free_scans', {
-    target_user_id: userId
-  });
-
-  if (error) {
-    console.error('Erro ao incrementar trial via RPC:', error);
-    throw new Error(error.message);
-  }
-
-  return data;
-}
+// NOTA: O incremento de uso diário é feito atomicamente pela Edge Function ai-analyzer
+// via as RPCs claim_daily_slot e claim_free_slot (migration 20260325_atomic_usage_slots.sql).
+// O frontend não incrementa diretamente — apenas lê o contador via getDailyUsage().
 
 // ==================== GAMIFICAÇÃO = [STREAKS, BADGES, LEVELS] = ====================
 
@@ -907,20 +875,16 @@ export async function getRevenueStats() {
 }
 
 export async function adminUpdateUserPlan(userId: string, planId: string): Promise<void> {
-  // 1. Desativar planos anteriores
-  await supabase
-    .from('user_plans')
-    .update({ active: false })
-    .eq('user_id', userId);
-
-  // 2. Inserir novo plano
+  // UPSERT: a tabela tem UNIQUE(user_id), então INSERT causaria violação de constraint.
+  // upsert com onConflict: 'user_id' atualiza a linha existente em vez de inserir nova.
   const { error } = await supabase
     .from('user_plans')
-    .insert({
+    .upsert({
       user_id: userId,
       plan_id: planId,
-      active: true
-    });
+      active: true,
+      plan_origin: 'manual',
+    }, { onConflict: 'user_id' });
 
   if (error) throw new Error(error.message);
 }

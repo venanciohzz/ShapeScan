@@ -59,7 +59,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
         }
     };
 
-    if (!user.isAdmin && user.email !== 'contatobielaz@gmail.com') {
+    if (!user.isAdmin) {
         return (
             <PremiumBackground className="flex items-center justify-center min-h-screen p-4" dim={true} intensity={1.5}>
                 <div className="bg-zinc-950/40 backdrop-blur-3xl p-12 rounded-[3.5rem] border border-red-500/20 shadow-2xl text-center max-w-lg w-full">

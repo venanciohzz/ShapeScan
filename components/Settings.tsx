@@ -158,7 +158,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
             </div>
 
             {/* Admin Area */}
-            {(user.isAdmin || user.email === 'contatobielaz@gmail.com') && (
+            {user.isAdmin && (
               <div className="pt-8 mt-8 border-t border-white/5">
                 <button
                   onClick={onGoToAdmin}

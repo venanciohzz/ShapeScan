@@ -17,15 +17,14 @@ Deno.serve(async (req) => {
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
         const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
+        // ── 1. AUTENTICAÇÃO ────────────────────────────────────────────────
         let user = null;
         if (authHeader) {
-            // Robust token extraction (case-insensitive "Bearer ")
             const token = authHeader.split(' ').pop();
-            
             if (token) {
                 const { data: { user: foundUser }, error: authError } = await adminClient.auth.getUser(token);
                 if (authError) {
-                    console.error('Supabase Auth verification error:', authError.message);
+                    console.error('Auth error:', authError.message);
                 }
                 user = foundUser;
             } else {
@@ -34,77 +33,77 @@ Deno.serve(async (req) => {
         }
 
         if (!user) {
-            console.error('Unauthorized request: No valid user found for token');
-            return new Response(JSON.stringify({ 
+            return new Response(JSON.stringify({
                 error: "Sessão inválida ou expirada. Por favor, saia e entre novamente no ShapeScan.",
                 isError: true,
                 code: 'AUTH_REQUIRED'
-            }), { 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-                status: 401 
-            });
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 });
         }
 
-        // 1.1 Bloqueio de Emails Temporários (Anti-Abuso)
-        const forbiddenDomains = ['temp-mail.org', 'guerrillamail.com', '10minutemail.com', 'mailinator.com'];
-        const userEmailDomain = user.email?.split('@')[1];
+        // ── 1.1 Bloqueio de Emails Temporários ─────────────────────────────
+        const forbiddenDomains = ['temp-mail.org', 'guerrillamail.com', '10minutemail.com', 'mailinator.com', 'yopmail.com', 'throwam.com'];
+        const userEmailDomain = user.email?.split('@')[1]?.toLowerCase();
         if (userEmailDomain && forbiddenDomains.includes(userEmailDomain)) {
-            return new Response(JSON.stringify({ 
+            return new Response(JSON.stringify({
                 error: "O uso de e-mails temporários não é permitido. Por favor, use um e-mail válido.",
-                isError: true 
-            }), { 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-                status: 403 
-            });
+                isError: true
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 });
         }
 
-        const effectiveUser = user;
-
-        // 2. PARSE REQUEST
+        // ── 2. PARSE DO BODY ────────────────────────────────────────────────
         const rawBody = await req.text();
         console.log(`REQ BODY SIZE: ${rawBody.length} bytes`);
-        
+
         let bodyJson;
         try {
             bodyJson = JSON.parse(rawBody);
         } catch (e) {
-            return new Response(JSON.stringify({ 
+            return new Response(JSON.stringify({
                 error: `JSON do Frontend inválido: ${e.message}`,
-                sample: rawBody.substring(0, 100),
-                isError: true 
-            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+                isError: true
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
         }
 
         const { image, prompt, systemPrompt, type } = bodyJson;
         const requestType = type || 'chat';
 
-        // 3. VERIFICAR PLANO E LIMITES
+        // ── 3. VERIFICAR PLANO ──────────────────────────────────────────────
         const { data: planData } = await adminClient
             .from('user_plans')
             .select('plan_id')
-            .eq('user_id', effectiveUser.id)
+            .eq('user_id', user.id)
             .eq('active', true)
             .single();
-
         const userPlan = planData?.plan_id || 'free';
-        const today = new Date().toISOString().split('T')[0];
 
-        // 3.1. Consulta de Uso
-        const usageQuery = adminClient
-            .from('daily_usage')
-            .select('count')
-            .eq('user_id', effectiveUser.id)
-            .eq('type', requestType);
+        // ── 4. VERIFICAR STATUS DE ADMIN (via tabela admin_users — sem hardcode) ─
+        const { data: adminRow } = await adminClient
+            .from('admin_users')
+            .select('email')
+            .eq('email', user.email)
+            .maybeSingle();
+        const isAdmin = !!adminRow;
 
-        if (userPlan !== 'free') {
-            usageQuery.eq('date', today);
-        }
+        // ── 5. CALCULAR DATA COM OFFSET UTC-1H ──────────────────────────────
+        // Alinha com o getTrackingDateString() do frontend: dia vira à 1h da manhã.
+        // Exemplo: 00:30 UTC → ainda considera "ontem"; 01:00 UTC → "hoje"
+        const adjusted = new Date(Date.now() - 60 * 60 * 1000);
+        const today = adjusted.toISOString().split('T')[0];
 
-        const { data: usageData } = await usageQuery;
-        const currentCount = usageData?.reduce((acc, curr) => acc + curr.count, 0) || 0;
-
-        const getLimit = (plan: string) => {
-            if (effectiveUser.email === 'contatobielaz@gmail.com') return 999;
+        // ── 6. LIMITES POR TIPO E PLANO ─────────────────────────────────────
+        // Shape scanner tem limites menores que o food scanner (análise mais pesada)
+        const getLimit = (plan: string, scanType: string): number => {
+            if (scanType === 'shape') {
+                switch (plan) {
+                    case 'pro_monthly':
+                    case 'pro_annual': return 4;
+                    case 'monthly':
+                    case 'annual':
+                    case 'lifetime': return 2;
+                    default: return 0; // free: bloqueado no shape
+                }
+            }
+            // food
             switch (plan) {
                 case 'pro_monthly':
                 case 'pro_annual': return 12;
@@ -115,80 +114,122 @@ Deno.serve(async (req) => {
             }
         };
 
-        const limit = getLimit(userPlan);
-        
-        // 3.2. Proteção Anti-Abuso para Plano Free
-        const userIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || req.headers.get('x-real-ip')?.trim() || 'unknown';
+        // ── 7. VERIFICAR E RESERVAR SLOT ATOMICAMENTE ───────────────────────
+        // Chat não consome quota (personal trainer 24h é ilimitado).
+        // Admin tem acesso ilimitado.
+        // A reserva acontece ANTES da chamada à OpenAI para eliminar race conditions.
+        if (requestType !== 'chat' && !isAdmin) {
+            const userIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+                        || req.headers.get('x-real-ip')?.trim()
+                        || 'unknown';
 
-        if (userPlan === 'free') {
-            // A. Limite Global de Segurança (Disjuntor)
-            const { count: globalDailyCount } = await adminClient
-                .from('free_scan_usage')
-                .select('*', { count: 'exact', head: true })
-                .gte('created_at', today);
+            if (userPlan === 'free') {
+                // A. Disjuntor global: máximo de 200 scans gratuitos por dia
+                const { count: globalDailyCount } = await adminClient
+                    .from('free_scan_usage')
+                    .select('*', { count: 'exact', head: true })
+                    .gte('created_at', today);
 
-            if (globalDailyCount && globalDailyCount >= 200) {
-                console.error("GLOBAL FREE LIMIT REACHED");
-                return new Response(JSON.stringify({ 
-                    error: "O limite global de análises gratuitas para hoje foi atingido. Tente novamente amanhã ou adquira um plano.",
-                    isError: true,
-                    isLimitReached: true
-                }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+                if (globalDailyCount !== null && globalDailyCount >= 200) {
+                    console.error("GLOBAL FREE LIMIT REACHED");
+                    return new Response(JSON.stringify({
+                        error: "O limite global de análises gratuitas para hoje foi atingido. Tente novamente amanhã ou adquira um plano.",
+                        isError: true,
+                        isLimitReached: true
+                    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
+                }
+
+                // B. Limite de IP: máximo de 3 scans por IP POR DIA (CORRIGIDO: era vitalício)
+                const { count: ipScanCount } = await adminClient
+                    .from('free_scan_usage')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('ip_address', userIp)
+                    .gte('created_at', today);
+
+                if (ipScanCount !== null && ipScanCount >= 3) {
+                    console.warn(`IP Daily Limit Reached: ${userIp}`);
+                    return new Response(JSON.stringify({
+                        error: "Limite de análises gratuitas atingido para este dispositivo hoje. Tente novamente amanhã ou adquira um plano.",
+                        isError: true,
+                        isLimitReached: true
+                    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
+                }
+
+                // C. Reserva atômica do scan gratuito vitalício via RPC
+                // claim_free_slot faz UPDATE profiles SET free_scans_used = free_scans_used + 1
+                // WHERE id = ? AND free_scans_used < 1 — operação atômica no PostgreSQL.
+                const { data: slotClaimed, error: claimError } = await adminClient
+                    .rpc('claim_free_slot', { p_user_id: user.id, p_type: requestType });
+
+                if (claimError) {
+                    console.error('claim_free_slot error:', claimError.message);
+                    return new Response(JSON.stringify({
+                        error: "Erro interno ao verificar seu limite. Tente novamente.",
+                        isError: true
+                    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+                }
+
+                if (!slotClaimed) {
+                    return new Response(JSON.stringify({
+                        error: "Você já utilizou sua análise gratuita vitalícia. Adquira um plano para continuar tendo acesso.",
+                        isError: true,
+                        isLimitReached: true,
+                        showPaywall: true
+                    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
+                }
+
+                // D. Registrar uso por IP (após confirmação da reserva)
+                await adminClient.from('free_scan_usage').insert({ ip_address: userIp });
+
+            } else {
+                // Usuário pago: reserva atômica do slot diário via RPC
+                // claim_daily_slot faz INSERT ... ON CONFLICT DO UPDATE ... WHERE count < limit
+                // — operação atômica que impede race conditions entre requests simultâneos.
+                const limit = getLimit(userPlan, requestType);
+
+                const { data: slotClaimed, error: claimError } = await adminClient
+                    .rpc('claim_daily_slot', {
+                        p_user_id: user.id,
+                        p_type:    requestType,
+                        p_date:    today,
+                        p_limit:   limit
+                    });
+
+                if (claimError) {
+                    console.error('claim_daily_slot error:', claimError.message);
+                    return new Response(JSON.stringify({
+                        error: "Erro interno ao verificar seu limite. Tente novamente.",
+                        isError: true
+                    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+                }
+
+                if (!slotClaimed) {
+                    return new Response(JSON.stringify({
+                        error: "Você atingiu seu limite diário para este recurso.",
+                        limit: limit,
+                        isError: true,
+                        isLimitReached: true
+                    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
+                }
             }
-
-            // B. Limite de 1 scan VITALÍCIO por conta gratuita
-            if (currentCount >= 1) {
-                 return new Response(JSON.stringify({ 
-                    error: "Você já utilizou sua análise gratuita vitalícia. Adquira um plano para continuar tendo acesso ilimitado.",
-                    isError: true,
-                    isLimitReached: true,
-                    showPaywall: true
-                }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-            }
-
-            // C. Limite de 3 scans por IP (Anti-Bot)
-            const { count: ipScanCount } = await adminClient
-                .from('free_scan_usage')
-                .select('*', { count: 'exact', head: true })
-                .eq('ip_address', userIp);
-
-            if (ipScanCount && ipScanCount >= 3) {
-                console.warn(`IP Limit Reached: ${userIp}`);
-                return new Response(JSON.stringify({ 
-                    error: "Limite de análises gratuitas atingido para este dispositivo. Crie uma conta ou adquira um plano.",
-                    isError: true,
-                    isLimitReached: true
-                }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-            }
-        } else if (currentCount >= limit) {
-            // Bloqueio padrão para planos pagos
-            return new Response(JSON.stringify({ 
-                error: "Você atingiu seu limite diário para este recurso.",
-                current: currentCount,
-                limit: limit,
-                isError: true,
-                isLimitReached: true
-            }), { 
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-                status: 429 
-            });
         }
 
-        // 4. EXECUTAR IA (OpenAI)
+        // ── 8. EXECUTAR IA (OpenAI) ─────────────────────────────────────────
+        // O slot já foi reservado atomicamente acima. Se a OpenAI falhar,
+        // o slot é consumido (comportamento padrão de rate limiting).
         const apiKey = Deno.env.get('OPENAI_API_KEY');
         if (!apiKey) throw new Error('OPENAI_API_KEY missing');
 
         const envModel = Deno.env.get('OPENAI_MODEL');
-        const model = envModel || 'gpt-4o-mini'; 
-        
-        // Chat retorna texto livre — não forçar JSON
+        const model = envModel || 'gpt-4o-mini';
+
         const isChat = requestType === 'chat';
         const jsonInstruction = isChat ? "" : " IMPORTANT: Your response must be a valid JSON object matching the schema. No extra text.";
         const finalSystemPrompt = (systemPrompt || "Você é um assistente de IA.") + jsonInstruction;
 
         const callOpenAI = async (targetModel: string) => {
             const url = 'https://api.openai.com/v1/chat/completions';
-            
+
             const reqBody: any = {
                 model: targetModel,
                 messages: [
@@ -198,17 +239,15 @@ Deno.serve(async (req) => {
                         ...(image ? [{ type: 'image_url', image_url: { url: image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}` } }] : [])
                     ]}
                 ],
-                // Chat usa tokens menores (respostas curtas). Análises precisam de mais.
                 max_completion_tokens: isChat ? 300 : 1200,
             };
 
-            // Forçar JSON apenas para análises de food/shape, nunca para chat
             if (!isChat) {
                 reqBody.response_format = { type: "json_object" };
             }
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 25000);
 
             const resp = await fetch(url, {
                 method: 'POST',
@@ -222,20 +261,20 @@ Deno.serve(async (req) => {
             console.log(`OPENAI RAW (${targetModel}): ${text.length} chars`);
 
             if (!resp.ok) throw new Error(`OpenAI Error (${resp.status}): ${text}`);
-            
+
             try {
-                return JSON.parse(text); 
+                return JSON.parse(text);
             } catch (e) {
                 throw new Error(`JSON Error: ${e.message} | Preview: ${text.substring(text.length - 100)}`);
             }
         };
 
         try {
-            console.log(`Starting v42 analysis with: ${model}`);
-            let data = await callOpenAI(model);
-            
+            console.log(`Starting analysis with: ${model}`);
+            const data = await callOpenAI(model);
+
             const findText = (obj: any, depth = 0): string => {
-                if (depth > 12) return ""; 
+                if (depth > 12) return "";
                 if (!obj || typeof obj !== 'object') return "";
                 if (obj.output?.[0]?.content?.[0]?.text) return obj.output[0].content[0].text;
                 if (obj.choices?.[0]?.message?.content) return obj.choices[0].message.content;
@@ -251,34 +290,17 @@ Deno.serve(async (req) => {
                 return "";
             };
 
-            let reply = findText(data);
+            const reply = findText(data);
 
             if (!reply) {
-                return new Response(JSON.stringify({ 
+                return new Response(JSON.stringify({
                     error: "A IA não gerou conteúdo.",
                     debug: JSON.stringify(data).substring(0, 300),
-                    isError: true 
+                    isError: true
                 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
             }
 
-            if (effectiveUser.id && reply.length > 5) {
-                // Registrar uso diário normal
-                await adminClient.from('daily_usage').upsert({
-                    user_id: effectiveUser.id,
-                    date: today,
-                    type: requestType,
-                    count: currentCount + 1
-                }, { onConflict: 'user_id,date,type' });
-
-                // Registrar uso por IP se for plano gratuito
-                if (userPlan === 'free') {
-                    await adminClient.from('free_scan_usage').insert({
-                        ip_address: userIp
-                    });
-                }
-            }
-
-            return new Response(JSON.stringify({ 
+            return new Response(JSON.stringify({
                 text: reply,
                 usage: data.usage,
                 model_used: model,
@@ -287,19 +309,19 @@ Deno.serve(async (req) => {
 
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            console.error(`Erro v42 (OpenAI/Parse): ${msg}`);
-            return new Response(JSON.stringify({ 
-                error: "Ocorreu um erro ao processar sua análise. Por favor, tente novamente em instantes.", 
-                isError: true 
+            console.error(`Erro OpenAI/Parse: ${msg}`);
+            return new Response(JSON.stringify({
+                error: "Ocorreu um erro ao processar sua análise. Por favor, tente novamente em instantes.",
+                isError: true
             }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
         }
 
     } catch (error) {
         const errMsg = error instanceof Error ? error.message : String(error);
-        console.error(`Exceção Crítica v42: ${errMsg}`);
-        return new Response(JSON.stringify({ 
-            error: "Infelizmente não conseguimos completar sua solicitação agora. Se o problema persistir, contate o suporte.", 
-            isError: true 
+        console.error(`Exceção Crítica: ${errMsg}`);
+        return new Response(JSON.stringify({
+            error: "Infelizmente não conseguimos completar sua solicitação agora. Se o problema persistir, contate o suporte.",
+            isError: true
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 });

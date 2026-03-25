@@ -66,9 +66,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
           throw new Error('Preencha todos os campos.');
         }
 
-        const isAdmin = cleanEmail === 'contatobielaz@gmail.com';
-
-        // Cria o objeto usuário (sem ID ainda, o DB gera)
+        // isAdmin é determinado pelo trigger handle_new_user no banco (via tabela admin_users).
+        // Nunca assumir admin pelo email no cliente — o banco é a fonte de verdade.
         const userData: Omit<User, 'id'> = {
           email: cleanEmail,
           name: cleanName,

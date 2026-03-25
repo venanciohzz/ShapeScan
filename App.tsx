@@ -135,69 +135,88 @@ const App: React.FC = () => {
     // Capturar userId pelo ref para evitar closure stale dentro do intervalo
     const currentUserId = userRef.current?.id;
 
-    // Dispara se veio do Stripe (URL param) OU se flag do localStorage constatar pending
-    if ((isPaymentSuccessParams || isAwaitingStripePayment) && currentUserId && !isPollingPremiumRef.current) {
-      console.log('[App] Retorno pós-pagamento detectado. Iniciando polling de ativação do plano...');
-      isPollingPremiumRef.current = true;
+    if (!(isPaymentSuccessParams || isAwaitingStripePayment) || !currentUserId) return;
 
-      const pollForPremium = async () => {
-        const MAX_POLL_TIME = 60_000;
-        const POLL_INTERVAL = 3000;
-        let elapsed = 0;
+    // PROTEÇÃO CONTRA RESTART INFINITO POR PAGE RELOAD:
+    // Guarda o timestamp de início no localStorage. Se a página recarregar
+    // dentro dos 60s, retoma com o tempo restante em vez de reiniciar do zero.
+    const MAX_POLL_TIME = 60_000;
+    const POLL_INTERVAL = 3000;
 
-        const { getProfile } = await import('./services/supabaseService');
+    const startedAt = Number(localStorage.getItem('awaiting_stripe_payment_started') || 0);
+    const alreadyElapsed = startedAt > 0 ? Date.now() - startedAt : 0;
+    const remainingTime = MAX_POLL_TIME - alreadyElapsed;
 
-        const interval = setInterval(async () => {
-          elapsed += POLL_INTERVAL;
+    if (remainingTime <= 0) {
+      // Janela de 60s já expirou (independente de reloads) — limpa e desiste
+      console.log('[App] Janela de polling expirada. Limpando flags.');
+      localStorage.removeItem('awaiting_stripe_payment');
+      localStorage.removeItem('awaiting_stripe_payment_started');
+      showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
+      return;
+    }
 
-          try {
-            // Usa currentUserId (capturado por closure no início do effect — nunca muda)
-            const updatedUser = await getProfile(currentUserId);
-            console.log(`[App] Debug Polling:`, {
-              elapsed: `${elapsed/1000}s`,
-              isPremium: updatedUser?.isPremium,
-              plan: updatedUser?.plan,
-            });
+    if (isPollingPremiumRef.current) return; // já está rodando neste ciclo de vida
+    isPollingPremiumRef.current = true;
 
-            if (updatedUser) {
-              const currentPlan = userRef.current?.plan;
-              if (updatedUser.isPremium || updatedUser.plan !== currentPlan) {
-                setUser(updatedUser);
-                localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
-              }
+    // Registra o início apenas na primeira vez (não sobrescreve em reloads)
+    if (!startedAt) {
+      localStorage.setItem('awaiting_stripe_payment_started', String(Date.now()));
+    }
 
-              if (updatedUser.isPremium) {
-                console.log(`[App] Plano premium ativado! (${elapsed / 1000}s)`);
-                showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
-                clearInterval(interval);
-                isPollingPremiumRef.current = false;
-                localStorage.removeItem('awaiting_stripe_payment');
-                window.history.replaceState({}, document.title, window.location.pathname);
-                return;
-              }
+    console.log(`[App] Polling de ativação do plano iniciado. Tempo restante: ${Math.round(remainingTime / 1000)}s`);
+
+    const pollForPremium = async () => {
+      let elapsed = 0;
+
+      const { getProfile } = await import('./services/supabaseService');
+
+      const interval = setInterval(async () => {
+        elapsed += POLL_INTERVAL;
+
+        try {
+          const updatedUser = await getProfile(currentUserId);
+          console.log(`[App] Polling:`, { elapsed: `${elapsed/1000}s`, isPremium: updatedUser?.isPremium, plan: updatedUser?.plan });
+
+          if (updatedUser) {
+            const currentPlan = userRef.current?.plan;
+            if (updatedUser.isPremium || updatedUser.plan !== currentPlan) {
+              setUser(updatedUser);
+              localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
             }
-          } catch (e) {
-            console.error(`[App] Erro ao verificar plano:`, e);
+
+            if (updatedUser.isPremium) {
+              console.log(`[App] Plano premium ativado! (${elapsed / 1000}s)`);
+              showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
+              clearInterval(interval);
+              isPollingPremiumRef.current = false;
+              localStorage.removeItem('awaiting_stripe_payment');
+              localStorage.removeItem('awaiting_stripe_payment_started');
+              window.history.replaceState({}, document.title, window.location.pathname);
+              return;
+            }
           }
+        } catch (e) {
+          console.error(`[App] Erro ao verificar plano:`, e);
+        }
 
-          if (elapsed >= MAX_POLL_TIME) {
-            clearInterval(interval);
-            isPollingPremiumRef.current = false;
-            console.log('[App] Fim do polling (timeout atingido).');
-            showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
-            localStorage.removeItem('awaiting_stripe_payment');
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        }, POLL_INTERVAL);
-      };
+        if (elapsed >= remainingTime) {
+          clearInterval(interval);
+          isPollingPremiumRef.current = false;
+          console.log('[App] Fim do polling (timeout atingido).');
+          showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
+          localStorage.removeItem('awaiting_stripe_payment');
+          localStorage.removeItem('awaiting_stripe_payment_started');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }, POLL_INTERVAL);
+    };
 
-      pollForPremium();
+    pollForPremium();
 
-      if (isPaymentSuccessParams) {
-        // Limpar o parâmetro da URL sem recarregar a página
-        const cleanUrl = window.location.protocol + '//' + window.location.host + '/dashboard';
-        window.history.replaceState(null, '', cleanUrl);
-      }
+    if (isPaymentSuccessParams) {
+      const cleanUrl = window.location.protocol + '//' + window.location.host + '/dashboard';
+      window.history.replaceState(null, '', cleanUrl);
     }
   // user?.id: re-trigger apenas quando o ID muda (null→uuid após login),
   // evitando re-trigger desnecessário ao actualizar propriedades do user durante polling.
