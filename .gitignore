@@ -25,3 +25,12 @@ dist-ssr
 
 # Vercel
 .vercel
+
+# Supabase CLI temp files
+supabase/.temp/
+
+# Claude Code local memory
+.claude/
+
+# Stripe temp/local files
+*stripe_webhooks*.json
