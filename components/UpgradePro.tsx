@@ -155,11 +155,14 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
 
           {/* Stripe Checkout Overlay */}
           {stripePriceId && selectedPlan && user && (
-             <StripeCheckout 
+             <StripeCheckout
                 priceId={stripePriceId}
                 userId={user.id}
                 email={user.email}
                 plan={selectedPlan}
+                planName={PAYMENT_CONFIG[selectedPlan]?.name}
+                planPrice={selectedPlan === 'pro_annual' ? '347' : '44,90'}
+                planPeriod={selectedPlan === 'pro_annual' ? '/ano' : '/mês'}
                 onClose={() => { setStripePriceId(null); setSelectedPlan(null); }}
              />
           )}

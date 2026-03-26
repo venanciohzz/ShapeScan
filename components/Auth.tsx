@@ -102,6 +102,24 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
     }
   };
 
+  const handleAlreadyConfirmed = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const user = await db.auth.signIn(sanitizeInput(email), sanitizeInput(password));
+      await db.auth.setSession(user);
+      onLogin(user, false);
+    } catch (err: any) {
+      if (err.message === 'auth/confirmation-required') {
+        setError('E-mail ainda não confirmado. Verifique sua caixa de entrada.');
+      } else {
+        setError(err.message || 'Erro ao verificar confirmação.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleResendEmail = async () => {
     setResendLoading(true);
     setError('');
@@ -129,24 +147,37 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
             <br /><br />
             Por favor, verifique sua caixa de entrada (e a pasta de spam) para ativar sua conta antes de continuar.
           </p>
+          {error && (
+            <div className="bg-red-500/10 text-red-400 p-4 rounded-2xl mb-6 text-xs font-bold border border-red-500/20 animate-in fade-in slide-in-from-top-2">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
-            <button 
+            <button
+              onClick={handleAlreadyConfirmed}
+              disabled={isLoading}
+              className="w-full px-8 py-5 transition-all font-black text-xs uppercase tracking-widest rounded-[2rem] border bg-emerald-500 text-zinc-950 border-emerald-500 hover:bg-emerald-400 disabled:opacity-50"
+            >
+              {isLoading ? 'Verificando...' : 'Já Confirmei o E-mail'}
+            </button>
+
+            <button
               onClick={handleResendEmail}
               disabled={resendLoading || resendSuccess}
               className={`w-full px-8 py-5 transition-all font-black text-xs uppercase tracking-widest rounded-[2rem] border ${
-                resendSuccess 
-                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
+                resendSuccess
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
                 : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
               }`}
             >
               {resendLoading ? 'Enviando...' : resendSuccess ? 'E-mail Enviado! ✨' : 'Reenviar E-mail de Confirmação'}
             </button>
 
-            <button 
+            <button
               onClick={() => {
                 setNeedsConfirmation(false);
                 setIsRegistering(false); // Switch to login mode
-              }} 
+              }}
               className="w-full px-8 py-4 text-zinc-500 hover:text-zinc-300 transition-all font-bold text-[10px] uppercase tracking-widest"
             >
               Voltar para o Login

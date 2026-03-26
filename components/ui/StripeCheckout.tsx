@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { 
-  Elements, 
-  PaymentElement, 
-  useStripe, 
-  useElements 
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements
 } from '@stripe/react-stripe-js';
 import { supabase } from '../../services/supabaseService';
 
@@ -47,9 +47,10 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () =>
     });
 
     if (error) {
+      localStorage.removeItem('awaiting_stripe_payment');
       setErrorMessage(error.message || 'Ocorreu um erro ao processar o pagamento.');
     }
-    
+
     setIsProcessing(false);
   };
 
@@ -86,7 +87,7 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () =>
             )}
           </span>
         </button>
-        
+
         <button
           type="button"
           onClick={onCancel}
@@ -100,10 +101,10 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () =>
   );
 };
 
-const StripeCheckout: React.FC<StripeCheckoutProps> = ({ 
-  priceId, 
-  userId, 
-  email, 
+const StripeCheckout: React.FC<StripeCheckoutProps> = ({
+  priceId,
+  userId,
+  email,
   plan,
   onClose,
   planName = 'ShapeScan Premium',
@@ -120,82 +121,99 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     finalPrice: number;
     discount: number;
   } | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  // Trava anti-dupla: previne execuções simultâneas (React Strict Mode)
-  const isInitializingRef = React.useRef(false);
+  const initializeCheckout = useCallback(async (signal: AbortSignal) => {
+    setIsInitializing(true);
+    setError(null);
 
-  useEffect(() => {
-    const initializeCheckout = async () => {
-      // Se já está rodando, ignora (protege contra dupla execução do React Strict Mode)
-      if (isInitializingRef.current) {
-        console.log('[StripeCheckout] Inicialização já em andamento, ignorando segunda chamada.');
+    try {
+      console.log('[StripeCheckout] Iniciando checkout para priceId:', priceId);
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (signal.aborted) return;
+
+      if (userError || !userData?.user) {
+        throw new Error('Usuário não autenticado. Faça login novamente para continuar.');
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (signal.aborted) return;
+
+      if (!session?.access_token) {
+        throw new Error('Sessão expirada. Por favor, faça login novamente.');
+      }
+
+      // Timeout de 30s para não travar o loading infinito
+      const fetchPromise = supabase.functions.invoke('stripe-checkout', {
+        body: { priceId, couponCode: appliedCouponCode, plan },
+      });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('O servidor demorou para responder. Tente novamente.')), 30000)
+      );
+
+      const { data, error: invokeError } = await Promise.race([fetchPromise, timeoutPromise]);
+      if (signal.aborted) return;
+
+      if (invokeError) {
+        console.error('[StripeCheckout] Edge Function ERROR:', invokeError);
+        let errorMessage = invokeError.message || 'Erro ao iniciar checkout';
+        try {
+          if (invokeError.context && typeof invokeError.context.json === 'function') {
+            const body = await invokeError.context.json();
+            errorMessage = body?.error || body?.message || errorMessage;
+          }
+        } catch (_) { /* seguro ignorar */ }
+        throw new Error(errorMessage);
+      }
+
+      if (data?.isError) throw new Error(data.error);
+
+      if (data?.pricing) {
+        setPricingOverview(data.pricing);
+      }
+
+      if (data?.isFree) {
+        console.log('[StripeCheckout] Assinatura gratuita ativada com sucesso!');
+        window.location.href = '/dashboard?payment=success';
         return;
       }
-      isInitializingRef.current = true;
 
-      try {
-        setIsInitializing(true);
-        setError(null);
-        
-        console.log('[StripeCheckout] Iniciando checkout para priceId:', priceId);
-
-        const { data: userData, error: userError } = await supabase.auth.getUser();
-
-        if (userError || !userData?.user) {
-          throw new Error('Usuário não autenticado. O checkout requer login ativo.');
-        }
-
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!session?.access_token) {
-          throw new Error('Usuário não autenticado');
-        }
-
-        console.log('[StripeCheckout] Token JWT obtido, invocando Edge Function...');
-        const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
-          body: { priceId, couponCode: appliedCouponCode, plan },
-        });
-
-        if (invokeError) {
-          console.error('[StripeCheckout] Edge Function ERROR:', invokeError);
-          // Tenta extrair o body real do erro (ex: mensagem do Stripe)
-          let errorMessage = invokeError.message || 'Erro ao iniciar checkout';
-          try {
-            if (invokeError.context && typeof invokeError.context.json === 'function') {
-              const body = await invokeError.context.json();
-              errorMessage = body?.error || body?.message || errorMessage;
-              console.error('[StripeCheckout] Edge Function error body:', body);
-            }
-          } catch (_) { /* seguro ignorar */ }
-          throw new Error(errorMessage);
-        }
-
-        if (data?.isError) throw new Error(data.error);
-
-        if (data?.pricing) {
-          setPricingOverview(data.pricing);
-        }
-        
-        if (data?.isFree) {
-          console.log('[StripeCheckout] Assinatura gratuita ativada com sucesso!');
-          window.location.href = '/dashboard?payment=success';
-          return;
-        }
-
-        if (!data?.clientSecret) throw new Error('Falha ao obter chave de pagamento ou recusa do cupom.');
-
-        setClientSecret(data.clientSecret);
-      } catch (err: any) {
-        console.error('[StripeCheckout] Initialization error:', err);
-        setError(err.message || 'Erro ao carregar o checkout.');
-      } finally {
-        setIsInitializing(false);
-        isInitializingRef.current = false; // Libera o lock para próximas tentativas
+      if (!data?.clientSecret) {
+        throw new Error(data?.error || 'Falha ao obter chave de pagamento. Tente novamente.');
       }
-    };
 
-    initializeCheckout();
-  }, [priceId, userId, email, appliedCouponCode]);
+      setClientSecret(data.clientSecret);
+    } catch (err: any) {
+      if (signal.aborted) return;
+      console.error('[StripeCheckout] Initialization error:', err);
+      setError(err.message || 'Erro ao carregar o checkout. Tente novamente.');
+    } finally {
+      if (!signal.aborted) {
+        setIsInitializing(false);
+      }
+    }
+  }, [priceId, appliedCouponCode, plan]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    initializeCheckout(controller.signal);
+    return () => {
+      controller.abort();
+    };
+  }, [initializeCheckout, retryCount]);
+
+  const handleRetry = () => {
+    setClientSecret(null);
+    setError(null);
+    setRetryCount(c => c + 1);
+  };
+
+  const handleApplyCoupon = () => {
+    setAppliedCouponCode(couponCodeInput);
+    setClientSecret(null);
+  };
 
   const appearance = {
     theme: 'night' as const,
@@ -233,9 +251,9 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md animate-in fade-in duration-500 overflow-y-auto">
       <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95 duration-500">
-        
+
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0"></div>
-        
+
         {/* Header & Summary */}
         <div className="p-10 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-900">
           <div>
@@ -250,7 +268,6 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
           <div className="flex flex-col md:items-end">
             <span className="text-zinc-500 text-[8px] font-black uppercase tracking-widest mb-1">Total a Pagar</span>
-            {/* Valor dinâmico baseado no plano selecionado */}
             {pricingOverview && pricingOverview.discount > 0 ? (
               <div className="flex flex-col items-end">
                 <span className="line-through text-zinc-500 text-sm font-bold mb-0.5">
@@ -275,18 +292,26 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
         <div className="px-10 py-10 flex-1">
           {error ? (
-            <div className="py-20 text-center animate-in zoom-in duration-300">
+            <div className="py-16 text-center animate-in zoom-in duration-300">
               <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
-                <span className="text-4xl text-red-500">⚠️</span>
+                <span className="text-4xl">⚠️</span>
               </div>
               <h4 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Erro no Checkout</h4>
               <p className="text-zinc-400 mb-8 max-w-xs mx-auto text-sm">{error}</p>
-              <button 
-                onClick={onClose}
-                className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-zinc-800 transition-all"
-              >
-                Voltar
-              </button>
+              <div className="flex flex-col gap-3 max-w-xs mx-auto">
+                <button
+                  onClick={handleRetry}
+                  className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-xs tracking-widest rounded-2xl transition-all"
+                >
+                  Tentar Novamente
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-zinc-800 transition-all"
+                >
+                  Voltar
+                </button>
+              </div>
             </div>
           ) : isInitializing ? (
             <div className="py-32 flex flex-col items-center justify-center">
@@ -295,28 +320,25 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
               <p className="mt-6 text-zinc-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Preparando ambiente seguro...</p>
+              <p className="mt-2 text-zinc-600 text-[9px] font-medium">Isso pode levar alguns segundos</p>
             </div>
-          ) : clientSecret && (
+          ) : clientSecret ? (
             <div className="flex flex-col gap-6">
               {/* Cupom Section */}
               <div className="flex flex-col gap-2">
                  <div className="flex items-center gap-2">
-                     <input 
-                       type="text" 
+                     <input
+                       type="text"
                        value={couponCodeInput}
                        onChange={e => setCouponCodeInput(e.target.value)}
+                       onKeyDown={e => e.key === 'Enter' && couponCodeInput && handleApplyCoupon()}
                        placeholder="Código de desconto"
                        className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none transition-colors"
-                       disabled={isInitializing}
                      />
-                   <button 
+                   <button
                      type="button"
-                     onClick={() => {
-                       setAppliedCouponCode(couponCodeInput);
-                       isInitializingRef.current = false; // Reset lock
-                       setClientSecret(null); // Force re-render of elements
-                     }}
-                     disabled={!couponCodeInput || isInitializing}
+                     onClick={handleApplyCoupon}
+                     disabled={!couponCodeInput}
                      className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase px-6 py-3.5 rounded-xl transition-colors disabled:opacity-50"
                    >
                      Aplicar
@@ -344,7 +366,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                 <PaymentForm onCancel={onClose} userId={userId} planId={priceId} planPeriod={planPeriod} />
               </Elements>
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="px-10 py-6 bg-zinc-900/50 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">

@@ -96,7 +96,11 @@ Deno.serve(async (req) => {
 
     const { id: userId, email } = user;
 
-    if (!email || email === 'debug@test.com') {
+    if (!email) {
+      throw new Error('E-mail do usuário não encontrado. Verifique sua conta.');
+    }
+
+    if (email === 'debug@test.com') {
       console.warn('[WARN] Usuário debug ativo. userId:', userId);
     }
 
@@ -153,7 +157,7 @@ Deno.serve(async (req) => {
     if (cancelledCount > 0) {
       // Aguarda o Stripe processar os cancelamentos antes de criar nova subscription
       console.log('[SUBSCRIPTIONS] Aguardando processamento dos cancelamentos...');
-      await sleep(1500);
+      await sleep(500);
     }
 
     // ── Criar nova subscription ─────────────────────────────────────────────
