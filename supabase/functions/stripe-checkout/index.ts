@@ -84,6 +84,9 @@ Deno.serve(async (req) => {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) throw new Error('STRIPE_SECRET_KEY não configurada');
 
+    const stripeMode = stripeKey.startsWith('sk_live_') ? 'LIVE' : 'TEST';
+    console.log('[STRIPE] Mode:', stripeMode, '| Key prefix:', stripeKey.slice(0, 12));
+
     const stripe = new Stripe(stripeKey, {
       apiVersion: '2023-10-16',
       httpClient: Stripe.createFetchHttpClient(),

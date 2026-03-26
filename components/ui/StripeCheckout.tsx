@@ -27,6 +27,17 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () =>
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [elementReady, setElementReady] = useState(false);
+
+  // Timeout: se o PaymentElement não carregar em 20s, mostra erro
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!elementReady) {
+        setErrorMessage('Não foi possível carregar o formulário de pagamento. Verifique sua conexão ou tente novamente.');
+      }
+    }, 20000);
+    return () => clearTimeout(timer);
+  }, [elementReady]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +70,11 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () =>
       <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-3xl backdrop-blur-sm">
         <PaymentElement
           options={{ layout: 'tabs' }}
-          onLoadError={(e) => console.error('[PaymentElement] Load error:', e)}
+          onReady={() => setElementReady(true)}
+          onLoadError={(e) => {
+            console.error('[PaymentElement] Load error:', e);
+            setErrorMessage('Erro ao carregar métodos de pagamento. Tente fechar e abrir o checkout novamente.');
+          }}
         />
       </div>
 
