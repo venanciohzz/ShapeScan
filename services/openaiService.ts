@@ -86,18 +86,31 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
 
     if (error) {
       console.error('[openaiService] Edge Function invoke error:', error);
-      
-      // If it's a 401 from the function call itself, it's definitely a session issue
+
+      // Try to parse the response body for structured errors (429, 401, etc.)
+      let errorBody: any = null;
+      try {
+        if (error.context && typeof error.context.json === 'function') {
+          errorBody = await error.context.json();
+        }
+      } catch (_) { /* ignore parse errors */ }
+
       if (error.status === 401 || (error.message && error.message.includes('401'))) {
         throw new Error('401: Sessão inválida. Por favor, faça login novamente para reautenticar.');
       }
-      
-      // Handle the case where the function itself returned a 406 or other status
+
+      if (error.status === 429 || errorBody?.isLimitReached) {
+        const e: any = new Error(errorBody?.error || 'Você atingiu seu limite diário para este recurso.');
+        e.isLimitReached = true;
+        e.showPaywall = errorBody?.showPaywall || false;
+        throw e;
+      }
+
       if (error.status === 406) {
         throw new Error('Erro de configuração no servidor (406). Por favor, contate o suporte.');
       }
 
-      throw new Error(error.message || 'Erro de conexão com o servidor de IA. Tente novamente.');
+      throw new Error(errorBody?.error || error.message || 'Erro de conexão com o servidor de IA. Tente novamente.');
     }
 
     if (data?.isError) {
