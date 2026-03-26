@@ -212,6 +212,7 @@ Deno.serve(async (req) => {
                   user_id: userId,
                   plan_id: planId,
                   active: true,
+                  subscription_id: invoice.subscription as string,
                 }, { onConflict: 'user_id' });
                 if (retryError) {
                   log('error', event.type, 'upsert_failed', { userId, planId, error: retryError.message, code: retryError.code });
@@ -295,6 +296,7 @@ Deno.serve(async (req) => {
                   log('warn', event.type, 'upsert_fallback', { userId, reason: 'extended column missing' });
                   const { error: retryError } = await supabase.from('user_plans').upsert({
                     user_id: userId, plan_id: planId, active: true, last_stripe_event_ts: event.created,
+                    subscription_id: sub.id, cancel_at_period_end: sub.cancel_at_period_end,
                   }, { onConflict: 'user_id' });
                   if (retryError) { log('error', event.type, 'upsert_failed', { userId, planId, error: retryError.message }); break; }
                   subUpsertError = null;

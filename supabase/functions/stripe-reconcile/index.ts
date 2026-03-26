@@ -55,7 +55,8 @@ Deno.serve(async (req) => {
     // ============================================================
     // 1. BUSCAR TODAS AS SUBSCRIPTIONS ATIVAS NO STRIPE
     // ============================================================
-    const activeSubscriptions = new Map<string, string>(); // userId → planId
+    type SubInfo = { planId: string; subId: string; cancelAtPeriodEnd: boolean; currentPeriodEnd: number };
+    const activeSubscriptions = new Map<string, SubInfo>(); // userId → SubInfo
 
     let hasMore = true;
     let startingAfter: string | undefined;
@@ -85,7 +86,12 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        activeSubscriptions.set(userId, planId);
+        activeSubscriptions.set(userId, {
+          planId,
+          subId: sub.id,
+          cancelAtPeriodEnd: sub.cancel_at_period_end,
+          currentPeriodEnd: sub.current_period_end,
+        });
         stats.stripeSubscriptions++;
       }
 
@@ -102,7 +108,7 @@ Deno.serve(async (req) => {
     // ============================================================
     const { data: dbPlans, error: dbError } = await supabase
       .from('user_plans')
-      .select('user_id, plan_id, active, plan_origin')
+      .select('user_id, plan_id, active, plan_origin, subscription_id')
       .eq('active', true)
       .eq('plan_origin', 'stripe');
 
@@ -111,9 +117,9 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: dbError.message }), { status: 500 });
     }
 
-    const dbPlanMap = new Map<string, string>(); // userId → planId
+    const dbPlanMap = new Map<string, { planId: string; subscriptionId: string | null }>(); // userId → { planId, subscriptionId }
     for (const row of (dbPlans || [])) {
-      dbPlanMap.set(row.user_id, row.plan_id);
+      dbPlanMap.set(row.user_id, { planId: row.plan_id, subscriptionId: row.subscription_id });
     }
 
     log('info', `Planos pagos ativos no banco: ${dbPlanMap.size}`);
@@ -122,34 +128,48 @@ Deno.serve(async (req) => {
     // 3. CORRIGIR DIVERGÊNCIAS
     // ============================================================
 
-    // 3a. Usuários com subscription ativa no Stripe mas sem plano correto no banco → ATIVAR
-    for (const [userId, planId] of activeSubscriptions.entries()) {
-      const dbPlan = dbPlanMap.get(userId);
+    // 3a. Usuários com subscription ativa no Stripe mas com divergência no banco → ATIVAR/CORRIGIR
+    for (const [userId, { planId, subId, cancelAtPeriodEnd, currentPeriodEnd }] of activeSubscriptions.entries()) {
+      const dbEntry = dbPlanMap.get(userId);
 
-      if (dbPlan === planId) {
+      const planCorrect = dbEntry?.planId === planId;
+      const subIdCorrect = dbEntry?.subscriptionId === subId;
+
+      if (planCorrect && subIdCorrect) {
         stats.alreadyCorrect++;
         continue; // Tudo certo
       }
 
-      log('warn', 'Divergência detectada — ativando plano', { userId, stripeplan: planId, dbPlan: dbPlan || 'none' });
+      log('warn', 'Divergência detectada — corrigindo plano', {
+        userId, stripePlan: planId, dbPlan: dbEntry?.planId || 'none',
+        stripeSubId: subId, dbSubId: dbEntry?.subscriptionId || 'null',
+      });
 
       const nowTs = Math.floor(Date.now() / 1000);
       const { error } = await supabase.from('user_plans').upsert(
-        { user_id: userId, plan_id: planId, active: true, last_stripe_event_ts: nowTs },
+        {
+          user_id: userId,
+          plan_id: planId,
+          active: true,
+          last_stripe_event_ts: nowTs,
+          subscription_id: subId,
+          cancel_at_period_end: cancelAtPeriodEnd,
+          current_period_end: currentPeriodEnd,
+        },
         { onConflict: 'user_id' }
       );
 
       if (error) {
-        log('error', 'Erro ao ativar plano na reconciliação', { userId, planId, reason: error.message });
+        log('error', 'Erro ao corrigir plano na reconciliação', { userId, planId, reason: error.message });
         stats.errors++;
       } else {
-        log('info', 'Plano ativado pela reconciliação', { userId, planId });
+        log('info', 'Plano corrigido pela reconciliação', { userId, planId, subId });
         stats.activated++;
       }
     }
 
     // 3b. Usuários com plano pago no banco mas SEM subscription ativa no Stripe → REBAIXAR
-    for (const [userId, dbPlan] of dbPlanMap.entries()) {
+    for (const [userId, { planId: dbPlan }] of dbPlanMap.entries()) {
       if (!activeSubscriptions.has(userId)) {
         log('warn', 'Plano pago sem subscription ativa — rebaixando para free', { userId, dbPlan });
 
