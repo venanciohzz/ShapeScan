@@ -1,6 +1,7 @@
 
 import { User, FoodLog, EvolutionRecord, ChatMessage, SavedMeal, UserStats } from '../types';
 import * as supabaseService from './supabaseService';
+import type { SubscriptionInfo } from './supabaseService';
 
 export const db = {
     auth: {
@@ -167,6 +168,16 @@ export const db = {
 
         async updateStreak(userId: string): Promise<UserStats> {
             return await supabaseService.updateStreak(userId);
+        }
+    },
+
+    subscription: {
+        async getInfo(userId: string): Promise<SubscriptionInfo | null> {
+            return await supabaseService.getSubscriptionInfo(userId);
+        },
+
+        async cancel(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
+            return await supabaseService.cancelSubscription();
         }
     }
 };

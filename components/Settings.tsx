@@ -3,10 +3,12 @@ import { User as UserType, UserStats } from '../types';
 import { compressImage } from '../utils/security';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
-import { ArrowLeft, User, Camera, CheckCircle2, ShieldAlert, Trash2, Flame } from 'lucide-react';
+import { ArrowLeft, User, Camera, CheckCircle2, ShieldAlert, Trash2, Flame, Calendar, AlertTriangle, CreditCard } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { db } from '../services/db';
+import type { SubscriptionInfo } from '../services/supabaseService';
 import GamificationWidget from './dashboard/GamificationWidget';
+import { PAYMENT_CONFIG } from '../services/paymentConfig';
 
 interface SettingsProps {
   user: UserType;
@@ -17,9 +19,16 @@ interface SettingsProps {
   onGoToAdmin: () => void;
 }
 
+const formatDate = (unixTs: number) =>
+  new Date(unixTs * 1000).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
 const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, darkMode, toggleTheme, onGoToAdmin }) => {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState('');
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -34,6 +43,40 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
     };
     fetchStats();
   }, [user.id]);
+
+  useEffect(() => {
+    if (!user.isPremium) return;
+    const fetchSubscription = async () => {
+      try {
+        const info = await db.subscription.getInfo(user.id);
+        setSubscriptionInfo(info);
+      } catch (err) {
+        console.error('Erro ao buscar dados da assinatura:', err);
+      }
+    };
+    fetchSubscription();
+  }, [user.id, user.isPremium]);
+
+  const handleCancelSubscription = async () => {
+    setCancelLoading(true);
+    setCancelError('');
+    try {
+      const result = await db.subscription.cancel();
+      setSubscriptionInfo(prev => prev ? {
+        ...prev,
+        cancel_at_period_end: result.cancel_at_period_end,
+        current_period_end: result.current_period_end,
+      } : null);
+      setShowCancelModal(false);
+      setSuccessMsg('Sua assinatura será encerrada ao final do período atual.');
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (err: any) {
+      setCancelError(err.message || 'Erro ao cancelar assinatura. Tente novamente.');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username.startsWith('@') ? user.username : `@${user.username}`);
   const [photo, setPhoto] = useState(user.photo || '');
@@ -157,6 +200,64 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
               <GamificationWidget stats={userStats} loading={loadingStats} />
             </div>
 
+            {/* Subscription Section */}
+            {user.isPremium && subscriptionInfo && subscriptionInfo.subscription_id && (
+              <div className="pt-8 border-t border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 mb-5 ml-2 flex items-center gap-2">
+                  <CreditCard className="w-3 h-3" />
+                  Assinatura
+                </p>
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-500">Plano atual</span>
+                    <span className="text-xs font-black text-white uppercase tracking-wider">
+                      {(PAYMENT_CONFIG as any)[subscriptionInfo.plan_id]?.name || subscriptionInfo.plan_id}
+                    </span>
+                  </div>
+
+                  {subscriptionInfo.subscription_start && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-zinc-500 flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3" />
+                        Início
+                      </span>
+                      <span className="text-xs text-zinc-300">{formatDate(subscriptionInfo.subscription_start)}</span>
+                    </div>
+                  )}
+
+                  {subscriptionInfo.current_period_end && !subscriptionInfo.cancel_at_period_end && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-zinc-500 flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3" />
+                        Próxima cobrança
+                      </span>
+                      <span className="text-xs text-zinc-300">{formatDate(subscriptionInfo.current_period_end)}</span>
+                    </div>
+                  )}
+
+                  {subscriptionInfo.cancel_at_period_end ? (
+                    <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-400 leading-relaxed">
+                        Seu plano está programado para cancelamento em{' '}
+                        <span className="font-black">
+                          {subscriptionInfo.current_period_end ? formatDate(subscriptionInfo.current_period_end) : 'breve'}
+                        </span>
+                        . Você mantém acesso completo até lá.
+                      </p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowCancelModal(true)}
+                      className="w-full py-3 text-zinc-500 hover:text-red-400 border border-white/5 hover:border-red-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
+                    >
+                      Cancelar assinatura
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Admin Area */}
             {user.isAdmin && (
               <div className="pt-8 mt-8 border-t border-white/5">
@@ -172,6 +273,53 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
           </div>
         </div>
       </div>
+      {/* Cancel Subscription Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-zinc-950 border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl"
+          >
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-6 h-6 text-red-400" />
+              </div>
+              <h3 className="text-base font-black text-white mb-3 leading-snug">
+                Tem certeza que deseja cancelar sua assinatura?
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Você continuará com acesso completo até o final do período atual. Após isso, sua assinatura será encerrada automaticamente.
+              </p>
+            </div>
+
+            {cancelError && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                <p className="text-xs text-red-400 text-center">{cancelError}</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCancelSubscription}
+                disabled={cancelLoading}
+                className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cancelLoading ? 'Processando...' : 'Confirmar cancelamento'}
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => { setShowCancelModal(false); setCancelError(''); }}
+                disabled={cancelLoading}
+                className="w-full py-4 bg-white/5 text-zinc-400 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
+              >
+                Voltar
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </PremiumBackground>
   );
 };

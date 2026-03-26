@@ -184,17 +184,25 @@ Deno.serve(async (req) => {
             const invoice = event.data.object as Stripe.Invoice;
             if (!(await canUpgradeUser(userId, supabase, log, { pi: invoice.payment_intent as string, sub: invoice.subscription as string }))) break;
 
-            let planId = invoice.subscription ? (await stripe.subscriptions.retrieve(invoice.subscription as string)).metadata?.plan : null;
+            let planId: string | null = null;
+            let retrievedSub: any = null;
+            if (invoice.subscription) {
+              retrievedSub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+              planId = retrievedSub.metadata?.plan || null;
+            }
             if (!planId) planId = priceToPlan[invoice.lines.data[0]?.price?.id || ''];
 
             if (planId) {
-              // Primary upsert: include subscription_id (requires migration 20260324_add_subscription_id_to_profiles)
+              // Primary upsert: include subscription_id and period data
               let { error: upsertError } = await supabase.from('user_plans').upsert({
                 user_id: userId,
                 plan_id: planId,
                 active: true,
                 last_stripe_event_ts: event.created,
-                subscription_id: invoice.subscription as string
+                subscription_id: invoice.subscription as string,
+                cancel_at_period_end: false,
+                current_period_end: retrievedSub?.current_period_end ?? null,
+                subscription_start: retrievedSub?.start_date ?? null,
               }, { onConflict: 'user_id' });
 
               // Fallback: column(s) missing (error 42703) — strip extended fields and retry with bare minimum
@@ -278,11 +286,13 @@ Deno.serve(async (req) => {
                   plan_id: planId,
                   active: true,
                   last_stripe_event_ts: event.created,
-                  subscription_id: sub.id
+                  subscription_id: sub.id,
+                  cancel_at_period_end: sub.cancel_at_period_end,
+                  current_period_end: sub.current_period_end,
                 }, { onConflict: 'user_id' });
 
                 if (subUpsertError?.code === '42703') {
-                  log('warn', event.type, 'upsert_fallback', { userId, reason: 'subscription_id column missing' });
+                  log('warn', event.type, 'upsert_fallback', { userId, reason: 'extended column missing' });
                   const { error: retryError } = await supabase.from('user_plans').upsert({
                     user_id: userId, plan_id: planId, active: true, last_stripe_event_ts: event.created,
                   }, { onConflict: 'user_id' });

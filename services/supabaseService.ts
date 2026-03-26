@@ -888,3 +888,40 @@ export async function adminUpdateUserPlan(userId: string, planId: string): Promi
 
   if (error) throw new Error(error.message);
 }
+
+// ==================== ASSINATURA ====================
+
+export interface SubscriptionInfo {
+  plan_id: string;
+  active: boolean;
+  subscription_id: string | null;
+  cancel_at_period_end: boolean;
+  current_period_end: number | null;
+  subscription_start: number | null;
+  created_at: string;
+}
+
+export async function getSubscriptionInfo(userId: string): Promise<SubscriptionInfo | null> {
+  const { data, error } = await supabase
+    .from('user_plans')
+    .select('plan_id, active, subscription_id, cancel_at_period_end, current_period_end, subscription_start, created_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data as SubscriptionInfo | null;
+}
+
+export async function cancelSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Usuário não autenticado');
+
+  const { data, error } = await supabase.functions.invoke('stripe-cancel-subscription', {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+
+  if (error) throw new Error(error.message || 'Erro ao cancelar assinatura');
+  if (data?.error) throw new Error(data.error);
+
+  return data as { cancel_at_period_end: boolean; current_period_end: number };
+}
