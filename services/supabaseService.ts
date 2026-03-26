@@ -634,34 +634,34 @@ export async function getDailyUsage(userId: string, type: 'food' | 'shape'): Pro
 // ==================== GAMIFICAÇÃO = [STREAKS, BADGES, LEVELS] = ====================
 
 export async function getUserStats(userId: string): Promise<UserStats> {
+  // maybeSingle() retorna 200+null quando não há linha, evitando o 406 no console
   const { data, error } = await supabase
     .from('user_stats')
     .select('*')
     .eq('user_id', userId)
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    if (error.code === 'PGRST116') {
-      // Criar stats iniciais se não existirem
-      const initialStats = {
-        user_id: userId,
-        current_streak: 0,
-        longest_streak: 0,
-        total_logs: 0,
-        level: 1,
-        experience: 0,
-        badges: []
-      };
-      const { data: newData, error: insertError } = await supabase
-        .from('user_stats')
-        .insert(initialStats)
-        .select()
-        .single();
-      
-      if (insertError) throw new Error(insertError.message);
-      return mapStatsFromDB(newData);
-    }
-    throw new Error(error.message);
+  if (error) throw new Error(error.message);
+
+  if (!data) {
+    // Criar stats iniciais se não existirem
+    const initialStats = {
+      user_id: userId,
+      current_streak: 0,
+      longest_streak: 0,
+      total_logs: 0,
+      level: 1,
+      experience: 0,
+      badges: []
+    };
+    const { data: newData, error: insertError } = await supabase
+      .from('user_stats')
+      .insert(initialStats)
+      .select()
+      .single();
+
+    if (insertError) throw new Error(insertError.message);
+    return mapStatsFromDB(newData);
   }
 
   return mapStatsFromDB(data);
@@ -912,11 +912,12 @@ export async function getSubscriptionInfo(userId: string): Promise<SubscriptionI
   return data as SubscriptionInfo | null;
 }
 
-export async function cancelSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
+export async function cancelSubscription(reason?: string, feedback?: string): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Usuário não autenticado');
 
   const { data, error } = await supabase.functions.invoke('stripe-cancel-subscription', {
+    body: { reason: reason || '', feedback: feedback || '' },
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
 
@@ -924,6 +925,27 @@ export async function cancelSubscription(): Promise<{ cancel_at_period_end: bool
   if (data?.error) throw new Error(data.error);
 
   return data as { cancel_at_period_end: boolean; current_period_end: number };
+}
+
+// ==================== CHAT ====================
+
+export async function getChatHistory(userId: string): Promise<{ role: 'user' | 'assistant'; content: string }[]> {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select('role, content')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(100);
+
+  if (error) throw new Error(error.message);
+  return (data || []) as { role: 'user' | 'assistant'; content: string }[];
+}
+
+export async function saveChatMessages(userId: string, messages: { role: string; content: string }[]): Promise<void> {
+  if (!messages.length) return;
+  const rows = messages.map(m => ({ user_id: userId, role: m.role, content: m.content }));
+  const { error } = await supabase.from('chat_messages').insert(rows);
+  if (error) throw new Error(error.message);
 }
 
 export async function reactivateSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {

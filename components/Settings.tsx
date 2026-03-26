@@ -26,10 +26,40 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null);
-  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelStep, setCancelStep] = useState<'survey' | 'retention' | 'confirm' | null>(null);
+  const [selectedReason, setSelectedReason] = useState('');
+  const [feedbackText, setFeedbackText] = useState('');
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState('');
   const [reactivateLoading, setReactivateLoading] = useState(false);
+
+  const CANCEL_REASONS = [
+    { id: 'expensive', label: 'Muito caro' },
+    { id: 'low_usage', label: 'Não uso o suficiente' },
+    { id: 'alternative', label: 'Encontrei uma alternativa' },
+    { id: 'technical', label: 'Problemas técnicos' },
+    { id: 'other', label: 'Outro motivo' },
+  ];
+
+  const getRetentionContent = (reason: string) => {
+    const expiryDate = subscriptionInfo?.current_period_end ? formatDate(subscriptionInfo.current_period_end) : 'o fim do período';
+    if (reason === 'expensive') return {
+      title: 'Antes de ir...',
+      body: `Por menos de R$1 por dia você tem análises ilimitadas de shape e alimentação, Personal 24h disponível a qualquer hora e acompanhamento real dos seus resultados. Você mantém acesso até ${expiryDate} — pense bem antes de cancelar.`,
+    };
+    if (reason === 'low_usage') return {
+      title: 'Você ainda tem muito para explorar',
+      body: `Seu acesso vai até ${expiryDate}. Análise de shape, plano nutricional personalizado e seu Personal 24h estão te esperando. Às vezes tudo que falta são 5 minutos para começar.`,
+    };
+    return null;
+  };
+
+  const closeCancelModal = () => {
+    setCancelStep(null);
+    setSelectedReason('');
+    setFeedbackText('');
+    setCancelError('');
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -81,13 +111,13 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
     setCancelLoading(true);
     setCancelError('');
     try {
-      const result = await db.subscription.cancel();
+      const result = await db.subscription.cancel(selectedReason, feedbackText);
       setSubscriptionInfo(prev => prev ? {
         ...prev,
         cancel_at_period_end: result.cancel_at_period_end,
         current_period_end: result.current_period_end,
       } : null);
-      setShowCancelModal(false);
+      closeCancelModal();
       setSuccessMsg('Sua assinatura será encerrada ao final do período atual.');
       setTimeout(() => setSuccessMsg(''), 5000);
     } catch (err: any) {
@@ -278,7 +308,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
                     </div>
                   ) : (
                     <button
-                      onClick={() => setShowCancelModal(true)}
+                      onClick={() => setCancelStep('survey')}
                       className="w-full py-3 text-zinc-500 hover:text-red-400 border border-white/5 hover:border-red-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all"
                     >
                       Cancelar assinatura
@@ -303,50 +333,135 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
           </div>
         </div>
       </div>
-      {/* Cancel Subscription Confirmation Modal */}
-      {showCancelModal && (
+      {/* Cancel Subscription Multi-step Modal */}
+      {cancelStep && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <motion.div
+            key={cancelStep}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-zinc-950 border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl"
           >
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="w-6 h-6 text-red-400" />
-              </div>
-              <h3 className="text-base font-black text-white mb-3 leading-snug">
-                Tem certeza que deseja cancelar sua assinatura?
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Você continuará com acesso completo até o final do período atual. Após isso, sua assinatura será encerrada automaticamente.
-              </p>
-            </div>
 
-            {cancelError && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                <p className="text-xs text-red-400 text-center">{cancelError}</p>
-              </div>
+            {/* STEP 1: Survey */}
+            {cancelStep === 'survey' && (
+              <>
+                <div className="mb-6">
+                  <h3 className="text-base font-black text-white mb-1">Por que você quer cancelar?</h3>
+                  <p className="text-xs text-zinc-500">Sua resposta nos ajuda a melhorar.</p>
+                </div>
+                <div className="space-y-2 mb-5">
+                  {CANCEL_REASONS.map(r => (
+                    <button
+                      key={r.id}
+                      onClick={() => setSelectedReason(r.id)}
+                      className={`w-full text-left px-4 py-3 rounded-xl border text-xs font-bold transition-all ${
+                        selectedReason === r.id
+                          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+                          : 'border-white/5 bg-white/[0.02] text-zinc-400 hover:border-white/10 hover:text-white'
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={feedbackText}
+                  onChange={e => setFeedbackText(e.target.value)}
+                  placeholder="Comentário adicional (opcional)"
+                  rows={2}
+                  className="w-full bg-white/[0.03] border border-white/5 rounded-xl p-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-emerald-500/30 resize-none mb-5"
+                />
+                <div className="space-y-3">
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      if (!selectedReason) return;
+                      const retention = getRetentionContent(selectedReason);
+                      setCancelStep(retention ? 'retention' : 'confirm');
+                    }}
+                    disabled={!selectedReason}
+                    className="w-full py-4 bg-white text-zinc-950 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Continuar
+                  </motion.button>
+                  <motion.button whileTap={{ scale: 0.98 }} onClick={closeCancelModal} className="w-full py-3 text-zinc-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all">
+                    Voltar
+                  </motion.button>
+                </div>
+              </>
             )}
 
-            <div className="space-y-3">
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={handleCancelSubscription}
-                disabled={cancelLoading}
-                className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {cancelLoading ? 'Processando...' : 'Confirmar cancelamento'}
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={() => { setShowCancelModal(false); setCancelError(''); }}
-                disabled={cancelLoading}
-                className="w-full py-4 bg-white/5 text-zinc-400 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
-              >
-                Voltar
-              </motion.button>
-            </div>
+            {/* STEP 2: Retention */}
+            {cancelStep === 'retention' && (() => {
+              const content = getRetentionContent(selectedReason);
+              return content ? (
+                <>
+                  <div className="text-center mb-6">
+                    <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl">💪</span>
+                    </div>
+                    <h3 className="text-base font-black text-white mb-3">{content.title}</h3>
+                    <p className="text-xs text-zinc-400 leading-relaxed">{content.body}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={closeCancelModal}
+                      className="w-full py-4 bg-emerald-500 text-zinc-950 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
+                    >
+                      Manter minha assinatura
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setCancelStep('confirm')}
+                      className="w-full py-3 text-zinc-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
+                    >
+                      Cancelar mesmo assim
+                    </motion.button>
+                  </div>
+                </>
+              ) : null;
+            })()}
+
+            {/* STEP 3: Confirm */}
+            {cancelStep === 'confirm' && (
+              <>
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <AlertTriangle className="w-6 h-6 text-red-400" />
+                  </div>
+                  <h3 className="text-base font-black text-white mb-3">Confirmar cancelamento</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Você continuará com acesso completo até o final do período atual. Após isso, sua assinatura será encerrada automaticamente e você não será mais cobrado.
+                  </p>
+                </div>
+                {cancelError && (
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <p className="text-xs text-red-400 text-center">{cancelError}</p>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleCancelSubscription}
+                    disabled={cancelLoading}
+                    className="w-full py-4 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {cancelLoading ? 'Processando...' : 'Confirmar cancelamento'}
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setCancelStep('survey')}
+                    disabled={cancelLoading}
+                    className="w-full py-3 text-zinc-500 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
+                  >
+                    Voltar
+                  </motion.button>
+                </div>
+              </>
+            )}
+
           </motion.div>
         </div>
       )}

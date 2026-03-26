@@ -171,6 +171,29 @@ Deno.serve(async (req) => {
 
     log('info', 'Reconciliação concluída', stats);
 
+    // Alerta de erros por email
+    if (stats.errors > 0) {
+      const resendApiKey = Deno.env.get('RESEND_API_KEY') || '';
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+      if (resendApiKey && adminEmail) {
+        try {
+          const html = `<div style="font-family:monospace;background:#0a0a0a;color:#f4f4f4;padding:24px;border-radius:8px;">
+            <h2 style="color:#ef4444;">⚠️ Stripe Reconcile — Erros detectados</h2>
+            <pre style="background:#1a1a1a;padding:16px;border-radius:8px;">${JSON.stringify(stats, null, 2)}</pre>
+            <p style="color:#a1a1aa;font-size:12px;">TraceId: ${traceId}</p>
+          </div>`;
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
+            body: JSON.stringify({ from: 'ShapeScan Alerts <no-reply@shapescan.com.br>', to: adminEmail, subject: `⚠️ Stripe Reconcile: ${stats.errors} erro(s) detectado(s)`, html }),
+          });
+          log('info', 'Alert email enviado ao admin');
+        } catch (emailErr: any) {
+          log('warn', 'Falha ao enviar alert email', { reason: emailErr.message });
+        }
+      }
+    }
+
     return new Response(JSON.stringify({ success: true, stats }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

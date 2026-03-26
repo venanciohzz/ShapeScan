@@ -129,12 +129,11 @@ export const db = {
 
     chat: {
         async getHistory(userId: string): Promise<ChatMessage[]> {
-            // Chat history não está sendo persistido no Supabase ainda
-            return [];
+            return await supabaseService.getChatHistory(userId);
         },
 
-        async saveHistory(userId: string, messages: ChatMessage[]) {
-            // Chat history não está sendo persistido no Supabase ainda
+        async saveMessages(userId: string, messages: ChatMessage[]): Promise<void> {
+            await supabaseService.saveChatMessages(userId, messages);
         }
     },
 
@@ -176,8 +175,8 @@ export const db = {
             return await supabaseService.getSubscriptionInfo(userId);
         },
 
-        async cancel(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-            return await supabaseService.cancelSubscription();
+        async cancel(reason?: string, feedback?: string): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
+            return await supabaseService.cancelSubscription(reason, feedback);
         },
 
         async reactivate(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {

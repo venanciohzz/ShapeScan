@@ -5,6 +5,7 @@ import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 import { ChevronLeft, Sparkles, Diamond, Mic, Send, Bot, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { db } from '../services/db';
 
 interface PersonalIAProps {
   user: User;
@@ -20,6 +21,7 @@ interface PersonalIAProps {
 const Personal24H: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack, messages, setMessages, onUpgrade, onShowToast }) => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // PREMIUM LOCK
@@ -58,32 +60,32 @@ const Personal24H: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack,
     );
   }
 
-  // Initial Message with Context Logic
+  // Carregar histórico do banco ao montar (apenas se não há mensagens em memória)
   useEffect(() => {
-    // Only add welcome message if chat is completely empty
-    if (messages.length === 0) {
-      const firstName = (user.name || 'atleta').split(' ')[0];
-      const welcomeOptions = [
-        `Fala ${firstName}! Bora pra cima? 🚀`,
-        `E aí ${firstName}! Como estamos na meta hoje? 💪`,
-        `Opa ${firstName}! Pronto para o próximo nível? 🔥`,
-        `Diz aí ${firstName}! No que posso te ajudar a evoluir agora? 📈`,
-        `Salve ${firstName}! Qual o plano de hoje? Treino, dieta ou só um gás? ⚡`
-      ];
+    if (messages.length > 0) { setHistoryLoaded(true); return; }
+    db.chat.getHistory(user.id)
+      .then(history => { if (history.length > 0) setMessages(history); })
+      .catch(err => console.error('[Chat] Erro ao carregar histórico:', err))
+      .finally(() => setHistoryLoaded(true));
+  }, [user.id]);
 
-      let welcome = welcomeOptions[Math.floor(Math.random() * welcomeOptions.length)];
-
-      // Check for latest evolution context
-      if (evolution.length > 0) {
-        const lastEvo = evolution[0];
-        if (lastEvo.detailedAnalysis) {
-          welcome += ` Vi sua última análise do shape. Vamos focar em melhorar esses pontos! 💪`;
-        }
-      }
-
-      setMessages([{ role: 'assistant', content: welcome + (welcome.includes('ajudar') ? '' : " Manda a braba!") }]);
+  // Mensagem de boas-vindas: apenas após carregar histórico e se chat ainda vazio
+  useEffect(() => {
+    if (!historyLoaded || messages.length > 0) return;
+    const firstName = (user.name || 'atleta').split(' ')[0];
+    const welcomeOptions = [
+      `Fala ${firstName}! Bora pra cima? 🚀`,
+      `E aí ${firstName}! Como estamos na meta hoje? 💪`,
+      `Opa ${firstName}! Pronto para o próximo nível? 🔥`,
+      `Diz aí ${firstName}! No que posso te ajudar a evoluir agora? 📈`,
+      `Salve ${firstName}! Qual o plano de hoje? Treino, dieta ou só um gás? ⚡`
+    ];
+    let welcome = welcomeOptions[Math.floor(Math.random() * welcomeOptions.length)];
+    if (evolution.length > 0 && evolution[0].detailedAnalysis) {
+      welcome += ` Vi sua última análise do shape. Vamos focar em melhorar esses pontos! 💪`;
     }
-  }, []);
+    setMessages([{ role: 'assistant', content: welcome + (welcome.includes('ajudar') ? '' : " Manda a braba!") }]);
+  }, [historyLoaded]);
 
   // Fix scroll behavior: Scroll to the TOP of the new message
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -144,8 +146,14 @@ const Personal24H: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack,
 
       // Clean up markdown asterisks from response immediately
       const cleanResponse = response ? response.replace(/\*\*/g, '').replace(/__/g, '') : "Puts, me perdi aqui. Manda de novo? 🙏";
+      const assistantMsg: ChatMessage = { role: 'assistant', content: cleanResponse };
+      setMessages((prev: ChatMessage[]) => [...prev, assistantMsg]);
 
-      setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: cleanResponse }]);
+      // Persistir no banco (fire and forget)
+      db.chat.saveMessages(user.id, [
+        { role: 'user', content: userMsg },
+        assistantMsg,
+      ]).catch(err => console.error('[Chat] Erro ao salvar mensagens:', err));
     } catch (err) {
       setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: "Erro na conexão. Tenta de novo já já! 🔥" }]);
     } finally {
