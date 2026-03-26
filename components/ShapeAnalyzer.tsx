@@ -191,7 +191,11 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
           setResult(validAnalysis);
           // Edge Function já incrementou o uso atomicamente
         } catch (err: any) {
-          onShowToast(err.message || "Falha na análise", 'error');
+          if (err.isLimitReached) {
+            setShowLimitModal(true);
+          } else {
+            onShowToast(err.message || "Falha na análise", 'error');
+          }
         } finally {
           setLoading(false);
         }
