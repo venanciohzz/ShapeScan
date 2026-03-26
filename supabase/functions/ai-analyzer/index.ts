@@ -18,14 +18,11 @@ Deno.serve(async (req) => {
         const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
         // ── 1. AUTENTICAÇÃO ────────────────────────────────────────────────
-        console.log('[AUTH] Header present:', !!authHeader, '| Prefix:', authHeader?.substring(0, 15));
         let user = null;
         if (authHeader) {
             const token = authHeader.split(' ').pop();
             if (token) {
-                console.log('[AUTH] Token prefix:', token.substring(0, 20));
                 const { data: { user: foundUser }, error: authError } = await adminClient.auth.getUser(token);
-                console.log('[AUTH] getUser result:', { hasUser: !!foundUser, userId: foundUser?.id?.substring(0, 8), error: authError?.message });
                 if (authError) {
                     console.error('Auth error:', authError.message);
                 }
@@ -36,7 +33,6 @@ Deno.serve(async (req) => {
         }
 
         if (!user) {
-            console.warn('[AUTH] No user — returning 401. authHeader present:', !!authHeader);
             return new Response(JSON.stringify({
                 error: "Sessão inválida ou expirada. Por favor, saia e entre novamente no ShapeScan.",
                 isError: true,
