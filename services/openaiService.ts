@@ -70,7 +70,7 @@ const calculateMuscleScore = (protein: number, carbs: number, fat: number): numb
 const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
   // Always get the MOST RECENT session to avoid using an expired token
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  
+
   if (sessionError || !session) {
     console.error('[openaiService] Auth session error or not found:', sessionError);
     throw new Error('401: Sua sessão expirou. Por favor, saia e entre novamente no aplicativo.');
@@ -80,8 +80,13 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
     // Log for debugging (remove in production if too noisy)
     console.log(`[openaiService] Invoking ai-analyzer for ${payload.type}...`);
 
+    // Explicitly pass Authorization header — supabase.functions.invoke auto-detection
+    // can fail in some environments, explicit header guarantees the correct token is sent
     const { data, error } = await supabase.functions.invoke('ai-analyzer', {
       body: payload,
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
 
     if (error) {
