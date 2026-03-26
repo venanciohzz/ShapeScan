@@ -201,6 +201,30 @@ Deno.serve(async (req) => {
 
   } catch (err: any) {
     log('error', 'Erro crítico na reconciliação', { reason: err.message });
+
+    // Alerta crítico: função quebrou antes de concluir
+    const resendApiKey = Deno.env.get('RESEND_API_KEY') || '';
+    const adminEmail = Deno.env.get('ADMIN_EMAIL') || '';
+    if (resendApiKey && adminEmail) {
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resendApiKey}` },
+          body: JSON.stringify({
+            from: 'ShapeScan Alerts <no-reply@shapescan.com.br>',
+            to: adminEmail,
+            subject: '🚨 CRÍTICO: Stripe Reconcile falhou completamente',
+            html: `<div style="font-family:monospace;background:#0a0a0a;color:#f4f4f4;padding:24px;border-radius:8px;">
+              <h2 style="color:#ef4444;">🚨 stripe-reconcile falhou com erro crítico</h2>
+              <p><strong>Mensagem:</strong> ${err.message}</p>
+              <p><strong>TraceId:</strong> ${traceId}</p>
+              <p style="color:#a1a1aa;font-size:12px;">A reconciliação não foi concluída. Usuários podem estar com planos inconsistentes.</p>
+            </div>`,
+          }),
+        });
+      } catch { /* não bloquear o return de erro */ }
+    }
+
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 });

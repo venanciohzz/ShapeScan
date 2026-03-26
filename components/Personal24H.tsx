@@ -149,11 +149,14 @@ const Personal24H: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack,
       const assistantMsg: ChatMessage = { role: 'assistant', content: cleanResponse };
       setMessages((prev: ChatMessage[]) => [...prev, assistantMsg]);
 
-      // Persistir no banco (fire and forget)
-      db.chat.saveMessages(user.id, [
-        { role: 'user', content: userMsg },
-        assistantMsg,
-      ]).catch(err => console.error('[Chat] Erro ao salvar mensagens:', err));
+      // Persistir no banco com retry único em caso de falha
+      const msgs = [{ role: 'user', content: userMsg }, assistantMsg];
+      db.chat.saveMessages(user.id, msgs).catch(() => {
+        setTimeout(() => {
+          db.chat.saveMessages(user.id, msgs)
+            .catch(err => console.error('[Chat] Falha ao persistir após retry:', err));
+        }, 2000);
+      });
     } catch (err) {
       setMessages((prev: ChatMessage[]) => [...prev, { role: 'assistant', content: "Erro na conexão. Tenta de novo já já! 🔥" }]);
     } finally {
