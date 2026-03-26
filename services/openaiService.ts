@@ -89,24 +89,25 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
 
       // Try to parse the response body for structured errors (429, 401, etc.)
       let errorBody: any = null;
+      const httpStatus = error.context?.status ?? error.status;
       try {
         if (error.context && typeof error.context.json === 'function') {
           errorBody = await error.context.json();
         }
       } catch (_) { /* ignore parse errors */ }
 
-      if (error.status === 401 || (error.message && error.message.includes('401'))) {
+      if (httpStatus === 401 || (error.message && error.message.includes('401'))) {
         throw new Error('401: Sessão inválida. Por favor, faça login novamente para reautenticar.');
       }
 
-      if (error.status === 429 || errorBody?.isLimitReached) {
+      if (httpStatus === 429 || errorBody?.isLimitReached) {
         const e: any = new Error(errorBody?.error || 'Você atingiu seu limite diário para este recurso.');
         e.isLimitReached = true;
         e.showPaywall = errorBody?.showPaywall || false;
         throw e;
       }
 
-      if (error.status === 406) {
+      if (httpStatus === 406) {
         throw new Error('Erro de configuração no servidor (406). Por favor, contate o suporte.');
       }
 
@@ -277,17 +278,21 @@ RESPOSTA (JSON APENAS):
     return result;
   } catch (error: any) {
     console.error('[openaiService] Error in analyzePlate:', error);
-    return { 
-      dish_name: "Erro na análise", 
-      items: [], 
-      calories: 0, 
-      protein_g: 0, 
-      carbs_g: 0, 
-      fat_g: 0, 
-      totalWeight: 0, 
-      score: 0, 
+    // Re-throw auth/limit errors so FoodAnalyzer can handle them properly
+    if (error.isLimitReached || (error.message && error.message.startsWith('401:'))) {
+      throw error;
+    }
+    return {
+      dish_name: "Erro na análise",
+      items: [],
+      calories: 0,
+      protein_g: 0,
+      carbs_g: 0,
+      fat_g: 0,
+      totalWeight: 0,
+      score: 0,
       observation: error.message || "Não foi possível analisar. Tente uma foto mais clara.",
-      mealName: "Erro", 
+      mealName: "Erro",
       reasoning: "Falha na comunicação com a IA: " + (error.message || "Erro desconhecido")
     };
   }
