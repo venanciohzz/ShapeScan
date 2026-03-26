@@ -57,9 +57,10 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () =>
   return (
     <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
       <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-3xl backdrop-blur-sm">
-        <PaymentElement options={{
-          layout: 'tabs',
-        }} />
+        <PaymentElement
+          options={{ layout: 'tabs' }}
+          onLoadError={(e) => console.error('[PaymentElement] Load error:', e)}
+        />
       </div>
 
       {errorMessage && (
