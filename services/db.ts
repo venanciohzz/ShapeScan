@@ -178,6 +178,10 @@ export const db = {
 
         async cancel(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
             return await supabaseService.cancelSubscription();
+        },
+
+        async reactivate(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
+            return await supabaseService.reactivateSubscription();
         }
     }
 };

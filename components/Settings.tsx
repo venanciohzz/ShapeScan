@@ -29,6 +29,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState('');
+  const [reactivateLoading, setReactivateLoading] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -56,6 +57,25 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
     };
     fetchSubscription();
   }, [user.id, user.isPremium]);
+
+  const handleReactivateSubscription = async () => {
+    setReactivateLoading(true);
+    try {
+      const result = await db.subscription.reactivate();
+      setSubscriptionInfo(prev => prev ? {
+        ...prev,
+        cancel_at_period_end: result.cancel_at_period_end,
+        current_period_end: result.current_period_end,
+      } : null);
+      setSuccessMsg('Sua assinatura foi reativada com sucesso!');
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (err: any) {
+      setCancelError(err.message || 'Erro ao reativar assinatura. Tente novamente.');
+      setTimeout(() => setCancelError(''), 5000);
+    } finally {
+      setReactivateLoading(false);
+    }
+  };
 
   const handleCancelSubscription = async () => {
     setCancelLoading(true);
@@ -236,15 +256,25 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
                   )}
 
                   {subscriptionInfo.cancel_at_period_end ? (
-                    <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                      <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                      <p className="text-xs text-amber-400 leading-relaxed">
-                        Seu plano está programado para cancelamento em{' '}
-                        <span className="font-black">
-                          {subscriptionInfo.current_period_end ? formatDate(subscriptionInfo.current_period_end) : 'breve'}
-                        </span>
-                        . Você mantém acesso completo até lá.
-                      </p>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-400 leading-relaxed">
+                          Seu plano está programado para cancelamento em{' '}
+                          <span className="font-black">
+                            {subscriptionInfo.current_period_end ? formatDate(subscriptionInfo.current_period_end) : 'breve'}
+                          </span>
+                          . Você mantém acesso completo até lá.
+                        </p>
+                      </div>
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleReactivateSubscription}
+                        disabled={reactivateLoading}
+                        className="w-full py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {reactivateLoading ? 'Processando...' : 'Continuar com o plano'}
+                      </motion.button>
                     </div>
                   ) : (
                     <button

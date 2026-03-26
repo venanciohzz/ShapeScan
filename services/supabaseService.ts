@@ -925,3 +925,17 @@ export async function cancelSubscription(): Promise<{ cancel_at_period_end: bool
 
   return data as { cancel_at_period_end: boolean; current_period_end: number };
 }
+
+export async function reactivateSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Usuário não autenticado');
+
+  const { data, error } = await supabase.functions.invoke('stripe-reactivate-subscription', {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+
+  if (error) throw new Error(error.message || 'Erro ao reativar assinatura');
+  if (data?.error) throw new Error(data.error);
+
+  return data as { cancel_at_period_end: boolean; current_period_end: number };
+}
