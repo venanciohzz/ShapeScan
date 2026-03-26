@@ -30,9 +30,11 @@ Deno.serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+  const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  // Usar service role para validar o JWT do usuário (mais confiável que anon key em edge functions)
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+  const supabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
     global: { headers: { Authorization: authHeader } },
   });
 
@@ -40,7 +42,7 @@ Deno.serve(async (req) => {
   const token = authHeader.replace('Bearer ', '');
 
   try {
-    const { data, error } = await supabaseClient.auth.getUser(token);
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
     if (error) throw error;
     if (!data.user) throw new Error('No user returned');
     user = { id: data.user.id, email: data.user.email || '' };
