@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlanType, PAYMENT_CONFIG } from '../services/paymentConfig';
+import { pixel } from '../utils/pixel';
 import { User } from '../types';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
@@ -18,15 +19,20 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
    const [stripePriceId, setStripePriceId] = useState<string | null>(null);
    const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
+   useEffect(() => {
+      pixel.viewContent('Página de Planos');
+   }, []);
+
    const handleSubscribe = async (plan: PlanType) => {
       if (!user) { onShowToast("Erro: Usuário não identificado.", 'error'); return; }
-      
+
       const config = PAYMENT_CONFIG[plan];
       if (!config || !config.stripePriceId) {
          onShowToast("Plano não disponível para Stripe no momento.", 'error');
          return;
       }
 
+      pixel.initiateCheckout(config.name, config.price);
       setStripePriceId(config.stripePriceId);
       setSelectedPlan(plan);
    };

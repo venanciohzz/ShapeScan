@@ -188,10 +188,19 @@ const App: React.FC = () => {
             if (updatedUser.isPremium) {
               console.log(`[App] Plano premium ativado! (${elapsed / 1000}s)`);
               showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
+
+              // Meta Pixel Purchase
+              const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
+              const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
+              const { pixel } = await import('./utils/pixel');
+              pixel.purchase(planName, planValue);
+
               clearInterval(interval);
               isPollingPremiumRef.current = false;
               localStorage.removeItem('awaiting_stripe_payment');
               localStorage.removeItem('awaiting_stripe_payment_started');
+              localStorage.removeItem('awaiting_stripe_plan_name');
+              localStorage.removeItem('awaiting_stripe_plan_value');
               window.history.replaceState({}, document.title, window.location.pathname);
               return;
             }
@@ -207,6 +216,8 @@ const App: React.FC = () => {
           showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
           localStorage.removeItem('awaiting_stripe_payment');
           localStorage.removeItem('awaiting_stripe_payment_started');
+          localStorage.removeItem('awaiting_stripe_plan_name');
+          localStorage.removeItem('awaiting_stripe_plan_value');
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }, POLL_INTERVAL);

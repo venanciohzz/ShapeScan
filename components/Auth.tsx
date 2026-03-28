@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
 import { db } from '../services/db';
 import { sanitizeInput } from '../utils/security';
+import { pixel } from '../utils/pixel';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 
@@ -82,12 +83,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
 
         const newUser = await db.auth.signUp(userData, cleanPassword);
         await db.auth.setSession(newUser);
+        pixel.completeRegistration();
         onLogin(newUser, true);
 
       } else {
         // Login Logic via Database Service
         const user = await db.auth.signIn(cleanEmail, cleanPassword);
         await db.auth.setSession(user);
+        pixel.lead();
         onLogin(user, false);
       }
     } catch (err: any) {

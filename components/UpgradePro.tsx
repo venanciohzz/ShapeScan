@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PlanType, PAYMENT_CONFIG } from '../services/paymentConfig';
+import { pixel } from '../utils/pixel';
 import { User } from '../types';
 import StripeCheckout from './ui/StripeCheckout';
 
@@ -22,6 +23,7 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
          return;
       }
 
+      pixel.initiateCheckout(config.name, config.price);
       setStripePriceId(config.stripePriceId);
       setSelectedPlan(plan);
    };

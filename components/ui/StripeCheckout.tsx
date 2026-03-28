@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
+import { pixel } from '../../utils/pixel';
 import {
   Elements,
   PaymentElement,
@@ -22,7 +23,7 @@ interface StripeCheckoutProps {
   planPeriod?: string; // Período, ex: "/mês" ou "/ano"
 }
 
-const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () => void; userId: string; planId: string; planPeriod: string }) => {
+const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue }: { onCancel: () => void; userId: string; planId: string; planPeriod: string; planName: string; planValue: number }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -49,6 +50,10 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod }: { onCancel: () =>
 
     // Gravar flag local ANTES do redirect para ativar o polling no retorno
     localStorage.setItem('awaiting_stripe_payment', 'true');
+    localStorage.setItem('awaiting_stripe_plan_name', planName);
+    localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
+
+    pixel.addPaymentInfo(planName, planValue);
 
     const { error } = await stripe.confirmPayment({
       elements,
@@ -379,7 +384,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
               </div>
 
               <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
-                <PaymentForm onCancel={onClose} userId={userId} planId={priceId} planPeriod={planPeriod} />
+                <PaymentForm onCancel={onClose} userId={userId} planId={priceId} planPeriod={planPeriod} planName={planName} planValue={parseFloat(planPrice.replace(',', '.'))} />
               </Elements>
             </div>
           ) : null}
