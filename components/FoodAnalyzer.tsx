@@ -314,22 +314,10 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
           {!result ? (
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
               <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-[2px] bg-emerald-500/50"></div>
-                  <span className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.4em] leading-none">
-                    {mode === 'manual' ? 'Registro Manual' : 'Análise de Refeição'}
-                  </span>
-                </div>
-                <h1 className="text-4xl md:text-8xl font-serif-premium font-bold text-white tracking-tighter leading-[0.9] flex flex-col text-balance">
-                  {mode === 'manual' ? (
-                    <>
-                      <LetterPuller text="Registro" className="opacity-60 md:opacity-40 text-2xl md:text-6xl" />
-                      <LetterPuller text="Manual" />
-                    </>
-                  ) : (
-                    <LetterPuller text="Scanner" />
-                  )}
-                </h1>
+                <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] leading-none opacity-70">
+                  {mode === 'manual' ? 'Registro Manual' : 'Análise de Refeição'}
+                </span>
+                <LetterPuller text="Scanner" className="text-4xl md:text-6xl text-white tracking-tighter text-balance" />
               </div>
 
               {mode === 'manual' ? (
