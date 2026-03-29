@@ -3,51 +3,86 @@ import { View } from '../../types';
 import { Scan, User, LineChart, NotebookPen, Save, Droplets, Scale, Flame, Target, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-interface ActionButtonProps {
-    onClick: () => void;
-    icon: React.ReactNode;
-    title: string;
-    subtitle?: string;
-    premium?: boolean;
-}
+const PREMIUM_TOOLS = [
+    {
+        view: 'food_ai' as View,
+        icon: Scan,
+        title: 'Análise de Refeição',
+        subtitle: 'Análise nutricional por IA',
+        accent: 'emerald',
+    },
+    {
+        view: 'shape' as View,
+        icon: User,
+        title: 'Análise Física',
+        subtitle: 'Morfologia e composição',
+        accent: 'violet',
+    },
+    {
+        view: 'chat' as View,
+        icon: MessageSquare,
+        title: 'Personal 24h',
+        subtitle: 'Suporte inteligente 24/7',
+        accent: 'sky',
+    },
+    {
+        view: 'evolution' as View,
+        icon: LineChart,
+        title: 'Sua Evolução',
+        subtitle: 'Analytics pessoal',
+        accent: 'amber',
+    },
+];
 
-const ActionButton: React.FC<ActionButtonProps> = ({ onClick, icon, title, subtitle, premium }) => (
-    <motion.button
-        whileTap={{ scale: 0.97 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        onClick={onClick}
-        className="relative overflow-hidden group bg-zinc-950/40 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] border border-white/10 hover:border-emerald-500/30 transition-all duration-500 shadow-xl flex flex-col items-center md:items-start text-center md:text-left h-full"
-    >
-        {/* Hover Glow */}
-        <div className="absolute -inset-20 bg-emerald-500/10 rounded-full blur-[60px] opacity-0 group-hover:opacity-40 transition-opacity duration-1000"></div>
+const FREE_TOOLS = [
+    { view: 'food_manual' as View, icon: NotebookPen, title: 'Manual' },
+    { view: 'saved_meals' as View, icon: Save, title: 'Salvas' },
+    { view: 'water_calc' as View, icon: Droplets, title: 'Água' },
+    { view: 'bmi_calc' as View, icon: Scale, title: 'IMC' },
+    { view: 'calorie_calc' as View, icon: Flame, title: 'Gasto' },
+    { view: 'calorie_plan' as View, icon: Target, title: 'Meta' },
+];
 
-        <div className="relative z-10 w-full flex flex-col items-center md:items-start">
-            <div className="flex justify-center md:justify-between items-start mb-6 md:mb-10 w-full">
-                <div className="text-zinc-300 group-hover:text-emerald-400 transition-all duration-500 transform group-hover:scale-110 drop-shadow-md">
-                    {icon}
-                </div>
-                {premium && (
-                    <div className="absolute top-0 right-0 md:relative bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-lg border border-emerald-500/30 text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                        Pro
-                    </div>
-                )}
-            </div>
+const accentMap: Record<string, { text: string; bg: string; border: string; glow: string; bar: string }> = {
+    emerald: {
+        text: 'text-emerald-400',
+        bg: 'bg-emerald-500/10',
+        border: 'border-emerald-500/30',
+        glow: 'bg-emerald-500/15',
+        bar: 'bg-emerald-500',
+    },
+    violet: {
+        text: 'text-violet-400',
+        bg: 'bg-violet-500/10',
+        border: 'border-violet-500/30',
+        glow: 'bg-violet-500/15',
+        bar: 'bg-violet-500',
+    },
+    sky: {
+        text: 'text-sky-400',
+        bg: 'bg-sky-500/10',
+        border: 'border-sky-500/30',
+        glow: 'bg-sky-500/15',
+        bar: 'bg-sky-500',
+    },
+    amber: {
+        text: 'text-amber-400',
+        bg: 'bg-amber-500/10',
+        border: 'border-amber-500/30',
+        glow: 'bg-amber-500/15',
+        bar: 'bg-amber-500',
+    },
+};
 
-            <div className="flex flex-col items-center md:items-start">
-                <h3 className="font-serif-premium font-bold text-lg md:text-xl text-white mb-2 tracking-tight group-hover:text-emerald-400 transition-colors drop-shadow-md">
-                    {title}
-                </h3>
-                {subtitle && (
-                    <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest leading-relaxed opacity-80 drop-shadow-sm">
-                        {subtitle}
-                    </p>
-                )}
-            </div>
+const containerVariants = {
+    hidden: {},
+    visible: { transition: { staggerChildren: 0.08 } },
+};
 
-            <div className="mt-6 w-8 h-0.5 bg-white/10 group-hover:w-full group-hover:bg-emerald-500/30 transition-all duration-700"></div>
-        </div>
-    </motion.button>
-);
+const cardVariants = {
+    hidden: { opacity: 0, y: 16 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+};
 
 interface ToolGridProps {
     onNavigate: (view: View) => void;
@@ -55,63 +90,100 @@ interface ToolGridProps {
 
 const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate }) => {
     return (
-        <div className="space-y-12 pb-20">
+        <div className="space-y-10 pb-20">
             {/* PREMIUM TOOLS */}
             <section>
-                <div className="flex items-center gap-4 mb-8">
-                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.5em] opacity-30">
-                        Ferramentas Premium
+                <div className="flex items-center gap-4 mb-6">
+                    <h2 className="text-[10px] font-black text-white uppercase tracking-[0.5em] opacity-25 shrink-0">
+                        Ferramentas IA
                     </h2>
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
+                    <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <ActionButton
-                        onClick={() => onNavigate('food_ai')}
-                        icon={<Scan className="w-10 h-10 md:w-12 md:h-12" />}
-                        title="Análise de Refeição"
-                        subtitle="Análise nutricional"
-                        premium={true}
-                    />
-                    <ActionButton
-                        onClick={() => onNavigate('shape')}
-                        icon={<User className="w-10 h-10 md:w-12 md:h-12" />}
-                        title="Análise Física"
-                        subtitle="Morfologia física"
-                        premium={true}
-                    />
-                    <ActionButton
-                        onClick={() => onNavigate('chat')}
-                        icon={<MessageSquare className="w-10 h-10 md:w-12 md:h-12" />}
-                        title="Personal 24h"
-                        subtitle="Suporte 24/7"
-                        premium={true}
-                    />
-                    <ActionButton
-                        onClick={() => onNavigate('evolution')}
-                        icon={<LineChart className="w-10 h-10 md:w-12 md:h-12" />}
-                        title="Sua Evolução"
-                        subtitle="Analytics pessoal"
-                        premium={true}
-                    />
-                </div>
+
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid grid-cols-2 gap-3"
+                >
+                    {PREMIUM_TOOLS.map((tool) => {
+                        const Icon = tool.icon;
+                        const accent = accentMap[tool.accent];
+                        return (
+                            <motion.button
+                                key={tool.view}
+                                variants={cardVariants}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => onNavigate(tool.view)}
+                                className="relative overflow-hidden group bg-zinc-950/50 backdrop-blur-2xl p-5 md:p-7 rounded-[2rem] border border-white/8 hover:border-white/15 transition-all duration-500 shadow-xl flex flex-col items-start text-left h-full min-h-[140px] md:min-h-[160px]"
+                            >
+                                {/* Hover glow */}
+                                <div className={`absolute -inset-12 ${accent.glow} rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
+
+                                {/* Top accent line */}
+                                <div className={`absolute top-0 left-6 right-6 h-px ${accent.bar} opacity-0 group-hover:opacity-60 transition-opacity duration-500`} />
+
+                                <div className="relative z-10 flex flex-col h-full w-full">
+                                    {/* Icon + Pro badge */}
+                                    <div className="flex items-start justify-between mb-auto">
+                                        <div className={`p-2.5 rounded-2xl ${accent.bg} border ${accent.border} mb-4 transition-all duration-300 group-hover:scale-110`}>
+                                            <Icon className={`w-5 h-5 md:w-6 md:h-6 ${accent.text}`} />
+                                        </div>
+                                        <span className={`text-[8px] font-black uppercase tracking-widest ${accent.text} opacity-60 mt-1`}>IA</span>
+                                    </div>
+
+                                    {/* Text */}
+                                    <div>
+                                        <h3 className={`font-serif-premium font-bold text-sm md:text-base text-white leading-tight mb-1 group-hover:${accent.text} transition-colors duration-300`}>
+                                            {tool.title}
+                                        </h3>
+                                        <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider leading-relaxed">
+                                            {tool.subtitle}
+                                        </p>
+                                    </div>
+
+                                    {/* Bottom bar */}
+                                    <div className={`mt-4 h-px w-6 ${accent.bar} opacity-30 group-hover:w-full group-hover:opacity-60 transition-all duration-500`} />
+                                </div>
+                            </motion.button>
+                        );
+                    })}
+                </motion.div>
             </section>
 
             {/* FREE TOOLS */}
             <section>
-                <div className="flex items-center gap-4 mb-8">
-                    <h2 className="text-[11px] font-black text-white uppercase tracking-[0.5em] opacity-30">
+                <div className="flex items-center gap-4 mb-6">
+                    <h2 className="text-[10px] font-black text-white uppercase tracking-[0.5em] opacity-25 shrink-0">
                         Ferramentas Gratuitas
                     </h2>
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
+                    <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                    <ActionButton onClick={() => onNavigate('food_manual')} icon={<NotebookPen className="w-8 h-8" />} title="Adicionar Manualmente" />
-                    <ActionButton onClick={() => onNavigate('saved_meals')} icon={<Save className="w-8 h-8" />} title="Refeições Salvas" />
-                    <ActionButton onClick={() => onNavigate('water_calc')} icon={<Droplets className="w-8 h-8" />} title="Meta de Água" />
-                    <ActionButton onClick={() => onNavigate('bmi_calc')} icon={<Scale className="w-8 h-8" />} title="IMC" />
-                    <ActionButton onClick={() => onNavigate('calorie_calc')} icon={<Flame className="w-8 h-8" />} title="Gasto Calórico" />
-                    <ActionButton onClick={() => onNavigate('calorie_plan')} icon={<Target className="w-8 h-8" />} title="Minha Meta" />
-                </div>
+
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid grid-cols-3 gap-3"
+                >
+                    {FREE_TOOLS.map((tool) => {
+                        const Icon = tool.icon;
+                        return (
+                            <motion.button
+                                key={tool.view}
+                                variants={cardVariants}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => onNavigate(tool.view)}
+                                className="relative overflow-hidden group bg-zinc-950/40 backdrop-blur-xl p-4 rounded-[1.5rem] border border-white/8 hover:border-white/20 hover:bg-white/[0.04] transition-all duration-300 shadow-lg flex flex-col items-center justify-center gap-3 min-h-[80px]"
+                            >
+                                <Icon className="w-5 h-5 text-zinc-500 group-hover:text-white transition-colors duration-300" />
+                                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider group-hover:text-white transition-colors duration-300 text-center leading-tight">
+                                    {tool.title}
+                                </span>
+                            </motion.button>
+                        );
+                    })}
+                </motion.div>
             </section>
         </div>
     );

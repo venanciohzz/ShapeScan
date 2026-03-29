@@ -10,71 +10,71 @@ interface MacroCardProps {
     color?: 'emerald' | 'blue' | 'yellow';
 }
 
-const MacroCard: React.FC<MacroCardProps> = ({
-    label,
-    value,
-    unit,
-    fullLabel,
-    goal,
-    color = 'emerald',
-}) => {
-    const hasGoal = typeof goal === 'number';
+const colorMap = {
+    emerald: {
+        text: 'text-emerald-400',
+        bar: 'bg-emerald-500',
+        dot: 'bg-emerald-500',
+        glow: 'shadow-[0_0_12px_rgba(16,185,129,0.3)]',
+    },
+    blue: {
+        text: 'text-blue-400',
+        bar: 'bg-blue-500',
+        dot: 'bg-blue-500',
+        glow: 'shadow-[0_0_12px_rgba(59,130,246,0.3)]',
+    },
+    yellow: {
+        text: 'text-amber-400',
+        bar: 'bg-amber-500',
+        dot: 'bg-amber-500',
+        glow: 'shadow-[0_0_12px_rgba(245,158,11,0.3)]',
+    },
+};
 
-    const colors: Record<string, string> = {
-        emerald: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-        blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
-        yellow: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
-    };
-
-    const barColors: Record<string, string> = {
-        emerald: 'bg-emerald-500',
-        blue: 'bg-blue-500',
-        yellow: 'bg-yellow-500',
-    };
-
-    const activeColor = colors[color] || colors.emerald;
-    const barColor = barColors[color] || barColors.emerald;
-
-    const progress = hasGoal ? Math.min(100, (value / (goal || 1)) * 100) : 0;
+const MacroCard: React.FC<MacroCardProps> = ({ label, value, unit, fullLabel, goal, color = 'emerald' }) => {
+    const colors = colorMap[color];
+    const hasGoal = typeof goal === 'number' && goal > 0;
+    const progress = hasGoal ? Math.min(100, (value / goal!) * 100) : 0;
+    const isNearGoal = progress >= 90;
 
     return (
-        <div className="relative group overflow-hidden bg-zinc-950/40 backdrop-blur-2xl p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 hover:border-white/20 transition-all duration-500 shadow-xl flex flex-col items-center justify-between min-h-[160px] sm:min-h-[180px]">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+        <div className="relative group overflow-hidden bg-zinc-950/40 backdrop-blur-2xl p-5 rounded-[2rem] border border-white/8 hover:border-white/18 transition-all duration-400 shadow-xl flex flex-col justify-between min-h-[140px]">
+            {/* Top shimmer line */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-            <div className="w-full flex justify-between items-start mb-4">
-                <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.3em] opacity-90 drop-shadow-sm">{fullLabel}</span>
-                <div className={`w-2 h-2 rounded-full ${progress > 90 ? 'bg-emerald-400 animate-pulse' : 'bg-white/20'}`}></div>
+            {/* Header */}
+            <div className="flex justify-between items-center mb-3">
+                <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">{fullLabel}</span>
+                <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${isNearGoal ? `${colors.dot} animate-pulse ${colors.glow}` : 'bg-white/15'}`} />
             </div>
 
-            <div className="flex flex-col items-center">
-                <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-serif-premium font-bold text-white tracking-tighter drop-shadow-md">
-                        {Math.round(value)}
-                    </span>
-                    <span className="text-emerald-500/80 text-[10px] font-serif-premium italic">{unit}</span>
-                </div>
+            {/* Value */}
+            <div className="flex items-baseline gap-1 mb-4">
+                <span className="text-3xl font-serif-premium font-bold text-white tracking-tighter">
+                    {Math.round(value)}
+                </span>
+                <span className={`text-[10px] font-serif-premium italic ${colors.text}`}>{unit}</span>
             </div>
 
-            <div className="w-full mt-6">
-                {hasGoal ? (
-                    <div className="space-y-3">
-                        <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                transition={{ duration: 1.5, ease: "circOut" }}
-                                className={`h-full ${barColor} shadow-[0_0_15px_rgba(255,255,255,0.2)]`}
-                            />
-                        </div>
-                        <div className="flex justify-between items-center text-[9px] font-black text-zinc-300 uppercase tracking-widest drop-shadow-sm">
-                            <span className="opacity-80">Consumo</span>
-                            <span className="text-white/80">Meta: {goal}{unit}</span>
-                        </div>
+            {/* Progress bar */}
+            {hasGoal ? (
+                <div className="space-y-2">
+                    <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 1.4, ease: 'circOut' }}
+                            className={`h-full ${colors.bar} rounded-full`}
+                        />
                     </div>
-                ) : (
-                    <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden opacity-40"></div>
-                )}
-            </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-[8px] font-black text-zinc-600 uppercase tracking-wider">{progress.toFixed(0)}%</span>
+                        <span className="text-[8px] font-black text-zinc-600 uppercase tracking-wider">/ {goal}{unit}</span>
+                    </div>
+                </div>
+            ) : (
+                <div className="h-1 bg-white/5 rounded-full" />
+            )}
         </div>
     );
 };
