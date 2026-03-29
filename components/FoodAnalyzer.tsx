@@ -316,7 +316,9 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-[2px] bg-emerald-500/50"></div>
-                  <span className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.4em] leading-none">Módulo de Análise</span>
+                  <span className="text-emerald-500 text-[11px] font-black uppercase tracking-[0.4em] leading-none">
+                    {mode === 'manual' ? 'Registro Manual' : 'Análise de Refeição'}
+                  </span>
                 </div>
                 <h1 className="text-4xl md:text-8xl font-serif-premium font-bold text-white tracking-tighter leading-[0.9] flex flex-col text-balance">
                   {mode === 'manual' ? (
@@ -325,7 +327,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                       <LetterPuller text="Manual" />
                     </>
                   ) : (
-                    <LetterPuller text="Análise" />
+                    <LetterPuller text="Scanner" />
                   )}
                 </h1>
               </div>
