@@ -3,7 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import Stripe from 'npm:stripe@^14.21.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const APP_URL = 'https://shapescan.com.br';
+const APP_URL = Deno.env.get('APP_URL') || 'https://shapescan.com.br';
 
 function htmlPage(title: string, message: string, isError = false) {
   const color = isError ? '#ef4444' : '#10b981';
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
   try {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) throw new Error('STRIPE_SECRET_KEY não configurada');
-    const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16', httpClient: Stripe.createFetchHttpClient() });
+    const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia', httpClient: Stripe.createFetchHttpClient() });
 
     if (!plan.subscription_id) throw new Error('Subscription ID não encontrado');
 

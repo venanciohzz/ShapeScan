@@ -73,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
       // A IA faz uma chamada de rede pesada (Edge Function → OpenAI) — melhor esperar a UI estar estável.
       const timer = setTimeout(fetchDailyFeedback, 5000);
       return () => clearTimeout(timer);
-   }, [todayLogs.length, user.dailyCalorieGoal, user.goal]);
+   }, [consumed, protein, carbs, fat, user.dailyCalorieGoal, user.goal]);
 
    const safeGoal = user.dailyCalorieGoal > 0 ? user.dailyCalorieGoal : 2000;
    const realPercent = (consumed / safeGoal) * 100;

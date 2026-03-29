@@ -43,13 +43,13 @@ const normalizeWeights = (items: any[], maxTotal: number = 550): any[] => {
 };
 
 // Health Score (v55 - Ajustado para Comida Limpa)
-const calculateIntelligentScore = (baseScore: number | undefined, protein: number, fat: number, calories: number, observation: string): number => {
+const calculateIntelligentScore = (baseScore: number | undefined, protein: number, fat: number, calories: number, observation?: string): number => {
   let score = baseScore ?? 7; // Default maior para comida limpa
   if (fat > 35) score -= 2;
   if (protein < 12) score -= 2;
   if (calories > 1000) score -= 1;
   if (protein > 25) score += 2; // Bônus maior para proteína
-  const obs = observation.toLowerCase();
+  const obs = (observation || '').toLowerCase();
   const isClean = obs.includes("grelhado") || obs.includes("cozido") || obs.includes("frango") || obs.includes("arroz");
   if (isClean && fat < 15) score += 1;
   if (obs.includes("legumes") || obs.includes("vegetais") || obs.includes("salada") || obs.includes("fibras")) score += 1;

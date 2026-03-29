@@ -28,21 +28,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  // Máscara de telefone (BR)
+  // Máscara de telefone (BR): opera sobre dígitos brutos para evitar off-by-one
+  // 10 dígitos → fixo  (XX) XXXX-XXXX
+  // 11 dígitos → móvel (XX) XXXXX-XXXX
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 11) value = value.slice(0, 11);
-
-    if (value.length > 2) {
-      value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length === 0) { setPhone(''); return; }
+    if (digits.length <= 2) { setPhone(`(${digits}`); return; }
+    if (digits.length <= 6) { setPhone(`(${digits.slice(0, 2)}) ${digits.slice(2)}`); return; }
+    if (digits.length <= 10) {
+      setPhone(`(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`);
+    } else {
+      setPhone(`(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`);
     }
-    if (value.length > 10) { // Formato (XX) XXXXX-XXXX
-      value = `${value.slice(0, 10)}-${value.slice(10)}`;
-    } else if (value.length > 6) { // Formato durante digitação (XX) XXXX-XXXX
-      value = `${value.slice(0, 9)}-${value.slice(9)}`;
-    }
-
-    setPhone(value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

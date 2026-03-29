@@ -101,13 +101,10 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLoading(true);
     setError('');
     const canContinue = await checkUsageLimit();
-    if (!canContinue) {
-      setLoading(false);
-      return;
-    }
+    if (!canContinue) return;
+    setLoading(true);
     const file = e.target.files?.[0];
     if (!file) {
       setLoading(false);

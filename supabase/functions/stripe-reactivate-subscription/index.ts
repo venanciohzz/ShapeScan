@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     if (!stripeKey) throw new Error('STRIPE_SECRET_KEY não configurada');
 
     const stripe = new Stripe(stripeKey, {
-      apiVersion: '2023-10-16',
+      apiVersion: '2024-12-18.acacia',
       httpClient: Stripe.createFetchHttpClient(),
     });
 
