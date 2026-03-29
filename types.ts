@@ -79,6 +79,12 @@ export interface User {
   targetWeight?: number | null;
   emailConfirmed?: boolean;
   createdAt?: number;
+  // Subscription fields (used in admin panel)
+  subscriptionStart?: number | null;
+  subscriptionEnd?: number | null;
+  cancelAtPeriodEnd?: boolean;
+  cancelledAt?: number | null;
+  cancellationReason?: string | null;
 }
 
 

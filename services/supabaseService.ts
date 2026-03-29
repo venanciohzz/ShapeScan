@@ -832,15 +832,24 @@ export async function getAllUsers(): Promise<User[]> {
 
   const { data: plans } = await supabase
     .from('user_plans')
-    .select('user_id, plan_id, active')
-    .eq('active', true);
+    .select('user_id, plan_id, active, subscription_start, current_period_end, cancel_at_period_end, cancelled_at, cancellation_reason');
 
   const planMap = new Map();
-  plans?.forEach((p: any) => planMap.set(p.user_id, p.plan_id));
+  plans?.forEach((p: any) => planMap.set(p.user_id, p));
 
-  return profiles.map((p: any) =>
-    mapProfileToUser(p, planMap.get(p.id), planMap.get(p.id) !== 'free', p.is_admin)
-  );
+  return profiles.map((p: any) => {
+    const plan = planMap.get(p.id);
+    const planId = plan?.active ? plan.plan_id : 'free';
+    const user = mapProfileToUser(p, planId, planId !== 'free', p.is_admin);
+    if (plan) {
+      user.subscriptionStart = plan.subscription_start ?? null;
+      user.subscriptionEnd = plan.current_period_end ?? null;
+      user.cancelAtPeriodEnd = plan.cancel_at_period_end ?? false;
+      user.cancelledAt = plan.cancelled_at ?? null;
+      user.cancellationReason = plan.cancellation_reason ?? null;
+    }
+    return user;
+  });
 }
 
 export async function getRevenueStats() {
