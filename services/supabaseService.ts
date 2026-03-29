@@ -262,10 +262,10 @@ export async function getProfile(userId: string): Promise<User> {
   // Buscar plano do usuário (com tratamento resiliente para colunas faltantes)
   let planQuery = supabase
     .from('user_plans')
-    .select('plan_id, active')
+    .select('plan_id, active, cancel_at_period_end, current_period_end')
     .eq('user_id', userId)
     .eq('active', true);
-    
+
   let { data: plans, error: planError } = await planQuery
     .order('created_at', { ascending: false })
     .limit(1);
@@ -281,7 +281,10 @@ export async function getProfile(userId: string): Promise<User> {
   const isPremium = planId !== 'free';
   const isAdmin = data.is_admin || false;
 
-  return mapProfileToUser(data, planId, isPremium, isAdmin);
+  return mapProfileToUser(data, planId, isPremium, isAdmin, {
+    cancelAtPeriodEnd: planData?.cancel_at_period_end ?? false,
+    currentPeriodEnd: planData?.current_period_end ?? null,
+  });
 }
 
 export async function updateProfile(userId: string, updates: Partial<User>): Promise<User> {
@@ -742,7 +745,13 @@ function mapStatsFromDB(dbStats: any): UserStats {
   };
 }
 
-function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAdmin?: boolean): User {
+function mapProfileToUser(
+  profile: any,
+  plan?: string,
+  isPremium?: boolean,
+  isAdmin?: boolean,
+  subscriptionMeta?: { cancelAtPeriodEnd?: boolean; currentPeriodEnd?: number | null }
+): User {
   return {
     id: profile.id,
     email: profile.email,
@@ -772,6 +781,8 @@ function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAd
     targetWeight: profile.targetWeight || profile.target_weight,
     emailConfirmed: profile.emailConfirmed || profile.email_confirmed || false,
     createdAt: new Date(profile.created_at).getTime(),
+    cancelAtPeriodEnd: subscriptionMeta?.cancelAtPeriodEnd ?? false,
+    currentPeriodEnd: subscriptionMeta?.currentPeriodEnd ?? null,
   };
 }
 

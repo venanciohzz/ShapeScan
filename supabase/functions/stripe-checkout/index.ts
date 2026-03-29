@@ -9,6 +9,14 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+// Source of truth: priceId → planId (server-side, never trust client body)
+const priceToPlan: Record<string, string> = {
+  'price_1TCCjDB2Kj43d7TH3yWQ41ZT': 'monthly',
+  'price_1TCCjEB2Kj43d7THrK5ru4sJ': 'annual',
+  'price_1TCCjEB2Kj43d7THaAJXfiiR': 'pro_monthly',
+  'price_1TCCjEB2Kj43d7TH1MzK5ixE': 'pro_annual',
+};
+
 // Pequena pausa para garantir que o Stripe finalize operações assíncronas
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -64,7 +72,19 @@ Deno.serve(async (req) => {
     try { body = JSON.parse(rawBody); }
     catch { throw new Error('Body não é JSON válido'); }
 
-    const { priceId, couponCode, plan } = body;
+    const { priceId, couponCode } = body;
+
+    // ── Derivar planId do priceId no servidor (nunca confiar no body) ────────
+    // Isso previne que um usuário envie plan=pro_annual com priceId=monthly
+    // para obter um plano superior pagando um preço inferior.
+    const plan = priceToPlan[priceId];
+    if (!plan) {
+      return new Response(JSON.stringify({ error: 'priceId não reconhecido.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    console.log(`[PLAN] Derivado do priceId: ${plan}`);
 
     // ── Prevenção de Múltiplas Assinaturas (Recompra Indesejada) ─────────────
     const { data: userPlan } = await supabaseClient
@@ -90,7 +110,7 @@ Deno.serve(async (req) => {
     console.log('[STRIPE] Mode:', stripeMode, '| Key prefix:', stripeKey.slice(0, 12));
 
     const stripe = new Stripe(stripeKey, {
-      apiVersion: '2023-10-16',
+      apiVersion: '2024-12-18.acacia',
       httpClient: Stripe.createFetchHttpClient(),
     });
 

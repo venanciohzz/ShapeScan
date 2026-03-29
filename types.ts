@@ -73,6 +73,8 @@ export interface User {
   activityLevel?: string;
   plan?: 'free' | 'monthly' | 'annual' | 'lifetime' | 'pro_monthly' | 'pro_annual'; // Updated Plan Types
   freeScansUsed?: number; // Tracks total food scans for free users (Limit 1)
+  cancelAtPeriodEnd?: boolean; // Subscription scheduled for cancellation at end of period
+  currentPeriodEnd?: number | null; // Unix timestamp of subscription period end
   velocity?: number | null;
   impediments?: string[];
   conquests?: string[];

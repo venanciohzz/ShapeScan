@@ -532,7 +532,7 @@ const App: React.FC = () => {
 
   const handleQuizComplete = async (metrics: Partial<User>) => {
     if (!user) {
-      alert("Erro: Usuário não identificado. Tente fazer login novamente.");
+      showToast("Erro: Usuário não identificado. Tente fazer login novamente.", 'error');
       return;
     }
 
@@ -577,7 +577,7 @@ const App: React.FC = () => {
       navigate('/planos');
     } catch (error: any) {
       console.error("Erro no Quiz:", error);
-      alert("Erro ao salvar dados: " + (error.message || "Tente novamente."));
+      showToast("Erro ao salvar dados: " + (error.message || "Tente novamente."), 'error');
     } finally {
       setIsQuizLoading(false);
     }
@@ -668,7 +668,7 @@ const App: React.FC = () => {
         .catch(err => console.error("Erro ao atualizar streak:", err));
     } catch (error) {
       console.error('❌ Erro ao salvar evolução:', error);
-      alert('Erro ao salvar evolução: ' + (error as Error).message);
+      showToast('Erro ao salvar evolução: ' + (error as Error).message, 'error');
     }
   };
 

@@ -125,10 +125,12 @@ Deno.serve(async (req) => {
 
             if (userPlan === 'free') {
                 // A. Disjuntor global: máximo de 200 scans gratuitos por dia
+                // Usar timestamp ISO com offset UTC-1h para alinhar com o "dia" do frontend
+                const dayStartIso = adjusted.toISOString().split('T')[0] + 'T01:00:00.000Z';
                 const { count: globalDailyCount } = await adminClient
                     .from('free_scan_usage')
                     .select('*', { count: 'exact', head: true })
-                    .gte('created_at', today);
+                    .gte('created_at', dayStartIso);
 
                 if (globalDailyCount !== null && globalDailyCount >= 200) {
                     console.error("GLOBAL FREE LIMIT REACHED");
@@ -144,7 +146,7 @@ Deno.serve(async (req) => {
                     .from('free_scan_usage')
                     .select('*', { count: 'exact', head: true })
                     .eq('ip_address', userIp)
-                    .gte('created_at', today);
+                    .gte('created_at', dayStartIso);
 
                 if (ipScanCount !== null && ipScanCount >= 3) {
                     console.warn(`IP Daily Limit Reached: ${userIp}`);
