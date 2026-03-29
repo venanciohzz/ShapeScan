@@ -168,6 +168,9 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       // Timeout de 30s para não travar o loading infinito
       const fetchPromise = supabase.functions.invoke('stripe-checkout', {
         body: { priceId, couponCode: appliedCouponCode, plan },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       const timeoutPromise = new Promise<never>((_, reject) =>
