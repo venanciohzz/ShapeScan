@@ -68,11 +68,12 @@ const calculateMuscleScore = (protein: number, carbs: number, fat: number): numb
 };
 
 const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
-  // Always get the MOST RECENT session to avoid using an expired token
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Força refresh do token para garantir JWT válido
+  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+  const session = refreshData?.session ?? (await supabase.auth.getSession()).data.session;
 
-  if (sessionError || !session) {
-    console.error('[openaiService] Auth session error or not found:', sessionError);
+  if (refreshError || !session) {
+    console.error('[openaiService] Auth session error or not found:', refreshError);
     throw new Error('401: Sua sessão expirou. Por favor, saia e entre novamente no aplicativo.');
   }
 

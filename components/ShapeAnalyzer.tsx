@@ -247,14 +247,19 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
                 <div className="text-4xl mb-4">🛑</div>
                 <h3 className="text-2xl font-serif-premium font-bold text-white mb-4">Limite Diário</h3>
                 <p className="text-zinc-500 mb-8 text-sm leading-relaxed tracking-wide">
-                  Você utilizou todas as análises de físico do seu plano hoje. O scanner requer alto processamento e volta a ficar disponível amanhã.
+                  {user.isPremium && user.plan?.includes('pro')
+                    ? "Você utilizou todas as análises de físico do plano Pro hoje. O scanner volta a ficar disponível amanhã."
+                    : "Você utilizou todas as análises de físico do seu plano hoje. O scanner requer alto processamento e volta a ficar disponível amanhã."
+                  }
                 </p>
-                <button
-                  onClick={() => { setShowLimitModal(false); onUpgradePro(); }}
-                  className="w-full py-5 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] mb-4 hover:bg-zinc-200 transition-all"
-                >
-                  Upgrade para Pro
-                </button>
+                {!(user.isPremium && user.plan?.includes('pro')) && (
+                  <button
+                    onClick={() => { setShowLimitModal(false); onUpgradePro(); }}
+                    className="w-full py-5 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] mb-4 hover:bg-zinc-200 transition-all"
+                  >
+                    Upgrade para Pro
+                  </button>
+                )}
                 <button onClick={() => { setShowLimitModal(false); onBack(); }} className="text-zinc-500 font-black uppercase tracking-widest text-[9px] hover:text-white transition-colors">
                   Voltar
                 </button>

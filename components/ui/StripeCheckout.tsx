@@ -137,6 +137,8 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const [isInitializing, setIsInitializing] = useState(true);
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
+  const [isCouponApplying, setIsCouponApplying] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [pricingOverview, setPricingOverview] = useState<{
     originalPrice: number;
     finalPrice: number;
@@ -158,16 +160,22 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         throw new Error('Usuário não autenticado. Faça login novamente para continuar.');
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
+      // Força refresh do token para garantir que o JWT enviado é válido e não expirado
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (signal.aborted) return;
 
-      if (!session?.access_token) {
+      const session = refreshData?.session ?? (await supabase.auth.getSession()).data.session;
+
+      if (refreshError || !session?.access_token) {
         throw new Error('Sessão expirada. Por favor, faça login novamente.');
       }
 
       // Timeout de 30s para não travar o loading infinito
       const fetchPromise = supabase.functions.invoke('stripe-checkout', {
         body: { priceId, couponCode: appliedCouponCode, plan },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -231,9 +239,51 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     setRetryCount(c => c + 1);
   };
 
-  const handleApplyCoupon = () => {
-    setAppliedCouponCode(couponCodeInput);
-    setClientSecret(null);
+  const handleApplyCoupon = async () => {
+    if (!couponCodeInput || isCouponApplying) return;
+    setIsCouponApplying(true);
+    setCouponError(null);
+
+    try {
+      const { data: refreshData } = await supabase.auth.refreshSession();
+      const session = refreshData?.session ?? (await supabase.auth.getSession()).data.session;
+
+      if (!session?.access_token) throw new Error('Sessão expirada. Faça login novamente.');
+
+      const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
+        body: { priceId, couponCode: couponCodeInput, plan },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (invokeError) {
+        let msg = invokeError.message || 'Cupom inválido';
+        try {
+          if (invokeError.context && typeof invokeError.context.json === 'function') {
+            const body = await invokeError.context.json();
+            msg = body?.error || body?.message || msg;
+          }
+        } catch (_) {}
+        throw new Error(msg);
+      }
+
+      if (data?.isError) throw new Error(data.error || 'Cupom inválido ou expirado.');
+
+      if (data?.isFree) {
+        window.location.href = '/dashboard?payment=success';
+        return;
+      }
+
+      if (!data?.clientSecret) throw new Error(data?.error || 'Falha ao aplicar cupom.');
+
+      setAppliedCouponCode(couponCodeInput);
+      if (data.pricing) setPricingOverview(data.pricing);
+      setClientSecret(data.clientSecret);
+    } catch (err: any) {
+      console.error('[StripeCheckout] Coupon error:', err);
+      setCouponError(err.message || 'Cupom inválido ou expirado.');
+    } finally {
+      setIsCouponApplying(false);
+    }
   };
 
   const appearance = {
@@ -351,26 +401,34 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                      <input
                        type="text"
                        value={couponCodeInput}
-                       onChange={e => setCouponCodeInput(e.target.value)}
+                       onChange={e => { setCouponCodeInput(e.target.value); setCouponError(null); }}
                        onKeyDown={e => e.key === 'Enter' && couponCodeInput && handleApplyCoupon()}
                        placeholder="Código de desconto"
-                       className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none transition-colors"
+                       disabled={isCouponApplying}
+                       className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none transition-colors disabled:opacity-50"
                      />
                    <button
                      type="button"
                      onClick={handleApplyCoupon}
-                     disabled={!couponCodeInput}
-                     className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase px-6 py-3.5 rounded-xl transition-colors disabled:opacity-50"
+                     disabled={!couponCodeInput || isCouponApplying}
+                     className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase px-6 py-3.5 rounded-xl transition-colors disabled:opacity-50 min-w-[80px] flex items-center justify-center gap-2"
                    >
-                     Aplicar
+                     {isCouponApplying ? (
+                       <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                     ) : 'Aplicar'}
                    </button>
                  </div>
-                 {appliedCouponCode && (
+                 {appliedCouponCode && !couponError && (
                     <div className="text-xs font-bold px-2 flex items-center gap-1 text-emerald-500">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                         <span>Cupom aplicado com sucesso!</span>
+                    </div>
+                 )}
+                 {couponError && (
+                    <div className="text-xs font-bold px-2 flex items-center gap-1 text-red-400">
+                        <span>⚠️ {couponError}</span>
                     </div>
                  )}
               </div>
@@ -383,7 +441,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                 </div>
               </div>
 
-              <Elements stripe={stripePromise} options={{ clientSecret, appearance }}>
+              <Elements key={clientSecret} stripe={stripePromise} options={{ clientSecret, appearance }}>
                 <PaymentForm onCancel={onClose} userId={userId} planId={priceId} planPeriod={planPeriod} planName={planName} planValue={parseFloat(planPrice.replace(',', '.'))} />
               </Elements>
             </div>

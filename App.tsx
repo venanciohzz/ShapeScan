@@ -166,7 +166,54 @@ const App: React.FC = () => {
 
     console.log(`[App] Polling de ativação do plano iniciado. Tempo restante: ${Math.round(remainingTime / 1000)}s`);
 
+    // ATIVAÇÃO IMEDIATA: chama a edge function para ativar o plano diretamente
+    // sem esperar o webhook do Stripe, eliminando o delay de 10-30s.
+    const tryImmediateActivation = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (!token) return;
+
+        const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+        const res = await fetch(`${supabaseUrl}/functions/v1/activate-after-payment`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        });
+
+        const result = await res.json();
+        console.log('[App] Ativação imediata:', result);
+
+        if (result.activated) {
+          const { getProfile } = await import('./services/supabaseService');
+          const updatedUser = await getProfile(currentUserId);
+          if (updatedUser?.isPremium) {
+            setUser(updatedUser);
+            localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+            showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
+            const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
+            const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
+            const { pixel } = await import('./utils/pixel');
+            pixel.purchase(planName, planValue);
+            isPollingPremiumRef.current = false;
+            localStorage.removeItem('awaiting_stripe_payment');
+            localStorage.removeItem('awaiting_stripe_payment_started');
+            localStorage.removeItem('awaiting_stripe_plan_name');
+            localStorage.removeItem('awaiting_stripe_plan_value');
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return true;
+          }
+        }
+      } catch (e) {
+        console.warn('[App] Ativação imediata falhou, continuando polling:', e);
+      }
+      return false;
+    };
+
     const pollForPremium = async () => {
+      // Tenta ativação imediata primeiro
+      const activated = await tryImmediateActivation();
+      if (activated) return;
+
       let elapsed = 0;
 
       const { getProfile } = await import('./services/supabaseService');

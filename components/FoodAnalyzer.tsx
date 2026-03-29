@@ -269,17 +269,21 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                 <h3 className="text-2xl font-serif-premium font-bold text-white mb-4">Limite Atingido</h3>
                 <p className="text-zinc-500 mb-8 text-sm leading-relaxed tracking-wide">
                   {limitModalType === 'daily'
-                    ? "Você atingiu o limite de scanners do seu plano hoje."
+                    ? (user.isPremium && user.plan?.includes('pro')
+                        ? "Você atingiu o limite diário do plano Pro. Seu limite renova à meia-noite."
+                        : "Você atingiu o limite de scanners do seu plano hoje.")
                     : "Sua análise experimental terminou."
                   }
                 </p>
-                <motion.button 
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => { setShowLimitModal(false); if (limitModalType === 'daily') onUpgradePro(); else onUpgrade(); }} 
-                  className="w-full py-5 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[10px] mb-4 hover:bg-zinc-200 transition-all"
-                >
-                  Fazer Upgrade
-                </motion.button>
+                {(limitModalType !== 'daily' || !(user.isPremium && user.plan?.includes('pro'))) && (
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { setShowLimitModal(false); if (limitModalType === 'daily') onUpgradePro(); else onUpgrade(); }}
+                    className="w-full py-5 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[10px] mb-4 hover:bg-zinc-200 transition-all"
+                  >
+                    Fazer Upgrade
+                  </motion.button>
+                )}
                 <motion.button 
                   whileTap={{ scale: 0.95 }}
                   onClick={() => { setShowLimitModal(false); onBack(); }} 
