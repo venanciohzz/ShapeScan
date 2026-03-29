@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 import { db } from '../services/db';
-import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit, ShieldX, Ban, ChevronDown, Calendar, Clock, AlertTriangle, Crown, Zap, UserCheck, UserX, Activity } from 'lucide-react';
+import { AdminUserDetails } from '../services/supabaseService';
+import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit, ShieldX, Ban, ChevronDown, Calendar, Clock, AlertTriangle, Crown, Zap, UserCheck, UserX, Activity, MessageSquare, Scan, Star, Flame, BarChart2, RefreshCw } from 'lucide-react';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 
@@ -45,6 +46,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
     const [selectedPlan, setSelectedPlan] = useState<string>('free');
     const [cancellingUser, setCancellingUser] = useState<string | null>(null);
     const [expandedUser, setExpandedUser] = useState<string | null>(null);
+    const [userDetails, setUserDetails] = useState<Record<string, AdminUserDetails>>({});
+    const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
+    const [detailPeriod, setDetailPeriod] = useState<'7d' | '30d' | '12m'>('30d');
 
     useEffect(() => { loadData(); }, []);
 
@@ -60,6 +64,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
             onShowToast('Erro ao carregar dados do admin', 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadUserDetails = useCallback(async (userId: string) => {
+        if (userDetails[userId]) return; // já carregado
+        setLoadingDetails(userId);
+        try {
+            // @ts-ignore
+            const details = await db.admin.getUserDetails(userId);
+            setUserDetails(prev => ({ ...prev, [userId]: details }));
+        } catch (e) {
+            console.error('Erro ao carregar detalhes:', e);
+        } finally {
+            setLoadingDetails(null);
+        }
+    }, [userDetails]);
+
+    const toggleExpand = (userId: string) => {
+        if (expandedUser === userId) {
+            setExpandedUser(null);
+        } else {
+            setExpandedUser(userId);
+            loadUserDetails(userId);
         }
     };
 
@@ -213,7 +240,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                     {/* Main Row */}
                                     <div
                                         className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 cursor-pointer hover:bg-white/[0.02] transition-colors"
-                                        onClick={() => setExpandedUser(isExpanded ? null : u.id)}
+                                        onClick={() => toggleExpand(u.id)}
                                     >
                                         {/* Avatar + Name */}
                                         <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -284,34 +311,152 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                     </div>
 
                                     {/* Expanded Details */}
-                                    {isExpanded && (
-                                        <div className="border-t border-white/5 p-5 space-y-5">
-                                            {/* Info Grid */}
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                                {[
-                                                    { label: 'Cadastro', value: fmtDateStr(u.createdAt ? new Date(u.createdAt).toISOString() : undefined), icon: <Calendar className="w-3 h-3" /> },
-                                                    { label: 'Assinatura Desde', value: fmtDate(u.subscriptionStart), icon: <Clock className="w-3 h-3" /> },
-                                                    { label: u.cancelAtPeriodEnd ? 'Acesso até' : 'Próxima Cobrança', value: fmtDate(u.subscriptionEnd), icon: <Zap className="w-3 h-3" />, highlight: u.cancelAtPeriodEnd ? 'red' : undefined },
-                                                    { label: 'Cancelado em', value: fmtDate(u.cancelledAt), icon: <Ban className="w-3 h-3" />, highlight: u.cancelledAt ? 'red' : undefined },
-                                                    { label: 'Motivo Cancel.', value: u.cancellationReason ? (reasonLabel[u.cancellationReason] || u.cancellationReason) : '—', icon: <AlertTriangle className="w-3 h-3" /> },
-                                                    { label: 'Scans Usados', value: u.plan === 'free' ? `${u.freeScansUsed ?? 0}` : '∞', icon: <Activity className="w-3 h-3" /> },
-                                                    { label: 'Objetivo', value: u.goal ? (goalLabel[u.goal] || u.goal) : '—', icon: <TrendingUp className="w-3 h-3" /> },
-                                                    { label: 'Peso / Altura', value: u.weight && u.height ? `${u.weight}kg / ${u.height}m` : '—', icon: <Users className="w-3 h-3" /> },
-                                                ].map(item => (
-                                                    <div key={item.label} className="bg-white/[0.02] rounded-2xl p-4 border border-white/5">
-                                                        <div className={`flex items-center gap-1.5 mb-1.5 ${item.highlight === 'red' && item.value !== '—' ? 'text-red-400' : 'text-zinc-500'}`}>
-                                                            {item.icon}
-                                                            <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+                                    {isExpanded && (() => {
+                                        const det = userDetails[u.id];
+                                        const isLoadingDet = loadingDetails === u.id;
+
+                                        // Period data for chart
+                                        const periodData = detailPeriod === '7d' ? det?.usageLast7Days
+                                            : detailPeriod === '30d' ? det?.usageLast30Days
+                                            : det?.usageByMonth;
+                                        const maxVal = Math.max(1, ...(periodData?.map(d => d.food + d.shape + d.chat) ?? []));
+
+                                        return (
+                                        <div className="border-t border-white/5 p-5 space-y-6">
+
+                                            {/* Profile Info Grid */}
+                                            <div>
+                                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-3">Perfil & Assinatura</p>
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                                    {[
+                                                        { label: 'Cadastro', value: fmtDateStr(u.createdAt ? new Date(u.createdAt).toISOString() : undefined), icon: <Calendar className="w-3 h-3" /> },
+                                                        { label: 'Assinatura Desde', value: fmtDate(u.subscriptionStart), icon: <Clock className="w-3 h-3" /> },
+                                                        { label: u.cancelAtPeriodEnd ? 'Acesso até' : 'Próxima Cobrança', value: fmtDate(u.subscriptionEnd), icon: <Zap className="w-3 h-3" />, highlight: u.cancelAtPeriodEnd ? 'red' : undefined },
+                                                        { label: 'Cancelado em', value: fmtDate(u.cancelledAt), icon: <Ban className="w-3 h-3" />, highlight: u.cancelledAt ? 'red' : undefined },
+                                                        { label: 'Motivo Cancel.', value: u.cancellationReason ? (reasonLabel[u.cancellationReason] || u.cancellationReason) : '—', icon: <AlertTriangle className="w-3 h-3" /> },
+                                                        { label: 'Objetivo', value: u.goal ? (goalLabel[u.goal] || u.goal) : '—', icon: <TrendingUp className="w-3 h-3" /> },
+                                                        { label: 'Peso / Altura', value: u.weight && u.height ? `${u.weight}kg / ${u.height}m` : '—', icon: <Users className="w-3 h-3" /> },
+                                                        { label: 'Telefone', value: u.phone || '—', icon: <Activity className="w-3 h-3" /> },
+                                                    ].map(item => (
+                                                        <div key={item.label} className="bg-white/[0.02] rounded-2xl p-3.5 border border-white/5">
+                                                            <div className={`flex items-center gap-1.5 mb-1.5 ${item.highlight === 'red' && item.value !== '—' ? 'text-red-400' : 'text-zinc-500'}`}>
+                                                                {item.icon}
+                                                                <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+                                                            </div>
+                                                            <p className={`text-sm font-bold ${item.highlight === 'red' && item.value !== '—' ? 'text-red-300' : 'text-white'}`}>{item.value}</p>
                                                         </div>
-                                                        <p className={`text-sm font-bold ${item.highlight === 'red' && item.value !== '—' ? 'text-red-300' : 'text-white'}`}>
-                                                            {item.value}
-                                                        </p>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
 
+                                            {/* Usage Stats */}
+                                            {isLoadingDet ? (
+                                                <div className="flex items-center gap-3 py-6">
+                                                    <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                                    <p className="text-zinc-500 text-xs font-black uppercase tracking-widest">Carregando dados de uso...</p>
+                                                </div>
+                                            ) : det ? (
+                                                <>
+                                                    {/* Totals */}
+                                                    <div>
+                                                        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-3">Uso Total (desde o início)</p>
+                                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                                            {[
+                                                                { label: 'Scans Refeição', value: det.totalFoodScans, icon: <Scan className="w-4 h-4 text-emerald-500" />, color: 'emerald' },
+                                                                { label: 'Logs Salvos', value: det.totalFoodLogs, icon: <Activity className="w-4 h-4 text-blue-500" />, color: 'blue' },
+                                                                { label: 'Scans Físicos', value: det.totalShapeScans, icon: <BarChart2 className="w-4 h-4 text-purple-500" />, color: 'purple' },
+                                                                { label: 'Msgs ao Personal', value: det.totalChatMessages, icon: <MessageSquare className="w-4 h-4 text-amber-500" />, color: 'amber' },
+                                                                { label: 'Análises Físicas', value: det.totalEvolutionRecords, icon: <RefreshCw className="w-4 h-4 text-pink-500" />, color: 'pink' },
+                                                            ].map(s => (
+                                                                <div key={s.label} className="bg-white/[0.02] rounded-2xl p-4 border border-white/5 flex items-center gap-3">
+                                                                    <div className={`w-9 h-9 rounded-xl bg-${s.color}-500/10 flex items-center justify-center shrink-0`}>{s.icon}</div>
+                                                                    <div>
+                                                                        <p className="text-[8px] font-black uppercase tracking-widest text-zinc-500 mb-0.5">{s.label}</p>
+                                                                        <p className="text-xl font-serif-premium font-bold text-white">{s.value}</p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Gamification */}
+                                                    {det.userStats && (
+                                                        <div>
+                                                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-3">Gamificação</p>
+                                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                                <div className="bg-amber-500/5 rounded-2xl p-3.5 border border-amber-500/10">
+                                                                    <div className="flex items-center gap-1.5 mb-1 text-amber-500"><Crown className="w-3 h-3" /><span className="text-[9px] font-black uppercase tracking-widest">Nível</span></div>
+                                                                    <p className="text-xl font-serif-premium font-bold text-amber-400">{det.userStats.level}</p>
+                                                                    <p className="text-[8px] text-zinc-500">{det.userStats.experience} XP</p>
+                                                                </div>
+                                                                <div className="bg-orange-500/5 rounded-2xl p-3.5 border border-orange-500/10">
+                                                                    <div className="flex items-center gap-1.5 mb-1 text-orange-400"><Flame className="w-3 h-3" /><span className="text-[9px] font-black uppercase tracking-widest">Sequência</span></div>
+                                                                    <p className="text-xl font-serif-premium font-bold text-orange-400">{det.userStats.currentStreak} dias</p>
+                                                                    <p className="text-[8px] text-zinc-500">Recorde: {det.userStats.longestStreak} dias</p>
+                                                                </div>
+                                                                <div className="bg-blue-500/5 rounded-2xl p-3.5 border border-blue-500/10">
+                                                                    <div className="flex items-center gap-1.5 mb-1 text-blue-400"><Activity className="w-3 h-3" /><span className="text-[9px] font-black uppercase tracking-widest">Total Logs</span></div>
+                                                                    <p className="text-xl font-serif-premium font-bold text-blue-400">{det.userStats.totalLogs}</p>
+                                                                </div>
+                                                                <div className="bg-emerald-500/5 rounded-2xl p-3.5 border border-emerald-500/10">
+                                                                    <div className="flex items-center gap-1.5 mb-1 text-emerald-400"><Star className="w-3 h-3" /><span className="text-[9px] font-black uppercase tracking-widest">Badges</span></div>
+                                                                    <p className="text-xl font-serif-premium font-bold text-emerald-400">{det.userStats.badges.length}</p>
+                                                                    <p className="text-[8px] text-zinc-500 truncate">{det.userStats.badges.slice(0, 2).join(', ') || '—'}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Usage Chart */}
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600">Atividade por Período</p>
+                                                            <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                                                                {(['7d', '30d', '12m'] as const).map(p => (
+                                                                    <button key={p} onClick={() => setDetailPeriod(p)}
+                                                                        className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${detailPeriod === p ? 'bg-emerald-500 text-zinc-950' : 'bg-white/5 text-zinc-500 hover:text-white'}`}>
+                                                                        {p === '7d' ? '7 dias' : p === '30d' ? '30 dias' : '12 meses'}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        {!periodData || periodData.length === 0 ? (
+                                                            <p className="text-zinc-600 text-xs font-bold py-4 text-center">Nenhuma atividade neste período</p>
+                                                        ) : (
+                                                            <div className="space-y-1.5">
+                                                                {periodData.map((d, i) => {
+                                                                    const label = detailPeriod === '12m'
+                                                                        ? new Date(d.date + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+                                                                        : new Date(d.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                                                                    const total = d.food + d.shape + d.chat;
+                                                                    return (
+                                                                        <div key={i} className="flex items-center gap-3">
+                                                                            <span className="text-[9px] font-bold text-zinc-600 w-14 shrink-0 text-right">{label}</span>
+                                                                            <div className="flex-1 h-5 bg-white/[0.02] rounded-full overflow-hidden flex">
+                                                                                {d.food > 0 && <div className="h-full bg-emerald-500/60 transition-all" style={{ width: `${(d.food / maxVal) * 100}%` }} title={`Food: ${d.food}`} />}
+                                                                                {d.shape > 0 && <div className="h-full bg-purple-500/60 transition-all" style={{ width: `${(d.shape / maxVal) * 100}%` }} title={`Shape: ${d.shape}`} />}
+                                                                                {d.chat > 0 && <div className="h-full bg-amber-500/60 transition-all" style={{ width: `${(d.chat / maxVal) * 100}%` }} title={`Chat: ${d.chat}`} />}
+                                                                            </div>
+                                                                            <span className="text-[9px] font-black text-zinc-500 w-6 shrink-0">{total}</span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                                <div className="flex items-center gap-4 pt-2">
+                                                                    {[['emerald', 'Refeição'], ['purple', 'Físico'], ['amber', 'Chat']].map(([c, l]) => (
+                                                                        <div key={c} className="flex items-center gap-1.5">
+                                                                            <div className={`w-2.5 h-2.5 rounded-sm bg-${c}-500/60`} />
+                                                                            <span className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">{l}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            ) : null}
+
                                             {/* Actions Row */}
-                                            <div className="flex flex-wrap gap-3 pt-2">
+                                            <div className="flex flex-wrap gap-3 pt-1 border-t border-white/5">
                                                 {isEditing ? (
                                                     <div className="flex items-center gap-3">
                                                         <select
@@ -361,11 +506,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                                 <AlertTriangle className="w-3.5 h-3.5" /> Cancelamento agendado
                                                             </span>
                                                         )}
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); setUserDetails(prev => { const n = {...prev}; delete n[u.id]; return n; }); loadUserDetails(u.id); }}
+                                                            className="px-4 py-2 bg-white/5 hover:bg-white/10 text-zinc-500 hover:text-white rounded-xl transition-all font-black text-xs uppercase tracking-widest flex items-center gap-2"
+                                                        >
+                                                            <RefreshCw className="w-3.5 h-3.5" /> Atualizar Dados
+                                                        </button>
                                                     </>
                                                 )}
                                             </div>
                                         </div>
-                                    )}
+                                        );
+                                    })()}
                                 </div>
                             );
                         })

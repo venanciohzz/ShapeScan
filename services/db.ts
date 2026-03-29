@@ -152,6 +152,10 @@ export const db = {
 
         async cancelUserSubscription(targetUserId: string): Promise<{ success: boolean; current_period_end: number; expiry_date: string }> {
             return await supabaseService.adminCancelUserSubscription(targetUserId);
+        },
+
+        async getUserDetails(targetUserId: string): Promise<supabaseService.AdminUserDetails> {
+            return await supabaseService.adminGetUserDetails(targetUserId);
         }
     },
 

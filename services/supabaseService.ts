@@ -951,6 +951,121 @@ export async function adminCancelUserSubscription(targetUserId: string): Promise
   return data as { success: boolean; current_period_end: number; expiry_date: string };
 }
 
+// ==================== ADMIN USER DETAILS ====================
+
+export interface AdminUserDetails {
+  totalFoodScans: number;
+  totalShapeScans: number;
+  totalChatMessages: number;
+  totalFoodLogs: number;
+  totalEvolutionRecords: number;
+  usageByMonth: { month: string; food: number; shape: number; chat: number }[];
+  usageLast7Days: { date: string; food: number; shape: number; chat: number }[];
+  usageLast30Days: { date: string; food: number; shape: number; chat: number }[];
+  userStats: {
+    level: number;
+    experience: number;
+    currentStreak: number;
+    longestStreak: number;
+    totalLogs: number;
+    badges: string[];
+  } | null;
+}
+
+export async function adminGetUserDetails(targetUserId: string): Promise<AdminUserDetails> {
+  const [
+    { data: dailyUsage },
+    { count: foodLogsCount },
+    { count: evolutionCount },
+    { count: chatCount },
+    { data: statsData },
+  ] = await Promise.all([
+    supabase
+      .from('daily_usage')
+      .select('date, type, count')
+      .eq('user_id', targetUserId)
+      .order('date', { ascending: false }),
+    supabase.from('food_logs').select('*', { count: 'exact', head: true }).eq('user_id', targetUserId),
+    supabase.from('evolution_records').select('*', { count: 'exact', head: true }).eq('user_id', targetUserId),
+    supabase.from('chat_messages').select('*', { count: 'exact', head: true }).eq('user_id', targetUserId).eq('role', 'user'),
+    supabase.from('user_stats').select('*').eq('user_id', targetUserId).maybeSingle(),
+  ]);
+
+  const rows: { date: string; type: string; count: number }[] = dailyUsage || [];
+
+  // Totals from daily_usage
+  const totalFoodScans = rows.filter(r => r.type === 'food').reduce((a, r) => a + r.count, 0);
+  const totalShapeScans = rows.filter(r => r.type === 'shape').reduce((a, r) => a + r.count, 0);
+  const totalChatMessages = rows.filter(r => r.type === 'chat').reduce((a, r) => a + r.count, 0);
+
+  // Monthly breakdown (last 12 months)
+  const monthMap = new Map<string, { food: number; shape: number; chat: number }>();
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
+  rows.forEach(r => {
+    const d = new Date(r.date);
+    if (d < twelveMonthsAgo) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    if (!monthMap.has(key)) monthMap.set(key, { food: 0, shape: 0, chat: 0 });
+    const m = monthMap.get(key)!;
+    if (r.type === 'food') m.food += r.count;
+    else if (r.type === 'shape') m.shape += r.count;
+    else if (r.type === 'chat') m.chat += r.count;
+  });
+  const usageByMonth = Array.from(monthMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([month, v]) => ({ month, ...v }));
+
+  // Last 7 days
+  const dayMap7 = new Map<string, { food: number; shape: number; chat: number }>();
+  const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  rows.forEach(r => {
+    const d = new Date(r.date);
+    if (d < sevenDaysAgo) return;
+    const key = r.date;
+    if (!dayMap7.has(key)) dayMap7.set(key, { food: 0, shape: 0, chat: 0 });
+    const m = dayMap7.get(key)!;
+    if (r.type === 'food') m.food += r.count;
+    else if (r.type === 'shape') m.shape += r.count;
+    else if (r.type === 'chat') m.chat += r.count;
+  });
+  const usageLast7Days = Array.from(dayMap7.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([date, v]) => ({ date, ...v }));
+
+  // Last 30 days
+  const dayMap30 = new Map<string, { food: number; shape: number; chat: number }>();
+  const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+  rows.forEach(r => {
+    const d = new Date(r.date);
+    if (d < thirtyDaysAgo) return;
+    const key = r.date;
+    if (!dayMap30.has(key)) dayMap30.set(key, { food: 0, shape: 0, chat: 0 });
+    const m = dayMap30.get(key)!;
+    if (r.type === 'food') m.food += r.count;
+    else if (r.type === 'shape') m.shape += r.count;
+    else if (r.type === 'chat') m.chat += r.count;
+  });
+  const usageLast30Days = Array.from(dayMap30.entries()).sort((a, b) => a[0].localeCompare(b[0])).map(([date, v]) => ({ date, ...v }));
+
+  return {
+    totalFoodScans,
+    totalShapeScans,
+    totalChatMessages,
+    totalFoodLogs: foodLogsCount ?? 0,
+    totalEvolutionRecords: evolutionCount ?? 0,
+    usageByMonth,
+    usageLast7Days,
+    usageLast30Days,
+    userStats: statsData ? {
+      level: statsData.level ?? 1,
+      experience: statsData.experience ?? 0,
+      currentStreak: statsData.current_streak ?? 0,
+      longestStreak: statsData.longest_streak ?? 0,
+      totalLogs: statsData.total_logs ?? 0,
+      badges: statsData.badges ?? [],
+    } : null,
+  };
+}
+
 // ==================== CHAT ====================
 
 export async function getChatHistory(userId: string): Promise<{ role: 'user' | 'assistant'; content: string }[]> {
