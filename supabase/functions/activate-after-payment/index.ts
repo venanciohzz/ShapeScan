@@ -65,16 +65,20 @@ Deno.serve(async (req) => {
 
     const customerId = profile!.stripe_customer_id;
 
-    // Buscar subscription ativa (ou trialing) mais recente
+    // Buscar subscription ativa (ou trialing) criada nos últimos 10 minutos
+    // Isso evita reativar planos de períodos anteriores em caso de falha de pagamento.
+    const TEN_MINUTES_AGO = Math.floor(Date.now() / 1000) - 600;
+
     let sub: Stripe.Subscription | null = null;
     for (const status of ['active', 'trialing'] as const) {
-      const subs = await stripe.subscriptions.list({ customer: customerId, status, limit: 1 });
-      if (subs.data.length) { sub = subs.data[0]; break; }
+      const subs = await stripe.subscriptions.list({ customer: customerId, status, limit: 5 });
+      const recent = subs.data.find(s => s.created >= TEN_MINUTES_AGO);
+      if (recent) { sub = recent; break; }
     }
 
     if (!sub) {
-      // Nenhuma subscription ativa — pode ser que o webhook ainda não processou
-      return new Response(JSON.stringify({ activated: false, reason: 'no_active_subscription' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      // Nenhuma subscription recente ativa — pagamento pode ter falhado ou webhook já processou
+      return new Response(JSON.stringify({ activated: false, reason: 'no_recent_active_subscription' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const planId = sub.metadata?.plan || priceToPlan[sub.items.data[0]?.price?.id || ''];
