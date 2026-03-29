@@ -1,2 +1,5 @@
 [functions.stripe-checkout]
 verify_jwt = false
+
+[functions.activate-after-payment]
+verify_jwt = false
