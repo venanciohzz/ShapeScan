@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import MacroCard from './MacroCard';
 
 interface UserMacros {
@@ -18,17 +17,12 @@ interface MacroGridProps {
 
 const MacroGrid: React.FC<MacroGridProps> = ({ protein, carbs, fat, user, formatValue }) => {
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-            className="grid grid-cols-3 gap-3"
-        >
+        <div className="flex flex-col md:grid md:grid-cols-3 gap-3 md:gap-6">
             <MacroCard
                 label="Prot"
                 value={formatValue(protein)}
                 unit="g"
-                fullLabel="Proteína"
+                fullLabel="Proteínas"
                 goal={user.dailyProtein}
                 color="emerald"
             />
@@ -36,7 +30,7 @@ const MacroGrid: React.FC<MacroGridProps> = ({ protein, carbs, fat, user, format
                 label="Carb"
                 value={formatValue(carbs)}
                 unit="g"
-                fullLabel="Carbs"
+                fullLabel="Carboidratos"
                 goal={user.dailyCarbs}
                 color="blue"
             />
@@ -44,11 +38,11 @@ const MacroGrid: React.FC<MacroGridProps> = ({ protein, carbs, fat, user, format
                 label="Gord"
                 value={formatValue(fat)}
                 unit="g"
-                fullLabel="Gordura"
+                fullLabel="Gorduras"
                 goal={user.dailyFat}
                 color="yellow"
             />
-        </motion.div>
+        </div>
     );
 };
 

@@ -9,104 +9,90 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ currentView }) => {
   const tabs = [
-    { id: 'dashboard',    path: '/dashboard',    label: 'Início',    icon: Home },
-    { id: 'analise-refeicao', path: '/analise-refeicao', label: 'Refeição', icon: ScanLine },
-    { id: 'analise-fisica',   path: '/analise-fisica',   label: 'Shape',   icon: UserSquare2 },
-    { id: 'evolucao',     path: '/evolucao',     label: 'Evolução',  icon: TrendingUp },
-    { id: 'personal-24h', path: '/personal-24h', label: 'Personal',  icon: MessageSquare },
-    { id: 'perfil',       path: '/perfil',       label: 'Perfil',    icon: Settings },
+    { id: 'dashboard', path: '/dashboard', label: 'Início', icon: <Home className="w-5 h-5" /> },
+    { id: 'analise-refeicao', path: '/analise-refeicao', label: 'Refeição', icon: <ScanLine className="w-5 h-5" /> },
+    { id: 'analise-fisica', path: '/analise-fisica', label: 'Shape', icon: <UserSquare2 className="w-5 h-5" /> },
+    { id: 'evolucao', path: '/evolucao', label: 'Evolução', icon: <TrendingUp className="w-5 h-5" /> },
+    { id: 'personal-24h', path: '/personal-24h', label: 'Personal 24H', icon: <MessageSquare className="w-5 h-5" /> },
+    { id: 'perfil', path: '/perfil', label: 'Perfil', icon: <Settings className="w-5 h-5" /> },
   ];
 
   return (
     <>
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-sm md:hidden z-50">
-        <div className="bg-zinc-950/85 backdrop-blur-3xl px-3 py-2.5 rounded-[2rem] flex justify-between items-center shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/8 relative overflow-hidden">
-          {/* Subtle inner glow */}
-          <div className="absolute inset-0 bg-gradient-to-t from-emerald-500/5 to-transparent pointer-events-none rounded-[2rem]" />
+      {/* Mobile Bottom Navigation - Floating Island Design */}
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm md:hidden z-50">
+        <div className="bg-zinc-950/80 backdrop-blur-2xl px-4 py-4 rounded-[2.5rem] flex justify-between items-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-50 pointer-events-none"></div>
 
           {tabs.map((tab) => {
-            const Icon = tab.icon;
             return (
               <NavLink
                 key={tab.id}
                 to={tab.path}
-                className="relative flex flex-col items-center justify-center flex-1 py-1.5 active:scale-90 transition-transform"
+                className={({ isActive }) => `
+                  relative flex flex-col items-center justify-center w-12 h-12 transition-all duration-300 active:scale-90
+                `}
               >
                 {({ isActive }) => (
                   <>
-                    {/* Active pill background */}
+                    <div className={`
+                        relative z-10 transition-all duration-500 flex flex-col items-center justify-center
+                        ${isActive ? 'text-white scale-110' : 'text-zinc-500 hover:text-zinc-300'}
+                      `}>
+                      {tab.icon}
+                    </div>
+
                     {isActive && (
                       <motion.div
-                        layoutId="mobileActivePill"
-                        className="absolute inset-x-1 inset-y-0 bg-white/8 rounded-[1.2rem]"
-                        transition={{ type: 'spring', bounce: 0.2, duration: 0.45 }}
+                        layoutId="activeTabMobile"
+                        className="absolute inset-0 bg-emerald-500/20 rounded-2xl z-0"
+                        transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
                       />
                     )}
 
-                    <div className={`relative z-10 transition-all duration-300 ${isActive ? 'text-white scale-110' : 'text-zinc-600'}`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-
-                    <AnimatePresence>
-                      {isActive && (
-                        <motion.span
-                          initial={{ opacity: 0, y: -2 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -2 }}
-                          className="relative z-10 text-[8px] font-black text-white uppercase tracking-wider mt-0.5"
-                        >
-                          {tab.label}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Active dot */}
                     {isActive && (
                       <motion.div
-                        layoutId="mobileActiveDot"
-                        className="absolute -bottom-0.5 w-1 h-1 bg-emerald-500 rounded-full"
-                        transition={{ type: 'spring', bounce: 0.3, duration: 0.4 }}
+                        layoutId="activeDotMobile"
+                        className="absolute -bottom-1 w-1 h-1 bg-emerald-500 rounded-full"
                       />
                     )}
                   </>
                 )}
               </NavLink>
-            );
+            )
           })}
         </div>
       </nav>
 
-      {/* Desktop Top Navigation */}
-      <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 px-8 py-5 justify-between items-center pointer-events-none">
-        {/* Logo */}
-        <div className="pointer-events-auto bg-zinc-950/80 backdrop-blur-2xl px-6 py-3 rounded-2xl flex items-center gap-3 shadow-2xl border border-white/8 group">
-          <div className="w-6 h-6 bg-emerald-600 rounded-lg flex items-center justify-center font-serif-premium font-bold italic text-white text-sm rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-md">S</div>
-          <span className="font-serif-premium font-bold text-xl tracking-tight text-white">ShapeScan</span>
+      {/* Desktop Top Navigation - Premium Top Bar */}
+      <nav className="hidden md:flex fixed top-0 left-0 right-0 z-50 px-10 py-6 justify-between items-center pointer-events-none">
+        <div className="pointer-events-auto bg-zinc-950/80 backdrop-blur-2xl px-8 py-4 rounded-full flex items-center gap-4 shadow-2xl border border-white/10 group">
+          <div className="relative">
+            <div className="w-7 h-7 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-serif-premium font-bold italic rotate-12 group-hover:rotate-0 transition-transform duration-500 shadow-lg">S</div>
+          </div>
+          <span className="font-serif-premium font-bold text-2xl tracking-tight text-white group-hover:tracking-widest transition-all duration-500">ShapeScan</span>
         </div>
 
-        {/* Tab bar */}
-        <div className="pointer-events-auto bg-zinc-950/80 backdrop-blur-2xl px-2 py-2 rounded-2xl flex items-center gap-1 shadow-2xl border border-white/8">
+        <div className="pointer-events-auto bg-zinc-950/80 backdrop-blur-2xl px-3 py-3 rounded-full flex items-center gap-1 shadow-2xl border border-white/10">
           {tabs.map((tab) => {
-            const Icon = tab.icon;
             return (
               <NavLink
                 key={tab.id}
                 to={tab.path}
-                className="relative px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all duration-300 group overflow-hidden"
+                className={({ isActive }) => `relative px-6 py-3 rounded-full flex items-center gap-3 transition-all duration-500 active:scale-95 group overflow-hidden`}
               >
                 {({ isActive }) => (
                   <>
-                    <div className={`relative z-10 flex items-center gap-2 transition-all duration-300 ${isActive ? 'text-zinc-950' : 'text-zinc-500 group-hover:text-white'}`}>
-                      <Icon className="w-4 h-4" />
+                    <div className={`relative z-10 flex items-center gap-2 ${isActive ? 'text-zinc-950' : 'text-zinc-400 group-hover:text-white'}`}>
+                      <div className={`transition-transform duration-500 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>{tab.icon}</div>
                       <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
                     </div>
 
                     {isActive && (
                       <motion.div
-                        layoutId="desktopActivePill"
-                        className="absolute inset-0 bg-white rounded-xl z-0"
-                        transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
+                        layoutId="activeTabDesktop"
+                        className="absolute inset-0 bg-white shadow-[0_0_20px_rgba(255,255,255,0.4)] z-0 rounded-full"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                       />
                     )}
                   </>
