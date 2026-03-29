@@ -38,7 +38,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
     const progress = hasGoal ? Math.min(100, (value / (goal || 1)) * 100) : 0;
 
     return (
-        <div className="relative group overflow-hidden bg-zinc-950/40 backdrop-blur-2xl p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 hover:border-white/20 transition-all duration-500 shadow-xl flex flex-col items-center justify-between min-h-[160px] sm:min-h-[180px]">
+        <div className="relative group overflow-hidden bg-zinc-900/50 backdrop-blur-2xl p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] transition-all duration-500 shadow-xl flex flex-col items-center justify-between min-h-[160px] sm:min-h-[180px]">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
 
             <div className="w-full flex justify-between items-start mb-4">

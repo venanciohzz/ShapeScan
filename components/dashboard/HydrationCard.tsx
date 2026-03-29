@@ -27,7 +27,7 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
 
     return (
         <div
-            className={`p-10 rounded-[3rem] relative overflow-hidden transition-all duration-700 border border-white/10 bg-zinc-950/40 backdrop-blur-2xl group shadow-2xl`}
+            className={`p-10 rounded-[3rem] relative overflow-hidden transition-all duration-700 bg-zinc-900/50 backdrop-blur-2xl group shadow-2xl`}
         >
             {/* Background Glow */}
             <div className={`absolute -inset-10 bg-cyan-500/10 rounded-full blur-[100px] opacity-0 group-hover:opacity-30 transition-opacity duration-1000`}></div>

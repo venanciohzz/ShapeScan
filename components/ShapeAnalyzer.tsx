@@ -275,7 +275,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
         </AnimatePresence>
 
         <header className="flex justify-between items-center mb-12">
-          <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white">
+          <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 transition-all active:scale-95 text-white">
             <span className="text-xl">←</span>
           </button>
         </header>

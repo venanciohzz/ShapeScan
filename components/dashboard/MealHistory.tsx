@@ -29,7 +29,7 @@ const MealHistory: React.FC<MealHistoryProps> = ({
                     {todayLogs.map((log) => (
                         <div
                             key={log.id}
-                            className="group relative overflow-hidden bg-zinc-950/40 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/10 hover:border-emerald-500/30 transition-all duration-500 shadow-xl flex justify-between items-center active:scale-[0.99]"
+                            className="group relative overflow-hidden bg-zinc-900/50 backdrop-blur-2xl p-6 rounded-[2rem] hover:bg-zinc-800/60 transition-all duration-500 shadow-xl flex justify-between items-center active:scale-[0.99]"
                         >
                             {/* Hover Glow */}
                             <div className="absolute -inset-10 bg-emerald-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>

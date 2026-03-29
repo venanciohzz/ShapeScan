@@ -25,7 +25,7 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
                 className={`absolute -inset-4 rounded-[3rem] blur-3xl opacity-0 transition-all duration-1000 group-hover:opacity-20 pointer-events-none ${isOverLimit ? 'bg-red-500' : 'bg-emerald-500'}`}
             ></div>
 
-            <div className="relative bg-zinc-950/40 backdrop-blur-2xl rounded-[2.5rem] p-10 md:p-14 border border-white/10 shadow-2xl overflow-hidden group-hover:border-white/20 transition-all duration-500">
+            <div className="relative bg-zinc-900/50 backdrop-blur-2xl rounded-[2.5rem] p-10 md:p-14 shadow-2xl overflow-hidden transition-all duration-500">
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-10 pointer-events-none">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(16,185,129,0.1),transparent)]"></div>

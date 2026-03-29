@@ -16,7 +16,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ onClick, icon, title, subti
         whileTap={{ scale: 0.97 }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         onClick={onClick}
-        className="relative overflow-hidden group bg-zinc-950/40 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] border border-white/10 hover:border-emerald-500/30 transition-all duration-500 shadow-xl flex flex-col items-center md:items-start text-center md:text-left h-full"
+        className="relative overflow-hidden group bg-zinc-900/50 backdrop-blur-2xl p-6 md:p-8 rounded-[2rem] hover:bg-zinc-800/60 transition-all duration-500 shadow-xl flex flex-col items-center md:items-start text-center md:text-left h-full"
     >
         {/* Hover Glow */}
         <div className="absolute -inset-20 bg-emerald-500/10 rounded-full blur-[60px] opacity-0 group-hover:opacity-40 transition-opacity duration-1000"></div>
