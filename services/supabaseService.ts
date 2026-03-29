@@ -927,6 +927,21 @@ export async function cancelSubscription(reason?: string, feedback?: string): Pr
   return data as { cancel_at_period_end: boolean; current_period_end: number };
 }
 
+export async function adminCancelUserSubscription(targetUserId: string): Promise<{ success: boolean; current_period_end: number; expiry_date: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Usuário não autenticado');
+
+  const { data, error } = await supabase.functions.invoke('admin-cancel-subscription', {
+    body: { targetUserId },
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+
+  if (error) throw new Error(error.message || 'Erro ao cancelar assinatura');
+  if (data?.error) throw new Error(data.error);
+
+  return data as { success: boolean; current_period_end: number; expiry_date: string };
+}
+
 // ==================== CHAT ====================
 
 export async function getChatHistory(userId: string): Promise<{ role: 'user' | 'assistant'; content: string }[]> {

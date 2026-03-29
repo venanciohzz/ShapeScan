@@ -148,6 +148,10 @@ export const db = {
 
         async updateUserPlan(userId: string, planId: string): Promise<void> {
             await supabaseService.adminUpdateUserPlan(userId, planId);
+        },
+
+        async cancelUserSubscription(targetUserId: string): Promise<{ success: boolean; current_period_end: number; expiry_date: string }> {
+            return await supabaseService.adminCancelUserSubscription(targetUserId);
         }
     },
 

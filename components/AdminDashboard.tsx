@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { db } from '../services/db';
-import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit, ShieldX } from 'lucide-react';
+import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit, ShieldX, Ban } from 'lucide-react';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 
@@ -18,6 +18,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState<string | null>(null);
     const [selectedPlan, setSelectedPlan] = useState<string>('free');
+    const [cancellingUser, setCancellingUser] = useState<string | null>(null);
 
     useEffect(() => {
         loadData();
@@ -45,6 +46,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
         u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleCancelSubscription = async (userId: string) => {
+        if (!window.confirm('Cancelar assinatura no fim do período atual? O usuário não será cobrado no próximo ciclo, mas mantém acesso até o vencimento.')) return;
+        setCancellingUser(userId);
+        try {
+            // @ts-ignore
+            const result = await db.admin.cancelUserSubscription(userId);
+            loadData();
+            onShowToast(`Assinatura cancelada — acesso até ${result.expiry_date}`, 'success');
+        } catch (error: any) {
+            console.error('Erro ao cancelar assinatura:', error);
+            onShowToast(error.message || 'Erro ao cancelar assinatura', 'error');
+        } finally {
+            setCancellingUser(null);
+        }
+    };
 
     const handleUpdatePlan = async (userId: string) => {
         try {
@@ -244,16 +261,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                         </button>
                                                     </div>
                                                 ) : (
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditingUser(u.id);
-                                                            setSelectedPlan(u.plan || 'free');
-                                                        }}
-                                                        className="p-3 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all border border-transparent hover:border-emerald-500/20 hover:scale-105 active:scale-95"
-                                                        title="Editar Plano"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
+                                                    <div className="flex gap-2 justify-end">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingUser(u.id);
+                                                                setSelectedPlan(u.plan || 'free');
+                                                            }}
+                                                            className="p-3 text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all border border-transparent hover:border-emerald-500/20 hover:scale-105 active:scale-95"
+                                                            title="Editar Plano"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        {u.isPremium && u.plan !== 'lifetime' && (
+                                                            <button
+                                                                onClick={() => handleCancelSubscription(u.id)}
+                                                                disabled={cancellingUser === u.id}
+                                                                className="p-3 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-500/20 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                title="Cancelar assinatura no fim do período"
+                                                            >
+                                                                {cancellingUser === u.id
+                                                                    ? <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                                                                    : <Ban className="w-4 h-4" />
+                                                                }
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 )}
                                             </td>
                                         </tr>
