@@ -366,7 +366,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                                 { label: 'Logs Salvos', value: det.totalFoodLogs, icon: <Activity className="w-4 h-4 text-blue-500" />, color: 'blue' },
                                                                 { label: 'Scans Físicos', value: det.totalShapeScans, icon: <BarChart2 className="w-4 h-4 text-purple-500" />, color: 'purple' },
                                                                 { label: 'Msgs ao Personal', value: det.totalChatMessages, icon: <MessageSquare className="w-4 h-4 text-amber-500" />, color: 'amber' },
-                                                                { label: 'Análises Físicas', value: det.totalEvolutionRecords, icon: <RefreshCw className="w-4 h-4 text-pink-500" />, color: 'pink' },
                                                             ].map(s => (
                                                                 <div key={s.label} className="bg-white/[0.02] rounded-2xl p-4 border border-white/5 flex items-center gap-3">
                                                                     <div className={`w-9 h-9 rounded-xl bg-${s.color}-500/10 flex items-center justify-center shrink-0`}>{s.icon}</div>
