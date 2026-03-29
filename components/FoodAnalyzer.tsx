@@ -269,13 +269,13 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                 <h3 className="text-2xl font-serif-premium font-bold text-white mb-4">Limite Atingido</h3>
                 <p className="text-zinc-500 mb-8 text-sm leading-relaxed tracking-wide">
                   {limitModalType === 'daily'
-                    ? (user.plan === 'pro_monthly' || user.plan === 'pro_annual'
+                    ? (user.isPremium && user.plan?.includes('pro')
                         ? "Você atingiu o limite diário do plano Pro. Seu limite renova à meia-noite."
                         : "Você atingiu o limite de scanners do seu plano hoje.")
                     : "Sua análise experimental terminou."
                   }
                 </p>
-                {(limitModalType !== 'daily' || (user.plan !== 'pro_monthly' && user.plan !== 'pro_annual')) && (
+                {(limitModalType !== 'daily' || !(user.isPremium && user.plan?.includes('pro'))) && (
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={() => { setShowLimitModal(false); if (limitModalType === 'daily') onUpgradePro(); else onUpgrade(); }}
