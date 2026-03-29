@@ -158,10 +158,13 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         throw new Error('Usuário não autenticado. Faça login novamente para continuar.');
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
+      // Força refresh do token para garantir que o JWT enviado é válido e não expirado
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (signal.aborted) return;
 
-      if (!session?.access_token) {
+      const session = refreshData?.session ?? (await supabase.auth.getSession()).data.session;
+
+      if (refreshError || !session?.access_token) {
         throw new Error('Sessão expirada. Por favor, faça login novamente.');
       }
 
