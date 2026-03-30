@@ -137,6 +137,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const [isInitializing, setIsInitializing] = useState(true);
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
+  const [couponAppliedSuccess, setCouponAppliedSuccess] = useState(false);
   const [isCouponApplying, setIsCouponApplying] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [pricingOverview, setPricingOverview] = useState<{
@@ -276,7 +277,9 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
       if (!data?.clientSecret) throw new Error(data?.error || 'Falha ao aplicar cupom.');
 
-      setAppliedCouponCode(couponCodeInput);
+      // Não chamar setAppliedCouponCode aqui — mudaria dep do useCallback initializeCheckout
+      // e dispararia re-inicialização desnecessária do checkout inteiro.
+      setCouponAppliedSuccess(true);
       if (data.pricing) setPricingOverview(data.pricing);
       setClientSecret(data.clientSecret);
     } catch (err: any) {
@@ -402,7 +405,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                      <input
                        type="text"
                        value={couponCodeInput}
-                       onChange={e => { setCouponCodeInput(e.target.value); setCouponError(null); }}
+                       onChange={e => { setCouponCodeInput(e.target.value); setCouponError(null); setCouponAppliedSuccess(false); }}
                        onKeyDown={e => e.key === 'Enter' && couponCodeInput && handleApplyCoupon()}
                        placeholder="Código de desconto"
                        disabled={isCouponApplying}
@@ -419,7 +422,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                      ) : 'Aplicar'}
                    </button>
                  </div>
-                 {appliedCouponCode && !couponError && (
+                 {couponAppliedSuccess && !couponError && (
                     <div className="text-xs font-bold px-2 flex items-center gap-1 text-emerald-500">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
