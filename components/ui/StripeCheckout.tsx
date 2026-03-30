@@ -160,34 +160,13 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         throw new Error('Usuário não autenticado. Faça login novamente para continuar.');
       }
 
-      // Força refresh do token — com timeout de 8s para não travar em usuários Google OAuth
-      // (refreshSession() pode pendurar indefinidamente se o provedor OAuth estiver lento)
-      let session: any = null;
-      try {
-        const refreshWithTimeout = Promise.race([
-          supabase.auth.refreshSession(),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('TIMEOUT')), 8000)
-          ),
-        ]);
-        const { data: refreshData, error: refreshError } = await refreshWithTimeout;
-        if (!refreshError && refreshData?.session) {
-          session = refreshData.session;
-        }
-      } catch (_) {
-        // refreshSession travou ou falhou — tenta usar a sessão atual
-      }
-
+      // Usa a sessão atual sem chamar refreshSession() — evita disparar TOKEN_REFRESHED
+      // que faz App.tsx re-buscar perfil e potencialmente navegar para /quiz,
+      // abortando o checkout silenciosamente. O Supabase auto-renova o token quando necessário.
+      const { data: sessionData } = await supabase.auth.getSession();
       if (signal.aborted) return;
 
-      // Fallback: usar sessão atual se o refresh falhou/travou
-      if (!session?.access_token) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        session = sessionData?.session;
-      }
-
-      if (signal.aborted) return;
-
+      const session = sessionData?.session;
       if (!session?.access_token) {
         throw new Error('Sessão expirada. Por favor, faça login novamente.');
       }
