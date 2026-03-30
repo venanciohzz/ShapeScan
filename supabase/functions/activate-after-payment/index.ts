@@ -52,18 +52,20 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle();
 
-    if (!profile?.stripe_customer_id) {
+    let customerId = profile?.stripe_customer_id ?? null;
+
+    if (!customerId) {
       // Tentar encontrar pelo email
       const customers = await stripe.customers.list({ email: user.email, limit: 1 });
       if (!customers.data.length) {
         return new Response(JSON.stringify({ activated: false, reason: 'no_customer' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
-      // Sincronizar customer_id
-      await supabase.from('profiles').update({ stripe_customer_id: customers.data[0].id }).eq('id', user.id);
-      profile!.stripe_customer_id = customers.data[0].id;
+      customerId = customers.data[0].id;
+      // Sincronizar customer_id (apenas se o profile existir)
+      if (profile) {
+        await supabase.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id);
+      }
     }
-
-    const customerId = profile!.stripe_customer_id;
 
     // Buscar subscription ativa (ou trialing) criada nos últimos 10 minutos
     // Isso evita reativar planos de períodos anteriores em caso de falha de pagamento.

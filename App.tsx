@@ -336,14 +336,15 @@ const App: React.FC = () => {
           if (resolved) return;
 
           // Carrega o perfil do DB e só então libera o loading
-          await loadProfileSafely(authUser.id, authUser.email || '');
-          
+          const navigatedToQuiz = await loadProfileSafely(authUser.id, authUser.email || '');
+
           if (!resolved) {
             setAuthState('authenticated');
             resolved = true;
           }
 
-          if (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar') {
+          // Só redireciona para /dashboard se loadProfileSafely não já redirecionou para /quiz
+          if (!navigatedToQuiz && (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar')) {
              navigate('/dashboard', { replace: true });
           }
         } else {
@@ -376,18 +377,20 @@ const App: React.FC = () => {
       }
     };
 
-    const loadProfileSafely = async (userId: string, email: string) => {
+    const loadProfileSafely = async (userId: string, email: string): Promise<boolean> => {
       try {
         const { getProfile } = await import('./services/supabaseService');
         const profile = await getProfile(userId);
-        
+
         setUser(profile);
         localStorage.setItem('shapescan_user_profile', JSON.stringify(profile));
-        
-        // Se precisar preencher infos do form inicial
+
+        // Se precisar preencher infos do form inicial (ex: novos usuários Google sem quiz)
         if (!profile.weight || !profile.height) {
             navigate('/quiz', { replace: true });
+            return true; // já navegou — initSession não deve sobrescrever com /dashboard
         }
+        return false;
       } catch (err) {
         console.warn("[App] ⚠️ Erro ao carregar perfil do DB. Fallback ativado:", err);
         // Fallback seguro: O Client tá logado mas o BD falhou em dar os meta-dados
@@ -405,12 +408,13 @@ const App: React.FC = () => {
         } as User;
         
         setUser(fallbackProfile);
+        return false;
       } finally {
         // Libera o loading DA SESSÃO E DA UI agora que o user (ou fallback) está definido
         setIsSessionLoading(false);
         isSessionLoadingRef.current = false;
       }
-      
+
       // Continua carregando dados em BG
       loadUserDataBackground(userId);
     };
