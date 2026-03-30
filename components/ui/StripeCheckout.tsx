@@ -246,8 +246,8 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     setCouponError(null);
 
     try {
-      const { data: refreshData } = await supabase.auth.refreshSession();
-      const session = refreshData?.session ?? (await supabase.auth.getSession()).data.session;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
 
       if (!session?.access_token) throw new Error('Sessão expirada. Faça login novamente.');
 
