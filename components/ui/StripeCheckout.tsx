@@ -160,13 +160,35 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         throw new Error('Usuário não autenticado. Faça login novamente para continuar.');
       }
 
-      // Força refresh do token para garantir que o JWT enviado é válido e não expirado
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      // Força refresh do token — com timeout de 8s para não travar em usuários Google OAuth
+      // (refreshSession() pode pendurar indefinidamente se o provedor OAuth estiver lento)
+      let session: any = null;
+      try {
+        const refreshWithTimeout = Promise.race([
+          supabase.auth.refreshSession(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT')), 8000)
+          ),
+        ]);
+        const { data: refreshData, error: refreshError } = await refreshWithTimeout;
+        if (!refreshError && refreshData?.session) {
+          session = refreshData.session;
+        }
+      } catch (_) {
+        // refreshSession travou ou falhou — tenta usar a sessão atual
+      }
+
       if (signal.aborted) return;
 
-      const session = refreshData?.session ?? (await supabase.auth.getSession()).data.session;
+      // Fallback: usar sessão atual se o refresh falhou/travou
+      if (!session?.access_token) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        session = sessionData?.session;
+      }
 
-      if (refreshError || !session?.access_token) {
+      if (signal.aborted) return;
+
+      if (!session?.access_token) {
         throw new Error('Sessão expirada. Por favor, faça login novamente.');
       }
 
