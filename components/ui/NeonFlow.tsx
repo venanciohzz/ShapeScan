@@ -15,6 +15,7 @@ export function NeonFlow({
 }: NeonFlowProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [hasInteracted, setHasInteracted] = useState(false);
     const tubesRef = useRef<any>(null);
 
     useEffect(() => {
@@ -76,8 +77,6 @@ export function NeonFlow({
         tubesRef.current.tubes.setColors(colors);
         tubesRef.current.tubes.setLightsColors(lightsColors);
     };
-
-    const [hasInteracted, setHasInteracted] = useState(false);
 
     useEffect(() => {
         const handleInteraction = () => {

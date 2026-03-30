@@ -38,7 +38,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
    };
 
    return (
-      <PremiumBackground className="overflow-x-hidden selection:bg-emerald-500 selection:text-white" dim={true} intensity={1.5}>
+      <PremiumBackground className="overflow-x-hidden selection:bg-emerald-500 selection:text-white" dim={true} intensity={1.5} showShaders={!stripePriceId}>
          {/* Top Navigation */}
          <div className="absolute top-8 left-6 md:top-12 md:left-12 z-50">
             <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white group">
