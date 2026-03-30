@@ -133,8 +133,10 @@ const App: React.FC = () => {
     const isPaymentSuccessParams = params.get('payment') === 'success';
     const isAwaitingStripePayment = localStorage.getItem('awaiting_stripe_payment') === 'true';
 
-    // Capturar userId pelo ref para evitar closure stale dentro do intervalo
-    const currentUserId = userRef.current?.id;
+    // Usar user?.id diretamente (está no array de deps, é confiável no início do efeito).
+    // userRef.current?.id causava bug: o efeito de sync do ref roda após o efeito de polling,
+    // então userRef.current ainda era null quando user?.id mudava de null → uuid.
+    const currentUserId = user?.id;
 
     if (!(isPaymentSuccessParams || isAwaitingStripePayment) || !currentUserId) return;
 
