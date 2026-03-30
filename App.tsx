@@ -29,6 +29,7 @@ const AdminDashboard = React.lazy(() => lazyRetry(() => import('./components/Adm
 const AppDemo = React.lazy(() => lazyRetry(() => import('./components/AppDemo')));
 const PasswordRecovery = React.lazy(() => lazyRetry(() => import('./components/PasswordRecovery')));
 const ResetPassword = React.lazy(() => lazyRetry(() => import('./components/ResetPassword')));
+const CompleteProfile = React.lazy(() => lazyRetry(() => import('./components/CompleteProfile')));
 import SuccessCelebration from './components/ui/SuccessCelebration';
 const { BMICalculator, DailyCalorieCalculator } = { 
   BMICalculator: React.lazy(() => lazyRetry(() => import('./components/Calculators').then(m => ({ default: m.BMICalculator })))),
@@ -385,10 +386,16 @@ const App: React.FC = () => {
         setUser(profile);
         localStorage.setItem('shapescan_user_profile', JSON.stringify(profile));
 
-        // Se precisar preencher infos do form inicial (ex: novos usuários Google sem quiz)
+        // Usuário Google sem username/phone → pede dados antes do quiz
+        if (!profile.username) {
+            navigate('/completar-perfil', { replace: true });
+            return true;
+        }
+
+        // Sem dados físicos → quiz
         if (!profile.weight || !profile.height) {
             navigate('/quiz', { replace: true });
-            return true; // já navegou — initSession não deve sobrescrever com /dashboard
+            return true;
         }
         return false;
       } catch (err) {
@@ -557,7 +564,19 @@ const App: React.FC = () => {
   const handleLogin = (user: User, isNew: boolean) => {
     setUser(user);
     loadUserData(user.id);
-    if (isNew || !user.weight || !user.height) {
+    if (!user.username) {
+      navigate('/completar-perfil');
+    } else if (isNew || !user.weight || !user.height) {
+      navigate('/quiz');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
+  const handleCompleteProfile = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+    if (!updatedUser.weight || !updatedUser.height) {
       navigate('/quiz');
     } else {
       navigate('/dashboard');
@@ -799,6 +818,7 @@ const App: React.FC = () => {
               {/* Protected Routes Wrapper */}
               <Route path="/*" element={user ? (
                 <Routes>
+                   <Route path="/completar-perfil" element={<CompleteProfile user={user} onComplete={handleCompleteProfile} />} />
                    <Route path="/quiz" element={<OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />} />
                    <Route path="/planos" element={<PlanSelection user={user} onBack={() => navigate('/dashboard')} onSelect={async (plan) => { if (plan === 'free') { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); navigate('/dashboard'); } }} onShowToast={showToast} />} />
                    <Route path="/assinatura" element={<UpgradePro user={user} onBack={() => navigate('/dashboard')} onShowToast={showToast} />} />
