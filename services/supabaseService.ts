@@ -923,13 +923,15 @@ export async function getSubscriptionInfo(userId: string): Promise<SubscriptionI
 }
 
 export async function cancelSubscription(reason?: string, feedback?: string): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  // refreshSession garante token fresco — functions.invoke usa getSession() internamente
+  // que pode retornar token expirado do localStorage causando 401 na edge function.
+  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+  const session = refreshData?.session;
+  if (refreshError || !session) throw new Error('Sessão expirada. Faça login novamente.');
 
-  // Não passar Authorization manual — functions.invoke usa a sessão atual
-  // e faz refresh automático do token se necessário (evita 401 com token expirado)
   const { data, error } = await supabase.functions.invoke('stripe-cancel-subscription', {
     body: { reason: reason || '', feedback: feedback || '' },
+    headers: { Authorization: `Bearer ${session.access_token}` },
   });
 
   if (error) throw new Error(error.message || 'Erro ao cancelar assinatura');
@@ -1090,10 +1092,13 @@ export async function saveChatMessages(userId: string, messages: { role: string;
 }
 
 export async function reactivateSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuário não autenticado');
+  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+  const session = refreshData?.session;
+  if (refreshError || !session) throw new Error('Sessão expirada. Faça login novamente.');
 
-  const { data, error } = await supabase.functions.invoke('stripe-reactivate-subscription', {});
+  const { data, error } = await supabase.functions.invoke('stripe-reactivate-subscription', {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
 
   if (error) throw new Error(error.message || 'Erro ao reativar assinatura');
   if (data?.error) throw new Error(data.error);
