@@ -922,49 +922,41 @@ export async function getSubscriptionInfo(userId: string): Promise<SubscriptionI
   return data as SubscriptionInfo | null;
 }
 
-// Obtém um access_token válido, fazendo refresh direto via fetch com timeout de 10s.
-// Evita o lock interno do SDK Supabase que trava indefinidamente no Google OAuth.
-async function getAccessToken(): Promise<string> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const session = sessionData?.session;
-  if (!session) throw new Error('Sessão expirada. Faça login novamente.');
-
-  // Verifica se o token ainda é válido (com 60s de margem)
-  const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
-  if (expiresAt > Date.now() + 60_000) return session.access_token;
-
-  // Token expirado — faz refresh direto sem usar o SDK (evita hang no Google OAuth)
+// Lê o token diretamente do localStorage sem passar pelo SDK (sem lock, síncrono).
+// A edge function aceita tokens expirados há até 24h, então não precisamos de refresh aqui.
+function getStoredToken(): string {
   try {
-    const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
-      body: JSON.stringify({ refresh_token: session.refresh_token }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (res.ok) {
-      const refreshed = await res.json();
-      if (refreshed.access_token) return refreshed.access_token;
+    const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
+    const key = `sb-${projectRef}-auth-token`;
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const session = JSON.parse(stored);
+      if (session?.access_token) return session.access_token;
     }
-  } catch {
-    // Timeout ou erro de rede — usa token atual mesmo expirado (edge function retornará 401 com mensagem clara)
-  }
+  } catch { /* fallback abaixo */ }
+  throw new Error('Sessão não encontrada. Faça login novamente.');
+}
 
-  // Tenta usar o token atual como fallback
-  return session.access_token;
+// Chama uma edge function via fetch direto — evita o supabase.functions.invoke
+// que internamente chama getSession() e pode travar com Google OAuth.
+async function callEdgeFunction(name: string, body?: object): Promise<any> {
+  const token = getStoredToken();
+  const res = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'apikey': supabaseAnonKey,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error || `Erro ${res.status}`);
+  return data;
 }
 
 export async function cancelSubscription(reason?: string, feedback?: string): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-  const accessToken = await getAccessToken();
-
-  const { data, error } = await supabase.functions.invoke('stripe-cancel-subscription', {
-    body: { reason: reason || '', feedback: feedback || '' },
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (error) throw new Error(error.message || 'Erro ao cancelar assinatura');
-  if (data?.error) throw new Error(data.error);
-
-  return data as { cancel_at_period_end: boolean; current_period_end: number };
+  return callEdgeFunction('stripe-cancel-subscription', { reason: reason || '', feedback: feedback || '' });
 }
 
 export async function adminCancelUserSubscription(targetUserId: string): Promise<{ success: boolean; current_period_end: number; expiry_date: string }> {
@@ -1119,14 +1111,7 @@ export async function saveChatMessages(userId: string, messages: { role: string;
 }
 
 export async function reactivateSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-  const accessToken = await getAccessToken();
-
-  const { data, error } = await supabase.functions.invoke('stripe-reactivate-subscription', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (error) throw new Error(error.message || 'Erro ao reativar assinatura');
-  if (data?.error) throw new Error(data.error);
-
+  const data = await callEdgeFunction('stripe-reactivate-subscription');
   return data as { cancel_at_period_end: boolean; current_period_end: number };
 }
+
