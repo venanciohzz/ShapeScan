@@ -179,7 +179,6 @@ const App: React.FC = () => {
         const token = stored ? JSON.parse(stored)?.access_token : null;
         if (!token) return;
 
-        const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
         const res = await fetch(`${supabaseUrl}/functions/v1/activate-after-payment`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
