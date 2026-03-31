@@ -245,10 +245,10 @@ export async function getProfile(userId: string): Promise<User> {
 
   // Bypass supabase.from() — ele chama getSession() internamente que usa o lock
   // do SDK e trava indefinidamente para Google OAuth. Usamos fetch direto com o
-  // token do localStorage (sem lock, sem rede extra).
+  // token válido (com refresh automático se expirado).
   let token: string;
   try {
-    token = getStoredToken();
+    token = await getValidToken();
   } catch {
     // Sem token no localStorage — usa anonKey para leitura (RLS permitirá se a policy for pública)
     token = supabaseAnonKey;
@@ -933,25 +933,73 @@ export async function getSubscriptionInfo(userId: string): Promise<SubscriptionI
   return data as SubscriptionInfo | null;
 }
 
-// Lê o token diretamente do localStorage sem passar pelo SDK (sem lock, síncrono).
-// A edge function aceita tokens expirados há até 24h, então não precisamos de refresh aqui.
-export function getStoredToken(): string {
+// Lê a sessão bruta do localStorage (síncrono, sem SDK).
+function getStoredSession(): { access_token: string; refresh_token: string; expires_at?: number; user?: any } | null {
   try {
     const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
     const key = `sb-${projectRef}-auth-token`;
     const stored = localStorage.getItem(key);
     if (stored) {
       const session = JSON.parse(stored);
-      if (session?.access_token) return session.access_token;
+      if (session?.access_token) return session;
     }
-  } catch { /* fallback abaixo */ }
+  } catch { /* fallback */ }
+  return null;
+}
+
+// Salva sessão atualizada no localStorage.
+function storeSession(session: { access_token: string; refresh_token: string; expires_at?: number; user?: any }): void {
+  try {
+    const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
+    const key = `sb-${projectRef}-auth-token`;
+    // Ler o existente para preservar campos extras (token_type, etc.)
+    const existing = JSON.parse(localStorage.getItem(key) || '{}');
+    localStorage.setItem(key, JSON.stringify({ ...existing, ...session }));
+  } catch { /* ignora */ }
+}
+
+// Obtém um access token válido. Se expirado, faz refresh direto via fetch (sem SDK, sem lock).
+export async function getValidToken(): Promise<string> {
+  const session = getStoredSession();
+  if (!session) throw new Error('Sessão não encontrada. Faça login novamente.');
+
+  const now = Math.floor(Date.now() / 1000);
+  const expiresAt = session.expires_at ?? 0;
+  // Renova se expirado ou expira em menos de 60s
+  if (expiresAt > now + 60) return session.access_token;
+
+  // Token expirado — refresh direto sem SDK
+  console.log('[SupabaseService] 🔄 Token expirado, fazendo refresh direto...');
+  if (!session.refresh_token) throw new Error('Sem refresh_token. Faça login novamente.');
+
+  const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': supabaseAnonKey },
+    body: JSON.stringify({ refresh_token: session.refresh_token }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error_description || `Refresh falhou (${res.status}). Faça login novamente.`);
+  }
+
+  const newSession = await res.json();
+  storeSession(newSession);
+  console.log('[SupabaseService] ✅ Token renovado com sucesso.');
+  return newSession.access_token;
+}
+
+// Mantém compatibilidade síncrona para casos onde token não precisa ser válido (leitura imediata).
+export function getStoredToken(): string {
+  const session = getStoredSession();
+  if (session?.access_token) return session.access_token;
   throw new Error('Sessão não encontrada. Faça login novamente.');
 }
 
 // Chama uma edge function via fetch direto — evita o supabase.functions.invoke
 // que internamente chama getSession() e pode travar com Google OAuth.
 export async function callEdgeFunction(name: string, body?: object): Promise<any> {
-  const token = getStoredToken();
+  const token = await getValidToken();
   const res = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
     method: 'POST',
     headers: {

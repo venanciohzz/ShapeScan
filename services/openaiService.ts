@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { FoodAnalysisResult, ShapeAnalysisResult } from '../types';
-import { supabase } from './supabaseService';
+import { supabase, getValidToken } from './supabaseService';
 
 const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-analyzer`;
 
@@ -68,77 +68,61 @@ const calculateMuscleScore = (protein: number, carbs: number, fat: number): numb
 };
 
 const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
-  // Força refresh do token para garantir JWT válido
-  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-  const session = refreshData?.session ?? (await supabase.auth.getSession()).data.session;
-
-  if (refreshError || !session) {
-    console.error('[openaiService] Auth session error or not found:', refreshError);
+  // Obtém token válido — renova automaticamente via fetch se expirado (sem SDK, sem lock).
+  let token: string;
+  try {
+    token = await getValidToken();
+  } catch {
     throw new Error('401: Sua sessão expirou. Por favor, saia e entre novamente no aplicativo.');
   }
 
-  try {
-    // Log for debugging (remove in production if too noisy)
-    console.log(`[openaiService] Invoking ai-analyzer for ${payload.type}...`);
+  console.log(`[openaiService] Calling ai-analyzer for ${payload.type}...`);
 
-    // Explicitly pass Authorization header — supabase.functions.invoke auto-detection
-    // can fail in some environments, explicit header guarantees the correct token is sent
-    const { data, error } = await supabase.functions.invoke('ai-analyzer', {
-      body: payload,
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
+  const res = await fetch(EDGE_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'apikey': (import.meta as any).env.VITE_SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(payload),
+  });
 
-    if (error) {
-      console.error('[openaiService] Edge Function invoke error:', error);
+  let data: any;
+  try { data = await res.json(); } catch { data = {}; }
 
-      // Try to parse the response body for structured errors (429, 401, etc.)
-      let errorBody: any = null;
-      const httpStatus = error.context?.status ?? error.status;
-      try {
-        if (error.context && typeof error.context.json === 'function') {
-          errorBody = await error.context.json();
-        }
-      } catch (_) { /* ignore parse errors */ }
-
-      if (httpStatus === 401 || (error.message && error.message.includes('401'))) {
-        throw new Error('401: Sessão inválida. Por favor, faça login novamente para reautenticar.');
-      }
-
-      if (httpStatus === 429 || errorBody?.isLimitReached) {
-        const e: any = new Error(errorBody?.error || 'Você atingiu seu limite diário para este recurso.');
-        e.isLimitReached = true;
-        e.showPaywall = errorBody?.showPaywall || false;
-        throw e;
-      }
-
-      if (httpStatus === 406) {
-        throw new Error('Erro de configuração no servidor (406). Por favor, contate o suporte.');
-      }
-
-      throw new Error(errorBody?.error || error.message || 'Erro de conexão com o servidor de IA. Tente novamente.');
+  if (!res.ok) {
+    const httpStatus = res.status;
+    if (httpStatus === 401) {
+      throw new Error('401: Sessão inválida. Por favor, faça login novamente para reautenticar.');
     }
-
-    if (data?.isError) {
-      console.error('[openaiService] AI Business Logic Error:', data.error);
-      throw new Error(data.error || 'Não foi possível completar a análise no momento.');
+    if (httpStatus === 429 || data?.isLimitReached) {
+      const e: any = new Error(data?.error || 'Você atingiu seu limite diário para este recurso.');
+      e.isLimitReached = true;
+      e.showPaywall = data?.showPaywall || false;
+      throw e;
     }
-
-    if (!data || data.text === undefined) {
-       console.error('[openaiService] Unexpected response structure:', data);
-       throw new Error('O servidor retornou uma resposta inválida. Tente novamente em instantes.');
+    if (httpStatus === 406) {
+      throw new Error('Erro de configuração no servidor (406). Por favor, contate o suporte.');
     }
-
-    if (data.usage) {
-      console.log(`[AI Usage] Tokens: ${data.usage.total_tokens || 'N/A'}`);
-    }
-
-    return data.text;
-  } catch (err: any) {
-    console.error('[openaiService] Exception in callAIAnalyzer:', err);
-    throw err;
+    throw new Error(data?.error || 'Erro de conexão com o servidor de IA. Tente novamente.');
   }
+
+  if (data?.isError) {
+    console.error('[openaiService] AI Business Logic Error:', data.error);
+    throw new Error(data.error || 'Não foi possível completar a análise no momento.');
+  }
+
+  if (!data || data.text === undefined) {
+    console.error('[openaiService] Unexpected response structure:', data);
+    throw new Error('O servidor retornou uma resposta inválida. Tente novamente em instantes.');
+  }
+
+  if (data.usage) {
+    console.log(`[AI Usage] Tokens: ${data.usage.total_tokens || 'N/A'}`);
+  }
+
+  return data.text;
 };
 
 const extractJson = (text: string): string => {
