@@ -1044,23 +1044,28 @@ export interface AdminUserDetails {
 }
 
 export async function adminGetUserDetails(targetUserId: string): Promise<AdminUserDetails> {
-  const [
-    { data: dailyUsage },
-    { count: foodLogsCount },
-    { count: evolutionCount },
-    { count: chatCount },
-    { data: statsData },
-  ] = await Promise.all([
-    supabase
-      .from('daily_usage')
-      .select('date, type, count')
-      .eq('user_id', targetUserId)
-      .order('date', { ascending: false }),
-    supabase.from('food_logs').select('*', { count: 'exact', head: true }).eq('user_id', targetUserId),
-    supabase.from('evolution_records').select('*', { count: 'exact', head: true }).eq('user_id', targetUserId),
-    supabase.from('chat_messages').select('*', { count: 'exact', head: true }).eq('user_id', targetUserId).eq('role', 'user'),
-    supabase.from('user_stats').select('*').eq('user_id', targetUserId).maybeSingle(),
+  const token = await getValidToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    'apikey': supabaseAnonKey,
+  };
+  const uid = encodeURIComponent(targetUserId);
+
+  const [dailyUsageRes, foodCountRes, evoCountRes, chatCountRes, statsRes] = await Promise.all([
+    fetch(`${supabaseUrl}/rest/v1/daily_usage?user_id=eq.${uid}&select=date,type,count&order=date.desc`, { headers }),
+    fetch(`${supabaseUrl}/rest/v1/food_logs?user_id=eq.${uid}&select=*`, { headers: { ...headers, 'Prefer': 'count=exact', 'Range-Unit': 'items', 'Range': '0-0' } }),
+    fetch(`${supabaseUrl}/rest/v1/evolution_records?user_id=eq.${uid}&select=*`, { headers: { ...headers, 'Prefer': 'count=exact', 'Range-Unit': 'items', 'Range': '0-0' } }),
+    fetch(`${supabaseUrl}/rest/v1/chat_messages?user_id=eq.${uid}&role=eq.user&select=*`, { headers: { ...headers, 'Prefer': 'count=exact', 'Range-Unit': 'items', 'Range': '0-0' } }),
+    fetch(`${supabaseUrl}/rest/v1/user_stats?user_id=eq.${uid}&select=*&limit=1`, { headers }),
   ]);
+
+  const dailyUsage = dailyUsageRes.ok ? await dailyUsageRes.json() : [];
+  const foodLogsCount = parseInt(foodCountRes.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+  const evolutionCount = parseInt(evoCountRes.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+  const chatCount = parseInt(chatCountRes.headers.get('Content-Range')?.split('/')[1] || '0', 10);
+  const statsArr = statsRes.ok ? await statsRes.json() : [];
+  const statsData = statsArr?.[0] || null;
 
   const rows: { date: string; type: string; count: number }[] = dailyUsage || [];
 
@@ -1154,8 +1159,21 @@ export async function getChatHistory(userId: string): Promise<{ role: 'user' | '
 export async function saveChatMessages(userId: string, messages: { role: string; content: string }[]): Promise<void> {
   if (!messages.length) return;
   const rows = messages.map(m => ({ user_id: userId, role: m.role, content: m.content }));
-  const { error } = await supabase.from('chat_messages').insert(rows);
-  if (error) throw new Error(error.message);
+  const token = await getValidToken();
+  const res = await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'apikey': supabaseAnonKey,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify(rows),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.message || `HTTP ${res.status} ao salvar mensagens`);
+  }
 }
 
 export async function reactivateSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {

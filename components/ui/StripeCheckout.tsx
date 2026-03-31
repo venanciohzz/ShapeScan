@@ -7,7 +7,7 @@ import {
   useStripe,
   useElements
 } from '@stripe/react-stripe-js';
-import { supabase } from '../../services/supabaseService';
+import { getValidToken, callEdgeFunction } from '../../services/supabaseService';
 
 // Initialize Stripe with the publishable key
 const stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -154,50 +154,26 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     try {
       console.log('[StripeCheckout] Iniciando checkout para priceId:', priceId);
 
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (signal.aborted) return;
-
-      if (userError || !userData?.user) {
+      // Bypass SDK — getUser() e getSession() podem travar com Google OAuth.
+      // userId já vem como prop; token via getValidToken() com refresh automático.
+      if (!userId) {
         throw new Error('Usuário não autenticado. Faça login novamente para continuar.');
       }
 
-      // Usa a sessão atual sem chamar refreshSession() — evita disparar TOKEN_REFRESHED
-      // que faz App.tsx re-buscar perfil e potencialmente navegar para /quiz,
-      // abortando o checkout silenciosamente. O Supabase auto-renova o token quando necessário.
-      const { data: sessionData } = await supabase.auth.getSession();
       if (signal.aborted) return;
 
-      const session = sessionData?.session;
-      if (!session?.access_token) {
-        throw new Error('Sessão expirada. Por favor, faça login novamente.');
-      }
+      const token = await getValidToken();
+      if (signal.aborted) return;
 
       // Timeout de 30s para não travar o loading infinito
-      const fetchPromise = supabase.functions.invoke('stripe-checkout', {
-        body: { priceId, couponCode: appliedCouponCode, plan },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      const fetchPromise = callEdgeFunction('stripe-checkout', { priceId, couponCode: appliedCouponCode, plan });
 
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('O servidor demorou para responder. Tente novamente.')), 30000)
       );
 
-      const { data, error: invokeError } = await Promise.race([fetchPromise, timeoutPromise]);
+      const data = await Promise.race([fetchPromise, timeoutPromise]);
       if (signal.aborted) return;
-
-      if (invokeError) {
-        console.error('[StripeCheckout] Edge Function ERROR:', invokeError);
-        let errorMessage = invokeError.message || 'Erro ao iniciar checkout';
-        try {
-          if (invokeError.context && typeof invokeError.context.json === 'function') {
-            const body = await invokeError.context.json();
-            errorMessage = body?.error || body?.message || errorMessage;
-          }
-        } catch (_) { /* seguro ignorar */ }
-        throw new Error(errorMessage);
-      }
 
       if (data?.isError) throw new Error(data.error);
 
@@ -247,26 +223,10 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     setCouponError(null);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const session = sessionData?.session;
+      // Bypass SDK — usar getValidToken() + callEdgeFunction direto.
+      await getValidToken(); // renova se expirado, para consistência
 
-      if (!session?.access_token) throw new Error('Sessão expirada. Faça login novamente.');
-
-      const { data, error: invokeError } = await supabase.functions.invoke('stripe-checkout', {
-        body: { priceId, couponCode: couponCodeInput, plan },
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-
-      if (invokeError) {
-        let msg = invokeError.message || 'Cupom inválido';
-        try {
-          if (invokeError.context && typeof invokeError.context.json === 'function') {
-            const body = await invokeError.context.json();
-            msg = body?.error || body?.message || msg;
-          }
-        } catch (_) {}
-        throw new Error(msg);
-      }
+      const data = await callEdgeFunction('stripe-checkout', { priceId, couponCode: couponCodeInput, plan });
 
       if (data?.isError) throw new Error(data.error || 'Cupom inválido ou expirado.');
 
