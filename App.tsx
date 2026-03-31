@@ -493,13 +493,13 @@ const App: React.FC = () => {
     // ============================================================
     const safetyTimeout = setTimeout(() => {
       if (!resolved) {
-        console.warn('[App] ⚠️ Safety Timeout (6s) atingido! Forçando encerramento do loader (Unauthenticated Fallback).');
+        console.warn('[App] ⚠️ Safety Timeout (15s) atingido! Forçando encerramento do loader (Unauthenticated Fallback).');
         setAuthState('unauthenticated');
         setIsSessionLoading(false);
         isSessionLoadingRef.current = false;
         resolved = true;
       }
-    }, 6000);
+    }, 15000);
 
     initSession();
 

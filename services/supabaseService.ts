@@ -2,8 +2,8 @@ import { createClient, SupabaseClient, User as SupabaseUser, Session } from '@su
 import { User, FoodLog, EvolutionRecord, SavedMeal, UserStats } from '../types';
 import { getTrackingDateString } from './dateUtils';
 
-const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
-const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
+export const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+export const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Variáveis de ambiente do Supabase não configuradas');
@@ -242,42 +242,53 @@ export async function getSession(): Promise<User | null> {
 
 export async function getProfile(userId: string): Promise<User> {
   console.log(`[SupabaseService] 🔍 getProfile iniciada para ${userId}`);
-  
-  const profilePromise = supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
 
-  const { data, error } = await profilePromise;
-
-  if (error) {
-    console.error(`[SupabaseService] ❌ Erro ao buscar perfil (${userId}):`, error.message);
-    throw new Error(error.message);
+  // Bypass supabase.from() — ele chama getSession() internamente que usa o lock
+  // do SDK e trava indefinidamente para Google OAuth. Usamos fetch direto com o
+  // token do localStorage (sem lock, sem rede extra).
+  let token: string;
+  try {
+    token = getStoredToken();
+  } catch {
+    // Sem token no localStorage — usa anonKey para leitura (RLS permitirá se a policy for pública)
+    token = supabaseAnonKey;
   }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    'apikey': supabaseAnonKey,
+  };
+
+  // Buscar perfil
+  const profileRes = await fetch(
+    `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=*&limit=1`,
+    { headers }
+  );
+  if (!profileRes.ok) {
+    const msg = `HTTP ${profileRes.status} ao buscar perfil`;
+    console.error(`[SupabaseService] ❌ Erro ao buscar perfil (${userId}):`, msg);
+    throw new Error(msg);
+  }
+  const profileRows = await profileRes.json();
+  const data = profileRows?.[0];
   if (!data) throw new Error('Perfil não encontrado');
 
   console.log('[SupabaseService] 💳 Buscando planos do usuário...');
 
-  // Buscar plano do usuário (com tratamento resiliente para colunas faltantes)
-  let planQuery = supabase
-    .from('user_plans')
-    .select('plan_id, active')
-    .eq('user_id', userId)
-    .eq('active', true);
-    
-  let { data: plans, error: planError } = await planQuery
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (planError) {
-    console.error('[SupabaseService] Erro ao carregar plano:', planError.message);
+  // Buscar plano do usuário
+  const plansRes = await fetch(
+    `${supabaseUrl}/rest/v1/user_plans?user_id=eq.${encodeURIComponent(userId)}&active=eq.true&select=plan_id,active&order=created_at.desc&limit=1`,
+    { headers }
+  );
+  const plans = plansRes.ok ? await plansRes.json() : [];
+  if (!plansRes.ok) {
+    console.error('[SupabaseService] Erro ao carregar plano:', plansRes.status);
   }
 
   const planData = plans?.[0];
-  // planId falls back to profiles.plan (synced by trigger) if user_plans has no active row
   const planId = planData?.plan_id || data.plan || 'free';
-  // isPremium derived from planId so profiles.plan fallback is also honoured
   const isPremium = planId !== 'free';
   const isAdmin = data.is_admin || false;
 
@@ -924,7 +935,7 @@ export async function getSubscriptionInfo(userId: string): Promise<SubscriptionI
 
 // Lê o token diretamente do localStorage sem passar pelo SDK (sem lock, síncrono).
 // A edge function aceita tokens expirados há até 24h, então não precisamos de refresh aqui.
-function getStoredToken(): string {
+export function getStoredToken(): string {
   try {
     const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
     const key = `sb-${projectRef}-auth-token`;
@@ -939,7 +950,7 @@ function getStoredToken(): string {
 
 // Chama uma edge function via fetch direto — evita o supabase.functions.invoke
 // que internamente chama getSession() e pode travar com Google OAuth.
-async function callEdgeFunction(name: string, body?: object): Promise<any> {
+export async function callEdgeFunction(name: string, body?: object): Promise<any> {
   const token = getStoredToken();
   const res = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
     method: 'POST',
@@ -960,18 +971,7 @@ export async function cancelSubscription(reason?: string, feedback?: string): Pr
 }
 
 export async function adminCancelUserSubscription(targetUserId: string): Promise<{ success: boolean; current_period_end: number; expiry_date: string }> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Usuário não autenticado');
-
-  const { data, error } = await supabase.functions.invoke('admin-cancel-subscription', {
-    body: { targetUserId },
-    headers: { Authorization: `Bearer ${session.access_token}` },
-  });
-
-  if (error) throw new Error(error.message || 'Erro ao cancelar assinatura');
-  if (data?.error) throw new Error(data.error);
-
-  return data as { success: boolean; current_period_end: number; expiry_date: string };
+  return callEdgeFunction('admin-cancel-subscription', { targetUserId });
 }
 
 // ==================== ADMIN USER DETAILS ====================
