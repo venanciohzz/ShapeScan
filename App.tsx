@@ -173,8 +173,10 @@ const App: React.FC = () => {
     // sem esperar o webhook do Stripe, eliminando o delay de 10-30s.
     const tryImmediateActivation = async () => {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData?.session?.access_token;
+        const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+        const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
+        const stored = localStorage.getItem(`sb-${projectRef}-auth-token`);
+        const token = stored ? JSON.parse(stored)?.access_token : null;
         if (!token) return;
 
         const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
@@ -317,56 +319,99 @@ const App: React.FC = () => {
       console.log('[App] 🚀 INIT_SESSION_START');
       const startTime = Date.now();
 
-      // Timers de expiração removidos a pedido do usuário
-
-
       try {
-        console.log('[App] Buscando sessão atual...');
-
         // ============================================================
-        // TIMEOUT DEFENSIVO: getSession compete com 8s de timeout.
-        // Se o Supabase/rede demorar mais que isso, tratar como visitante.
-        // Isso previne loading infinito em conexões lentas ou cold starts.
-        // O safety timeout do useEffect (5s) continua como fallback final.
+        // BYPASS TOTAL DO SDK: supabase.auth.getSession() usa um lock
+        // interno que trava indefinidamente para usuários Google OAuth.
+        // Lemos direto do localStorage — síncrono, sem lock, sem rede.
         // ============================================================
-        // Use APENAS a sessão oficial do Supabase para inicializar
-        const { data } = await supabase.auth.getSession();
-        
-        if (data.session) {
-          const authUser = data.session.user;
-          console.log(`[App] Sessão Auth Válida encontrada:`, authUser.email);
-          
-          if (resolved) return;
+        const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+        const projectRef = new URL(supabaseUrl).hostname.split('.')[0];
+        const storageKey = `sb-${projectRef}-auth-token`;
 
-          // Carrega o perfil do DB e só então libera o loading
-          const navigatedToQuiz = await loadProfileSafely(authUser.id, authUser.email || '');
+        // PASSO 1: Callback OAuth no hash da URL (#access_token=...)
+        // Processamos manualmente para não depender do SDK que pode travar.
+        const hash = window.location.hash;
+        if (hash && hash.includes('access_token=') && !hash.includes('error=')) {
+          console.log('[App] OAuth callback detectado — processando hash manualmente...');
+          const params = new URLSearchParams(hash.substring(1));
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+          const expiresAt = params.get('expires_at');
+          const expiresIn = params.get('expires_in');
 
-          if (!resolved) {
-            setAuthState('authenticated');
-            resolved = true;
+          if (accessToken && refreshToken) {
+            try {
+              const payloadB64 = accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+              const payload = JSON.parse(atob(payloadB64));
+
+              const sessionData = {
+                access_token: accessToken,
+                refresh_token: refreshToken,
+                expires_at: expiresAt ? parseInt(expiresAt) : Math.floor(Date.now() / 1000) + parseInt(expiresIn || '3600'),
+                expires_in: parseInt(expiresIn || '3600'),
+                token_type: 'bearer',
+                user: {
+                  id: payload.sub,
+                  aud: payload.aud || 'authenticated',
+                  role: payload.role || 'authenticated',
+                  email: payload.email || '',
+                  app_metadata: payload.app_metadata || {},
+                  user_metadata: payload.user_metadata || {},
+                },
+              };
+              localStorage.setItem(storageKey, JSON.stringify(sessionData));
+              console.log('[App] Sessão OAuth salva no localStorage:', payload.email);
+              window.history.replaceState(null, '', window.location.pathname);
+
+              if (resolved) return;
+              const navigatedToQuiz = await loadProfileSafely(payload.sub, payload.email || '');
+              if (!resolved) { setAuthState('authenticated'); resolved = true; }
+              if (!navigatedToQuiz && (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar')) {
+                navigate('/dashboard', { replace: true });
+              }
+              return;
+            } catch (parseErr) {
+              console.warn('[App] Falha ao processar hash OAuth:', parseErr);
+            }
           }
+        }
 
-          // Só redireciona para /dashboard se loadProfileSafely não já redirecionou para /quiz
-          if (!navigatedToQuiz && (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar')) {
-             navigate('/dashboard', { replace: true });
+        // PASSO 2: Sessão existente no localStorage (usuário retornando)
+        console.log('[App] Buscando sessão no localStorage...');
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          try {
+            const session = JSON.parse(stored);
+            if (session?.access_token && session?.user?.id) {
+              console.log('[App] Sessão encontrada no localStorage:', session.user.email);
+              if (resolved) return;
+              const navigatedToQuiz = await loadProfileSafely(session.user.id, session.user.email || '');
+              if (!resolved) { setAuthState('authenticated'); resolved = true; }
+              if (!navigatedToQuiz && (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/entrar' || location.pathname === '/registrar')) {
+                navigate('/dashboard', { replace: true });
+              }
+              return;
+            }
+          } catch (parseErr) {
+            console.warn('[App] Sessão no localStorage corrompida:', parseErr);
           }
-        } else {
-          console.log('[App] ℹ️ Nenhuma sessão ativa encontrada (Visitante).');
-          localStorage.removeItem('shapescan_user_profile');
-          
-          if (resolved) return;
+        }
 
-          // Libera o loading para visitantes
+        // PASSO 3: Sem sessão — visitante
+        console.log('[App] ℹ️ Nenhuma sessão ativa encontrada (Visitante).');
+        localStorage.removeItem('shapescan_user_profile');
+        if (!resolved) {
           setAuthState('unauthenticated');
           setIsSessionLoading(false);
           isSessionLoadingRef.current = false;
           resolved = true;
-
-          const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha'];
-          if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
-             navigate('/', { replace: true });
-          }
         }
+        const publicPaths = ['/', '/como-funciona', '/sobre', '/recuperar-senha', '/nova-senha'];
+        if (!publicPaths.includes(location.pathname) && !location.pathname.startsWith('/entrar') && !location.pathname.startsWith('/registrar')) {
+          navigate('/', { replace: true });
+        }
+
       } catch (e: any) {
         console.error("[App] ❌ Erro não tratado durante initSession:", e);
         if (!resolved) {
