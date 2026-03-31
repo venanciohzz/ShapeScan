@@ -923,11 +923,11 @@ export async function getSubscriptionInfo(userId: string): Promise<SubscriptionI
 }
 
 export async function cancelSubscription(reason?: string, feedback?: string): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-  // refreshSession garante token fresco — functions.invoke usa getSession() internamente
-  // que pode retornar token expirado do localStorage causando 401 na edge function.
-  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-  const session = refreshData?.session;
-  if (refreshError || !session) throw new Error('Sessão expirada. Faça login novamente.');
+  // getSession() lê do localStorage sem chamada de rede — evita hang com Google OAuth.
+  // O token é passado explicitamente para sobrescrever o header interno do functions.invoke.
+  const { data: sessionData } = await supabase.auth.getSession();
+  const session = sessionData?.session;
+  if (!session) throw new Error('Sessão expirada. Faça login novamente.');
 
   const { data, error } = await supabase.functions.invoke('stripe-cancel-subscription', {
     body: { reason: reason || '', feedback: feedback || '' },
@@ -1092,9 +1092,9 @@ export async function saveChatMessages(userId: string, messages: { role: string;
 }
 
 export async function reactivateSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-  const session = refreshData?.session;
-  if (refreshError || !session) throw new Error('Sessão expirada. Faça login novamente.');
+  const { data: sessionData } = await supabase.auth.getSession();
+  const session = sessionData?.session;
+  if (!session) throw new Error('Sessão expirada. Faça login novamente.');
 
   const { data, error } = await supabase.functions.invoke('stripe-reactivate-subscription', {
     headers: { Authorization: `Bearer ${session.access_token}` },
