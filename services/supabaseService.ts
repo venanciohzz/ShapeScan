@@ -832,7 +832,7 @@ export async function getAllUsers(): Promise<User[]> {
 
   const { data: plans } = await supabase
     .from('user_plans')
-    .select('user_id, plan_id, active, subscription_start, current_period_end, cancel_at_period_end, cancelled_at, cancellation_reason');
+    .select('user_id, plan_id, active, subscription_start, current_period_end, cancel_at_period_end, cancelled_at, cancellation_reason, cancellation_feedback');
 
   const planMap = new Map();
   plans?.forEach((p: any) => planMap.set(p.user_id, p));
@@ -847,6 +847,7 @@ export async function getAllUsers(): Promise<User[]> {
       user.cancelAtPeriodEnd = plan.cancel_at_period_end ?? false;
       user.cancelledAt = plan.cancelled_at ?? null;
       user.cancellationReason = plan.cancellation_reason ?? null;
+      user.cancellationFeedback = plan.cancellation_feedback ?? null;
     }
     return user;
   });

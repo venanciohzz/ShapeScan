@@ -347,6 +347,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                         </div>
                                                     ))}
                                                 </div>
+
+                                                {/* Feedback escrito do cancelamento */}
+                                                {u.cancellationFeedback && (
+                                                    <div className="mt-3 p-3.5 bg-red-500/5 border border-red-500/10 rounded-2xl">
+                                                        <div className="flex items-center gap-1.5 mb-1.5 text-red-400">
+                                                            <AlertTriangle className="w-3 h-3" />
+                                                            <span className="text-[9px] font-black uppercase tracking-widest">Relato do usuário</span>
+                                                        </div>
+                                                        <p className="text-xs text-zinc-300 leading-relaxed">{u.cancellationFeedback}</p>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Usage Stats */}

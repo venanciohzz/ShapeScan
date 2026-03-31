@@ -85,6 +85,7 @@ export interface User {
   cancelAtPeriodEnd?: boolean;
   cancelledAt?: number | null;
   cancellationReason?: string | null;
+  cancellationFeedback?: string | null;
 }
 
 

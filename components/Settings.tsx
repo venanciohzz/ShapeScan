@@ -365,22 +365,29 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
                     </button>
                   ))}
                 </div>
-                <textarea
-                  value={feedbackText}
-                  onChange={e => setFeedbackText(e.target.value)}
-                  placeholder="Comentário adicional (opcional)"
-                  rows={2}
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-xl p-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-emerald-500/30 resize-none mb-5"
-                />
+                <div className="mb-5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2">
+                    Conte com suas palavras <span className="text-red-400">*</span>
+                  </p>
+                  <textarea
+                    value={feedbackText}
+                    onChange={e => setFeedbackText(e.target.value)}
+                    placeholder="Descreva o motivo do cancelamento..."
+                    rows={3}
+                    className={`w-full bg-white/[0.03] border rounded-xl p-3 text-xs text-white placeholder:text-zinc-600 outline-none focus:border-emerald-500/30 resize-none transition-colors ${
+                      feedbackText.trim() ? 'border-emerald-500/30' : 'border-white/5'
+                    }`}
+                  />
+                </div>
                 <div className="space-y-3">
                   <motion.button
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      if (!selectedReason) return;
+                      if (!selectedReason || !feedbackText.trim()) return;
                       const retention = getRetentionContent(selectedReason);
                       setCancelStep(retention ? 'retention' : 'confirm');
                     }}
-                    disabled={!selectedReason}
+                    disabled={!selectedReason || !feedbackText.trim()}
                     className="w-full py-4 bg-white text-zinc-950 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Continuar
