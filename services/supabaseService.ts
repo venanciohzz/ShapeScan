@@ -922,16 +922,43 @@ export async function getSubscriptionInfo(userId: string): Promise<SubscriptionI
   return data as SubscriptionInfo | null;
 }
 
-export async function cancelSubscription(reason?: string, feedback?: string): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-  // getSession() lê do localStorage sem chamada de rede — evita hang com Google OAuth.
-  // O token é passado explicitamente para sobrescrever o header interno do functions.invoke.
+// Obtém um access_token válido, fazendo refresh direto via fetch com timeout de 10s.
+// Evita o lock interno do SDK Supabase que trava indefinidamente no Google OAuth.
+async function getAccessToken(): Promise<string> {
   const { data: sessionData } = await supabase.auth.getSession();
   const session = sessionData?.session;
   if (!session) throw new Error('Sessão expirada. Faça login novamente.');
 
+  // Verifica se o token ainda é válido (com 60s de margem)
+  const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+  if (expiresAt > Date.now() + 60_000) return session.access_token;
+
+  // Token expirado — faz refresh direto sem usar o SDK (evita hang no Google OAuth)
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: supabaseAnonKey },
+      body: JSON.stringify({ refresh_token: session.refresh_token }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (res.ok) {
+      const refreshed = await res.json();
+      if (refreshed.access_token) return refreshed.access_token;
+    }
+  } catch {
+    // Timeout ou erro de rede — usa token atual mesmo expirado (edge function retornará 401 com mensagem clara)
+  }
+
+  // Tenta usar o token atual como fallback
+  return session.access_token;
+}
+
+export async function cancelSubscription(reason?: string, feedback?: string): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
+  const accessToken = await getAccessToken();
+
   const { data, error } = await supabase.functions.invoke('stripe-cancel-subscription', {
     body: { reason: reason || '', feedback: feedback || '' },
-    headers: { Authorization: `Bearer ${session.access_token}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (error) throw new Error(error.message || 'Erro ao cancelar assinatura');
@@ -1092,12 +1119,10 @@ export async function saveChatMessages(userId: string, messages: { role: string;
 }
 
 export async function reactivateSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const session = sessionData?.session;
-  if (!session) throw new Error('Sessão expirada. Faça login novamente.');
+  const accessToken = await getAccessToken();
 
   const { data, error } = await supabase.functions.invoke('stripe-reactivate-subscription', {
-    headers: { Authorization: `Bearer ${session.access_token}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 
   if (error) throw new Error(error.message || 'Erro ao reativar assinatura');
