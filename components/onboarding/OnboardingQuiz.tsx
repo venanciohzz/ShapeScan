@@ -90,7 +90,18 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
         return true;
     };
 
-    const compatibilityScore = useMemo(() => Math.floor(Math.random() * (97 - 90 + 1)) + 90, []);
+    const compatibilityScore = useMemo(() => {
+        let score = 80;
+        if (data.goal) score += 4;
+        if (data.frequency === '3-5' || data.frequency === '6+') score += 4;
+        else if (data.frequency === '0-2') score += 2;
+        if (data.knowsMacros) score += 3;
+        if (data.impediments.length <= 1) score += 3;
+        else if (data.impediments.length <= 3) score += 1;
+        if (data.gender && data.height > 0 && data.weight > 0) score += 3;
+        if (data.targetWeight && data.targetWeight !== data.weight) score += 2;
+        return Math.min(score, 97);
+    }, [data.goal, data.frequency, data.knowsMacros, data.impediments, data.gender, data.height, data.weight, data.targetWeight]);
 
     return (
         <OnboardingLayout progress={step / totalSteps} onBack={prev} showBack={step > 1}>

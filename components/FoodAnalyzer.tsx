@@ -89,13 +89,10 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
   };
 
   const incrementUsage = async () => {
-    // Incremento controlado pela Edge Function — esta função é mantida apenas para sincronizar
+    // Incremento controlado pela Edge Function — esta função é mantida apenas para sincronizar
     // o estado local do usuário (freeScansUsed) após confirmar sucesso
-    if (user.isAdmin) return { success: true };
     if (user.plan === 'free') {
-      // Apenas atualizar contagem local para UX imediata
       onUpdateUser({ ...user, freeScansUsed: (user.freeScansUsed || 0) + 1 });
-      return { success: true };
     }
     return { success: true };
   };

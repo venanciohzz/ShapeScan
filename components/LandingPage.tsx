@@ -246,7 +246,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             <div className="w-[1px] h-4 bg-white/10 hidden sm:block"></div>
             <button
               onClick={onStart}
-              className="group relative px-6 py-2.5 rounded-full overflow-hidden flex items-center gap-3 font-black tracking-[0.2em] uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] hidden sm:flex border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
+              className="group relative px-6 py-2.5 rounded-full overflow-hidden hidden sm:flex items-center gap-3 font-black tracking-[0.2em] uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-emerald-500/10 to-transparent rotate-45 animate-sweep"></div>
@@ -285,6 +285,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="flex flex-col gap-10 text-center w-full px-8 max-sm">
           <button onClick={() => handleMobileNav(onHowItWorks)} className="text-4xl font-serif-premium font-medium text-white hover:text-emerald-400 transition-colors">Como funciona?</button>
           <button onClick={() => handleMobileNav(onAbout)} className="text-4xl font-serif-premium font-medium text-white hover:text-emerald-400 transition-colors">Quem somos?</button>
+          <div className="pt-4 border-t border-white/10">
+            <button
+              onClick={() => handleMobileNav(onStart)}
+              className="w-full px-8 py-5 rounded-full bg-emerald-500 text-zinc-950 font-black tracking-[0.2em] uppercase text-sm flex items-center justify-center gap-3 shadow-[0_0_40px_-5px_rgba(16,185,129,0.5)]"
+            >
+              Começar Agora
+              <ArrowRight className="w-4 h-4" strokeWidth={3} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -518,6 +527,77 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           </div>
         </motion.section>
 
+        {/* Pricing Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 60 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="py-20 lg:py-32 px-6 relative bg-transparent"
+        >
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium font-bold tracking-tighter text-white mb-6">
+                <LetterPuller text="Planos simples," /> <LetterPuller text="sem surpresas." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic" delay={0.3} />
+              </h2>
+              <p className="text-lg text-zinc-400 font-medium max-w-xl mx-auto">
+                Comece grátis e evolua quando estiver pronto.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 items-stretch">
+              {/* Free */}
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-8 flex flex-col">
+                <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4">Grátis</p>
+                <p className="text-4xl font-black text-white mb-1">R$0</p>
+                <p className="text-zinc-500 text-sm font-medium mb-8">para sempre</p>
+                <ul className="space-y-3 flex-1 mb-8">
+                  <PricingFeature text="1 análise de refeição (por conta)" />
+                  <PricingFeature text="Calculadoras de macro e hidratação" />
+                  <PricingFeature text="Dashboard de evolução básico" />
+                  <PricingFeature text="Sem cartão de crédito" />
+                </ul>
+                <button onClick={onStart} className="w-full py-4 rounded-full border border-white/10 text-zinc-300 font-black text-xs uppercase tracking-widest hover:bg-white/5 transition-all">
+                  Começar Grátis
+                </button>
+              </div>
+
+              {/* Standard */}
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-8 flex flex-col">
+                <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4">Standard</p>
+                <p className="text-4xl font-black text-white mb-1">R$29<span className="text-lg text-zinc-400">,90/mês</span></p>
+                <p className="text-zinc-500 text-sm font-medium mb-8">ou R$247/ano (-20%)</p>
+                <ul className="space-y-3 flex-1 mb-8">
+                  <PricingFeature text="6 análises de refeição por dia" />
+                  <PricingFeature text="2 análises de shape por dia" />
+                  <PricingFeature text="Histórico completo e relatórios" />
+                  <PricingFeature text="Personal IA 24h" />
+                </ul>
+                <button onClick={onStart} className="w-full py-4 rounded-full border border-emerald-500/40 text-emerald-400 font-black text-xs uppercase tracking-widest hover:bg-emerald-500/10 transition-all">
+                  Assinar Standard
+                </button>
+              </div>
+
+              {/* Pro */}
+              <div className="bg-emerald-500/5 border border-emerald-500/40 rounded-3xl p-8 flex flex-col relative overflow-hidden shadow-[0_0_60px_-20px_rgba(16,185,129,0.3)]">
+                <div className="absolute top-4 right-4 px-3 py-1 bg-emerald-500 text-zinc-950 rounded-full text-[9px] font-black uppercase tracking-widest">Mais Popular</div>
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-500 mb-4">Pro</p>
+                <p className="text-4xl font-black text-white mb-1">R$44<span className="text-lg text-zinc-400">,90/mês</span></p>
+                <p className="text-zinc-500 text-sm font-medium mb-8">ou R$347/ano (-20%)</p>
+                <ul className="space-y-3 flex-1 mb-8">
+                  <PricingFeature text="12 análises de refeição por dia" highlight />
+                  <PricingFeature text="4 análises de shape por dia" highlight />
+                  <PricingFeature text="Acesso antecipado a novidades" highlight />
+                  <PricingFeature text="Suporte prioritário" highlight />
+                </ul>
+                <button onClick={onStart} className="w-full py-4 rounded-full bg-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+                  Assinar Pro
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
         {/* Testimonials Section */}
         <motion.section
           initial={{ opacity: 0, y: 60 }}
@@ -539,25 +619,28 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             <div className="grid md:grid-cols-3 gap-8">
               <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.1 }}>
                 <TestimonialCard
-                  name="Gabriel Costa"
-                  role="Atleta Natural"
-                  image="https://randomuser.me/api/portraits/men/32.jpg"
+                  name="Gabriel C."
+                  role="Atleta Natural • São Paulo"
+                  initials="GC"
+                  color="from-emerald-600 to-teal-700"
                   text="O scanner de alimentos é bizarro de bom. Economizo uns 20 minutos por dia não tendo que pesar tudo milimetricamente."
                 />
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.3 }}>
                 <TestimonialCard
-                  name="Fernanda Lima"
-                  role="Personal 24h"
-                  image="https://randomuser.me/api/portraits/women/44.jpg"
+                  name="Fernanda L."
+                  role="Nutricionista • Rio de Janeiro"
+                  initials="FL"
+                  color="from-violet-600 to-purple-700"
                   text="Comecei a usar para validar as fotos que meus pacientes mandam. A estimativa de macros bate muito com a realidade."
                 />
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.5 }}>
                 <TestimonialCard
-                  name="Lucas Martins"
-                  role="Iniciante"
-                  image="https://randomuser.me/api/portraits/men/86.jpg"
+                  name="Lucas M."
+                  role="Iniciante • Belo Horizonte"
+                  initials="LM"
+                  color="from-blue-600 to-cyan-700"
                   text="A análise de shape foi um choque de realidade. A Personal 24h me ajudou a montar um plano que eu realmente consigo seguir."
                 />
               </motion.div>
@@ -612,6 +695,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 };
 
 // Subcomponents for cleaner code
+const PricingFeature = ({ text, highlight = false }: { text: string; highlight?: boolean }) => (
+  <li className="flex items-center gap-3 text-sm font-medium">
+    <CheckCircle2 className={`w-4 h-4 shrink-0 ${highlight ? 'text-emerald-400' : 'text-zinc-500'}`} />
+    <span className={highlight ? 'text-zinc-200' : 'text-zinc-400'}>{text}</span>
+  </li>
+);
+
 const FeatureList = ({ text }: { text: string }) => (
   <li className="flex items-center gap-3 text-zinc-300 font-medium group">
     <CheckCircle2 className="w-5 h-5 text-emerald-500 opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -634,16 +724,16 @@ const StatCard = ({ value, label }: { value: string, label: string }) => (
   </div>
 );
 
-const TestimonialCard = ({ name, role, image, text }: { name: string, role: string, image: string, text: string }) => (
+const TestimonialCard = ({ name, role, initials, color, text }: { name: string, role: string, initials: string, color: string, text: string }) => (
   <div className="bg-zinc-900/60 backdrop-blur-md p-8 rounded-3xl border border-white/5 hover:border-emerald-500/30 shadow-xl transition-all duration-300 relative group glow-hover">
     <div className="absolute top-8 right-8 text-emerald-500 text-4xl opacity-20 font-serif">"</div>
     <div className="flex items-center gap-4 mb-6">
-      <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-emerald-500/20">
-        <img src={image} alt={name} className="w-full h-full object-cover" />
+      <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${color} flex items-center justify-center border-2 border-white/10 shrink-0`}>
+        <span className="text-white font-black text-sm">{initials}</span>
       </div>
       <div>
         <p className="text-white font-bold text-lg leading-none mb-1">{name}</p>
-        <p className="text-emerald-500 text-xs font-bold uppercase tracking-widest">{role}</p>
+        <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">{role}</p>
       </div>
     </div>
     <div className="flex gap-1 mb-4">

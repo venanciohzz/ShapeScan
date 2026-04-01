@@ -12,6 +12,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+        'serif-premium': ['Playfair Display', 'serif'],
       },
       colors: {
         gray: {

@@ -67,7 +67,6 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     );
   }
 
-
   useEffect(() => {
     if (loading) {
       document.body.style.overflow = 'hidden';

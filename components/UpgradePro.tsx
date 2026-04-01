@@ -46,23 +46,23 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
 
          <div className="relative z-10 max-w-4xl mx-auto px-6 pt-32 pb-24">
             <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-               <div className="inline-block px-4 py-1.5 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 text-[10px] font-black uppercase tracking-widest mb-6 shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]">
-                  Limite Diário Atingido
+               <div className="inline-block px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-6 shadow-[0_0_20px_-5px_rgba(16,185,129,0.2)]">
+                  Pronto para ir além?
                </div>
                <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-[1.1]">
-                  Sua evolução pede <br className="hidden md:block" />
+                  Sua evolução merece <br className="hidden md:block" />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-200 to-white">mais liberdade.</span>
                </h1>
                <p className="text-zinc-400 text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-                  Você utilizou todas as análises do Plano Standard hoje. Novas análises liberam à meia-noite, ou faça o upgrade agora.
+                  Você usou todas as análises de hoje. Desbloqueie o dobro de capacidade agora, ou aguarde a renovação à meia-noite.
                </p>
             </div>
 
             {/* Comparison Cards */}
             <div className="grid md:grid-cols-2 gap-6 items-center max-w-4xl mx-auto mb-16">
                {/* Standard (Current) */}
-               <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-8 opacity-60 scale-95 blur-[0.5px] grayscale-[0.5]">
-                  <h3 className="text-zinc-500 font-black uppercase tracking-widest text-sm mb-6">Seu Plano Atual (Standard)</h3>
+               <div className="bg-zinc-900/30 border border-white/10 rounded-3xl p-8">
+                  <h3 className="text-zinc-400 font-black uppercase tracking-widest text-sm mb-6">Seu Plano Atual — Standard</h3>
                   <div className="space-y-4">
                      <div className="flex justify-between items-center">
                         <span className="text-zinc-400 font-bold">Refeições/Dia</span>
@@ -138,14 +138,15 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
                   onClick={() => handleSubscribe('pro_annual')}
                   className="bg-gradient-to-br from-emerald-900/20 to-zinc-900 border border-emerald-500/50 p-6 rounded-3xl hover:bg-emerald-900/30 transition-all group relative overflow-hidden shadow-lg shadow-emerald-900/20"
                >
-                  <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl">Economize</div>
+                  <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl">Economize 20%</div>
                   <div className="relative z-10 text-left">
                      <p className="text-emerald-400 font-black uppercase text-xs tracking-widest mb-2">Pro Anual</p>
                      <div className="flex items-baseline gap-1">
                         <span className="text-3xl font-black text-white">R$ 347</span>
                         <span className="text-zinc-500 text-sm font-bold">/ano</span>
                      </div>
-                     <div className="mt-4 flex items-center justify-between">
+                     <p className="text-emerald-500/70 text-[10px] font-bold mt-1">≈ R$ 28,92/mês — o mais barato</p>
+                     <div className="mt-3 flex items-center justify-between">
                          <p className={`font-bold text-xs ${stripePriceId === PAYMENT_CONFIG.pro_annual.stripePriceId ? 'text-zinc-500' : 'text-white group-hover:underline'}`}>
                             {stripePriceId === PAYMENT_CONFIG.pro_annual.stripePriceId ? 'Processando...' : 'Assinar Anual →'}
                          </p>

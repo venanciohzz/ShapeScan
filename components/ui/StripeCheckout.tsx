@@ -29,6 +29,7 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [elementReady, setElementReady] = useState(false);
+  const [agreedToRecurring, setAgreedToRecurring] = useState(false);
 
   // Timeout: se o PaymentElement não carregar em 20s, mostra erro
   useEffect(() => {
@@ -52,6 +53,7 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue
     localStorage.setItem('awaiting_stripe_payment', 'true');
     localStorage.setItem('awaiting_stripe_plan_name', planName);
     localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
+    localStorage.setItem('awaiting_stripe_payment_started', String(Date.now()));
 
     pixel.addPaymentInfo(planName, planValue);
 
@@ -90,11 +92,19 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue
       )}
 
       <div className="flex flex-col gap-4 pt-2">
-        <p className="text-center text-[10px] text-zinc-500 font-medium px-4 leading-relaxed">
-          Sua assinatura tem renovação automática {planPeriod?.includes('ano') ? 'anual' : 'mensal'}. Você pode cancelar a qualquer momento sem taxas adicionais.
-        </p>
+        <label className="flex items-start gap-3 cursor-pointer group">
+          <div
+            onClick={() => setAgreedToRecurring(v => !v)}
+            className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${agreedToRecurring ? 'bg-emerald-500 border-emerald-500' : 'border-zinc-600 group-hover:border-zinc-400'}`}
+          >
+            {agreedToRecurring && <svg className="w-3 h-3 text-zinc-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+          </div>
+          <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+            Entendi que esta assinatura tem <strong className="text-white">renovação automática {planPeriod?.includes('ano') ? 'anual' : 'mensal'}</strong>. Posso cancelar a qualquer momento sem taxas adicionais.
+          </p>
+        </label>
         <button
-          disabled={isProcessing || !stripe}
+          disabled={isProcessing || !stripe || !agreedToRecurring}
           className="group relative w-full px-8 py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-all duration-300 active:scale-95 shadow-xl shadow-emerald-500/20 overflow-hidden"
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
@@ -122,6 +132,13 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue
   );
 };
 
+const LOADING_STEPS = [
+  'Preparando ambiente seguro...',
+  'Verificando sua identidade...',
+  'Conectando ao processador de pagamento...',
+  'Quase pronto...',
+];
+
 const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   priceId,
   userId,
@@ -135,6 +152,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [loadingStepIdx, setLoadingStepIdx] = useState(0);
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
   const [couponAppliedSuccess, setCouponAppliedSuccess] = useState(false);
@@ -146,6 +164,21 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     discount: number;
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+
+  // Scroll lock
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  // Progress messages durante loading
+  useEffect(() => {
+    if (!isInitializing) return;
+    const interval = setInterval(() => {
+      setLoadingStepIdx(i => Math.min(i + 1, LOADING_STEPS.length - 1));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isInitializing]);
 
   const initializeCheckout = useCallback(async (signal: AbortSignal) => {
     setIsInitializing(true);
@@ -169,7 +202,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       const fetchPromise = callEdgeFunction('stripe-checkout', { priceId, couponCode: appliedCouponCode, plan });
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('O servidor demorou para responder. Tente novamente.')), 30000)
+        setTimeout(() => reject(new Error('O servidor demorou para responder. Verifique sua conexão e tente novamente.')), 15000)
       );
 
       const data = await Promise.race([fetchPromise, timeoutPromise]);
@@ -354,8 +387,12 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                 <div className="w-12 h-12 border-4 border-emerald-500/10 rounded-full"></div>
                 <div className="absolute top-0 left-0 w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <p className="mt-6 text-zinc-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Preparando ambiente seguro...</p>
-              <p className="mt-2 text-zinc-600 text-[9px] font-medium">Isso pode levar alguns segundos</p>
+              <p className="mt-6 text-zinc-400 font-black uppercase tracking-[0.3em] text-[10px] transition-all duration-500">{LOADING_STEPS[loadingStepIdx]}</p>
+              <div className="flex gap-1.5 mt-4">
+                {LOADING_STEPS.map((_, i) => (
+                  <div key={i} className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${i <= loadingStepIdx ? 'bg-emerald-500' : 'bg-zinc-700'}`} />
+                ))}
+              </div>
             </div>
           ) : clientSecret ? (
             <div className="flex flex-col gap-6">
@@ -414,10 +451,13 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
         <div className="px-10 py-6 bg-zinc-900/50 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Garantia ShapeScan</span>
+            <div>
+              <span className="text-xs font-black text-white uppercase tracking-widest block">Garantia de 7 dias</span>
+              <span className="text-[9px] text-zinc-500 font-medium">Não ficou satisfeito? Devolvemos sem perguntas.</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

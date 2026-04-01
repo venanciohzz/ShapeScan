@@ -20,7 +20,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [isRegistering, setIsRegistering] = useState(initialMode === 'registrar');
   const [error, setError] = useState('');
@@ -76,19 +75,21 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
 
       if (isRegistering) {
         const cleanName = sanitizeInput(name);
-        const cleanUser = sanitizeInput(username);
         const cleanPhone = sanitizeInput(phone);
 
-        if (!cleanName || !cleanUser || !cleanPhone) {
-          throw new Error('Preencha todos os campos.');
+        if (!cleanName) {
+          throw new Error('Preencha seu nome completo.');
         }
+
+        // username gerado automaticamente a partir do nome para reduzir fricção no cadastro
+        const autoUsername = cleanName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').slice(0, 20) + '_' + Math.floor(Math.random() * 1000);
 
         // isAdmin é determinado pelo trigger handle_new_user no banco (via tabela admin_users).
         // Nunca assumir admin pelo email no cliente — o banco é a fonte de verdade.
         const userData: Omit<User, 'id'> = {
           email: cleanEmail,
           name: cleanName,
-          username: cleanUser,
+          username: autoUsername,
           phone: cleanPhone,
           isPremium: false,
           isAdmin: false,
@@ -277,31 +278,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
                     disabled={isLoading}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Usuário</label>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                      placeholder="@usuario"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">WhatsApp</label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                      placeholder="(00) 00000-0000"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">WhatsApp <span className="text-zinc-600 normal-case">(opcional)</span></label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
+                    placeholder="(00) 00000-0000"
+                    disabled={isLoading}
+                  />
                 </div>
               </>
             )}
