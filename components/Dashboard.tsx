@@ -173,6 +173,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                </div>
             )}
 
+            {/* Banner: Completar perfil físico */}
+            {(!user.weight || !user.height) && (
+               <div className="mb-8 p-5 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                     <span className="text-2xl shrink-0">📊</span>
+                     <div className="min-w-0">
+                        <p className="text-white font-black text-sm">Personalize suas metas</p>
+                        <p className="text-zinc-400 text-xs font-medium mt-0.5">Responda 5 perguntas rápidas para ter calorias e macros calculados para você.</p>
+                     </div>
+                  </div>
+                  <button
+                     onClick={() => onNavigate('quiz' as View)}
+                     className="shrink-0 px-5 py-3 rounded-2xl bg-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all whitespace-nowrap"
+                  >
+                     Começar
+                  </button>
+               </div>
+            )}
+
             {/* Grid Principal */}
             <div className="flex flex-col md:flex-row gap-8 items-start">
 

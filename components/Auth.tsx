@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
 import { db } from '../services/db';
@@ -21,13 +21,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
-  const [phone, setPhone] = useState('');
   const [isRegistering, setIsRegistering] = useState(initialMode === 'registrar');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
@@ -42,23 +38,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
       setGoogleLoading(false);
     }
     // Se não der erro, o redirect acontece automaticamente — sem setar loading false
-  };
-
-  // Máscara de telefone (BR)
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 11) value = value.slice(0, 11);
-
-    if (value.length > 2) {
-      value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-    }
-    if (value.length > 10) { // Formato (XX) XXXXX-XXXX
-      value = `${value.slice(0, 10)}-${value.slice(10)}`;
-    } else if (value.length > 6) { // Formato durante digitação (XX) XXXX-XXXX
-      value = `${value.slice(0, 9)}-${value.slice(9)}`;
-    }
-
-    setPhone(value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,9 +56,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
       if (isRegistering) {
         const cleanName = sanitizeInput(name);
         const cleanUser = sanitizeInput(username);
-        const cleanPhone = sanitizeInput(phone);
 
-        if (!cleanName || !cleanUser || !cleanPhone) {
+        if (!cleanName || !cleanUser) {
           throw new Error('Preencha todos os campos.');
         }
 
@@ -89,7 +67,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
           email: cleanEmail,
           name: cleanName,
           username: cleanUser,
-          phone: cleanPhone,
+          phone: '',
           isPremium: false,
           isAdmin: false,
           dailyCalorieGoal: 2000,
@@ -98,8 +76,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
         };
 
         const newUser = await db.auth.signUp(userData, cleanPassword);
-        await db.auth.setSession(newUser);
         pixel.completeRegistration();
+        if (!newUser.needsEmailConfirmation) {
+          await db.auth.setSession(newUser);
+        }
         onLogin(newUser, true);
 
       } else {
@@ -111,101 +91,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
       }
     } catch (err: any) {
       console.error(err);
-      if (err.message === 'auth/confirmation-required') {
-        setNeedsConfirmation(true);
-      } else {
-        setError(err.message || 'Erro ao conectar com o servidor.');
-      }
+      setError(err.message || 'Erro ao conectar com o servidor.');
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleAlreadyConfirmed = async () => {
-    setIsLoading(true);
-    setError('');
-    try {
-      const user = await db.auth.signIn(sanitizeInput(email), sanitizeInput(password));
-      await db.auth.setSession(user);
-      onLogin(user, false);
-    } catch (err: any) {
-      if (err.message === 'auth/confirmation-required') {
-        setError('E-mail ainda não confirmado. Verifique sua caixa de entrada.');
-      } else {
-        setError(err.message || 'Erro ao verificar confirmação.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResendEmail = async () => {
-    setResendLoading(true);
-    setError('');
-    try {
-      await db.auth.resendConfirmationEmail(email);
-      setResendSuccess(true);
-      setTimeout(() => setResendSuccess(false), 5000);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao reenviar e-mail.');
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
-  if (needsConfirmation) {
-    return (
-      <PremiumBackground className="flex items-center justify-center min-h-screen p-4" dim={true} intensity={1.5}>
-        <div className="bg-zinc-950/40 backdrop-blur-3xl p-12 rounded-[3.5rem] border border-emerald-500/20 shadow-2xl text-center max-w-lg w-full">
-          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-emerald-500/30">
-            <Mail className="w-10 h-10 text-emerald-500" />
-          </div>
-          <h1 className="text-3xl font-black text-white px-2 tracking-tighter mb-4"><LetterPuller text="Verifique seu E-mail" /></h1>
-          <p className="text-zinc-400 font-medium mb-10 leading-relaxed text-sm">
-            Sua conta foi criada com sucesso! Enviamos um link de confirmação para <strong className="text-white">{email}</strong>.
-            <br /><br />
-            Por favor, verifique sua caixa de entrada (e a pasta de spam) para ativar sua conta antes de continuar.
-          </p>
-          {error && (
-            <div className="bg-red-500/10 text-red-400 p-4 rounded-2xl mb-6 text-xs font-bold border border-red-500/20 animate-in fade-in slide-in-from-top-2">
-              {error}
-            </div>
-          )}
-          <div className="space-y-4">
-            <button
-              onClick={handleAlreadyConfirmed}
-              disabled={isLoading}
-              className="w-full px-8 py-5 transition-all font-black text-xs uppercase tracking-widest rounded-[2rem] border bg-emerald-500 text-zinc-950 border-emerald-500 hover:bg-emerald-400 disabled:opacity-50"
-            >
-              {isLoading ? 'Verificando...' : 'Já Confirmei o E-mail'}
-            </button>
-
-            <button
-              onClick={handleResendEmail}
-              disabled={resendLoading || resendSuccess}
-              className={`w-full px-8 py-5 transition-all font-black text-xs uppercase tracking-widest rounded-[2rem] border ${
-                resendSuccess
-                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50'
-                : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
-              }`}
-            >
-              {resendLoading ? 'Enviando...' : resendSuccess ? 'E-mail Enviado! ✨' : 'Reenviar E-mail de Confirmação'}
-            </button>
-
-            <button
-              onClick={() => {
-                setNeedsConfirmation(false);
-                setIsRegistering(false); // Switch to login mode
-              }}
-              className="w-full px-8 py-4 text-zinc-500 hover:text-zinc-300 transition-all font-bold text-[10px] uppercase tracking-widest"
-            >
-              Voltar para o Login
-            </button>
-          </div>
-        </div>
-      </PremiumBackground>
-    );
-  }
 
   return (
     <PremiumBackground className="flex items-center justify-center p-6" dim={true} intensity={1.0}>
@@ -277,31 +167,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
                     disabled={isLoading}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Usuário</label>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                      placeholder="@usuario"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">WhatsApp</label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                      placeholder="(00) 00000-0000"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Usuário</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
+                    placeholder="@usuario"
+                    required
+                    disabled={isLoading}
+                  />
                 </div>
               </>
             )}

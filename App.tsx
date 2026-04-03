@@ -432,15 +432,9 @@ const App: React.FC = () => {
         setUser(profile);
         localStorage.setItem('shapescan_user_profile', JSON.stringify(profile));
 
-        // Usuário Google sem username/phone → pede dados antes do quiz
+        // Usuário Google sem username → pede dados antes
         if (!profile.username) {
             navigate('/completar-perfil', { replace: true });
-            return true;
-        }
-
-        // Sem dados físicos → quiz
-        if (!profile.weight || !profile.height) {
-            navigate('/quiz', { replace: true });
             return true;
         }
         return false;
@@ -612,8 +606,6 @@ const App: React.FC = () => {
     loadUserData(user.id);
     if (!user.username) {
       navigate('/completar-perfil');
-    } else if (isNew || !user.weight || !user.height) {
-      navigate('/quiz');
     } else {
       navigate('/dashboard');
     }
@@ -690,7 +682,7 @@ const App: React.FC = () => {
 
       const updatedUser = await db.users.update(user.email, updates);
       setUser(updatedUser);
-      navigate('/planos');
+      navigate('/dashboard');
     } catch (error: any) {
       console.error("Erro no Quiz:", error);
       alert("Erro ao salvar dados: " + (error.message || "Tente novamente."));
