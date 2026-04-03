@@ -604,7 +604,7 @@ const App: React.FC = () => {
   const handleLogin = (user: User, isNew: boolean) => {
     setUser(user);
     loadUserData(user.id);
-    if (!user.username) {
+    if (!user.username || (isNew && !user.phone)) {
       navigate('/completar-perfil');
     } else {
       navigate('/dashboard');
