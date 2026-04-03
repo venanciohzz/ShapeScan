@@ -146,8 +146,8 @@ export const db = {
             return await supabaseService.getRevenueStats();
         },
 
-        async updateUserPlan(userId: string, planId: string): Promise<void> {
-            await supabaseService.adminUpdateUserPlan(userId, planId);
+        async updateUserPlan(userId: string, planId: string, expiresAt?: number): Promise<void> {
+            await supabaseService.adminUpdateUserPlan(userId, planId, expiresAt);
         },
 
         async cancelUserSubscription(targetUserId: string): Promise<{ success: boolean; current_period_end: number; expiry_date: string }> {
@@ -156,6 +156,22 @@ export const db = {
 
         async getUserDetails(targetUserId: string): Promise<supabaseService.AdminUserDetails> {
             return await supabaseService.adminGetUserDetails(targetUserId);
+        },
+
+        async getUserPayments(userId: string): Promise<supabaseService.AdminPayment[]> {
+            return await supabaseService.adminGetUserPayments(userId);
+        },
+
+        async getGrowthData(): Promise<supabaseService.GrowthPoint[]> {
+            return await supabaseService.adminGetGrowthData();
+        },
+
+        async saveNote(userId: string, note: string): Promise<void> {
+            await supabaseService.adminSaveNote(userId, note);
+        },
+
+        async sendEmail(userId: string, userEmail: string, userName: string, subject: string, message: string): Promise<void> {
+            await supabaseService.adminSendEmail(userId, userEmail, userName, subject, message);
         }
     },
 

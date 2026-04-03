@@ -783,7 +783,8 @@ function mapProfileToUser(profile: any, plan?: string, isPremium?: boolean, isAd
     targetWeight: profile.targetWeight || profile.target_weight,
     emailConfirmed: profile.emailConfirmed || profile.email_confirmed || false,
     createdAt: new Date(profile.created_at).getTime(),
-  };
+    adminNote: profile.admin_note || '',
+  } as any;
 }
 
 function mapFoodLogFromDB(dbLog: any): FoodLog {
@@ -895,17 +896,21 @@ export async function getRevenueStats() {
   };
 }
 
-export async function adminUpdateUserPlan(userId: string, planId: string): Promise<void> {
+export async function adminUpdateUserPlan(userId: string, planId: string, expiresAt?: number): Promise<void> {
   // UPSERT: a tabela tem UNIQUE(user_id), então INSERT causaria violação de constraint.
   // upsert com onConflict: 'user_id' atualiza a linha existente em vez de inserir nova.
+  const payload: any = {
+    user_id: userId,
+    plan_id: planId,
+    active: true,
+    plan_origin: 'manual',
+  };
+  if (expiresAt !== undefined) {
+    payload.current_period_end = expiresAt;
+  }
   const { error } = await supabase
     .from('user_plans')
-    .upsert({
-      user_id: userId,
-      plan_id: planId,
-      active: true,
-      plan_origin: 'manual',
-    }, { onConflict: 'user_id' });
+    .upsert(payload, { onConflict: 'user_id' });
 
   if (error) throw new Error(error.message);
 }
@@ -1179,5 +1184,67 @@ export async function saveChatMessages(userId: string, messages: { role: string;
 export async function reactivateSubscription(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
   const data = await callEdgeFunction('stripe-reactivate-subscription');
   return data as { cancel_at_period_end: boolean; current_period_end: number };
+}
+
+// ==================== ADMIN EXTRAS ====================
+
+export interface AdminPayment {
+  id: string;
+  amount: number;
+  status: string;
+  plan_id: string | null;
+  created_at: string;
+}
+
+export async function adminGetUserPayments(userId: string): Promise<AdminPayment[]> {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('id, amount, status, plan_id, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data || []) as AdminPayment[];
+}
+
+export interface GrowthPoint { date: string; count: number }
+
+export async function adminGetGrowthData(): Promise<GrowthPoint[]> {
+  // Busca cadastros dos últimos 30 dias agrupados por dia
+  const since = new Date();
+  since.setDate(since.getDate() - 29);
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('created_at')
+    .gte('created_at', since.toISOString())
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+
+  const dayMap = new Map<string, number>();
+  // preenche todos os 30 dias com 0
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(since);
+    d.setDate(since.getDate() + i);
+    dayMap.set(d.toISOString().split('T')[0], 0);
+  }
+  (data || []).forEach((r: any) => {
+    const day = r.created_at.split('T')[0];
+    dayMap.set(day, (dayMap.get(day) || 0) + 1);
+  });
+
+  return Array.from(dayMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, count]) => ({ date, count }));
+}
+
+export async function adminSaveNote(userId: string, note: string): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ admin_note: note })
+    .eq('id', userId);
+  if (error) throw new Error(error.message);
+}
+
+export async function adminSendEmail(userId: string, userEmail: string, userName: string, subject: string, message: string): Promise<void> {
+  await callEdgeFunction('admin-send-email', { userId, userEmail, userName, subject, message });
 }
 
