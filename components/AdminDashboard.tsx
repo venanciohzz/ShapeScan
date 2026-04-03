@@ -314,6 +314,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                     </p>
                                                 )}
                                             </div>
+                                            {u.phone && (
+                                                <a
+                                                    href={getWhatsAppUrl(u.phone)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    title={`WhatsApp: ${u.phone}`}
+                                                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 hover:border-green-500/40 transition-all shrink-0"
+                                                >
+                                                    <Phone className="w-4 h-4" />
+                                                </a>
+                                            )}
                                             <ChevronDown className={`w-4 h-4 text-zinc-600 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                                         </div>
                                     </div>
@@ -523,17 +535,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                             <span className="px-4 py-2 bg-amber-500/5 text-amber-400/60 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2 border border-amber-500/10">
                                                                 <AlertTriangle className="w-3.5 h-3.5" /> Cancelamento agendado
                                                             </span>
-                                                        )}
-                                                        {u.phone && (
-                                                            <a
-                                                                href={getWhatsAppUrl(u.phone)}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-xl transition-all font-black text-xs uppercase tracking-widest flex items-center gap-2 border border-transparent hover:border-green-500/30"
-                                                            >
-                                                                <Phone className="w-3.5 h-3.5" /> WhatsApp
-                                                            </a>
                                                         )}
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); setUserDetails(prev => { const n = {...prev}; delete n[u.id]; return n; }); loadUserDetails(u.id); }}
