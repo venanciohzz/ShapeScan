@@ -17,12 +17,28 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length > 11) value = value.slice(0, 11);
-    if (value.length > 2) value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-    if (value.length > 10) value = `${value.slice(0, 10)}-${value.slice(10)}`;
-    else if (value.length > 6) value = `${value.slice(0, 9)}-${value.slice(9)}`;
-    setPhone(value);
+    const raw = e.target.value;
+    const prevDigits = phone.replace(/\D/g, '');
+    let digits = raw.replace(/\D/g, '');
+
+    // Se o usuário tentou deletar um separador, deleta o dígito anterior também
+    if (digits === prevDigits && raw.length < phone.length) {
+      digits = digits.slice(0, -1);
+    }
+
+    if (digits.length > 11) digits = digits.slice(0, 11);
+
+    let formatted = digits;
+    if (digits.length > 6) {
+      const mid = digits.length === 11 ? 7 : 6;
+      formatted = `(${digits.slice(0, 2)}) ${digits.slice(2, mid)}-${digits.slice(mid)}`;
+    } else if (digits.length > 2) {
+      formatted = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    } else if (digits.length > 0) {
+      formatted = `(${digits}`;
+    }
+
+    setPhone(formatted);
   };
 
   // true = usuário Google (sem username); false = cadastro por e-mail (já tem username, precisa só do telefone)
