@@ -21,10 +21,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
+  const [phone, setPhone] = useState('');
   const [isRegistering, setIsRegistering] = useState(initialMode === 'registrar');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 11) value = value.slice(0, 11);
+    if (value.length > 2) value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+    if (value.length > 10) value = `${value.slice(0, 10)}-${value.slice(10)}`;
+    else if (value.length > 6) value = `${value.slice(0, 9)}-${value.slice(9)}`;
+    setPhone(value);
+  };
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
@@ -56,8 +66,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
       if (isRegistering) {
         const cleanName = sanitizeInput(name);
         const cleanUser = sanitizeInput(username);
+        const cleanPhone = sanitizeInput(phone);
 
-        if (!cleanName || !cleanUser) {
+        if (!cleanName || !cleanUser || !cleanPhone) {
           throw new Error('Preencha todos os campos.');
         }
 
@@ -67,7 +78,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
           email: cleanEmail,
           name: cleanName,
           username: cleanUser,
-          phone: '',
+          phone: cleanPhone,
           isPremium: false,
           isAdmin: false,
           dailyCalorieGoal: 2000,
@@ -167,17 +178,31 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
                     disabled={isLoading}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Usuário</label>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                    placeholder="@usuario"
-                    required
-                    disabled={isLoading}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Usuário</label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
+                      placeholder="@usuario"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">WhatsApp</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={handlePhoneChange}
+                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
+                      placeholder="(00) 00000-0000"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
               </>
             )}
