@@ -78,6 +78,7 @@ export interface User {
   conquests?: string[];
   targetWeight?: number | null;
   emailConfirmed?: boolean;
+  needsEmailConfirmation?: boolean;
   createdAt?: number;
   // Subscription fields (used in admin panel)
   subscriptionStart?: number | null;

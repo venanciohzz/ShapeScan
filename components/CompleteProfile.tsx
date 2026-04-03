@@ -25,14 +25,17 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
     setPhone(value);
   };
 
+  // true = usuário Google (sem username); false = cadastro por e-mail (já tem username, precisa só do telefone)
+  const needsUsername = !user.username;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const cleanUsername = sanitizeInput(username).trim();
+    const cleanUsername = needsUsername ? sanitizeInput(username).trim() : user.username;
     const cleanPhone = sanitizeInput(phone).trim();
 
-    if (!cleanUsername) {
+    if (needsUsername && !cleanUsername) {
       setError('Escolha um nome de usuário.');
       return;
     }
@@ -43,10 +46,9 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
 
     setIsLoading(true);
     try {
-      const updatedUser = await updateProfile(user.id, {
-        username: cleanUsername,
-        phone: cleanPhone,
-      });
+      const updates: Partial<User> = { phone: cleanPhone };
+      if (needsUsername) updates.username = cleanUsername;
+      const updatedUser = await updateProfile(user.id, updates);
       onComplete(updatedUser);
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar. Tente novamente.');
@@ -77,7 +79,10 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
               <LetterPuller text="Quase lá!" />
             </h2>
             <p className="text-zinc-400 font-medium text-sm">
-              Olá, <span className="text-white font-bold">{user.name}</span>! Só faltam dois dados para completar seu perfil.
+              {needsUsername
+                ? <>Olá, <span className="text-white font-bold">{user.name}</span>! Só faltam dois dados para completar seu perfil.</>
+                : <>Olá, <span className="text-white font-bold">{user.name}</span>! Informe seu WhatsApp — é pelo que entro em contato com você sobre sua conta e evolução.</>
+              }
             </p>
           </div>
 
@@ -88,21 +93,23 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="block text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em] ml-2">
-                Nome de Usuário
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                placeholder="@seu_usuario"
-                required
-                disabled={isLoading}
-                autoComplete="username"
-              />
-            </div>
+            {needsUsername && (
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em] ml-2">
+                  Nome de Usuário
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
+                  placeholder="@seu_usuario"
+                  required
+                  disabled={isLoading}
+                  autoComplete="username"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="block text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em] ml-2">

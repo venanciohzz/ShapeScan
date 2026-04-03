@@ -46,11 +46,8 @@ export async function signUp(email: string, password: string, userData: Omit<Use
   if (!authData.user) throw new Error('Falha ao criar usuário');
 
   // Retornar objeto User construído com os dados enviados (já que o profile pode levar uns ms para ser criado)
+  // Não bloquear por confirmação de email — o usuário acessa o app imediatamente
   const isConfirmed = authData.user.email_confirmed_at !== undefined && authData.user.email_confirmed_at !== null;
-  // Se exigirmos confirmação de email e ele não estiver confirmado, jogamos erro pro Auth saber
-  if (!isConfirmed) {
-      throw new Error('auth/confirmation-required');
-  }
 
   return {
     ...userData,
@@ -62,7 +59,8 @@ export async function signUp(email: string, password: string, userData: Omit<Use
     plan: 'free',
     dailyCalorieGoal: userData.dailyCalorieGoal || 2000,
     freeScansUsed: 0,
-    emailConfirmed: isConfirmed
+    emailConfirmed: isConfirmed,
+    needsEmailConfirmation: !isConfirmed
   } as User;
 }
 export async function signIn(email: string, password: string): Promise<User> {
