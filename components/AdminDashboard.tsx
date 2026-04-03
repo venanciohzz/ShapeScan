@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 import { db } from '../services/db';
 import { AdminUserDetails } from '../services/supabaseService';
-import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit, ShieldX, Ban, ChevronDown, Calendar, Clock, AlertTriangle, Crown, Zap, UserCheck, UserX, Activity, MessageSquare, Scan, Star, Flame, BarChart2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit, ShieldX, Ban, ChevronDown, Calendar, Clock, AlertTriangle, Crown, Zap, UserCheck, UserX, Activity, MessageSquare, Scan, Star, Flame, BarChart2, RefreshCw, Phone } from 'lucide-react';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 
@@ -34,6 +34,14 @@ const fmtDate = (ts: number | null | undefined) => {
 const fmtDateStr = (str: string | null | undefined) => {
     if (!str) return '—';
     return new Date(str).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const WHATSAPP_MESSAGE = `Olá! Tudo bem? 😊\n\nAqui é da equipe do ShapeScan. Vimos que você já fez seu cadastro e queríamos saber como está sendo sua experiência até agora.\n\nVocê está gostando do site? Tem alguma sugestão ou algo que acha que podemos melhorar? Seu feedback é muito importante pra gente 🚀`;
+
+const getWhatsAppUrl = (phone: string) => {
+    const digits = phone.replace(/\D/g, '');
+    const fullNumber = digits.length >= 12 ? digits : '55' + digits;
+    return `https://wa.me/${fullNumber}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
 };
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToast }) => {
@@ -515,6 +523,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                             <span className="px-4 py-2 bg-amber-500/5 text-amber-400/60 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2 border border-amber-500/10">
                                                                 <AlertTriangle className="w-3.5 h-3.5" /> Cancelamento agendado
                                                             </span>
+                                                        )}
+                                                        {u.phone && (
+                                                            <a
+                                                                href={getWhatsAppUrl(u.phone)}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-xl transition-all font-black text-xs uppercase tracking-widest flex items-center gap-2 border border-transparent hover:border-green-500/30"
+                                                            >
+                                                                <Phone className="w-3.5 h-3.5" /> WhatsApp
+                                                            </a>
                                                         )}
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); setUserDetails(prev => { const n = {...prev}; delete n[u.id]; return n; }); loadUserDetails(u.id); }}
