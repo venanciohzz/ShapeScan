@@ -167,28 +167,39 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
     }
   };
 
+  const MANUAL_DAILY_LIMIT = 10;
+
+  const getManualUsageToday = (): number => {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `shapescan_manual_${user.id}_${today}`;
+    return parseInt(localStorage.getItem(key) || '0', 10);
+  };
+
+  const incrementManualUsage = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `shapescan_manual_${user.id}_${today}`;
+    localStorage.setItem(key, String(getManualUsageToday() + 1));
+  };
+
   const handleManualAdd = async () => {
     if (!manualName) {
       onShowToast("Descreva o alimento com detalhes.", 'error');
       return;
     }
-    setLoading(true);
-    const canContinue = await checkUsageLimit();
-    if (!canContinue) {
-      setLoading(false);
+
+    const usedToday = getManualUsageToday();
+    if (usedToday >= MANUAL_DAILY_LIMIT) {
+      onShowToast(`Você atingiu o limite de ${MANUAL_DAILY_LIMIT} adições manuais hoje. O limite é renovado à meia-noite.`, 'error');
       return;
     }
+
+    setLoading(true);
     try {
       const analysis = await getManualFoodMacros(manualName, user.goal);
       if (!analysis?.items?.length) throw new Error("Falha no cálculo.");
-      await incrementUsage();
+      incrementManualUsage();
       setResult(analysis);
     } catch (err: any) {
-      if (err.isLimitReached) {
-        setLimitModalType(err.showPaywall ? 'free' : 'daily');
-        setShowLimitModal(true);
-        return;
-      }
       onShowToast("Erro ao processar análise.", 'error');
     } finally {
       setLoading(false);
