@@ -173,11 +173,22 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       return;
     }
     setLoading(true);
+    const canContinue = await checkUsageLimit();
+    if (!canContinue) {
+      setLoading(false);
+      return;
+    }
     try {
       const analysis = await getManualFoodMacros(manualName, user.goal);
       if (!analysis?.items?.length) throw new Error("Falha no cálculo.");
+      await incrementUsage();
       setResult(analysis);
-    } catch (err) {
+    } catch (err: any) {
+      if (err.isLimitReached) {
+        setLimitModalType(err.showPaywall ? 'free' : 'daily');
+        setShowLimitModal(true);
+        return;
+      }
       onShowToast("Erro ao processar análise.", 'error');
     } finally {
       setLoading(false);
