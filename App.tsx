@@ -614,7 +614,9 @@ const App: React.FC = () => {
   const handleCompleteProfile = (updatedUser: User) => {
     setUser(updatedUser);
     localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
-    if (!updatedUser.weight || !updatedUser.height) {
+    if (updatedUser.emailConfirmed === false) {
+      navigate('/dashboard');
+    } else if (!updatedUser.weight || !updatedUser.height) {
       navigate('/quiz');
     } else {
       navigate('/dashboard');
@@ -685,7 +687,11 @@ const App: React.FC = () => {
       navigate('/dashboard');
     } catch (error: any) {
       console.error("Erro no Quiz:", error);
-      alert("Erro ao salvar dados: " + (error.message || "Tente novamente."));
+      if (error.message === 'Usuário não autenticado') {
+        alert("Por favor, confirme seu e-mail antes de continuar.\n\nVerifique sua caixa de entrada e clique no link de confirmação que enviamos.");
+      } else {
+        alert("Erro ao salvar dados: " + (error.message || "Tente novamente."));
+      }
     } finally {
       setIsQuizLoading(false);
     }
@@ -855,6 +861,13 @@ const App: React.FC = () => {
 
               {/* Protected Routes Wrapper */}
               <Route path="/*" element={user ? (
+                user.emailConfirmed === false ? (
+                  /* E-mail não confirmado: apenas dashboard disponível */
+                  <Routes>
+                    <Route path="/dashboard" element={<Dashboard user={user} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
+                ) : (
                 <Routes>
                    <Route path="/completar-perfil" element={<CompleteProfile user={user} onComplete={handleCompleteProfile} />} />
                    <Route path="/quiz" element={<OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />} />
@@ -876,6 +889,7 @@ const App: React.FC = () => {
                    <Route path="/admin" element={<AdminDashboard user={user} onBack={() => navigate('/configuracoes')} onShowToast={showToast} />} />
                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
+                )
               ) : <Navigate to="/" replace />} />
             </Routes>
           </React.Suspense>

@@ -290,7 +290,24 @@ export async function getProfile(userId: string): Promise<User> {
   const isPremium = planId !== 'free';
   const isAdmin = data.is_admin || false;
 
-  return mapProfileToUser(data, planId, isPremium, isAdmin);
+  // Buscar status de confirmação de e-mail direto da Auth API
+  let emailConfirmed = false;
+  try {
+    const authUserRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'apikey': supabaseAnonKey,
+      }
+    });
+    if (authUserRes.ok) {
+      const authUser = await authUserRes.json();
+      emailConfirmed = !!authUser.email_confirmed_at;
+    }
+  } catch (e) {
+    console.warn('[SupabaseService] Não foi possível verificar confirmação de e-mail:', e);
+  }
+
+  return mapProfileToUser({ ...data, emailConfirmed }, planId, isPremium, isAdmin);
 }
 
 export async function updateProfile(userId: string, updates: Partial<User>): Promise<User> {

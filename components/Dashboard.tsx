@@ -98,6 +98,27 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
             className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-20"
          >
 
+            {/* Banner de confirmação de e-mail */}
+            {user.emailConfirmed === false && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 flex flex-col sm:flex-row sm:items-center gap-3"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-amber-300 font-bold text-sm">Confirme seu e-mail para liberar o acesso completo</p>
+                    <p className="text-amber-400/70 text-xs mt-0.5">Verifique sua caixa de entrada e clique no link de confirmação que enviamos.</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {/* Modais de Controle */}
             <DeleteMealModal
                isOpen={!!logToDelete}
