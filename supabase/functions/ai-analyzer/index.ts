@@ -116,9 +116,10 @@ Deno.serve(async (req) => {
 
         // ── 7. VERIFICAR E RESERVAR SLOT ATOMICAMENTE ───────────────────────
         // Chat não consome quota (personal trainer 24h é ilimitado).
+        // Manual não consome quota (gratuito, limite de 10/dia controlado no frontend).
         // Admin tem acesso ilimitado.
         // A reserva acontece ANTES da chamada à OpenAI para eliminar race conditions.
-        if (requestType !== 'chat' && !isAdmin) {
+        if (requestType !== 'chat' && requestType !== 'manual' && !isAdmin) {
             const userIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
                         || req.headers.get('x-real-ip')?.trim()
                         || 'unknown';

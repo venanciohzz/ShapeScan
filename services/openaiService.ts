@@ -304,7 +304,7 @@ REGRAS:
 3. Use o objetivo do usuário para contextualizar o campo goal_analysis.
 4. Retorne APENAS JSON válido com os campos: dish_name, food_items, total_calories, total_protein_g, total_carbs_g, total_fat_g, health_score (0-10), dish_category, goal_analysis (bulking/cutting), observation.`;
 
-    let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'food' });
+    let text = await callAIAnalyzer({ prompt, systemPrompt, type: 'manual' });
     if (typeof text !== 'string') text = JSON.stringify(text);
 
     const data = JSON.parse(extractJson(text));
