@@ -1263,3 +1263,7 @@ export async function adminSendEmail(userId: string, userEmail: string, userName
   await callEdgeFunction('admin-send-email', { userId, userEmail, userName, subject, message });
 }
 
+export async function adminDeleteUser(targetUserId: string): Promise<void> {
+  await callEdgeFunction('admin-delete-user', { targetUserId });
+}
+

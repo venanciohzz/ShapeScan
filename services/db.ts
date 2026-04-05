@@ -172,6 +172,10 @@ export const db = {
 
         async sendEmail(userId: string, userEmail: string, userName: string, subject: string, message: string): Promise<void> {
             await supabaseService.adminSendEmail(userId, userEmail, userName, subject, message);
+        },
+
+        async deleteUser(targetUserId: string): Promise<void> {
+            await supabaseService.adminDeleteUser(targetUserId);
         }
     },
 

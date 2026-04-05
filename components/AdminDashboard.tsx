@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { User } from '../types';
 import { db } from '../services/db';
 import { AdminUserDetails, AdminPayment, GrowthPoint } from '../services/supabaseService';
-import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit, ShieldX, Ban, ChevronDown, Calendar, Clock, AlertTriangle, Crown, Zap, UserCheck, UserX, Activity, MessageSquare, Scan, Star, Flame, BarChart2, RefreshCw, Phone, Download, Mail, StickyNote, CreditCard, Send } from 'lucide-react';
+import { ArrowLeft, Search, TrendingUp, Users, DollarSign, Check, X, Edit, ShieldX, Ban, ChevronDown, Calendar, Clock, AlertTriangle, Crown, Zap, UserCheck, UserX, Activity, MessageSquare, Scan, Star, Flame, BarChart2, RefreshCw, Phone, Download, Mail, StickyNote, CreditCard, Send, Trash2 } from 'lucide-react';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 
@@ -66,6 +66,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
     const [editingNote, setEditingNote] = useState<string | null>(null);
     const [savingNote, setSavingNote] = useState(false);
     const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+    const [deletingUser, setDeletingUser] = useState<string | null>(null);
     const [emailModal, setEmailModal] = useState<{ userId: string; email: string; name: string } | null>(null);
     const [emailSubject, setEmailSubject] = useState('');
     const [emailMessage, setEmailMessage] = useState('');
@@ -229,6 +230,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
             onShowToast(error.message || 'Erro ao enviar e-mail', 'error');
         } finally {
             setSendingEmail(false);
+        }
+    };
+
+    const handleDeleteUser = async (userId: string, userName: string) => {
+        if (!window.confirm(`Excluir permanentemente a conta de "${userName}"?\n\nEsta ação é irreversível — todos os dados, logs e histórico serão apagados.`)) return;
+        setDeletingUser(userId);
+        try {
+            // @ts-ignore
+            await db.admin.deleteUser(userId);
+            setUsers(prev => prev.filter(u => u.id !== userId));
+            if (expandedUser === userId) setExpandedUser(null);
+            onShowToast(`Conta de ${userName} excluída.`, 'success');
+        } catch (error: any) {
+            onShowToast(error.message || 'Erro ao excluir conta', 'error');
+        } finally {
+            setDeletingUser(null);
         }
     };
 
@@ -832,6 +849,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                             className="px-4 py-2 bg-white/5 hover:bg-white/10 text-zinc-500 hover:text-white rounded-xl transition-all font-black text-xs uppercase tracking-widest flex items-center gap-2"
                                                         >
                                                             <RefreshCw className="w-3.5 h-3.5" /> Atualizar Dados
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteUser(u.id, u.name || u.email || 'usuário'); }}
+                                                            disabled={deletingUser === u.id}
+                                                            className="px-4 py-2 bg-red-500/5 hover:bg-red-500/15 text-red-500/50 hover:text-red-400 rounded-xl transition-all font-black text-xs uppercase tracking-widest flex items-center gap-2 border border-transparent hover:border-red-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        >
+                                                            {deletingUser === u.id
+                                                                ? <><div className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" /> Excluindo...</>
+                                                                : <><Trash2 className="w-3.5 h-3.5" /> Excluir Conta</>
+                                                            }
                                                         </button>
                                                     </>
                                                 )}
