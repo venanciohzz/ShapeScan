@@ -799,6 +799,11 @@ const App: React.FC = () => {
   };
 
   const navigateWithPremiumCheck = (view: View) => {
+    if (user?.emailConfirmed === false && view !== 'dashboard') {
+      showToast('Confirme seu e-mail para acessar esta ferramenta.', 'info');
+      return;
+    }
+
     const viewPathMap: Record<string, string> = {
       'landing': '/',
       'dashboard': '/dashboard',
@@ -818,7 +823,7 @@ const App: React.FC = () => {
       'saved_meals': '/refeicoes-salvas',
       'admin': '/admin'
     };
-    
+
     const path = viewPathMap[view] || '/dashboard';
     navigate(path);
   };

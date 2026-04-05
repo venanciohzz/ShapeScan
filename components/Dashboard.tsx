@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { User, FoodLog, View, DailyFeedback } from '../types';
 import { isSameTrackingDay } from '../services/dateUtils';
 import { getDailyFeedback } from '../services/openaiService';
+import { resendConfirmationEmail } from '../services/supabaseService';
 import { motion } from 'framer-motion';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
@@ -33,6 +34,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
    const [logToDelete, setLogToDelete] = useState<string | null>(null);
    const [dailyFeedback, setDailyFeedback] = useState<DailyFeedback | null>(null);
    const [loadingFeedback, setLoadingFeedback] = useState(false);
+   const [resendingEmail, setResendingEmail] = useState(false);
+   const [emailResent, setEmailResent] = useState(false);
    const todayLogs = useMemo(() => logs.filter(log => isSameTrackingDay(log.timestamp)), [logs]);
 
    const totals = useMemo(() => ({
@@ -82,6 +85,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
 
    const formatValue = (val: number) => Number(val.toFixed(1));
 
+   const handleResendEmail = async () => {
+      if (resendingEmail || emailResent) return;
+      setResendingEmail(true);
+      try {
+         await resendConfirmationEmail(user.email);
+         setEmailResent(true);
+         onShowToast('E-mail de confirmação reenviado!', 'success');
+      } catch {
+         onShowToast('Erro ao reenviar e-mail. Tente novamente.', 'error');
+      } finally {
+         setResendingEmail(false);
+      }
+   };
+
    const confirmDelete = () => {
       if (logToDelete) {
          onDeleteLog(logToDelete);
@@ -116,6 +133,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                     <p className="text-amber-400/70 text-xs mt-0.5">Verifique sua caixa de entrada e clique no link de confirmação que enviamos.</p>
                   </div>
                 </div>
+                <button
+                  onClick={handleResendEmail}
+                  disabled={resendingEmail || emailResent}
+                  className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg border border-amber-500/40 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {emailResent ? 'Enviado!' : resendingEmail ? 'Enviando...' : 'Reenviar e-mail'}
+                </button>
               </motion.div>
             )}
 
