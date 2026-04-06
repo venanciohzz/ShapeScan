@@ -165,8 +165,18 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       const token = await getValidToken();
       if (signal.aborted) return;
 
+      // Ler UTMs capturados pelo script da Utmify (cookie "utmify")
+      const getUtmParams = () => {
+        try {
+          const raw = document.cookie.split('; ').find(c => c.startsWith('utmify='));
+          if (!raw) return {};
+          return JSON.parse(decodeURIComponent(raw.split('=').slice(1).join('=')));
+        } catch { return {}; }
+      };
+      const utmParams = getUtmParams();
+
       // Timeout de 30s para não travar o loading infinito
-      const fetchPromise = callEdgeFunction('stripe-checkout', { priceId, couponCode: appliedCouponCode, plan });
+      const fetchPromise = callEdgeFunction('stripe-checkout', { priceId, couponCode: appliedCouponCode, plan, utmParams });
 
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('O servidor demorou para responder. Tente novamente.')), 30000)

@@ -236,6 +236,49 @@ Deno.serve(async (req) => {
               if (invoice.amount_paid > 0) {
                 const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
                 if (customer.email) await sendEmail(log, customer.email, `✅ ShapeScan — Pagamento Confirmado`, purchaseConfirmationEmail(customer.name || 'Atleta', planNames[planId], invoice.amount_paid), resendApiKey);
+
+                // ── UTMIFY: Reportar venda ──────────────────────────────────
+                const utmifyToken = Deno.env.get('UTMIFY_API_TOKEN');
+                if (utmifyToken) {
+                  try {
+                    const meta = retrievedSub?.metadata || {};
+                    const eventDate = new Date(event.created * 1000).toISOString();
+                    await fetch('https://api.utmify.com.br/api-credentials/orders', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', 'x-api-token': utmifyToken },
+                      body: JSON.stringify({
+                        orderId: invoice.id,
+                        platform: 'shapescan',
+                        paymentMethod: 'credit_card',
+                        status: 'paid',
+                        createdAt: eventDate,
+                        approvedDate: eventDate,
+                        refundedAt: null,
+                        customer: {
+                          name: customer.name || '',
+                          email: customer.email || '',
+                          phone: null,
+                          document: null,
+                        },
+                        commission: {
+                          totalPriceInCents: invoice.amount_paid,
+                          gatewayFeeInCents: 0,
+                          userCommissionInCents: invoice.amount_paid,
+                        },
+                        trackingParameters: {
+                          utm_source: meta.utm_source || null,
+                          utm_campaign: meta.utm_campaign || null,
+                          utm_medium: meta.utm_medium || null,
+                          utm_content: meta.utm_content || null,
+                          utm_term: meta.utm_term || null,
+                        },
+                      }),
+                    });
+                    log('info', event.type, 'utmify_reported', { userId, orderId: invoice.id });
+                  } catch (utmErr) {
+                    log('warn', event.type, 'utmify_error', { reason: String(utmErr) });
+                  }
+                }
               }
             }
             break;
