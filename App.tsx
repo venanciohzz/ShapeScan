@@ -197,7 +197,7 @@ const App: React.FC = () => {
             const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
             const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
             const { pixel } = await import('./utils/pixel');
-            pixel.purchase(planName, planValue);
+            pixel.purchase(planName, planValue, updatedUser?.email);
             isPollingPremiumRef.current = false;
             localStorage.removeItem('awaiting_stripe_payment');
             localStorage.removeItem('awaiting_stripe_payment_started');
@@ -244,7 +244,7 @@ const App: React.FC = () => {
               const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
               const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
               const { pixel } = await import('./utils/pixel');
-              pixel.purchase(planName, planValue);
+              pixel.purchase(planName, planValue, updatedUser?.email);
 
               clearInterval(interval);
               isPollingPremiumRef.current = false;
