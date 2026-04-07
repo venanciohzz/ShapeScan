@@ -84,6 +84,11 @@ const App: React.FC = () => {
     else if (path.startsWith('/entrar') || path.startsWith('/registrar')) setCurrentView('auth');
   }, [location]);
 
+  // Pixel PageView — dispara CAPI + browser em cada mudança de rota
+  useEffect(() => {
+    import('./utils/pixel').then(({ pixel }) => pixel.pageView()).catch(() => {});
+  }, [location.pathname]);
+
   // Scroll to top on view change
   useEffect(() => {
     window.scrollTo(0, 0);
