@@ -1,9 +1,57 @@
-// Trigger deployment v9 - Produção: Blindagem Final (Ordering Protection + Context Isolation)
+// Trigger deployment v10 - Meta CAPI server-side purchase tracking
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Stripe from 'npm:stripe@^14.21.0';
 
 const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
+
+async function sha256(value: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(value.toLowerCase().trim());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function sendMetaCapi(log: any, eventType: string, params: {
+  email: string;
+  invoiceId: string;
+  amountPaidCents: number;
+  planName: string;
+  eventCreated: number;
+}) {
+  const capiToken = Deno.env.get('META_CAPI_TOKEN');
+  if (!capiToken) { log('warn', eventType, 'capi_skipped', { reason: 'META_CAPI_TOKEN not set' }); return; }
+  try {
+    const hashedEmail = await sha256(params.email);
+    const payload = {
+      data: [{
+        event_name: 'Purchase',
+        event_time: params.eventCreated,
+        event_id: `purchase-${params.invoiceId}`,
+        action_source: 'website',
+        event_source_url: 'https://www.shapescan.com.br/dashboard',
+        user_data: { em: hashedEmail },
+        custom_data: {
+          value: params.amountPaidCents / 100,
+          currency: 'BRL',
+          content_name: params.planName,
+        },
+      }],
+    };
+    const res = await fetch(
+      `https://graph.facebook.com/v18.0/512947444394258/events?access_token=${capiToken}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+    );
+    const result = await res.json();
+    if (res.ok) {
+      log('info', eventType, 'capi_reported', { invoiceId: params.invoiceId });
+    } else {
+      log('warn', eventType, 'capi_error', { status: res.status, result });
+    }
+  } catch (err) {
+    log('warn', eventType, 'capi_exception', { reason: String(err) });
+  }
+}
 
 const priceToPlan: Record<string, string> = {
   'price_1TCCjDB2Kj43d7TH3yWQ41ZT': 'monthly',
@@ -278,6 +326,17 @@ Deno.serve(async (req) => {
                   } catch (utmErr) {
                     log('warn', event.type, 'utmify_error', { reason: String(utmErr) });
                   }
+                }
+
+                // ── META CAPI: Reportar compra server-side ──────────────────
+                if (customer.email) {
+                  await sendMetaCapi(log, event.type, {
+                    email: customer.email,
+                    invoiceId: invoice.id,
+                    amountPaidCents: invoice.amount_paid,
+                    planName: planNames[planId] || planId,
+                    eventCreated: event.created,
+                  });
                 }
               }
             }
