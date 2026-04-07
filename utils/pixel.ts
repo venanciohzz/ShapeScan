@@ -104,4 +104,11 @@ export const pixel = {
     fbqTrack('Purchase', { content_name: planName, value, currency: 'BRL' }, id);
     sendCapi('Purchase', id, { contentName: planName, value, currency: 'BRL', email });
   },
+
+  /** PageView — disparado em cada mudança de rota */
+  pageView: () => {
+    const id = generateEventId();
+    fbqTrack('PageView', {}, id);
+    sendCapi('PageView', id);
+  },
 };
