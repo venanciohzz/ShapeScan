@@ -27,9 +27,10 @@ interface DashboardProps {
    waterConsumed: number;
    setWaterConsumed: (amount: number) => void;
    onShowToast: (message: string, type: 'success' | 'error' | 'info') => void;
+   onUpgrade: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout, onDeleteLog, onEditLog, waterConsumed, setWaterConsumed, onShowToast }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout, onDeleteLog, onEditLog, waterConsumed, setWaterConsumed, onShowToast, onUpgrade }) => {
    const [editingLog, setEditingLog] = useState<FoodLog | null>(null);
    const [logToDelete, setLogToDelete] = useState<string | null>(null);
    const [dailyFeedback, setDailyFeedback] = useState<DailyFeedback | null>(null);
@@ -270,7 +271,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                <div className="w-full md:w-[40%] space-y-8">
                   <DailyFeedbackCard feedback={dailyFeedback} loading={loadingFeedback} />
                   
-                  <ToolGrid onNavigate={onNavigate} />
+                  <ToolGrid onNavigate={onNavigate} onUpgrade={onUpgrade} />
 
                   <MealHistory
                      todayLogs={todayLogs}

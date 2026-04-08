@@ -437,8 +437,8 @@ const App: React.FC = () => {
         setUser(profile);
         localStorage.setItem('shapescan_user_profile', JSON.stringify(profile));
 
-        // Usuário Google sem username → pede dados antes
-        if (!profile.username) {
+        // Usuário sem username ou sem phone → pede dados antes
+        if (!profile.username || !profile.phone) {
             navigate('/completar-perfil', { replace: true });
             return true;
         }
@@ -609,8 +609,10 @@ const App: React.FC = () => {
   const handleLogin = (user: User, isNew: boolean) => {
     setUser(user);
     loadUserData(user.id);
-    if (!user.username) {
+    if (!user.username || !user.phone) {
       navigate('/completar-perfil');
+    } else if (isNew && (!user.weight || !user.height)) {
+      navigate('/quiz');
     } else {
       navigate('/dashboard');
     }
@@ -874,7 +876,7 @@ const App: React.FC = () => {
                 user.emailConfirmed === false ? (
                   /* E-mail não confirmado: apenas dashboard disponível */
                   <Routes>
-                    <Route path="/dashboard" element={<Dashboard user={user} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />} />
+                    <Route path="/dashboard" element={<Dashboard user={user} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} onUpgrade={() => navigate('/planos')} />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 ) : (
@@ -883,7 +885,7 @@ const App: React.FC = () => {
                    <Route path="/quiz" element={<OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />} />
                    <Route path="/planos" element={<PlanSelection user={user} onBack={() => navigate('/dashboard')} onSelect={async (plan) => { if (plan === 'free') { const updated = await db.users.update(user.email, { isPremium: false, plan: 'free' }); setUser(updated); navigate('/dashboard'); } }} onShowToast={showToast} />} />
                    <Route path="/assinatura" element={<UpgradePro user={user} onBack={() => navigate('/dashboard')} onShowToast={showToast} />} />
-                   <Route path="/dashboard" element={<Dashboard user={user} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} />} />
+                   <Route path="/dashboard" element={<Dashboard user={user} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} onUpgrade={() => navigate('/planos')} />} />
                    <Route path="/analise-refeicao" element={<FoodAnalyzer mode="ai" user={user} onAdd={addFoodLog} onBack={() => navigate('/dashboard')} onUpdateUser={refreshUser} onUpgrade={() => navigate('/planos')} onUpgradePro={() => navigate('/assinatura')} onShowToast={showToast} />} />
                    <Route path="/adicionar-manualmente" element={<FoodAnalyzer mode="manual" user={user} onAdd={addFoodLog} onBack={() => navigate('/dashboard')} onUpdateUser={refreshUser} onUpgrade={() => navigate('/planos')} onUpgradePro={() => navigate('/assinatura')} onShowToast={showToast} />} />
                    <Route path="/refeicoes-salvas" element={<SavedMeals user={user} onAddLog={addFoodLog} onBack={() => navigate('/dashboard')} onShowToast={showToast} />} />
