@@ -166,6 +166,10 @@ export const db = {
             return await supabaseService.adminGetGrowthData();
         },
 
+        async getToolLogs(userId: string, tool: string): Promise<any[]> {
+            return await supabaseService.getAdminUserToolLogs(userId, tool);
+        },
+
         async saveNote(userId: string, note: string): Promise<void> {
             await supabaseService.adminSaveNote(userId, note);
         },

@@ -931,6 +931,62 @@ export async function getRevenueStats() {
   };
 }
 
+export async function getAdminUserToolLogs(userId: string, tool: string): Promise<any[]> {
+  switch (tool) {
+    case 'food_logs': {
+      const { data } = await supabase
+        .from('food_logs')
+        .select('id, name, items, calories, protein, carbs, fat, weight, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+    case 'saved_meals': {
+      const { data } = await supabase
+        .from('saved_meals')
+        .select('id, name, items, calories, protein, carbs, fat, weight, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+    case 'hydration_logs': {
+      const { data } = await supabase
+        .from('hydration_logs')
+        .select('id, date, amount, daily_goal, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+    case 'chat_messages': {
+      const { data } = await supabase
+        .from('chat_messages')
+        .select('id, role, content, created_at')
+        .eq('user_id', userId)
+        .eq('role', 'user')
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+    case 'evolution_records': {
+      const { data } = await supabase
+        .from('evolution_records')
+        .select('id, record_date, weight, height, bf, notes, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      return data || [];
+    }
+    case 'daily_usage': {
+      const { data } = await supabase
+        .from('daily_usage')
+        .select('id, date, type, count, updated_at')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+      return data || [];
+    }
+    default:
+      return [];
+  }
+}
+
 export async function adminUpdateUserPlan(userId: string, planId: string, expiresAt?: number): Promise<void> {
   // UPSERT: a tabela tem UNIQUE(user_id), então INSERT causaria violação de constraint.
   // upsert com onConflict: 'user_id' atualiza a linha existente em vez de inserir nova.
