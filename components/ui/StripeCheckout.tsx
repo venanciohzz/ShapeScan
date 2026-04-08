@@ -193,6 +193,10 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
       if (data?.isFree) {
         console.log('[StripeCheckout] Assinatura gratuita ativada com sucesso!');
+        const freeValue = data.pricing?.finalPrice ?? 0;
+        localStorage.setItem('awaiting_stripe_payment', 'true');
+        localStorage.setItem('awaiting_stripe_plan_name', planName);
+        localStorage.setItem('awaiting_stripe_plan_value', String(freeValue));
         window.location.href = '/dashboard?payment=success';
         return;
       }
@@ -241,6 +245,10 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       if (data?.isError) throw new Error(data.error || 'Cupom inválido ou expirado.');
 
       if (data?.isFree) {
+        const freeValue = data.pricing?.finalPrice ?? 0;
+        localStorage.setItem('awaiting_stripe_payment', 'true');
+        localStorage.setItem('awaiting_stripe_plan_name', planName);
+        localStorage.setItem('awaiting_stripe_plan_value', String(freeValue));
         window.location.href = '/dashboard?payment=success';
         return;
       }
