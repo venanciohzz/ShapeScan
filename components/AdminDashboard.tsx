@@ -51,6 +51,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
     const [searchTerm, setSearchTerm] = useState('');
     const [filterPlan, setFilterPlan] = useState<string>('all');
     const [filterDate, setFilterDate] = useState<string>('all');
+    const [filterOnboarding, setFilterOnboarding] = useState<string>('all');
     const [editingUser, setEditingUser] = useState<string | null>(null);
     const [selectedPlan, setSelectedPlan] = useState<string>('free');
     const [selectedExpiry, setSelectedExpiry] = useState<string>('');
@@ -156,7 +157,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
             (filterPlan === 'premium' && u.isPremium) ||
             (filterPlan === 'free' && !u.isPremium) ||
             (filterPlan === 'cancelling' && u.cancelAtPeriodEnd);
-        return matchSearch && matchPlan && dateFilterFn(u);
+        const matchOnboarding = filterOnboarding === 'all' ||
+            (filterOnboarding === 'no_quiz' && !(u.weight && u.height && u.goal)) ||
+            (filterOnboarding === 'no_meal' && (u.foodLogsCount || 0) === 0) ||
+            (filterOnboarding === 'no_phone' && !u.phone) ||
+            (filterOnboarding === 'complete' && !!(u.weight && u.height && u.goal && (u.foodLogsCount || 0) > 0));
+        return matchSearch && matchPlan && dateFilterFn(u) && matchOnboarding;
     });
 
     // ==================== ACTIONS ====================
@@ -411,6 +417,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                         <option value="7d">Últimos 7 dias</option>
                         <option value="30d">Últimos 30 dias</option>
                     </select>
+                    <select
+                        value={filterOnboarding}
+                        onChange={(e) => setFilterOnboarding(e.target.value)}
+                        className="px-5 py-3.5 rounded-xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 outline-none text-zinc-300 font-bold text-sm"
+                    >
+                        <option value="all">Todos os estágios</option>
+                        <option value="no_quiz">Sem quiz</option>
+                        <option value="no_meal">Sem refeição</option>
+                        <option value="no_phone">Sem telefone</option>
+                        <option value="complete">Onboarding completo</option>
+                    </select>
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 text-zinc-500 text-xs font-bold uppercase tracking-widest shrink-0">
                             <Activity className="w-4 h-4" />
@@ -485,6 +502,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                 </div>
                                                 <p className="text-xs text-zinc-500 truncate">{u.email}</p>
                                                 <p className="text-[10px] text-zinc-600 font-medium">@{u.username}</p>
+                                                {/* Onboarding Progress Dots */}
+                                                {(() => {
+                                                    const steps = [
+                                                        { label: 'Perfil', done: !!(u.username && !u.username.includes('@') && u.phone) },
+                                                        { label: 'Telefone', done: !!u.phone },
+                                                        { label: 'Quiz', done: !!(u.weight && u.height && u.goal) },
+                                                        { label: 'Refeição', done: (u.foodLogsCount || 0) > 0 },
+                                                        { label: 'Plano', done: u.plan !== 'free' },
+                                                    ];
+                                                    const done = steps.filter(s => s.done).length;
+                                                    return (
+                                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                                            {steps.map((s, i) => (
+                                                                <div key={i} title={`${s.label}: ${s.done ? '✓' : '✗'}`}
+                                                                    className={`w-2 h-2 rounded-full transition-colors ${s.done ? 'bg-emerald-500' : 'bg-zinc-700'}`}
+                                                                />
+                                                            ))}
+                                                            <span className={`text-[9px] font-bold ml-0.5 ${done === steps.length ? 'text-emerald-400' : done >= 3 ? 'text-amber-400' : 'text-zinc-600'}`}>
+                                                                {done}/{steps.length}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
 
@@ -555,6 +595,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
 
                                         return (
                                         <div className="border-t border-white/5 p-5 space-y-6">
+
+                                            {/* Onboarding Checklist */}
+                                            <div>
+                                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-3">Progresso de Onboarding</p>
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                                    {[
+                                                        { label: 'Cadastro realizado', done: true, detail: fmtDateStr(u.createdAt ? new Date(u.createdAt).toISOString() : undefined) },
+                                                        { label: 'Username definido', done: !!(u.username && !u.username.includes('@gmail') && !u.username.includes('@hotmail') && !u.username.includes('@yahoo')), detail: u.username ? `@${u.username}` : 'Não definido' },
+                                                        { label: 'Telefone cadastrado', done: !!u.phone, detail: u.phone || 'Não informado' },
+                                                        { label: 'Quiz completo', done: !!(u.weight && u.height && u.goal), detail: u.goal ? `${goalLabel[u.goal] || u.goal} · ${u.weight}kg · ${u.height}cm` : 'Não completou' },
+                                                        { label: 'Meta calórica ativa', done: !!(u.dailyCalorieGoal && u.dailyCalorieGoal > 0 && u.goal), detail: u.dailyCalorieGoal ? `${u.dailyCalorieGoal} kcal/dia` : 'Sem meta' },
+                                                        { label: 'Primeira refeição', done: (u.foodLogsCount || 0) > 0, detail: (u.foodLogsCount || 0) > 0 ? `${u.foodLogsCount} registro(s)` : 'Nenhuma registrada' },
+                                                        { label: 'Usou Personal IA', done: (u.chatMsgsCount || 0) > 0, detail: (u.chatMsgsCount || 0) > 0 ? `${u.chatMsgsCount} mensagem(s)` : 'Nunca usou' },
+                                                        { label: 'Plano ativo', done: u.plan !== 'free', detail: planLabel[u.plan || 'free'] || u.plan || 'Gratuito' },
+                                                    ].map(step => (
+                                                        <div key={step.label} className={`flex items-start gap-2.5 p-3 rounded-xl border ${step.done ? 'bg-emerald-500/5 border-emerald-500/15' : 'bg-white/[0.02] border-white/5'}`}>
+                                                            <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${step.done ? 'bg-emerald-500' : 'bg-zinc-700'}`}>
+                                                                {step.done ? <Check className="w-2.5 h-2.5 text-zinc-950" /> : <X className="w-2.5 h-2.5 text-zinc-500" />}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className={`text-[10px] font-bold leading-tight ${step.done ? 'text-emerald-300' : 'text-zinc-500'}`}>{step.label}</p>
+                                                                <p className="text-[9px] text-zinc-600 mt-0.5 truncate">{step.detail}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
 
                                             {/* Profile Info Grid */}
                                             <div>
