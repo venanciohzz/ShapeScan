@@ -66,6 +66,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
     const [notes, setNotes] = useState<Record<string, string>>({});
     const [editingNote, setEditingNote] = useState<string | null>(null);
     const [savingNote, setSavingNote] = useState(false);
+    const [expandedToolKey, setExpandedToolKey] = useState<string | null>(null);
+    const [toolLogsCache, setToolLogsCache] = useState<Record<string, any[]>>({});
+    const [loadingToolKey, setLoadingToolKey] = useState<string | null>(null);
     const [resendingEmail, setResendingEmail] = useState<string | null>(null);
     const [deletingUser, setDeletingUser] = useState<string | null>(null);
     const [emailModal, setEmailModal] = useState<{ userId: string; email: string; name: string } | null>(null);
@@ -126,6 +129,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
             setLoadingPayments(null);
         }
     }, [userPayments]);
+
+    const toggleToolLogs = async (userId: string, tool: string) => {
+        const key = `${userId}_${tool}`;
+        if (expandedToolKey === key) { setExpandedToolKey(null); return; }
+        setExpandedToolKey(key);
+        if (toolLogsCache[key]) return;
+        setLoadingToolKey(key);
+        try {
+            // @ts-ignore
+            const logs = await db.admin.getToolLogs(userId, tool);
+            setToolLogsCache(prev => ({ ...prev, [key]: logs }));
+        } catch (e) {
+            console.error('Erro ao carregar logs:', e);
+        } finally {
+            setLoadingToolKey(null);
+        }
+    };
+
+    const fmtDateTime = (str: string) => {
+        if (!str) return '—';
+        return new Date(str).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    };
 
     const toggleExpand = (userId: string) => {
         if (expandedUser === userId) {
@@ -623,24 +648,107 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                 </div>
                                             </div>
 
-                                            {/* Uso das Ferramentas Gratuitas */}
+                                            {/* Uso das Ferramentas */}
                                             <div>
                                                 <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-3">Uso das Ferramentas</p>
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                                    {[
-                                                        { label: 'Refeições registradas', icon: '🍽️', count: u.foodLogsCount || 0, color: (u.foodLogsCount || 0) > 0 ? 'emerald' : 'zinc' },
-                                                        { label: 'Refeições salvas', icon: '💾', count: u.savedMealsCount || 0, color: (u.savedMealsCount || 0) > 0 ? 'emerald' : 'zinc' },
-                                                        { label: 'Hidratação (dias)', icon: '💧', count: u.hydrationLogsCount || 0, color: (u.hydrationLogsCount || 0) > 0 ? 'blue' : 'zinc' },
-                                                        { label: 'Msgs Personal IA', icon: '🤖', count: u.chatMsgsCount || 0, color: (u.chatMsgsCount || 0) > 0 ? 'purple' : 'zinc' },
-                                                    ].map(tool => (
-                                                        <div key={tool.label} className={`p-3 rounded-xl border text-center ${tool.count > 0 ? `bg-${tool.color}-500/5 border-${tool.color}-500/15` : 'bg-white/[0.02] border-white/5'}`}>
-                                                            <div className="text-xl mb-1">{tool.icon}</div>
-                                                            <p className={`text-lg font-black ${tool.count > 0 ? (tool.color === 'blue' ? 'text-blue-300' : tool.color === 'purple' ? 'text-purple-300' : 'text-emerald-300') : 'text-zinc-600'}`}>{tool.count}</p>
-                                                            <p className="text-[9px] text-zinc-600 mt-0.5 leading-tight">{tool.label}</p>
-                                                        </div>
-                                                    ))}
+                                                <div className="space-y-1.5">
+                                                    {([
+                                                        { key: 'food_logs',        label: 'Adicionar Refeição',  icon: '🍽️', paid: false, count: u.foodLogsCount || 0 },
+                                                        { key: 'saved_meals',      label: 'Refeições Salvas',    icon: '💾', paid: false, count: u.savedMealsCount || 0 },
+                                                        { key: 'hydration_logs',   label: 'Meta de Água',        icon: '💧', paid: false, count: u.hydrationLogsCount || 0 },
+                                                        { key: null,               label: 'Calcular IMC',        icon: '⚖️', paid: false, count: null },
+                                                        { key: null,               label: 'Gasto Calórico',      icon: '🔥', paid: false, count: null },
+                                                        { key: null,               label: 'Minha Meta',          icon: '🎯', paid: false, count: null },
+                                                        { key: 'chat_messages',    label: 'Personal IA',         icon: '🤖', paid: true,  count: u.chatMsgsCount || 0 },
+                                                        { key: 'evolution_records',label: 'Evolução Física',     icon: '📸', paid: true,  count: undefined },
+                                                        { key: 'daily_usage',      label: 'Análise IA (uso/dia)',icon: '🧠', paid: false, count: undefined },
+                                                    ] as const).map((tool) => {
+                                                        const toolKey = tool.key ? `${u.id}_${tool.key}` : null;
+                                                        const isExpanded = toolKey && expandedToolKey === toolKey;
+                                                        const isLoading = toolKey && loadingToolKey === toolKey;
+                                                        const logs = toolKey ? (toolLogsCache[toolKey] || []) : [];
+                                                        return (
+                                                            <div key={tool.label} className="rounded-xl border border-white/5 overflow-hidden">
+                                                                <div className="flex items-center gap-3 px-3 py-2.5">
+                                                                    <span className="text-base">{tool.icon}</span>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <span className="text-xs font-bold text-zinc-300">{tool.label}</span>
+                                                                        {tool.paid && <span className="ml-2 text-[8px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">PRO</span>}
+                                                                    </div>
+                                                                    {tool.count === null ? (
+                                                                        <span className="text-[9px] text-zinc-600 italic">local</span>
+                                                                    ) : tool.count !== undefined ? (
+                                                                        <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${tool.count > 0 ? 'text-emerald-300 bg-emerald-500/10' : 'text-zinc-600 bg-white/[0.02]'}`}>{tool.count}</span>
+                                                                    ) : null}
+                                                                    {tool.key && (
+                                                                        <button
+                                                                            onClick={() => toggleToolLogs(u.id, tool.key!)}
+                                                                            className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-white/5 text-zinc-500 hover:text-zinc-300 transition-colors shrink-0"
+                                                                        >
+                                                                            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                {isExpanded && (
+                                                                    <div className="border-t border-white/5 bg-black/20 max-h-72 overflow-y-auto">
+                                                                        {isLoading ? (
+                                                                            <p className="text-center text-zinc-600 text-xs py-4">Carregando...</p>
+                                                                        ) : logs.length === 0 ? (
+                                                                            <p className="text-center text-zinc-700 text-xs py-4 italic">Nenhum registro encontrado.</p>
+                                                                        ) : (
+                                                                            <div className="divide-y divide-white/[0.04]">
+                                                                                {logs.map((log: any, idx: number) => (
+                                                                                    <div key={log.id || idx} className="px-3 py-2.5 space-y-1">
+                                                                                        <p className="text-[9px] text-zinc-500 font-bold">{fmtDateTime(log.created_at || log.date || log.updated_at)}</p>
+                                                                                        {/* food_logs & saved_meals */}
+                                                                                        {log.name && tool.key !== 'chat_messages' && (
+                                                                                            <p className="text-xs font-bold text-white">{log.name}</p>
+                                                                                        )}
+                                                                                        {log.items && Array.isArray(log.items) && log.items.length > 0 && (
+                                                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                                                {log.items.map((item: any, i: number) => (
+                                                                                                    <span key={i} className="text-[9px] bg-white/5 border border-white/10 rounded px-1.5 py-0.5 text-zinc-400">
+                                                                                                        {item.name}{item.weight ? ` ${item.weight}g` : ''}
+                                                                                                    </span>
+                                                                                                ))}
+                                                                                            </div>
+                                                                                        )}
+                                                                                        {log.calories !== undefined && tool.key !== 'chat_messages' && (
+                                                                                            <p className="text-[9px] text-zinc-500">
+                                                                                                {log.calories} kcal · {log.protein}g prot · {log.carbs}g carb · {log.fat}g fat
+                                                                                            </p>
+                                                                                        )}
+                                                                                        {/* hydration_logs */}
+                                                                                        {log.amount !== undefined && (
+                                                                                            <p className="text-xs text-blue-300 font-bold">{log.amount} ml <span className="text-zinc-600 font-normal">/ meta {log.daily_goal} ml</span></p>
+                                                                                        )}
+                                                                                        {/* chat_messages */}
+                                                                                        {tool.key === 'chat_messages' && log.content && (
+                                                                                            <p className="text-xs text-zinc-300 leading-relaxed">{log.content}</p>
+                                                                                        )}
+                                                                                        {/* evolution_records */}
+                                                                                        {log.weight !== undefined && tool.key === 'evolution_records' && (
+                                                                                            <p className="text-[9px] text-zinc-400">
+                                                                                                {log.weight}kg · {log.height}cm{log.bf ? ` · ${log.bf}% BF` : ''}{log.notes ? ` · ${log.notes}` : ''}
+                                                                                            </p>
+                                                                                        )}
+                                                                                        {/* daily_usage */}
+                                                                                        {log.type !== undefined && (
+                                                                                            <p className="text-[9px] text-zinc-400">
+                                                                                                <span className="font-bold text-zinc-300">{log.type === 'food' ? 'Foto IA' : log.type === 'shape' ? 'Corpo IA' : log.type === 'chat' ? 'Personal IA' : log.type}</span> — {log.count}x em {log.date}
+                                                                                            </p>
+                                                                                        )}
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
-                                                <p className="text-[9px] text-zinc-700 mt-2 italic">* IMC, Gasto Calórico e Meta Calórica são calculadoras locais sem persistência no servidor.</p>
+                                                <p className="text-[9px] text-zinc-700 mt-2 italic">* IMC, Gasto Calórico e Minha Meta são calculadoras locais sem persistência no servidor.</p>
                                             </div>
 
                                             {/* Profile Info Grid */}
