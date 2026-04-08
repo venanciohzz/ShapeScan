@@ -857,10 +857,12 @@ export async function getAllUsers(): Promise<User[]> {
 
   if (error) throw new Error(error.message);
 
-  const [plansResult, foodLogsResult, chatMsgsResult] = await Promise.all([
+  const [plansResult, foodLogsResult, chatMsgsResult, savedMealsResult, hydrationLogsResult] = await Promise.all([
     supabase.from('user_plans').select('user_id, plan_id, active, subscription_start, current_period_end, cancel_at_period_end, cancelled_at, cancellation_reason, cancellation_feedback'),
     supabase.from('food_logs').select('user_id'),
     supabase.from('chat_messages').select('user_id'),
+    supabase.from('saved_meals').select('user_id'),
+    supabase.from('hydration_logs').select('user_id'),
   ]);
 
   const planMap = new Map();
@@ -871,6 +873,12 @@ export async function getAllUsers(): Promise<User[]> {
 
   const chatMsgCountMap = new Map<string, number>();
   chatMsgsResult.data?.forEach((c: any) => chatMsgCountMap.set(c.user_id, (chatMsgCountMap.get(c.user_id) || 0) + 1));
+
+  const savedMealsCountMap = new Map<string, number>();
+  savedMealsResult.data?.forEach((s: any) => savedMealsCountMap.set(s.user_id, (savedMealsCountMap.get(s.user_id) || 0) + 1));
+
+  const hydrationCountMap = new Map<string, number>();
+  hydrationLogsResult.data?.forEach((h: any) => hydrationCountMap.set(h.user_id, (hydrationCountMap.get(h.user_id) || 0) + 1));
 
   return profiles.map((p: any) => {
     const plan = planMap.get(p.id);
@@ -885,6 +893,8 @@ export async function getAllUsers(): Promise<User[]> {
       user.cancellationFeedback = plan.cancellation_feedback ?? null;
     }
     user.foodLogsCount = foodLogCountMap.get(p.id) || 0;
+    user.savedMealsCount = savedMealsCountMap.get(p.id) || 0;
+    user.hydrationLogsCount = hydrationCountMap.get(p.id) || 0;
     user.chatMsgsCount = chatMsgCountMap.get(p.id) || 0;
     return user;
   });

@@ -623,6 +623,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                                                 </div>
                                             </div>
 
+                                            {/* Uso das Ferramentas Gratuitas */}
+                                            <div>
+                                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-3">Uso das Ferramentas</p>
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                    {[
+                                                        { label: 'Refeições registradas', icon: '🍽️', count: u.foodLogsCount || 0, color: (u.foodLogsCount || 0) > 0 ? 'emerald' : 'zinc' },
+                                                        { label: 'Refeições salvas', icon: '💾', count: u.savedMealsCount || 0, color: (u.savedMealsCount || 0) > 0 ? 'emerald' : 'zinc' },
+                                                        { label: 'Hidratação (dias)', icon: '💧', count: u.hydrationLogsCount || 0, color: (u.hydrationLogsCount || 0) > 0 ? 'blue' : 'zinc' },
+                                                        { label: 'Msgs Personal IA', icon: '🤖', count: u.chatMsgsCount || 0, color: (u.chatMsgsCount || 0) > 0 ? 'purple' : 'zinc' },
+                                                    ].map(tool => (
+                                                        <div key={tool.label} className={`p-3 rounded-xl border text-center ${tool.count > 0 ? `bg-${tool.color}-500/5 border-${tool.color}-500/15` : 'bg-white/[0.02] border-white/5'}`}>
+                                                            <div className="text-xl mb-1">{tool.icon}</div>
+                                                            <p className={`text-lg font-black ${tool.count > 0 ? (tool.color === 'blue' ? 'text-blue-300' : tool.color === 'purple' ? 'text-purple-300' : 'text-emerald-300') : 'text-zinc-600'}`}>{tool.count}</p>
+                                                            <p className="text-[9px] text-zinc-600 mt-0.5 leading-tight">{tool.label}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <p className="text-[9px] text-zinc-700 mt-2 italic">* IMC, Gasto Calórico e Meta Calórica são calculadoras locais sem persistência no servidor.</p>
+                                            </div>
+
                                             {/* Profile Info Grid */}
                                             <div>
                                                 <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-3">Perfil & Assinatura</p>

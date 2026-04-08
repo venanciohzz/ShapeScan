@@ -89,6 +89,8 @@ export interface User {
   cancellationFeedback?: string | null;
   // Admin-only fields
   foodLogsCount?: number;
+  savedMealsCount?: number;
+  hydrationLogsCount?: number;
   chatMsgsCount?: number;
 }
 
