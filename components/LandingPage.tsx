@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, CheckCircle2, Star, Play } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Star, Play, Lock } from 'lucide-react';
 import '@fontsource/playfair-display/700.css';
 import '@fontsource/playfair-display/400.css';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
@@ -308,7 +308,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
       </div>
 
       {/* Hero Section — Grid Desktop */}
-      <section className="relative pt-36 pb-20 lg:pt-44 lg:pb-28 px-6 max-w-7xl mx-auto z-10 w-full min-h-screen flex flex-col justify-center">
+      <section className="relative pt-28 pb-16 lg:pt-32 lg:pb-20 px-6 max-w-7xl mx-auto z-10 w-full flex flex-col justify-center">
 
         <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/8 blur-[160px] rounded-full pointer-events-none z-0" />
 
