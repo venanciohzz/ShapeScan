@@ -879,6 +879,12 @@ const App: React.FC = () => {
                     <Route path="/dashboard" element={<Dashboard user={user} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} onUpgrade={() => navigate('/planos')} />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
+                ) : (!user.username || !user.phone) ? (
+                  /* Perfil incompleto: bloqueia todas as rotas e força completar-perfil */
+                  <Routes>
+                    <Route path="/completar-perfil" element={<CompleteProfile user={user} onComplete={handleCompleteProfile} />} />
+                    <Route path="*" element={<Navigate to="/completar-perfil" replace />} />
+                  </Routes>
                 ) : (
                 <Routes>
                    <Route path="/completar-perfil" element={<CompleteProfile user={user} onComplete={handleCompleteProfile} />} />

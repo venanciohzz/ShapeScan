@@ -13,7 +13,7 @@ interface CompleteProfileProps {
 const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) => {
   const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState<{ username?: string; phone?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,20 +46,20 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
     const cleanUsername = needsUsername ? sanitizeInput(username).trim() : user.username;
     const cleanPhone = sanitizeInput(phone).trim();
 
-    if (needsUsername && !cleanUsername) {
-      setError('Escolha um nome de usuário.');
-      return;
-    }
-    if (!cleanPhone || cleanPhone.replace(/\D/g, '').length < 10) {
-      setError('Informe um número de WhatsApp válido.');
+    const newErrors: { username?: string; phone?: string } = {};
+    if (needsUsername && !cleanUsername) newErrors.username = 'Escolha um nome de usuário para continuar.';
+    if (!cleanPhone || cleanPhone.replace(/\D/g, '').length < 10) newErrors.phone = 'Informe um número de WhatsApp válido para continuar.';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setErrors({});
     setIsLoading(true);
     try {
       const updates: Partial<User> = { phone: cleanPhone };
@@ -67,7 +67,7 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
       const updatedUser = await updateProfile(user.id, updates);
       onComplete(updatedUser);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar. Tente novamente.');
+      setErrors({ phone: err.message || 'Erro ao salvar. Tente novamente.' });
     } finally {
       setIsLoading(false);
     }
@@ -102,12 +102,6 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
             </p>
           </div>
 
-          {error && (
-            <div className="bg-red-500/10 text-red-400 p-4 rounded-2xl mb-6 text-xs font-bold border border-red-500/20 animate-in fade-in slide-in-from-top-2">
-              {error}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-6">
             {needsUsername && (
               <div className="space-y-2">
@@ -117,13 +111,17 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
+                  onChange={(e) => { setUsername(e.target.value); setErrors(p => ({ ...p, username: undefined })); }}
+                  className={`w-full px-6 py-4 rounded-2xl bg-white/[0.03] border focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm ${errors.username ? 'border-red-500/60 focus:border-red-500/60' : 'border-white/5 focus:border-emerald-500/50'}`}
                   placeholder="@seu_usuario"
-                  required
                   disabled={isLoading}
                   autoComplete="username"
                 />
+                {errors.username && (
+                  <p className="text-red-400 text-xs font-bold ml-2 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                    <span>⚠</span> {errors.username}
+                  </p>
+                )}
               </div>
             )}
 
@@ -134,13 +132,17 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
               <input
                 type="tel"
                 value={phone}
-                onChange={handlePhoneChange}
-                className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
+                onChange={(e) => { handlePhoneChange(e); setErrors(p => ({ ...p, phone: undefined })); }}
+                className={`w-full px-6 py-4 rounded-2xl bg-white/[0.03] border focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm ${errors.phone ? 'border-red-500/60 focus:border-red-500/60' : 'border-white/5 focus:border-emerald-500/50'}`}
                 placeholder="(00) 00000-0000"
-                required
                 disabled={isLoading}
                 autoComplete="tel"
               />
+              {errors.phone && (
+                <p className="text-red-400 text-xs font-bold ml-2 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                  <span>⚠</span> {errors.phone}
+                </p>
+              )}
             </div>
 
             <button
