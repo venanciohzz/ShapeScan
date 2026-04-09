@@ -353,16 +353,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   <ArrowRight className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />
                 </div>
               </button>
-
-              {/* Trust badge */}
-              <p className="text-zinc-500 text-xs font-medium flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                Grátis para começar
-                <span className="text-zinc-700">·</span>
-                Sem cartão necessário
-                <span className="text-zinc-700">·</span>
-                Resultado em segundos
-              </p>
             </motion.div>
 
           </div>
@@ -370,7 +360,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
       </section>
 
       {/* Main Container Wrapper */}
-      <div className="relative w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden z-10">
         {/* Feature 1: Food Scan */}
         <motion.section
           initial={{ opacity: 0, y: 60 }}
