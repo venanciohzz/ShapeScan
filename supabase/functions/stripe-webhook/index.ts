@@ -1,4 +1,4 @@
-// Trigger deployment v10 - Meta CAPI server-side purchase tracking
+// Trigger deployment v11 - Meta CAPI dispara para assinaturas gratuitas/cupom (amount_paid=0)
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Stripe from 'npm:stripe@^14.21.0';
@@ -281,8 +281,10 @@ Deno.serve(async (req) => {
               });
               if (auditError) log('warn', event.type, 'audit_insert_failed', { userId, error: auditError.message, code: auditError.code });
 
+              // Retrieve customer for email, UTMIFY and CAPI
+              const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
+
               if (invoice.amount_paid > 0) {
-                const customer = await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer;
                 if (customer.email) await sendEmail(log, customer.email, `✅ ShapeScan — Pagamento Confirmado`, purchaseConfirmationEmail(customer.name || 'Atleta', planNames[planId], invoice.amount_paid), resendApiKey);
 
                 // ── UTMIFY: Reportar venda ──────────────────────────────────
@@ -327,17 +329,17 @@ Deno.serve(async (req) => {
                     log('warn', event.type, 'utmify_error', { reason: String(utmErr) });
                   }
                 }
+              }
 
-                // ── META CAPI: Reportar compra server-side ──────────────────
-                if (customer.email) {
-                  await sendMetaCapi(log, event.type, {
-                    email: customer.email,
-                    invoiceId: invoice.id,
-                    amountPaidCents: invoice.amount_paid,
-                    planName: planNames[planId] || planId,
-                    eventCreated: event.created,
-                  });
-                }
+              // ── META CAPI: Reportar compra server-side (paid AND free/coupon) ──
+              if (customer.email) {
+                await sendMetaCapi(log, event.type, {
+                  email: customer.email,
+                  invoiceId: invoice.id,
+                  amountPaidCents: invoice.amount_paid,
+                  planName: planNames[planId] || planId,
+                  eventCreated: event.created,
+                });
               }
             }
             break;
