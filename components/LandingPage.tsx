@@ -4,6 +4,7 @@ import '@fontsource/playfair-display/700.css';
 import '@fontsource/playfair-display/400.css';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
 import { LiquidShaderBackground } from './ui/LiquidShaderBackground';
+import { NeonFlow } from './ui/NeonFlow';
 import SimulatedAnalysisModal from './landing/SimulatedAnalysisModal';
 
 // --- Utility Components for God Mode UI ---
@@ -110,12 +111,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSimModal, setShowSimModal] = useState(false);
-  const [modalAnalysisType, setModalAnalysisType] = useState<'body' | 'food'>('body');
-
-  const openModal = (type: 'body' | 'food') => {
-    setModalAnalysisType(type);
-    setShowSimModal(true);
-  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -150,7 +145,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
       <AnimatePresence>
         {showSimModal && (
           <SimulatedAnalysisModal
-            type={modalAnalysisType}
             onClose={() => setShowSimModal(false)}
             onSignup={() => { setShowSimModal(false); onStart(); }}
           />
@@ -212,13 +206,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
       `}</style>
 
       <div className="fixed inset-0 z-0 bg-[#020202] overflow-hidden pointer-events-none">
-        <div className="opacity-50">
-          <LiquidShaderBackground />
-        </div>
+        <LiquidShaderBackground />
+        <NeonFlow className="opacity-60" />
 
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05]" />
 
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/30 via-zinc-950/50 to-[#020202]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/40 to-[#020202]" />
       </div>
 
       {/* Navbar V3 - Ultra Premium Floating Pill */}
@@ -307,69 +300,77 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         </div>
       </div>
 
-      {/* Hero Section — Grid Desktop */}
-      <section className="relative pt-28 pb-16 lg:pt-32 lg:pb-20 px-6 max-w-7xl mx-auto z-10 w-full flex flex-col justify-center">
+      {/* Hero Section V2 - Omi Premium Style with Framer Motion */}
+      <section className="relative pt-40 pb-24 lg:pt-36 lg:pb-20 px-6 max-w-7xl mx-auto z-10 w-full min-h-screen flex flex-col justify-center items-center text-center">
 
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/8 blur-[160px] rounded-full pointer-events-none z-0" />
+        {/* Glow Element Behind Text */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-4xl h-[400px] bg-emerald-500/10 blur-[150px] rounded-full pointer-events-none z-0" />
 
-        <div className="w-full relative z-20">
-          <div className="flex flex-col items-center text-center max-w-3xl mx-auto space-y-7">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium tracking-tight text-white leading-[1.1] drop-shadow-2xl z-20 overflow-visible">
-                <span className="block">
-                  <LetterPuller text="Descubra seu % de gordura" />
-                </span>
-                <span className="block mt-1">
-                  <LetterPuller
-                    text="por foto em segundos."
-                    className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
-                    delay={0.4}
-                  />
-                </span>
-              </h1>
+        <div className="w-full max-w-5xl mx-auto relative z-20">
+          <div className="flex flex-col items-center space-y-8 pt-8 relative z-30">
 
-              <motion.p
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
-                className="text-base sm:text-lg text-zinc-300 font-medium max-w-xl leading-relaxed z-20 mx-auto lg:mx-0"
+            <h1 className="flex flex-col items-center text-5xl sm:text-6xl md:text-7xl lg:text-6xl font-serif-premium tracking-tight text-white leading-[1.1] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible text-balance">
+              <span className="block w-full">
+                <LetterPuller text="Descubra seu % de gordura" />
+              </span>
+              <span className="block w-full">
+                <LetterPuller
+                  text="por foto em segundos."
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
+                  delay={0.5}
+                />
+              </span>
+            </h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+              className="text-lg sm:text-xl lg:text-2xl text-zinc-300 font-medium max-w-3xl mx-auto leading-relaxed px-4 z-20 text-pretty"
+            >
+              Analise seu físico ou suas refeições com inteligência artificial e acompanhe sua evolução de forma simples, rápida e sem esforço.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+              className="flex flex-col items-center gap-4 pt-8 w-full px-6 max-w-lg"
+            >
+              <button
+                onClick={() => setShowSimModal(true)}
+                className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 bg-emerald-500 text-zinc-950 font-black tracking-[0.2em] text-sm md:text-base uppercase shadow-[0_0_40px_-5px_rgba(16,185,129,0.5)] hover:shadow-[0_0_60px_-5px_rgba(16,185,129,0.7)] w-full sm:w-auto"
               >
-                Analise seu físico ou suas refeições com inteligência artificial e acompanhe sua evolução de forma simples, rápida e sem esforço.
-              </motion.p>
+                {/* Subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
-                className="flex flex-col sm:flex-row items-center lg:items-start gap-3 pt-2"
-              >
-                {/* CTA primário → cadastro direto */}
-                <button
-                  onClick={onStart}
-                  className="group relative px-8 py-4 rounded-full overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 bg-emerald-500 text-zinc-950 font-black tracking-[0.15em] text-sm uppercase shadow-[0_0_35px_-5px_rgba(16,185,129,0.5)] hover:shadow-[0_0_55px_-5px_rgba(16,185,129,0.7)] w-full sm:w-auto"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-white/40 to-transparent rotate-45 animate-sweep" />
-                  <span className="relative z-10">Começar agora</span>
-                  <div className="relative z-10 w-7 h-7 rounded-full bg-zinc-950/20 flex items-center justify-center">
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-950 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
-                  </div>
-                </button>
+                {/* Sweep Animation Diagonal */}
+                <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-white/40 to-transparent rotate-45 animate-sweep"></div>
 
-                {/* CTA secundário → modal */}
-                <button
-                  onClick={() => openModal('body')}
-                  className="group flex items-center gap-2.5 px-6 py-4 rounded-full border border-white/10 hover:border-emerald-500/40 bg-white/[0.03] hover:bg-emerald-500/8 transition-all duration-300 text-zinc-300 hover:text-white font-bold text-sm w-full sm:w-auto justify-center"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                  Testar minha análise
-                </button>
-              </motion.div>
+                <span className="relative z-10 drop-shadow-sm">Fazer minha análise agora</span>
+
+                <div className="relative z-10 w-8 h-8 rounded-full bg-zinc-950/20 flex items-center justify-center group-hover:bg-zinc-950/30 transition-colors backdrop-blur-sm shadow-inner group-hover:scale-110 duration-300">
+                  <ArrowRight className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />
+                </div>
+              </button>
+
+              {/* Trust badge */}
+              <p className="text-zinc-500 text-xs font-medium flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                Grátis para começar
+                <span className="text-zinc-700">·</span>
+                Sem cartão necessário
+                <span className="text-zinc-700">·</span>
+                Resultado em segundos
+              </p>
+            </motion.div>
+
           </div>
         </div>
       </section>
 
       {/* Main Container Wrapper */}
-      <div className="relative w-full overflow-hidden z-10 bg-zinc-950/40">
+      <div className="relative w-full overflow-hidden">
         {/* Feature 1: Food Scan */}
         <motion.section
           initial={{ opacity: 0, y: 60 }}
@@ -438,7 +439,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
               <motion.button
                 whileTap={{ scale: 0.97 }}
-                onClick={() => openModal('food')}
+                onClick={() => setShowSimModal(true)}
                 className="mt-8 group flex items-center gap-3 px-7 py-3.5 rounded-full bg-white/5 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all duration-300 text-white font-black text-xs uppercase tracking-widest"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -459,6 +460,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         >
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="order-2 lg:order-1">
+              <div className="inline-block px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-black uppercase tracking-widest mb-6 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                Inteligência Visual
+              </div>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium font-bold tracking-tighter text-white mb-6 leading-tight">
                 <LetterPuller text="Bioimpedância" /> <br />
                 <LetterPuller text="Visual." className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2" delay={0.3} />
@@ -485,16 +489,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Acesso contínuo ao seu acompanhamento</p>
                 </div>
               </div>
-
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={() => openModal('body')}
-                className="mt-8 group flex items-center gap-3 px-7 py-3.5 rounded-full bg-white/5 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all duration-300 text-white font-black text-xs uppercase tracking-widest"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Analisar meu físico agora
-                <ArrowRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
-              </motion.button>
             </div>
 
             <div className="order-1 lg:order-2 relative group h-[550px] sm:h-[650px]">
@@ -623,13 +617,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
               Descubra seu percentual de gordura em segundos. Sem cartão para começar.
             </p>
             <button
-              onClick={onStart}
-              className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden font-black tracking-[0.15em] text-base md:text-lg uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 shadow-[0_0_40px_-5px_rgba(16,185,129,0.4)] mx-auto bg-emerald-500 hover:bg-emerald-400 text-zinc-950"
+              onClick={() => setShowSimModal(true)}
+              className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden font-black tracking-[0.15em] text-base md:text-lg uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] mx-auto border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
             >
-              <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-white/30 to-transparent rotate-45 animate-sweep"></div>
-              <span className="relative z-10">Criar minha conta agora</span>
-              <div className="relative z-10 w-8 h-8 rounded-full bg-zinc-950/20 flex items-center justify-center">
-                <ArrowRight className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-emerald-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-emerald-500/10 to-transparent rotate-45 animate-sweep"></div>
+
+              <span className="relative z-10 text-white group-hover:text-emerald-50 transition-colors">Fazer minha análise agora</span>
+
+              <div className="relative z-10 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 text-emerald-500 transition-all duration-500 shadow-lg backdrop-blur-sm">
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />
               </div>
             </button>
 
