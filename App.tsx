@@ -94,12 +94,7 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
     // Reinforce scroll to top for mobile browsers after render
     const timer = setTimeout(() => window.scrollTo(0, 0), 100);
-    
-    // Meta Pixel PageView for SPA routing
-    if (typeof (window as any).fbq === 'function') {
-      (window as any).fbq('track', 'PageView');
-    }
-    
+    // PageView já é disparado pelo useEffect do pixel.pageView() acima — não duplicar aqui
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
@@ -315,10 +310,6 @@ const App: React.FC = () => {
   useEffect(() => {
     let resolved = false;
     
-    console.log('Auth Debug:', {
-      hasToken: !!localStorage.getItem('supabase.auth.token')
-    });
-
     const initSession = async () => {
       console.log('[App] 🚀 INIT_SESSION_START');
       const startTime = Date.now();
