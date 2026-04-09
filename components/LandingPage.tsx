@@ -5,6 +5,7 @@ import '@fontsource/playfair-display/400.css';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
 import { LiquidShaderBackground } from './ui/LiquidShaderBackground';
 import { NeonFlow } from './ui/NeonFlow';
+import SimulatedAnalysisModal from './landing/SimulatedAnalysisModal';
 
 // --- Utility Components for God Mode UI ---
 
@@ -109,6 +110,7 @@ interface LandingPageProps {
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWorks, onAbout }) => {
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showSimModal, setShowSimModal] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -138,6 +140,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
   return (
     <div className="bg-zinc-950 min-h-screen text-white overflow-x-hidden font-sans selection:bg-emerald-500 selection:text-white w-full">
+
+      {/* Modal de Pré-Análise Simulada */}
+      <AnimatePresence>
+        {showSimModal && (
+          <SimulatedAnalysisModal
+            onClose={() => setShowSimModal(false)}
+            onSignup={() => { setShowSimModal(false); onStart(); }}
+          />
+        )}
+      </AnimatePresence>
       <style>{`
         @keyframes glow-pulse {
           0%, 100% { opacity: 0.8; transform: scale(1); }
@@ -299,11 +311,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
             <h1 className="flex flex-col items-center text-5xl sm:text-6xl md:text-7xl lg:text-[7.5rem] font-serif-premium tracking-tight text-white leading-[1.1] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible text-balance">
               <span className="block w-full">
-                <LetterPuller text="Evolua seu físico" />
+                <LetterPuller text="Descubra seu % de gordura" />
               </span>
               <span className="block w-full">
                 <LetterPuller
-                  text="com clareza."
+                  text="por foto em segundos."
                   className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
                   delay={0.5}
                 />
@@ -316,17 +328,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
               transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
               className="text-lg sm:text-xl lg:text-2xl text-zinc-300 font-medium max-w-3xl mx-auto leading-relaxed px-4 z-20 text-pretty"
             >
-              Analise seu shape, suas refeições e acompanhe sua evolução com fotos, dados e orientação inteligente em um só lugar.
+              Analise seu físico ou suas refeições com inteligência artificial e acompanhe sua evolução de forma simples, rápida e sem esforço.
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
-              className="flex flex-col sm:flex-row gap-4 sm:gap-6 pt-8 justify-center w-full px-6 max-w-lg"
+              className="flex flex-col items-center gap-4 pt-8 w-full px-6 max-w-lg"
             >
               <button
-                onClick={onStart}
+                onClick={() => setShowSimModal(true)}
                 className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 bg-emerald-500 text-zinc-950 font-black tracking-[0.2em] text-sm md:text-base uppercase shadow-[0_0_40px_-5px_rgba(16,185,129,0.5)] hover:shadow-[0_0_60px_-5px_rgba(16,185,129,0.7)] w-full sm:w-auto"
               >
                 {/* Subtle gradient overlay */}
@@ -335,12 +347,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                 {/* Sweep Animation Diagonal */}
                 <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-white/40 to-transparent rotate-45 animate-sweep"></div>
 
-                <span className="relative z-10 drop-shadow-sm">Começar Agora</span>
+                <span className="relative z-10 drop-shadow-sm">Fazer minha análise agora</span>
 
                 <div className="relative z-10 w-8 h-8 rounded-full bg-zinc-950/20 flex items-center justify-center group-hover:bg-zinc-950/30 transition-colors backdrop-blur-sm shadow-inner group-hover:scale-110 duration-300">
                   <ArrowRight className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />
                 </div>
               </button>
+
+              {/* Trust badge */}
+              <p className="text-zinc-500 text-xs font-medium flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                Grátis para começar
+                <span className="text-zinc-700">·</span>
+                Sem cartão necessário
+                <span className="text-zinc-700">·</span>
+                Resultado em segundos
+              </p>
             </motion.div>
 
           </div>
@@ -414,6 +436,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                 <FeatureList text="Cálculo estimado de porções e macros" />
                 <FeatureList text="Integração com seu histórico de evolução" />
               </ul>
+
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowSimModal(true)}
+                className="mt-8 group flex items-center gap-3 px-7 py-3.5 rounded-full bg-white/5 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all duration-300 text-white font-black text-xs uppercase tracking-widest"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Analisar minha refeição agora
+                <ArrowRight className="w-4 h-4 text-emerald-500 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+              </motion.button>
             </div>
           </div>
         </motion.section>
@@ -542,15 +574,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   name="Gabriel Costa"
                   role="Atleta Natural"
                   image="https://randomuser.me/api/portraits/men/32.jpg"
-                  text="O scanner de alimentos é bizarro de bom. Economizo uns 20 minutos por dia não tendo que pesar tudo milimetricamente."
+                  text="Perdi 6kg em 7 semanas sem pesar comida. Só foto, análise e ajuste. O scanner de refeições mudou completamente minha relação com a dieta."
                 />
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.3 }}>
                 <TestimonialCard
                   name="Fernanda Lima"
-                  role="Personal 24h"
+                  role="Personal Trainer"
                   image="https://randomuser.me/api/portraits/women/44.jpg"
-                  text="Comecei a usar para validar as fotos que meus pacientes mandam. A estimativa de macros bate muito com a realidade."
+                  text="Uso com todos os meus alunos. A análise de shape identificou assimetrias que eu não vinha percebendo. Em 2 meses, 3 alunos bateram seu melhor shape."
                 />
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.5 }}>
@@ -558,7 +590,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   name="Lucas Martins"
                   role="Iniciante"
                   image="https://randomuser.me/api/portraits/men/86.jpg"
-                  text="A análise de shape foi um choque de realidade. A Personal 24h me ajudou a montar um plano que eu realmente consigo seguir."
+                  text="Baixei de 28% para 21% de gordura em 3 meses. A análise por foto me mostrou exatamente onde eu estava e o que precisava mudar."
                 />
               </motion.div>
             </div>
@@ -582,16 +614,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
               <LetterPuller text="começa agora." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic" delay={0.3} />
             </h2>
             <p className="text-zinc-400 text-lg lg:text-xl mb-12 font-medium">
-              Acesso imediato a todas as ferramentas. Sem cartão para testar a versão gratuita.
+              Descubra seu percentual de gordura em segundos. Sem cartão para começar.
             </p>
             <button
-              onClick={onStart}
+              onClick={() => setShowSimModal(true)}
               className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden font-black tracking-[0.15em] text-base md:text-lg uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] mx-auto border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-emerald-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-emerald-500/10 to-transparent rotate-45 animate-sweep"></div>
 
-              <span className="relative z-10 text-white group-hover:text-emerald-50 transition-colors">Começar Agora</span>
+              <span className="relative z-10 text-white group-hover:text-emerald-50 transition-colors">Fazer minha análise agora</span>
 
               <div className="relative z-10 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 text-emerald-500 transition-all duration-500 shadow-lg backdrop-blur-sm">
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />

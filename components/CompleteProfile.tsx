@@ -1,9 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { updateProfile } from '../services/supabaseService';
 import { sanitizeInput } from '../utils/security';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
+
+/** Gera um username legível a partir do nome completo.
+ * Ex: "Gabriel Venâncio" → "gabriel.v"
+ *     "Ana" → "ana"
+ */
+function generateUsernameFromName(fullName: string): string {
+  const cleaned = fullName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/[^a-zA-Z\s]/g, '')     // só letras e espaços
+    .trim()
+    .toLowerCase();
+
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'usuario';
+  if (parts.length === 1) return parts[0];
+
+  // "gabriel venancio" → "gabriel.v"
+  return `${parts[0]}.${parts[parts.length - 1][0]}`;
+}
 
 interface CompleteProfileProps {
   user: User;
@@ -11,7 +31,8 @@ interface CompleteProfileProps {
 }
 
 const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) => {
-  const [username, setUsername] = useState('');
+  const suggested = generateUsernameFromName(user.name || '');
+  const [username, setUsername] = useState(suggested);
   const [phone, setPhone] = useState('');
   const [errors, setErrors] = useState<{ username?: string; phone?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -96,8 +117,8 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
             </h2>
             <p className="text-zinc-400 font-medium text-sm">
               {needsUsername
-                ? <>Olá, <span className="text-white font-bold">{user.name}</span>! Só faltam dois dados para completar seu perfil.</>
-                : <>Olá, <span className="text-white font-bold">{user.name}</span>! Informe seu WhatsApp — é pelo que entro em contato com você sobre sua conta e evolução.</>
+                ? <>Olá, <span className="text-white font-bold">{user.name}</span>! Geramos um usuário para você — pode personalizar abaixo.</>
+                : <>Olá, <span className="text-white font-bold">{user.name}</span>! Só falta seu WhatsApp para ativarmos seu acesso completo.</>
               }
             </p>
           </div>
@@ -105,14 +126,19 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
           <form onSubmit={handleSubmit} className="space-y-6">
             {needsUsername && (
               <div className="space-y-2">
-                <label className="block text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em] ml-2">
-                  Nome de Usuário
-                </label>
+                <div className="flex items-center justify-between ml-2">
+                  <label className="block text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em]">
+                    Nome de Usuário
+                  </label>
+                  <span className="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">
+                    Gerado automaticamente · editável
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => { setUsername(e.target.value); setErrors(p => ({ ...p, username: undefined })); }}
-                  className={`w-full px-6 py-4 rounded-2xl bg-white/[0.03] border focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm ${errors.username ? 'border-red-500/60 focus:border-red-500/60' : 'border-white/5 focus:border-emerald-500/50'}`}
+                  className={`w-full px-6 py-4 rounded-2xl bg-white/[0.03] border focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm ${errors.username ? 'border-red-500/60 focus:border-red-500/60' : 'border-emerald-500/30 focus:border-emerald-500/60'}`}
                   placeholder="@seu_usuario"
                   disabled={isLoading}
                   autoComplete="username"
