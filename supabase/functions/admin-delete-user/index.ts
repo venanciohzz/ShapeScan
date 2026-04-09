@@ -54,7 +54,10 @@ Deno.serve(async (req) => {
 
     // Deletar do Auth (cascade apaga profile e dados relacionados via FK ON DELETE CASCADE)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
-    if (deleteError) throw new Error(deleteError.message);
+    if (deleteError) {
+      console.error('[ADMIN-DELETE-USER] Supabase deleteUser error:', JSON.stringify(deleteError));
+      throw new Error(deleteError.message);
+    }
 
     console.log('[ADMIN-DELETE-USER] OK:', { targetUserId, adminId: callerUserId });
 

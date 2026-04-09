@@ -73,7 +73,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
 
     try {
       const cleanEmail = sanitizeInput(email);
-      const cleanPassword = sanitizeInput(password);
+      // Senha NÃO deve ser sanitizada — pode conter < > e outros caracteres especiais legítimos
+      const cleanPassword = password.trim();
 
       if (!cleanEmail || !cleanPassword) {
         throw new Error('Preencha email e senha.');

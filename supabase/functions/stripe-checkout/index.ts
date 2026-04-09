@@ -135,7 +135,11 @@ Deno.serve(async (req) => {
       console.warn('[CUSTOMER] Erro ao sincronizar stripe_customer_id:', customerSyncError.message);
     }
 
-    // ── Cancelar subscriptions incompletas ──────────────────────────────────
+    // ── Cancelar subscriptions existentes (incompletas E ativas) ──────────────
+    // Cancela incompletas com mesmo preço e ativas de qualquer plano (evita dupla cobrança em upgrades)
+    let cancelledCount = 0;
+
+    // 1. Cancelar incompletas com o mesmo preço (evita duplicatas pendentes)
     console.log('[SUBSCRIPTIONS] Listando subscriptions incomplete para customer:', customer.id);
     const existingIncomplete = await stripe.subscriptions.list({
       customer: customer.id,
@@ -144,23 +148,39 @@ Deno.serve(async (req) => {
     });
     console.log('[SUBSCRIPTIONS] Total incomplete encontradas:', existingIncomplete.data.length);
 
-    let cancelledCount = 0;
     for (const sub of existingIncomplete.data) {
       const hasSamePrice = sub.items.data.some(item => item.price.id === priceId);
       if (hasSamePrice) {
         try {
           await stripe.subscriptions.cancel(sub.id);
           cancelledCount++;
-          console.log('[SUBSCRIPTIONS] Cancelada:', sub.id);
+          console.log('[SUBSCRIPTIONS] Incompleta cancelada:', sub.id);
         } catch (cancelErr: any) {
-          // Não impede a criação de nova subscription
-          console.warn('[SUBSCRIPTIONS] Falha ao cancelar', sub.id, ':', cancelErr.message);
+          console.warn('[SUBSCRIPTIONS] Falha ao cancelar incompleta', sub.id, ':', cancelErr.message);
+        }
+      }
+    }
+
+    // 2. Cancelar subscriptions ativas/trialing do mesmo customer (evita dupla cobrança em upgrade/downgrade)
+    for (const status of ['active', 'trialing'] as const) {
+      const existingActive = await stripe.subscriptions.list({
+        customer: customer.id,
+        status,
+        limit: 10,
+      });
+      for (const sub of existingActive.data) {
+        try {
+          // Cancela imediatamente (prorate: o Stripe calcula crédito automaticamente)
+          await stripe.subscriptions.cancel(sub.id, { prorate: true });
+          cancelledCount++;
+          console.log(`[SUBSCRIPTIONS] ${status} cancelada para upgrade:`, sub.id);
+        } catch (cancelErr: any) {
+          console.warn(`[SUBSCRIPTIONS] Falha ao cancelar ${status}`, sub.id, ':', cancelErr.message);
         }
       }
     }
 
     if (cancelledCount > 0) {
-      // Aguarda o Stripe processar os cancelamentos antes de criar nova subscription
       console.log('[SUBSCRIPTIONS] Aguardando processamento dos cancelamentos...');
       await sleep(500);
     }

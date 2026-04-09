@@ -458,17 +458,18 @@ const App: React.FC = () => {
           plan: 'free',
           dailyCalorieGoal: 2000,
         } as User;
-        
+
         setUser(fallbackProfile);
         return false;
       } finally {
         // Libera o loading DA SESSÃO E DA UI agora que o user (ou fallback) está definido
         setIsSessionLoading(false);
         isSessionLoadingRef.current = false;
-      }
 
-      // Continua carregando dados em BG
-      loadUserDataBackground(userId);
+        // Carrega dados em background (food logs, evolução, água)
+        // Precisa estar no finally para executar após try/catch
+        loadUserDataBackground(userId);
+      }
     };
 
     const loadUserDataBackground = async (userId: string) => {
@@ -547,8 +548,8 @@ const App: React.FC = () => {
     // Se o usuário deslogar numa aba, as outras abas recarregam p/ bloquear acesso
     // ============================================================
     const handleStorageChange = (event: StorageEvent) => {
-      // Monitora o token oficial do supabase
-      if (event.key?.includes('supabase.auth.token') && !event.newValue) {
+      // Monitora o token oficial do Supabase v2 (formato: sb-{ref}-auth-token)
+      if (event.key?.includes('-auth-token') && !event.newValue) {
          console.warn('[App] 🔄 Sync multi-tab: estado de logout detectado. Recarregando app...');
          window.location.assign('/');
       }
