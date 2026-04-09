@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from '../../types';
-import { Scan, User, LineChart, NotebookPen, Save, Droplets, Scale, Flame, Target, MessageSquare, Zap } from 'lucide-react';
+import { Scan, User, LineChart, NotebookPen, Save, Droplets, Scale, Flame, Target, MessageSquare, Zap, Lock, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ActionButtonProps {
@@ -89,15 +89,102 @@ interface ToolGridProps {
 
 const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate, onUpgrade }) => {
     return (
-        <div className="space-y-10 pb-20">
+        <div className="space-y-8 pb-20">
 
-            {/* FREE TOOLS — em destaque, primeiro */}
+            {/* ═══ BANNER DE BLOQUEIO — Shape Analysis ═══ */}
+            <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="relative overflow-hidden rounded-[2rem] border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-zinc-900/60 to-zinc-950/80 p-6"
+            >
+                {/* Glow de fundo */}
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="relative z-10">
+                    {/* Badge */}
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                        Sua análise de shape está pronta
+                    </div>
+
+                    <h3 className="font-serif-premium font-bold text-xl text-white mb-1 tracking-tight leading-snug">
+                        Desbloqueie seu % de gordura
+                    </h3>
+                    <p className="text-zinc-400 text-xs font-medium mb-5 leading-relaxed">
+                        Acesse análises ilimitadas por foto, percentual de gordura em segundos e Personal 24h.
+                    </p>
+
+                    {/* Mini features */}
+                    <div className="flex flex-col gap-2 mb-5">
+                        {[
+                            'Análises ilimitadas por foto',
+                            'Acesse seu % de gordura em segundos',
+                            'Ative o Personal 24h',
+                        ].map((item) => (
+                            <div key={item} className="flex items-center gap-2 text-xs text-zinc-300 font-medium">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                {item}
+                            </div>
+                        ))}
+                    </div>
+
+                    <motion.button
+                        whileTap={{ scale: 0.97 }}
+                        onClick={onUpgrade}
+                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-[0_0_25px_rgba(16,185,129,0.3)]"
+                    >
+                        <Lock className="w-3.5 h-3.5" />
+                        Desbloquear análise
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    </motion.button>
+                </div>
+            </motion.div>
+
+            {/* ═══ FERRAMENTAS PREMIUM — destaque ═══ */}
             <section>
-                <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-4 mb-4">
                     <h2 className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em]">
+                        Ferramentas Pro
+                    </h2>
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-emerald-500/30 to-transparent" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <PremiumButton
+                        onClick={onUpgrade}
+                        icon={<Scan className="w-8 h-8" />}
+                        title="Análise por Foto"
+                        subtitle="IA nutricional"
+                    />
+                    <PremiumButton
+                        onClick={onUpgrade}
+                        icon={<User className="w-8 h-8" />}
+                        title="Análise Física"
+                        subtitle="% gordura"
+                    />
+                    <PremiumButton
+                        onClick={onUpgrade}
+                        icon={<MessageSquare className="w-8 h-8" />}
+                        title="Personal 24h"
+                        subtitle="Suporte IA"
+                    />
+                    <PremiumButton
+                        onClick={onUpgrade}
+                        icon={<LineChart className="w-8 h-8" />}
+                        title="Sua Evolução"
+                        subtitle="Analytics"
+                    />
+                </div>
+            </section>
+
+            {/* ═══ FERRAMENTAS GRATUITAS ═══ */}
+            <section>
+                <div className="flex items-center gap-4 mb-4">
+                    <h2 className="text-[11px] font-black text-zinc-500 uppercase tracking-[0.4em]">
                         Disponível agora
                     </h2>
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-emerald-500/30 to-transparent"></div>
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-white/5 to-transparent" />
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <ActionButton
@@ -112,61 +199,6 @@ const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate, onUpgrade }) => {
                     <ActionButton onClick={() => onNavigate('calorie_calc')} icon={<Flame className="w-8 h-8" />} title="Gasto Calórico" subtitle="Seu TDEE" />
                     <ActionButton onClick={() => onNavigate('calorie_plan')} icon={<Target className="w-8 h-8" />} title="Minha Meta" subtitle="Meta de calorias" />
                     <ActionButton onClick={() => onNavigate('saved_meals')} icon={<Save className="w-8 h-8" />} title="Refeições Salvas" subtitle="Seus favoritos" />
-                </div>
-            </section>
-
-            {/* PREMIUM UPSELL */}
-            <section>
-                <div className="flex items-center gap-4 mb-2">
-                    <h2 className="text-[11px] font-black text-zinc-500 uppercase tracking-[0.4em]">
-                        Ferramentas Pro
-                    </h2>
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-white/5 to-transparent"></div>
-                </div>
-
-                {/* CTA de upgrade */}
-                <motion.button
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onUpgrade}
-                    className="w-full mb-4 flex items-center justify-between gap-4 px-5 py-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 hover:border-emerald-500/40 hover:from-emerald-500/15 transition-all duration-300 group"
-                >
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                            <Zap className="w-4 h-4 text-emerald-400" />
-                        </div>
-                        <div className="text-left">
-                            <p className="text-sm font-bold text-white">Desbloqueie o Plano Pro</p>
-                            <p className="text-[10px] text-zinc-400 font-medium">Análise de fotos, Personal 24h e muito mais</p>
-                        </div>
-                    </div>
-                    <span className="text-xs font-black text-emerald-400 uppercase tracking-wider shrink-0 group-hover:translate-x-1 transition-transform">Ver planos →</span>
-                </motion.button>
-
-                <div className="grid grid-cols-2 gap-3">
-                    <PremiumButton
-                        onClick={() => onNavigate('food_ai')}
-                        icon={<Scan className="w-8 h-8" />}
-                        title="Análise por Foto"
-                        subtitle="IA nutricional"
-                    />
-                    <PremiumButton
-                        onClick={() => onNavigate('shape')}
-                        icon={<User className="w-8 h-8" />}
-                        title="Análise Física"
-                        subtitle="Morfologia"
-                    />
-                    <PremiumButton
-                        onClick={() => onNavigate('chat')}
-                        icon={<MessageSquare className="w-8 h-8" />}
-                        title="Personal 24h"
-                        subtitle="Suporte IA"
-                    />
-                    <PremiumButton
-                        onClick={() => onNavigate('evolution')}
-                        icon={<LineChart className="w-8 h-8" />}
-                        title="Sua Evolução"
-                        subtitle="Analytics"
-                    />
                 </div>
             </section>
         </div>

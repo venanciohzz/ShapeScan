@@ -48,14 +48,20 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
 
          <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24">
             <div className="text-center mb-16 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000">
+               {/* Badge de urgência */}
+               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black uppercase tracking-widest mb-6 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Você está a um passo de ver sua análise completa
+               </div>
+
                <h1 className="text-5xl md:text-7xl font-serif-premium font-bold tracking-tight mb-6 text-white leading-[1.1]">
-                  Escolha o seu nível de<br />
+                  Desbloqueie agora<br />
                   <span className="text-emerald-400 drop-shadow-[0_0_30px_rgba(52,211,153,0.3)]">
-                     <LetterPuller text="evolução." />
+                     <LetterPuller text="seu resultado." />
                   </span>
                </h1>
-               <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs md:text-sm opactiy-80">
-                  Desbloqueie todo o potencial da tecnologia para o seu físico.
+               <p className="text-zinc-400 font-bold uppercase tracking-widest text-xs md:text-sm opacity-80">
+                  Análises ilimitadas por foto · Personal 24h · % de gordura em segundos
                </p>
             </div>
 
@@ -136,14 +142,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                </div>
             </div>
 
-            {/* Show "Continue Free" only if user hasn't used their 1 scan or isn't logged in yet */}
-            {(!user || (user.plan === 'free' && (user.freeScansUsed || 0) < 1)) && (
-               <div className="text-center mt-12 animate-in fade-in duration-1000 delay-700">
-                  <button onClick={() => onSelect('free')} className="text-zinc-500 hover:text-emerald-400 transition-colors text-[10px] font-black uppercase tracking-[0.3em] border-b border-white/10 hover:border-emerald-500/50 pb-1">
-                     Continuar no Plano Gratuito (1 Análise Total)
-                  </button>
-               </div>
-            )}
+            {/* "Continuar gratuito" removido para maximizar conversão */}
 
             {/* Stripe Checkout Overlay */}
             {stripePriceId && user && selectedPlan && (
