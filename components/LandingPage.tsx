@@ -316,7 +316,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="w-full max-w-5xl mx-auto relative z-20">
           <div className="flex flex-col items-center space-y-8 pt-8 relative z-30">
 
-            <h1 className="flex flex-col items-center text-4xl sm:text-5xl md:text-6xl lg:text-6xl font-serif-premium tracking-tight text-white leading-[1.1] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible text-balance">
+            <h1 className="flex flex-col items-center text-[clamp(1.6rem,6.5vw,3.75rem)] lg:text-6xl font-serif-premium tracking-tight text-white leading-[1.1] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible text-balance">
               <span className="block w-full">
                 <LetterPuller text="Descubra seu % de gordura" />
               </span>
