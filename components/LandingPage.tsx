@@ -4,7 +4,6 @@ import '@fontsource/playfair-display/700.css';
 import '@fontsource/playfair-display/400.css';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
 import { LiquidShaderBackground } from './ui/LiquidShaderBackground';
-import { NeonFlow } from './ui/NeonFlow';
 import SimulatedAnalysisModal from './landing/SimulatedAnalysisModal';
 
 // --- Utility Components for God Mode UI ---
@@ -216,7 +215,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="opacity-50">
           <LiquidShaderBackground />
         </div>
-        <NeonFlow className="opacity-25" />
 
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03]" />
 
