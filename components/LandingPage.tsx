@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, CheckCircle2, Star, Play, Lock } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Star, Play } from 'lucide-react';
 import '@fontsource/playfair-display/700.css';
 import '@fontsource/playfair-display/400.css';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
@@ -313,10 +313,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/8 blur-[160px] rounded-full pointer-events-none z-0" />
 
         <div className="w-full relative z-20">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-
-            {/* ── Coluna de Texto ── */}
-            <div className="text-center lg:text-left flex flex-col space-y-7">
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto space-y-7">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium tracking-tight text-white leading-[1.1] drop-shadow-2xl z-20 overflow-visible">
                 <span className="block">
                   <LetterPuller text="Descubra seu % de gordura" />
@@ -367,83 +364,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   Testar minha análise
                 </button>
               </motion.div>
-            </div>
-
-            {/* ── Coluna Visual (desktop only) ── */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.9, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="hidden lg:block relative"
-            >
-              {/* Card de análise mockup */}
-              <div className="relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-zinc-900/60 backdrop-blur-xl p-6">
-                {/* Scan line */}
-                <div className="relative rounded-2xl overflow-hidden bg-zinc-950 mb-5 h-52">
-                  <img src="/before.png" alt="Análise corporal" className="w-full h-full object-cover opacity-70" />
-                  <motion.div
-                    initial={{ top: "5%" }}
-                    animate={{ top: ["5%", "95%", "5%"] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute inset-x-0 h-[2px] bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,1)] z-10"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 to-transparent" />
-                  <div className="absolute bottom-4 left-4">
-                    <p className="text-emerald-400 text-[9px] font-black uppercase tracking-widest mb-0.5">Analisando</p>
-                    <p className="text-white font-bold text-sm">Composição corporal</p>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="bg-zinc-950/80 rounded-2xl p-3 text-center border border-white/5">
-                    <p className="text-emerald-400 text-xl font-black">18.4%</p>
-                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Gordura</p>
-                  </div>
-                  <div className="bg-zinc-950/80 rounded-2xl p-3 text-center border border-white/5">
-                    <p className="text-white text-xl font-black">72kg</p>
-                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Massa Magra</p>
-                  </div>
-                  <div className="bg-zinc-950/80 rounded-2xl p-3 text-center border border-white/5">
-                    <p className="text-blue-400 text-xl font-black">92%</p>
-                    <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider mt-0.5">Simetria</p>
-                  </div>
-                </div>
-
-                {/* Barra de progresso */}
-                <div className="bg-zinc-950/80 rounded-2xl p-4 border border-white/5">
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-xs font-bold text-zinc-300">Evolução mensal</p>
-                    <p className="text-emerald-400 font-black text-xs">-3.2%</p>
-                  </div>
-                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: "0%" }}
-                      animate={{ width: "68%" }}
-                      transition={{ duration: 1.5, delay: 0.8, ease: "easeOut" }}
-                      className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
-                    />
-                  </div>
-                </div>
-
-                {/* Overlay tease */}
-                <div className="absolute bottom-6 right-6 w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                  <Lock className="w-4 h-4 text-emerald-400" />
-                </div>
-              </div>
-
-              {/* Floating badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 }}
-                className="absolute -left-6 top-1/3 bg-zinc-900 border border-white/10 px-4 py-3 rounded-2xl shadow-xl"
-              >
-                <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Análise concluída</p>
-                <p className="text-white font-black text-sm">Resultado disponível</p>
-              </motion.div>
-            </motion.div>
-
           </div>
         </div>
       </section>
