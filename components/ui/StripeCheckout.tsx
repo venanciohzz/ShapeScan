@@ -136,7 +136,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [couponCodeInput, setCouponCodeInput] = useState('');
-  const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(null);
+  // Ref (não state) para não re-disparar initializeCheckout ao aplicar cupom
   const [couponAppliedSuccess, setCouponAppliedSuccess] = useState(false);
   const [isCouponApplying, setIsCouponApplying] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
@@ -146,6 +146,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     discount: number;
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const appliedCouponRef = React.useRef<string | null>(null);
 
   const initializeCheckout = useCallback(async (signal: AbortSignal) => {
     setIsInitializing(true);
@@ -176,7 +177,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       const utmParams = getUtmParams();
 
       // Timeout de 30s para não travar o loading infinito
-      const fetchPromise = callEdgeFunction('stripe-checkout', { priceId, couponCode: appliedCouponCode, plan, utmParams });
+      const fetchPromise = callEdgeFunction('stripe-checkout', { priceId, couponCode: appliedCouponRef.current, plan, utmParams });
 
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('O servidor demorou para responder. Tente novamente.')), 30000)
@@ -215,7 +216,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         setIsInitializing(false);
       }
     }
-  }, [priceId, appliedCouponCode, plan]);
+  }, [priceId, plan]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -255,8 +256,8 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
       if (!data?.clientSecret) throw new Error(data?.error || 'Falha ao aplicar cupom.');
 
-      // Não chamar setAppliedCouponCode aqui — mudaria dep do useCallback initializeCheckout
-      // e dispararia re-inicialização desnecessária do checkout inteiro.
+      // Salvar o cupom aplicado via ref para que handleRetry o preserve
+      appliedCouponRef.current = couponCodeInput;
       setCouponAppliedSuccess(true);
       if (data.pricing) setPricingOverview(data.pricing);
       setClientSecret(data.clientSecret);
