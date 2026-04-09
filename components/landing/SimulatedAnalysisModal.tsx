@@ -1,23 +1,24 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Upload, Lock } from 'lucide-react';
+import { X, Camera, Upload, Lock, UtensilsCrossed, User } from 'lucide-react';
 
 interface SimulatedAnalysisModalProps {
   onClose: () => void;
   onSignup: () => void;
+  type?: 'body' | 'food';
 }
 
-const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose, onSignup }) => {
+const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose, onSignup, type = 'body' }) => {
   const [step, setStep] = useState<'select' | 'loading' | 'result'>('select');
   const [progress, setProgress] = useState(0);
-  const [loadingText, setLoadingText] = useState('Analisando sua imagem...');
+  const [loadingText, setLoadingText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const loadingMessages = [
-    'Analisando sua imagem...',
-    'Calculando composição corporal...',
-    'Gerando resultado personalizado...',
-  ];
+  const isFood = type === 'food';
+
+  const loadingMessages = isFood
+    ? ['Identificando alimentos...', 'Calculando macros e calorias...', 'Gerando análise nutricional...']
+    : ['Detectando pontos de análise...', 'Calculando composição corporal...', 'Gerando resultado personalizado...'];
 
   const startLoading = () => {
     setStep('loading');
@@ -36,13 +37,12 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
         clearInterval(interval);
         setTimeout(() => setStep('result'), 300);
       }
-    }, 70); // ~3.5 segundos total
+    }, 70);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // NÃO envia para API — apenas simula o fluxo visualmente
     startLoading();
   };
 
@@ -69,10 +69,8 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
       className="fixed inset-0 z-[200] bg-zinc-950/98 backdrop-blur-3xl flex flex-col items-center justify-center p-6"
       onClick={(e) => { if (e.target === e.currentTarget && step !== 'loading') onClose(); }}
     >
-      {/* Glow de fundo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Botão de fechar */}
       {step !== 'loading' && (
         <button
           onClick={onClose}
@@ -82,7 +80,6 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
         </button>
       )}
 
-      {/* Logo */}
       <div className="absolute top-6 left-6 flex items-center gap-2 z-10">
         <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
           <span className="text-white font-black text-xs font-serif-premium">S</span>
@@ -106,14 +103,19 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
               className="text-center"
             >
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-                <Camera className="w-8 h-8 text-emerald-400" />
+                {isFood
+                  ? <UtensilsCrossed className="w-8 h-8 text-emerald-400" />
+                  : <User className="w-8 h-8 text-emerald-400" />
+                }
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-serif-premium font-bold text-white mb-3 tracking-tight">
-                Envie sua foto
+                {isFood ? 'Foto da refeição' : 'Foto do seu corpo'}
               </h2>
               <p className="text-zinc-400 text-sm mb-8 leading-relaxed max-w-xs mx-auto">
-                Tire uma foto de frente ou de perfil para analisar sua composição corporal em segundos.
+                {isFood
+                  ? 'Envie uma foto da sua refeição para estimar calorias e macros em segundos.'
+                  : 'Tire uma foto do seu corpo para analisar sua composição corporal em segundos.'}
               </p>
 
               <input
@@ -125,7 +127,6 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
                 onChange={handleFileSelect}
               />
 
-              {/* Zona de upload */}
               <div
                 onClick={() => fileInputRef.current?.click()}
                 onDrop={handleDrop}
@@ -146,7 +147,7 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
             </motion.div>
           )}
 
-          {/* ─── STEP 2: CARREGANDO (SIMULADO) ─── */}
+          {/* ─── STEP 2: CARREGANDO ─── */}
           {step === 'loading' && (
             <motion.div
               key="loading"
@@ -156,23 +157,12 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
               transition={{ duration: 0.4 }}
               className="text-center"
             >
-              {/* Progresso circular */}
               <div className="relative w-36 h-36 mx-auto mb-8">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                  {/* Track */}
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(16, 185, 129, 0.1)" strokeWidth="6" />
                   <circle
-                    cx="50" cy="50" r="45"
-                    fill="none"
-                    stroke="rgba(16, 185, 129, 0.1)"
-                    strokeWidth="6"
-                  />
-                  {/* Progress */}
-                  <circle
-                    cx="50" cy="50" r="45"
-                    fill="none"
-                    stroke="rgb(16, 185, 129)"
-                    strokeWidth="6"
-                    strokeLinecap="round"
+                    cx="50" cy="50" r="45" fill="none"
+                    stroke="rgb(16, 185, 129)" strokeWidth="6" strokeLinecap="round"
                     strokeDasharray={circumference}
                     strokeDashoffset={circumference * (1 - progress / 100)}
                     className="transition-all duration-75"
@@ -196,7 +186,6 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
               </motion.p>
               <p className="text-zinc-500 text-xs">Inteligência artificial em ação...</p>
 
-              {/* Dots animados */}
               <div className="flex justify-center gap-2 mt-8">
                 {[0, 1, 2].map((i) => (
                   <motion.div
@@ -219,7 +208,6 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
               transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="text-center"
             >
-              {/* Ícone de sucesso */}
               <motion.div
                 initial={{ scale: 0.3, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -238,36 +226,68 @@ const SimulatedAnalysisModal: React.FC<SimulatedAnalysisModalProps> = ({ onClose
                 Resultado pronto para você
               </p>
 
-              {/* Card de resultado borrado */}
+              {/* Card de resultado borrado — diferente por tipo */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
                 className="relative rounded-[2rem] overflow-hidden border border-white/10 mb-5"
               >
-                {/* Conteúdo falso (borrado) */}
                 <div className="blur-[6px] pointer-events-none p-5 bg-zinc-900/80 select-none">
-                  <div className="grid grid-cols-2 gap-3 mb-3">
-                    <div className="bg-white/5 rounded-2xl p-4 text-left">
-                      <p className="text-emerald-400 text-[9px] font-black uppercase tracking-widest mb-1">% Gordura</p>
-                      <p className="text-3xl font-black text-white leading-none">18.4%</p>
-                      <p className="text-[9px] text-zinc-400 mt-1">Nível: Fitness</p>
-                    </div>
-                    <div className="bg-white/5 rounded-2xl p-4 text-left">
-                      <p className="text-blue-400 text-[9px] font-black uppercase tracking-widest mb-1">Massa Magra</p>
-                      <p className="text-3xl font-black text-white leading-none">72.1<span className="text-lg">kg</span></p>
-                      <p className="text-[9px] text-zinc-400 mt-1">Resultado ótimo</p>
-                    </div>
-                  </div>
-                  <div className="bg-white/5 rounded-2xl p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <p className="text-xs font-bold text-zinc-300">Simetria Muscular</p>
-                      <p className="text-emerald-400 font-black text-sm">92%</p>
-                    </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full w-[92%] bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" />
-                    </div>
-                  </div>
+                  {isFood ? (
+                    /* Resultado de REFEIÇÃO */
+                    <>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="bg-white/5 rounded-2xl p-4 text-left col-span-2">
+                          <p className="text-emerald-400 text-[9px] font-black uppercase tracking-widest mb-1">Total Estimado</p>
+                          <p className="text-3xl font-black text-white leading-none">820 <span className="text-lg text-zinc-400">kcal</span></p>
+                          <p className="text-[9px] text-zinc-400 mt-1">Feijoada com arroz e farofa</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-white/5 rounded-xl p-3 text-left">
+                          <div className="w-full h-1 bg-emerald-500 rounded-full mb-2" />
+                          <p className="text-[9px] text-zinc-400 font-bold uppercase">Proteína</p>
+                          <p className="text-white font-black text-sm">38g</p>
+                        </div>
+                        <div className="bg-white/5 rounded-xl p-3 text-left">
+                          <div className="w-full h-1 bg-blue-500 rounded-full mb-2" />
+                          <p className="text-[9px] text-zinc-400 font-bold uppercase">Carbo</p>
+                          <p className="text-white font-black text-sm">92g</p>
+                        </div>
+                        <div className="bg-white/5 rounded-xl p-3 text-left">
+                          <div className="w-full h-1 bg-yellow-500 rounded-full mb-2" />
+                          <p className="text-[9px] text-zinc-400 font-bold uppercase">Gordura</p>
+                          <p className="text-white font-black text-sm">26g</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* Resultado de CORPO */
+                    <>
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="bg-white/5 rounded-2xl p-4 text-left">
+                          <p className="text-emerald-400 text-[9px] font-black uppercase tracking-widest mb-1">% Gordura</p>
+                          <p className="text-3xl font-black text-white leading-none">18.4%</p>
+                          <p className="text-[9px] text-zinc-400 mt-1">Nível: Fitness</p>
+                        </div>
+                        <div className="bg-white/5 rounded-2xl p-4 text-left">
+                          <p className="text-blue-400 text-[9px] font-black uppercase tracking-widest mb-1">Massa Magra</p>
+                          <p className="text-3xl font-black text-white leading-none">72.1<span className="text-lg">kg</span></p>
+                          <p className="text-[9px] text-zinc-400 mt-1">Resultado ótimo</p>
+                        </div>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="text-xs font-bold text-zinc-300">Simetria Muscular</p>
+                          <p className="text-emerald-400 font-black text-sm">92%</p>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-full w-[92%] bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Overlay de bloqueio */}
