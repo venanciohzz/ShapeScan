@@ -104,7 +104,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
         };
 
         const newUser = await db.auth.signUp(userData, cleanPassword);
-        pixel.completeRegistration();
+        pixel.completeRegistration(cleanEmail);
         if (!newUser.needsEmailConfirmation) {
           await db.auth.setSession(newUser);
         }
@@ -114,7 +114,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
         // Login Logic via Database Service
         const user = await db.auth.signIn(cleanEmail, cleanPassword);
         await db.auth.setSession(user);
-        pixel.lead();
+        pixel.lead(cleanEmail);
         onLogin(user, false);
       }
     } catch (err: any) {

@@ -41,6 +41,12 @@ function sendCapi(eventName: string, eventId: string, options: {
     const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
     if (!supabaseUrl || !supabaseAnonKey) return;
 
+    const fbp = getFbp();
+    const fbc = getFbc();
+
+    // Não envia CAPI se user_data seria completamente vazio — Meta retorna 400
+    if (!options.email && !fbp && !fbc) return;
+
     fetch(`${supabaseUrl}/functions/v1/meta-capi`, {
       method: 'POST',
       headers: {
@@ -51,12 +57,13 @@ function sendCapi(eventName: string, eventId: string, options: {
         eventName,
         eventId,
         sourceUrl: window.location.href,
-        fbp: getFbp(),
-        fbc: getFbc(),
+        fbp,
+        fbc,
         email: options.email,
         value: options.value,
         currency: options.currency,
         contentName: options.contentName,
+        clientUserAgent: navigator.userAgent,
       }),
     }).catch(() => {}); // fire-and-forget: nunca bloqueia o fluxo
   } catch { /* nunca lançar erro de tracking */ }

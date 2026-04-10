@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const PIXEL_ID = '512947444394258';
-const API_VERSION = 'v18.0';
+const API_VERSION = 'v21.0';
 
 async function sha256(value: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -34,7 +34,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { eventName, eventId, sourceUrl, email, fbp, fbc, value, currency, contentName } = body;
+    const { eventName, eventId, sourceUrl, email, fbp, fbc, value, currency, contentName, clientUserAgent } = body;
 
     if (!eventName) {
       return new Response(JSON.stringify({ error: 'eventName required' }), {
@@ -50,6 +50,7 @@ Deno.serve(async (req: Request) => {
     }
     if (fbp && typeof fbp === 'string') userData['fbp'] = fbp;
     if (fbc && typeof fbc === 'string') userData['fbc'] = fbc;
+    if (clientUserAgent && typeof clientUserAgent === 'string') userData['client_user_agent'] = clientUserAgent;
 
     // Montar evento
     const eventData: Record<string, any> = {

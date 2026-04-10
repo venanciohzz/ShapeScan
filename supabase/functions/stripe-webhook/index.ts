@@ -39,7 +39,7 @@ async function sendMetaCapi(log: any, eventType: string, params: {
       }],
     };
     const res = await fetch(
-      `https://graph.facebook.com/v18.0/512947444394258/events?access_token=${capiToken}`,
+      `https://graph.facebook.com/v21.0/512947444394258/events?access_token=${capiToken}`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
     );
     const result = await res.json();
