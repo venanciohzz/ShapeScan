@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
 
     let sub: Stripe.Subscription | null = null;
     for (const status of ['active', 'trialing'] as const) {
-      const subs = await stripe.subscriptions.list({ customer: customerId, status, limit: 5 });
+      const subs = await stripe.subscriptions.list({ customer: customerId, status, limit: 5, expand: ['data.latest_invoice'] });
       const recent = subs.data.find(s => s.created >= TEN_MINUTES_AGO);
       if (recent) { sub = recent; break; }
     }
@@ -112,7 +112,13 @@ Deno.serve(async (req) => {
 
     console.log(`[activate-after-payment] Plano ${planId} ativado para ${user.id}`);
 
-    return new Response(JSON.stringify({ activated: true, planId }), {
+    // Extrair invoice ID para deduplicação do evento Purchase no Meta Pixel + CAPI.
+    // O stripe-webhook usa `purchase-${invoiceId}` como event_id na CAPI — o frontend precisa
+    // do mesmo ID para que a Meta consiga deduplicar os dois disparos (pixel browser + servidor).
+    const latestInvoice = sub.latest_invoice;
+    const invoiceId = typeof latestInvoice === 'string' ? latestInvoice : (latestInvoice as any)?.id ?? null;
+
+    return new Response(JSON.stringify({ activated: true, planId, invoiceId }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

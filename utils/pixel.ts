@@ -20,6 +20,19 @@ function getFbc(): string | null {
   } catch { return null; }
 }
 
+// Captura fbclid da URL e persiste como cookie _fbc para melhorar qualidade de correspondência da CAPI.
+// Deve ser chamado em cada pageView. Sem isso, usuários vindos de anúncios perdem o fbc e a atribuição piora.
+function captureFbclid(): void {
+  try {
+    if (getFbc()) return; // já existe, não sobrescrever
+    const fbclid = new URLSearchParams(window.location.search).get('fbclid');
+    if (fbclid) {
+      const fbc = `fb.1.${Date.now()}.${fbclid}`;
+      document.cookie = `_fbc=${fbc}; path=/; max-age=7776000`; // 90 dias
+    }
+  } catch { /* nunca lançar erro de tracking */ }
+}
+
 function fbqTrack(event: string, params?: Record<string, any>, eventId?: string) {
   if (typeof (window as any).fbq === 'function') {
     if (eventId) {
@@ -98,15 +111,18 @@ export const pixel = {
     sendCapi('AddPaymentInfo', id, { contentName: planName, value, currency: 'BRL', email });
   },
 
-  /** Compra confirmada (webhook processado) */
-  purchase: (planName: string, value: number, email?: string) => {
-    const id = generateEventId();
+  /** Compra confirmada (webhook processado).
+   *  eventId deve ser `purchase-${invoiceId}` para coincidir com o event_id enviado pelo stripe-webhook via CAPI,
+   *  permitindo que a Meta deduplique corretamente os dois eventos (pixel + servidor). */
+  purchase: (planName: string, value: number, email?: string, eventId?: string) => {
+    const id = eventId || generateEventId();
     fbqTrack('Purchase', { content_name: planName, value, currency: 'BRL' }, id);
     sendCapi('Purchase', id, { contentName: planName, value, currency: 'BRL', email });
   },
 
   /** PageView — disparado em cada mudança de rota */
   pageView: () => {
+    captureFbclid(); // captura fbclid da URL antes de qualquer coisa
     const id = generateEventId();
     fbqTrack('PageView', {}, id);
     sendCapi('PageView', id);

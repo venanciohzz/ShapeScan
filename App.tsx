@@ -196,13 +196,17 @@ const App: React.FC = () => {
             showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
             const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
             const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
+            // Usa o mesmo event_id que o stripe-webhook envia via CAPI para que a Meta possa deduplicar.
+            const purchaseEventId = result.invoiceId ? `purchase-${result.invoiceId}` : undefined;
+            if (purchaseEventId) localStorage.setItem('awaiting_stripe_invoice_id', purchaseEventId);
             const { pixel } = await import('./utils/pixel');
-            pixel.purchase(planName, planValue, updatedUser?.email);
+            pixel.purchase(planName, planValue, updatedUser?.email, purchaseEventId);
             isPollingPremiumRef.current = false;
             localStorage.removeItem('awaiting_stripe_payment');
             localStorage.removeItem('awaiting_stripe_payment_started');
             localStorage.removeItem('awaiting_stripe_plan_name');
             localStorage.removeItem('awaiting_stripe_plan_value');
+            localStorage.removeItem('awaiting_stripe_invoice_id');
             window.history.replaceState({}, document.title, window.location.pathname);
             return true;
           }
@@ -240,11 +244,13 @@ const App: React.FC = () => {
               console.log(`[App] Plano premium ativado! (${elapsed / 1000}s)`);
               showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
 
-              // Meta Pixel Purchase
+              // Meta Pixel Purchase — usa o event_id salvo pelo activate-after-payment (se disponível)
+              // para garantir deduplicação com o evento CAPI do stripe-webhook.
               const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
               const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
+              const purchaseEventId = localStorage.getItem('awaiting_stripe_invoice_id') || undefined;
               const { pixel } = await import('./utils/pixel');
-              pixel.purchase(planName, planValue, updatedUser?.email);
+              pixel.purchase(planName, planValue, updatedUser?.email, purchaseEventId);
 
               clearInterval(interval);
               isPollingPremiumRef.current = false;
@@ -252,6 +258,7 @@ const App: React.FC = () => {
               localStorage.removeItem('awaiting_stripe_payment_started');
               localStorage.removeItem('awaiting_stripe_plan_name');
               localStorage.removeItem('awaiting_stripe_plan_value');
+              localStorage.removeItem('awaiting_stripe_invoice_id');
               window.history.replaceState({}, document.title, window.location.pathname);
               return;
             }
