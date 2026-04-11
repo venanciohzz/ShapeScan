@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
 import { db } from '../services/db';
 import { AdminUserDetails, AdminPayment, GrowthPoint } from '../services/supabaseService';
@@ -45,6 +46,7 @@ const getWhatsAppUrl = (phone: string) => {
 };
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToast }) => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [stats, setStats] = useState({ totalRevenue: 0, totalUsers: 0, activeSubs: 0 });
     const [loading, setLoading] = useState(true);
@@ -341,16 +343,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
             <div className="max-w-7xl mx-auto space-y-10 relative z-10">
 
                 {/* Header */}
-                <div className="flex items-center gap-6">
-                    <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white group shrink-0">
-                        <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
-                    </button>
-                    <div>
-                        <h1 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white mb-1">
-                            <LetterPuller text="Painel Administrativo" />
-                        </h1>
-                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 opacity-80">Controle de Autoridade Master</p>
+                <div className="flex items-center justify-between gap-6 flex-wrap">
+                    <div className="flex items-center gap-6">
+                        <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white group shrink-0">
+                            <ArrowLeft className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
+                        </button>
+                        <div>
+                            <h1 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white mb-1">
+                                <LetterPuller text="Painel Administrativo" />
+                            </h1>
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 opacity-80">Controle de Autoridade Master</p>
+                        </div>
                     </div>
+                    <button
+                        onClick={() => navigate('/leads')}
+                        className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/20 hover:border-[#25D366]/40 text-[#25D366] text-xs font-black uppercase tracking-widest transition-all"
+                    >
+                        <Phone className="w-4 h-4" />
+                        Leads / Prospectos
+                    </button>
                 </div>
 
                 {/* Stats Cards */}

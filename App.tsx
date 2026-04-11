@@ -26,6 +26,7 @@ const Evolution = React.lazy(() => lazyRetry(() => import('./components/Evolutio
 const Settings = React.lazy(() => lazyRetry(() => import('./components/Settings')));
 const SavedMeals = React.lazy(() => lazyRetry(() => import('./components/SavedMeals')));
 const AdminDashboard = React.lazy(() => lazyRetry(() => import('./components/AdminDashboard')));
+const Leads = React.lazy(() => lazyRetry(() => import('./components/Leads')));
 const AppDemo = React.lazy(() => lazyRetry(() => import('./components/AppDemo')));
 const PasswordRecovery = React.lazy(() => lazyRetry(() => import('./components/PasswordRecovery')));
 const ResetPassword = React.lazy(() => lazyRetry(() => import('./components/ResetPassword')));
@@ -888,6 +889,7 @@ const App: React.FC = () => {
                    <Route path="/perfil" element={<Settings user={user} onUpdateProfile={handleUpdateProfile} onBack={() => navigate('/dashboard')} darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} onGoToAdmin={() => navigate('/admin')} />} />
                    <Route path="/configuracoes" element={<Settings user={user} onUpdateProfile={handleUpdateProfile} onBack={() => navigate('/dashboard')} darkMode={darkMode} toggleTheme={() => setDarkMode(!darkMode)} onGoToAdmin={() => navigate('/admin')} />} />
                    <Route path="/admin" element={<AdminDashboard user={user} onBack={() => navigate('/configuracoes')} onShowToast={showToast} />} />
+                   <Route path="/leads" element={<Leads user={user} onBack={() => navigate('/admin')} onShowToast={showToast} />} />
                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
                 )

@@ -214,5 +214,20 @@ export const db = {
         async reactivate(): Promise<{ cancel_at_period_end: boolean; current_period_end: number }> {
             return await supabaseService.reactivateSubscription();
         }
+    },
+
+    leads: {
+        async getAll() {
+            return await supabaseService.getLeads();
+        },
+        async create(lead: supabaseService.LeadInsert) {
+            return await supabaseService.createLead(lead);
+        },
+        async update(id: string, updates: supabaseService.LeadUpdate) {
+            return await supabaseService.updateLead(id, updates);
+        },
+        async remove(id: string) {
+            return await supabaseService.deleteLead(id);
+        }
     }
 };
