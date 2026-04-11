@@ -1343,3 +1343,58 @@ export async function adminDeleteUser(targetUserId: string): Promise<void> {
   await callEdgeFunction('admin-delete-user', { targetUserId });
 }
 
+// ==================== LEADS ====================
+
+export interface Lead {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  source?: string | null;
+  status: 'novo' | 'contatado' | 'convertido' | 'perdido';
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type LeadInsert = Omit<Lead, 'id' | 'created_at' | 'updated_at'>;
+export type LeadUpdate = Partial<LeadInsert>;
+
+export async function getLeads(): Promise<Lead[]> {
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return data as Lead[];
+}
+
+export async function createLead(lead: LeadInsert): Promise<Lead> {
+  const { data, error } = await supabase
+    .from('leads')
+    .insert(lead)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Lead;
+}
+
+export async function updateLead(id: string, updates: LeadUpdate): Promise<Lead> {
+  const { data, error } = await supabase
+    .from('leads')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data as Lead;
+}
+
+export async function deleteLead(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('leads')
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
