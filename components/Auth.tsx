@@ -19,38 +19,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [phone, setPhone] = useState('');
   const [isRegistering, setIsRegistering] = useState(initialMode === 'registrar');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    const prevDigits = phone.replace(/\D/g, '');
-    let digits = raw.replace(/\D/g, '');
-
-    // Se o usuário tentou deletar um separador, deleta o dígito anterior também
-    if (digits === prevDigits && raw.length < phone.length) {
-      digits = digits.slice(0, -1);
-    }
-
-    if (digits.length > 11) digits = digits.slice(0, 11);
-
-    let formatted = digits;
-    if (digits.length > 6) {
-      const mid = digits.length === 11 ? 7 : 6;
-      formatted = `(${digits.slice(0, 2)}) ${digits.slice(2, mid)}-${digits.slice(mid)}`;
-    } else if (digits.length > 2) {
-      formatted = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    } else if (digits.length > 0) {
-      formatted = `(${digits}`;
-    }
-
-    setPhone(formatted);
-  };
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
