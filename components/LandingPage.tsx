@@ -265,7 +265,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             <div className="w-[1px] h-4 bg-white/10 hidden sm:block"></div>
             <button
               onClick={onStart}
-              className="group relative px-6 py-2.5 rounded-full overflow-hidden flex items-center gap-3 font-black tracking-[0.2em] uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] hidden sm:flex border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
+              className="group relative px-4 sm:px-6 py-2 sm:py-2.5 rounded-full overflow-hidden flex items-center gap-2 sm:gap-3 font-black tracking-[0.2em] uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-emerald-500/10 to-transparent rotate-45 animate-sweep"></div>

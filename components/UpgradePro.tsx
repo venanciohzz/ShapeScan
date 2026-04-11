@@ -23,7 +23,7 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
          return;
       }
 
-      pixel.initiateCheckout(config.name, config.price);
+      pixel.initiateCheckout(config.name, config.price, user?.id);
       setStripePriceId(config.stripePriceId);
       setSelectedPlan(plan);
    };

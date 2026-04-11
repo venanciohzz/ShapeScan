@@ -20,7 +20,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
    const [selectedPlan, setSelectedPlan] = useState<PlanType | null>(null);
 
    useEffect(() => {
-      pixel.viewContent('Página de Planos');
+      pixel.viewContent('Página de Planos', user?.id);
    }, []);
 
    const handleSubscribe = async (plan: PlanType) => {
@@ -32,7 +32,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
          return;
       }
 
-      pixel.initiateCheckout(config.name, config.price);
+      pixel.initiateCheckout(config.name, config.price, user?.id);
       setStripePriceId(config.stripePriceId);
       setSelectedPlan(plan);
    };

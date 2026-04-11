@@ -53,7 +53,7 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue
     localStorage.setItem('awaiting_stripe_plan_name', planName);
     localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
 
-    pixel.addPaymentInfo(planName, planValue);
+    pixel.addPaymentInfo(planName, planValue, undefined, userId);
 
     const { error } = await stripe.confirmPayment({
       elements,

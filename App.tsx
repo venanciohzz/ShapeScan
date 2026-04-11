@@ -86,7 +86,7 @@ const App: React.FC = () => {
 
   // Pixel PageView — dispara CAPI + browser em cada mudança de rota
   useEffect(() => {
-    import('./utils/pixel').then(({ pixel }) => pixel.pageView()).catch(() => {});
+    import('./utils/pixel').then(({ pixel }) => pixel.pageView(user?.id)).catch(() => {});
   }, [location.pathname]);
 
   // Scroll to top on view change
@@ -197,7 +197,7 @@ const App: React.FC = () => {
             const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
             const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
             const { pixel } = await import('./utils/pixel');
-            pixel.purchase(planName, planValue, updatedUser?.email);
+            pixel.purchase(planName, planValue, updatedUser?.email, updatedUser?.id);
             isPollingPremiumRef.current = false;
             localStorage.removeItem('awaiting_stripe_payment');
             localStorage.removeItem('awaiting_stripe_payment_started');
@@ -244,7 +244,7 @@ const App: React.FC = () => {
               const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
               const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
               const { pixel } = await import('./utils/pixel');
-              pixel.purchase(planName, planValue, updatedUser?.email);
+              pixel.purchase(planName, planValue, updatedUser?.email, updatedUser?.id);
 
               clearInterval(interval);
               isPollingPremiumRef.current = false;
@@ -798,10 +798,7 @@ const App: React.FC = () => {
   };
 
   const navigateWithPremiumCheck = (view: View) => {
-    if (user?.emailConfirmed === false && view !== 'dashboard') {
-      showToast('Confirme seu e-mail para acessar esta ferramenta.', 'info');
-      return;
-    }
+    // Gate de email removido — permitir acesso mesmo sem confirmação para reduzir fricção no funil
 
     const viewPathMap: Record<string, string> = {
       'landing': '/',
@@ -865,13 +862,7 @@ const App: React.FC = () => {
 
               {/* Protected Routes Wrapper */}
               <Route path="/*" element={user ? (
-                user.emailConfirmed === false ? (
-                  /* E-mail não confirmado: apenas dashboard disponível */
-                  <Routes>
-                    <Route path="/dashboard" element={<Dashboard user={user} logs={foodLogs} onNavigate={navigateWithPremiumCheck} onLogout={handleLogout} onDeleteLog={removeFoodLog} onEditLog={editFoodLog} waterConsumed={waterConsumed || 0} setWaterConsumed={setWaterConsumed} onShowToast={showToast} onUpgrade={() => navigate('/planos')} />} />
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                  </Routes>
-                ) : (!user.username || !user.phone) ? (
+                (!user.username || !user.phone || !user.name) ? (
                   /* Perfil incompleto: bloqueia todas as rotas e força completar-perfil */
                   <Routes>
                     <Route path="/completar-perfil" element={<CompleteProfile user={user} onComplete={handleCompleteProfile} />} />

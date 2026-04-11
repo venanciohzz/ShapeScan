@@ -34,7 +34,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { eventName, eventId, sourceUrl, email, fbp, fbc, value, currency, contentName, clientUserAgent } = body;
+    const { eventName, eventId, sourceUrl, email, fbp, fbc, value, currency, contentName, clientUserAgent, externalId } = body;
 
     if (!eventName) {
       return new Response(JSON.stringify({ error: 'eventName required' }), {
@@ -51,6 +51,7 @@ Deno.serve(async (req: Request) => {
     if (fbp && typeof fbp === 'string') userData['fbp'] = fbp;
     if (fbc && typeof fbc === 'string') userData['fbc'] = fbc;
     if (clientUserAgent && typeof clientUserAgent === 'string') userData['client_user_agent'] = clientUserAgent;
+    if (externalId && typeof externalId === 'string') userData['external_id'] = await sha256(externalId);
 
     // Montar evento
     const eventData: Record<string, any> = {

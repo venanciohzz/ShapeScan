@@ -35,6 +35,7 @@ function sendCapi(eventName: string, eventId: string, options: {
   value?: number;
   currency?: string;
   contentName?: string;
+  externalId?: string;
 } = {}): void {
   try {
     const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
@@ -45,7 +46,7 @@ function sendCapi(eventName: string, eventId: string, options: {
     const fbc = getFbc();
 
     // Não envia CAPI se user_data seria completamente vazio — Meta retorna 400
-    if (!options.email && !fbp && !fbc) return;
+    if (!options.email && !fbp && !fbc && !options.externalId) return;
 
     fetch(`${supabaseUrl}/functions/v1/meta-capi`, {
       method: 'POST',
@@ -60,6 +61,7 @@ function sendCapi(eventName: string, eventId: string, options: {
         fbp,
         fbc,
         email: options.email,
+        externalId: options.externalId,
         value: options.value,
         currency: options.currency,
         contentName: options.contentName,
@@ -71,51 +73,51 @@ function sendCapi(eventName: string, eventId: string, options: {
 
 export const pixel = {
   /** Usuário completou o cadastro */
-  completeRegistration: (email?: string) => {
+  completeRegistration: (email?: string, externalId?: string) => {
     const id = generateEventId();
     fbqTrack('CompleteRegistration', {}, id);
-    sendCapi('CompleteRegistration', id, { email });
+    sendCapi('CompleteRegistration', id, { email, externalId });
   },
 
   /** Usuário fez login */
-  lead: (email?: string) => {
+  lead: (email?: string, externalId?: string) => {
     const id = generateEventId();
     fbqTrack('Lead', {}, id);
-    sendCapi('Lead', id, { email });
+    sendCapi('Lead', id, { email, externalId });
   },
 
   /** Usuário visualizou a página de planos */
-  viewContent: (contentName: string) => {
+  viewContent: (contentName: string, externalId?: string) => {
     const id = generateEventId();
     fbqTrack('ViewContent', { content_name: contentName, content_category: 'subscription' }, id);
-    sendCapi('ViewContent', id, { contentName });
+    sendCapi('ViewContent', id, { contentName, externalId });
   },
 
   /** Usuário clicou em um plano e iniciou o checkout */
-  initiateCheckout: (planName: string, value: number) => {
+  initiateCheckout: (planName: string, value: number, externalId?: string) => {
     const id = generateEventId();
     fbqTrack('InitiateCheckout', { content_name: planName, value, currency: 'BRL', num_items: 1 }, id);
-    sendCapi('InitiateCheckout', id, { contentName: planName, value, currency: 'BRL' });
+    sendCapi('InitiateCheckout', id, { contentName: planName, value, currency: 'BRL', externalId });
   },
 
   /** Usuário submeteu dados de pagamento */
-  addPaymentInfo: (planName: string, value: number, email?: string) => {
+  addPaymentInfo: (planName: string, value: number, email?: string, externalId?: string) => {
     const id = generateEventId();
     fbqTrack('AddPaymentInfo', { content_name: planName, value, currency: 'BRL' }, id);
-    sendCapi('AddPaymentInfo', id, { contentName: planName, value, currency: 'BRL', email });
+    sendCapi('AddPaymentInfo', id, { contentName: planName, value, currency: 'BRL', email, externalId });
   },
 
   /** Compra confirmada (webhook processado) */
-  purchase: (planName: string, value: number, email?: string) => {
+  purchase: (planName: string, value: number, email?: string, externalId?: string) => {
     const id = generateEventId();
     fbqTrack('Purchase', { content_name: planName, value, currency: 'BRL' }, id);
-    sendCapi('Purchase', id, { contentName: planName, value, currency: 'BRL', email });
+    sendCapi('Purchase', id, { contentName: planName, value, currency: 'BRL', email, externalId });
   },
 
   /** PageView — disparado em cada mudança de rota */
-  pageView: () => {
+  pageView: (externalId?: string) => {
     const id = generateEventId();
     fbqTrack('PageView', {}, id);
-    sendCapi('PageView', id);
+    sendCapi('PageView', id, { externalId });
   },
 };

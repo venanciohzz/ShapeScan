@@ -81,30 +81,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
       }
 
       if (isRegistering) {
-        const cleanName = sanitizeInput(name);
-        const cleanUser = sanitizeInput(username);
-        const cleanPhone = sanitizeInput(phone);
-
-        if (!cleanName || !cleanUser || !cleanPhone) {
-          throw new Error('Preencha todos os campos.');
-        }
-
-        // isAdmin é determinado pelo trigger handle_new_user no banco (via tabela admin_users).
-        // Nunca assumir admin pelo email no cliente — o banco é a fonte de verdade.
+        // Cadastro simplificado: apenas email + senha.
+        // Nome, username e WhatsApp serão coletados na tela CompleteProfile após o primeiro login.
         const userData: Omit<User, 'id'> = {
           email: cleanEmail,
-          name: cleanName,
-          username: cleanUser,
-          phone: cleanPhone,
+          name: '',
+          username: '',
+          phone: '',
           isPremium: false,
           isAdmin: false,
           dailyCalorieGoal: 2000,
           plan: 'free',
-          dailyWaterGoal: 2500 // Default seguro
+          dailyWaterGoal: 2500
         };
 
         const newUser = await db.auth.signUp(userData, cleanPassword);
-        pixel.completeRegistration(cleanEmail);
+        pixel.completeRegistration(cleanEmail, newUser.id);
         if (!newUser.needsEmailConfirmation) {
           await db.auth.setSession(newUser);
         }
@@ -114,7 +106,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
         // Login Logic via Database Service
         const user = await db.auth.signIn(cleanEmail, cleanPassword);
         await db.auth.setSession(user);
-        pixel.lead(cleanEmail);
+        pixel.lead(cleanEmail, user.id);
         onLogin(user, false);
       }
     } catch (err: any) {
@@ -181,48 +173,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {isRegistering && (
-              <>
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Nome Completo</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                    placeholder="Seu nome completo"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">Usuário</label>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                      placeholder="@usuario"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">WhatsApp</label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      className="w-full px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/5 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none font-bold text-white placeholder:text-zinc-600 transition-all text-sm"
-                      placeholder="(00) 00000-0000"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
             <div className="space-y-2">
               <label className="block text-[10px] font-black text-zinc-300 drop-shadow-sm uppercase tracking-[0.2em] ml-2">E-mail</label>
               <input
