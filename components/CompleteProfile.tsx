@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { updateProfile } from '../services/supabaseService';
 import { sanitizeInput } from '../utils/security';
+import { pixel } from '../utils/pixel';
 import PremiumBackground from './ui/PremiumBackground';
 import LetterPuller from './ui/LetterPuller';
 
@@ -86,6 +87,7 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
       const updates: Partial<User> = { phone: cleanPhone };
       if (needsUsername) updates.username = cleanUsername;
       const updatedUser = await updateProfile(user.id, updates);
+      pixel.completeRegistration(user.email, user.id);
       onComplete(updatedUser);
     } catch (err: any) {
       setErrors({ phone: err.message || 'Erro ao salvar. Tente novamente.' });
