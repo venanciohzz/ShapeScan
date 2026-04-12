@@ -32,7 +32,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
          return;
       }
 
-      pixel.initiateCheckout(config.name, config.price, user?.id);
+      pixel.initiateCheckout(config.name, config.price, user?.id, user?.email);
       setStripePriceId(config.stripePriceId);
       setSelectedPlan(plan);
    };

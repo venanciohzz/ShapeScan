@@ -75,8 +75,8 @@ export const pixel = {
   /** Usuário completou o cadastro */
   completeRegistration: (email?: string, externalId?: string) => {
     const id = generateEventId();
-    fbqTrack('CompleteRegistration', {}, id);
-    sendCapi('CompleteRegistration', id, { email, externalId });
+    fbqTrack('CompleteRegistration', { content_name: 'shapescan_signup', status: true }, id);
+    sendCapi('CompleteRegistration', id, { email, externalId, contentName: 'shapescan_signup' });
   },
 
   /** Usuário fez login */
@@ -94,10 +94,10 @@ export const pixel = {
   },
 
   /** Usuário clicou em um plano e iniciou o checkout */
-  initiateCheckout: (planName: string, value: number, externalId?: string) => {
+  initiateCheckout: (planName: string, value: number, externalId?: string, email?: string) => {
     const id = generateEventId();
     fbqTrack('InitiateCheckout', { content_name: planName, value, currency: 'BRL', num_items: 1 }, id);
-    sendCapi('InitiateCheckout', id, { contentName: planName, value, currency: 'BRL', externalId });
+    sendCapi('InitiateCheckout', id, { contentName: planName, value, currency: 'BRL', externalId, email });
   },
 
   /** Usuário submeteu dados de pagamento */
