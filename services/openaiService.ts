@@ -9,8 +9,8 @@ const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
 
 // Clamps Equilibrados (v51 - Calibrado)
-const clampWeight = (name: string, weight: number): number => {
-  const n = name.toLowerCase();
+const clampWeight = (name: string | undefined | null, weight: number): number => {
+  const n = (name || '').toLowerCase();
   // Arroz continua conservador para evitar inflação (v51)
   if (n.includes("arroz")) return clamp(weight, 30, 250); 
   // Proteína calibrada: reduzimos o mínimo para aceitar pedaços pequenos (v51)
@@ -311,8 +311,8 @@ REGRAS:
     const itemsRaw = data.food_items || data.ingredients || data.items || [];
     
     let processedItems = itemsRaw.map((item: any) => ({
-      name: item.name,
-      weight: clampWeight(item.name, safeParseFloat(item.weight_g || item.weight)),
+      name: item.name || item.ingredient || item.food || 'Item',
+      weight: clampWeight(item.name || item.ingredient || item.food || '', safeParseFloat(item.weight_g || item.weight)),
       calories: safeParseFloat(item.calories),
       protein: safeParseFloat(item.total_protein_g || item.protein_g || item.protein),
       carbs: safeParseFloat(item.total_carbs_g || item.carbs_g || item.carbs),
