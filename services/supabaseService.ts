@@ -339,12 +339,28 @@ export async function updateProfile(userId: string, updates: Partial<User>): Pro
     profileUpdates[key] === undefined && delete profileUpdates[key]
   );
 
-  const { error } = await supabase
-    .from('profiles')
-    .update(profileUpdates)
-    .eq('id', userId);
+  // Usa raw fetch (igual ao getProfile) — bypassa supabase.from() que chama
+  // getSession() internamente e pode travar indefinidamente para Google OAuth,
+  // zerando a sessão e fazendo getProfile falhar com "Perfil não encontrado".
+  const token = await getValidToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    'apikey': supabaseAnonKey,
+    'Prefer': 'return=minimal',
+  };
 
-  if (error) throw new Error(error.message);
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`,
+    { method: 'PATCH', headers, body: JSON.stringify(profileUpdates) }
+  );
+
+  if (!res.ok) {
+    let msg = `HTTP ${res.status} ao atualizar perfil`;
+    try { const e = await res.json(); msg = e?.message || e?.error || msg; } catch {}
+    throw new Error(msg);
+  }
 
   return await getProfile(userId);
 }
