@@ -6,10 +6,16 @@ import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'fram
 import { LiquidShaderBackground } from './ui/LiquidShaderBackground';
 import { NeonFlow } from './ui/NeonFlow';
 import SimulatedAnalysisModal from './landing/SimulatedAnalysisModal';
+import { useIsMobile } from '../src/utils/useIsMobile';
 
 // --- Utility Components for God Mode UI ---
 
-const LetterPuller = React.memo(({ text, className = "", delay = 0 }: { text: string; className?: string; delay?: number }) => {
+const LetterPuller = React.memo(({ text, className = "", delay = 0, isMobile = false }: { text: string; className?: string; delay?: number; isMobile?: boolean }) => {
+  // Mobile: texto simples, sem framer-motion por letra (JS thread livre)
+  if (isMobile) {
+    return <span className={`inline ${className}`}>{text}</span>;
+  }
+
   const words = text.split(" ");
   let letterCounter = 0;
 
@@ -50,10 +56,10 @@ const LetterPuller = React.memo(({ text, className = "", delay = 0 }: { text: st
       {words.map((word, wordIndex) => {
         const letters = Array.from(word);
         return (
-          <span 
-            key={wordIndex} 
-            style={{ 
-              display: 'inline-block', 
+          <span
+            key={wordIndex}
+            style={{
+              display: 'inline-block',
               whiteSpace: 'nowrap',
               position: 'relative'
             }}
@@ -108,6 +114,7 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWorks, onAbout }) => {
+  const isMobile = useIsMobile();
   const [scrolled, setScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSimModal, setShowSimModal] = useState(false);
@@ -166,12 +173,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
         }
-        .animate-flare {
-          animation: glow-pulse 8s ease-in-out infinite;
-        }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
+        .animate-flare { animation: glow-pulse 8s ease-in-out infinite; }
+        .animate-float  { animation: float 6s ease-in-out infinite; }
+
         @keyframes smooth-float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-3px); }
@@ -186,35 +190,43 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           85% { opacity: 1; }
           100% { top: 100%; opacity: 0; }
         }
-        .animate-scan {
-          animation: scan 3s linear infinite;
-        }
+        .animate-scan { animation: scan 3s linear infinite; }
+
         @keyframes sweep {
           0% { left: -100%; top: -100%; }
           50% { left: 100%; top: 100%; }
           100% { left: 100%; top: 100%; }
         }
-        .animate-sweep {
-          animation: sweep 2.5s ease-in-out infinite;
-        }
+        .animate-sweep { animation: sweep 2.5s ease-in-out infinite; }
 
         /* Typography overrides for Premium V2 */
         .font-serif-premium {
           font-family: 'Playfair Display', serif;
           letter-spacing: -0.02em;
         }
-        
         .glass-nav {
-          background: rgba(10, 10, 10, 0.4);
+          background: rgba(10, 10, 10, 0.85);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
+
+        /* Mobile: desabilita todas as animações decorativas */
+        @media (max-width: 768px) {
+          .animate-flare, .animate-float, .animate-smooth-float,
+          .animate-scan, .animate-sweep { animation: none !important; }
+          .glass-nav {
+            background: rgba(5, 5, 5, 0.97) !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+          }
+        }
       `}</style>
 
       <div className="fixed inset-0 z-0 bg-[#020202] overflow-hidden pointer-events-none">
-        <LiquidShaderBackground />
-        <NeonFlow className="opacity-60" />
+        {/* WebGL desabilitado em mobile — causa heating/travamento */}
+        {!isMobile && <LiquidShaderBackground />}
+        {!isMobile && <NeonFlow className="opacity-60" />}
 
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05]" />
 
@@ -265,7 +277,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
             <div className="w-[1px] h-4 bg-white/10 hidden sm:block"></div>
             <button
               onClick={onStart}
-              className="group relative px-4 sm:px-6 py-2 sm:py-2.5 rounded-full overflow-hidden flex items-center gap-2 sm:gap-3 font-black tracking-[0.2em] uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
+              className="hidden sm:flex group relative px-4 sm:px-6 py-2 sm:py-2.5 rounded-full overflow-hidden items-center gap-2 sm:gap-3 font-black tracking-[0.2em] uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.4)] border border-white/10 hover:border-emerald-500/50 bg-zinc-950"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-emerald-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-emerald-500/10 to-transparent rotate-45 animate-sweep"></div>
@@ -318,13 +330,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
             <h1 className="flex flex-col items-center text-[clamp(1.6rem,6.5vw,3.75rem)] lg:text-6xl font-serif-premium tracking-tight text-white leading-[1.1] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible text-balance">
               <span className="block w-full">
-                <LetterPuller text="Descubra seu % de gordura" />
+                <LetterPuller text="Descubra seu % de gordura" isMobile={isMobile} />
               </span>
               <span className="block w-full">
                 <LetterPuller
                   text="por foto em segundos."
                   className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
                   delay={0.5}
+                  isMobile={isMobile}
                 />
               </span>
             </h1>
@@ -383,9 +396,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         >
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div
-              whileHover={{ rotateY: 5, rotateX: -5, scale: 1.02 }}
+              whileHover={isMobile ? undefined : { rotateY: 5, rotateX: -5, scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300 }}
-              className="relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-white/[0.01] backdrop-blur-[40px] group flex flex-col hover:border-emerald-500/50 transition-colors duration-500"
+              className="relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-white/[0.01] group flex flex-col hover:border-emerald-500/50 transition-colors duration-500"
             >
               <div className="relative h-64 sm:h-72 overflow-hidden bg-transparent flex items-center justify-center">
                 <img
@@ -393,12 +406,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   alt="Análise de Refeição"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80"
                 />
-                <motion.div
-                  initial={{ top: "0%", opacity: 0 }}
-                  animate={{ top: ["5%", "95%", "5%"], opacity: [0, 1, 1, 0] }}
-                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute inset-x-8 h-[2px] bg-emerald-400 shadow-[0_0_25px_rgba(52,211,153,1)] z-10"
-                />
+                {!isMobile && (
+                  <motion.div
+                    initial={{ top: "0%", opacity: 0 }}
+                    animate={{ top: ["5%", "95%", "5%"], opacity: [0, 1, 1, 0] }}
+                    transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute inset-x-8 h-[2px] bg-emerald-400 shadow-[0_0_25px_rgba(52,211,153,1)] z-10"
+                  />
+                )}
               </div>
 
               <div className="p-6 sm:p-8 bg-transparent border-t border-white/10 relative z-10">
