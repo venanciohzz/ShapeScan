@@ -111,12 +111,16 @@ body {
 
   /* Desativa animações decorativas pesadas em mobile */
   .animate-scan-y,
+  .animate-\[scan-line_2\.5s_linear_infinite\],
   .animate-\[scan-line_3s_ease-in-out_infinite\],
+  .animate-\[spin_3s_linear_infinite\],
   .animate-\[spin_8s_linear_infinite\],
   .animate-\[spin_12s_linear_infinite_reverse\],
   .animate-\[blob_10s_infinite\],
   .animate-\[float_6s_ease-in-out_infinite\],
-  .animate-\[pulse-glow_3s_ease-in-out_infinite\] {
+  .animate-\[pulse-glow_3s_ease-in-out_infinite\],
+  .animate-\[sweep_3s_ease-in-out_infinite\],
+  .animate-\[shimmer_2s_ease-in-out_infinite\] {
     animation: none !important;
   }
 

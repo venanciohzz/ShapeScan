@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
-import { Dna, Eye, Target, ArrowRight } from 'lucide-react';
+import { Dna, Eye, Target } from 'lucide-react';
 import { motion, Variants } from 'framer-motion';
 import { LiquidShaderBackground } from './ui/LiquidShaderBackground';
 import { NeonFlow } from './ui/NeonFlow';
+import { useIsMobile } from '../src/utils/useIsMobile';
 
-const LetterPuller: React.FC<{ text: string; className?: string; delay?: number }> = ({ text, className = "", delay = 0 }) => {
+const LetterPuller: React.FC<{ text: string; className?: string; delay?: number; isMobile?: boolean }> = ({ text, className = "", delay = 0, isMobile = false }) => {
+  if (isMobile) return <span className={className}>{text}</span>;
   const letters = Array.from(text);
   const container = {
     hidden: { opacity: 1 },
@@ -44,6 +46,7 @@ interface AboutProps {
 }
 
 const About: React.FC<AboutProps> = ({ onBack, onRegister }) => {
+  const isMobile = useIsMobile();
 
   // Scroll to top on mount
   useEffect(() => {
@@ -77,12 +80,20 @@ const About: React.FC<AboutProps> = ({ onBack, onRegister }) => {
           -webkit-backdrop-filter: blur(20px);
           border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
+        @media (max-width: 768px) {
+          .animate-smooth-float { animation: none !important; }
+          .glass-card, .glass-nav {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: rgba(9, 9, 11, 0.92) !important;
+          }
+        }
       `}</style>
 
       {/* Background Ambience */}
       <div className="fixed inset-0 z-0 bg-[#020202] overflow-hidden pointer-events-none">
-        <LiquidShaderBackground />
-        <NeonFlow className="opacity-40" />
+        {!isMobile && <LiquidShaderBackground />}
+        {!isMobile && <NeonFlow className="opacity-40" />}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-950/40 to-[#020202]" />
       </div>
 
@@ -117,11 +128,12 @@ const About: React.FC<AboutProps> = ({ onBack, onRegister }) => {
             Institucional
           </div>
           <h1 className="text-4xl lg:text-7xl font-serif-premium font-bold tracking-tight text-white mb-8 leading-[1.1]">
-            <LetterPuller text="Redefinindo a performance" /> <br />
+            <LetterPuller text="Redefinindo a performance" isMobile={isMobile} /> <br />
             <LetterPuller
               text="através da tecnologia."
               className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
               delay={0.5}
+              isMobile={isMobile}
             />
           </h1>
           <p className="text-xl text-zinc-400 font-medium max-w-3xl mx-auto leading-relaxed">
