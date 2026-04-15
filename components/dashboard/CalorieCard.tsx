@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useIsMobile } from '../../src/utils/useIsMobile';
 
 interface CalorieCardProps {
     consumed: number;
@@ -16,6 +17,7 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
     realPercent,
     visualPercent,
 }) => {
+    const isMobile = useIsMobile();
     const formatValue = (val: number) => Number(val.toFixed(1));
 
     return (
@@ -78,7 +80,7 @@ const CalorieCard: React.FC<CalorieCardProps> = ({
                                 initial={{ width: 0 }}
                                 animate={{ width: `${visualPercent}%` }}
                                 transition={{ duration: 1.2, ease: "circOut" }}
-                                className={`h-full ${isOverLimit ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]'}`}
+                                className={`h-full ${isOverLimit ? 'bg-red-500' : 'bg-emerald-500'}${isMobile ? '' : isOverLimit ? ' shadow-[0_0_20px_rgba(239,68,68,0.5)]' : ' shadow-[0_0_20px_rgba(16,185,129,0.5)]'}`}
                             />
                         </div>
                         <div className="flex justify-between items-center px-1">

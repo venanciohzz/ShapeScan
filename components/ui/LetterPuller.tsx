@@ -1,7 +1,15 @@
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
+import { useIsMobile } from '../../src/utils/useIsMobile';
 
 const LetterPuller: React.FC<{ text: string; className?: string; delay?: number }> = ({ text, className = "", delay = 0 }) => {
+    const isMobile = useIsMobile();
+
+    // Em mobile: renderiza texto plano sem animação por letra (economiza JS thread)
+    if (isMobile) {
+        return <span className={`inline break-words ${className}`}>{text}</span>;
+    }
+
     const words = text.split(' ');
     let globalIndex = 0;
 
@@ -73,7 +81,6 @@ const LetterPuller: React.FC<{ text: string; className?: string; delay?: number 
                                 </motion.span>
                             );
                         })}
-                        {/* Adiciona espaço após a palavra, exceto na última */}
                         {wordIndex < words.length - 1 && <span className="inline-block">&nbsp;</span>}
                     </span>
                 );

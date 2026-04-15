@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
+import { useIsMobile } from './src/utils/useIsMobile';
 import { View, User, FoodLog, EvolutionRecord, ChatMessage } from './types';
 import { db } from './services/db';
 import { supabase } from './services/supabaseService';
@@ -62,7 +63,8 @@ const App: React.FC = () => {
   const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
-  
+  const isMobile = useIsMobile();
+
   // Ref para controlar o estado do polling de pagamento e evitar loops exponenciais
   const isPollingPremiumRef = React.useRef(false);
 
@@ -905,6 +907,8 @@ const App: React.FC = () => {
   const showMobileNav = user && !hideNavPaths.includes(location.pathname);
 
   return (
+    // Em mobile: reduz duração de todas as animações framer-motion para 60% e desativa whileHover
+    <MotionConfig reducedMotion={isMobile ? 'always' : 'never'}>
     <div className="relative min-h-[100dvh] w-full max-w-[100vw] overflow-x-hidden bg-[#F3F6F8] dark:bg-zinc-950 text-gray-900 dark:text-white transition-colors duration-500">
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-emerald-50/20 dark:from-zinc-950 dark:via-zinc-900 dark:to-black transition-colors duration-500" />
@@ -931,6 +935,7 @@ const App: React.FC = () => {
         </div>
       )}
     </div>
+    </MotionConfig>
   );
 };
 

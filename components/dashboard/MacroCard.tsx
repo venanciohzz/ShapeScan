@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useIsMobile } from '../../src/utils/useIsMobile';
 
 interface MacroCardProps {
     label: string;
@@ -18,6 +19,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
     goal,
     color = 'emerald',
 }) => {
+    const isMobile = useIsMobile();
     const hasGoal = typeof goal === 'number';
 
     const colors: Record<string, string> = {
@@ -63,7 +65,7 @@ const MacroCard: React.FC<MacroCardProps> = ({
                                 initial={{ width: 0 }}
                                 animate={{ width: `${progress}%` }}
                                 transition={{ duration: 1.5, ease: "circOut" }}
-                                className={`h-full ${barColor} shadow-[0_0_15px_rgba(255,255,255,0.2)]`}
+                                className={`h-full ${barColor}${isMobile ? '' : ' shadow-[0_0_15px_rgba(255,255,255,0.2)]'}`}
                             />
                         </div>
                         <div className="flex justify-between items-center text-[9px] font-black text-zinc-300 uppercase tracking-widest drop-shadow-sm">

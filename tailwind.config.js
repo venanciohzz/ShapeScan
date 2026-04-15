@@ -48,13 +48,18 @@ export default {
           '0%': { transform: 'translateX(-100%)' },
           '50%': { transform: 'translateX(100%)' },
           '100%': { transform: 'translateX(-100%)' }
-        }
+        },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
       },
       animation: {
         'blob': 'blob 10s infinite',
         'float': 'float 6s ease-in-out infinite',
         'pulse-glow': 'pulse-glow 3s infinite',
         'scan-line': 'scan-line 2.5s linear infinite',
+        'shimmer': 'shimmer 2s ease-in-out infinite',
       },
       boxShadow: {
         'premium': '0 10px 40px -10px rgba(0,0,0,0.05)',
