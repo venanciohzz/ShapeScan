@@ -27,15 +27,15 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
 
     return (
         <div
-            className={`p-10 rounded-[3rem] relative overflow-hidden transition-all duration-700 bg-zinc-900/50 backdrop-blur-2xl group shadow-2xl`}
+            className={`p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] relative overflow-hidden transition-all duration-700 bg-zinc-900/50 backdrop-blur-2xl group shadow-2xl`}
         >
             {/* Background Glow */}
             <div className={`absolute -inset-10 bg-cyan-500/10 rounded-full blur-[100px] opacity-0 group-hover:opacity-30 transition-opacity duration-1000`}></div>
 
             <div className="relative z-10">
-                <div className="flex flex-col sm:flex-row justify-between items-start gap-6 mb-10">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-3 md:gap-6 mb-5 md:mb-10">
                     <div className="flex flex-col">
-                        <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.4em] mb-3 leading-none opacity-90 drop-shadow-sm">Monitoramento H2O</span>
+                        <span className="text-zinc-300 text-[9px] md:text-[10px] font-black uppercase tracking-widest md:tracking-[0.4em] mb-2 md:mb-3 leading-none opacity-90">Monitoramento H2O</span>
                         <div className="flex items-center gap-3">
                             <h3 className="font-serif-premium font-bold text-2xl md:text-3xl text-white tracking-tight drop-shadow-md">Hidratação</h3>
                             {isWaterGoalMet && (
@@ -46,7 +46,7 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
                         </div>
                     </div>
                     <div className="text-left sm:text-right flex flex-col items-start sm:items-end">
-                        <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.4em] mb-3 leading-none opacity-90 drop-shadow-sm">Nível Atual</span>
+                        <span className="text-zinc-300 text-[9px] md:text-[10px] font-black uppercase tracking-widest md:tracking-[0.4em] mb-2 md:mb-3 leading-none opacity-90">Nível Atual</span>
                         {manualWaterEdit ? (
                             <div className="flex items-center gap-2">
                                 <input
@@ -70,7 +70,7 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
                     </div>
                 </div>
 
-                <div className="relative w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5 mb-10">
+                <div className="relative w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5 mb-5 md:mb-10">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${waterPercent}%` }}
@@ -88,7 +88,7 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
                     <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={() => addWater(250)}
-                        className={`flex-[3] py-5 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-3 border shadow-xl ${isWaterGoalMet
+                        className={`flex-[3] py-4 md:py-5 rounded-[1.5rem] md:rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 flex items-center justify-center gap-3 border shadow-xl ${isWaterGoalMet
                             ? 'bg-white text-zinc-950 border-white shadow-white/10 hover:bg-zinc-100'
                             : 'bg-zinc-950 text-white border-white/10 hover:border-cyan-500/50 hover:bg-zinc-900'
                             }`}

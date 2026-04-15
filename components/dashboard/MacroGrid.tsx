@@ -17,7 +17,7 @@ interface MacroGridProps {
 
 const MacroGrid: React.FC<MacroGridProps> = ({ protein, carbs, fat, user, formatValue }) => {
     return (
-        <div className="flex flex-col md:grid md:grid-cols-3 gap-3 md:gap-6">
+        <div className="grid grid-cols-3 gap-2 md:gap-6">
             <MacroCard
                 label="Prot"
                 value={formatValue(protein)}

@@ -162,23 +162,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
             />
 
             {/* Header Unificado e Compacto */}
-            <header className="mb-12 md:mb-20">
+            <header className="mb-8 md:mb-20">
                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 md:gap-8 min-w-0">
+                  <div className="flex items-center gap-3 md:gap-8 min-w-0">
                      <div className="relative shrink-0">
-                        <div className="w-16 h-16 md:w-32 md:h-32 rounded-[2rem] bg-white/5 border border-emerald-500/20 flex items-center justify-center shadow-2xl relative z-10 p-0.5">
-                           <div className="w-full h-full rounded-[1.8rem] overflow-hidden bg-zinc-900">
-                              {user.photo ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" /> : <span className="text-3xl md:text-6xl flex items-center justify-center h-full">👤</span>}
+                        <div className="w-14 h-14 md:w-32 md:h-32 rounded-[1.5rem] md:rounded-[2rem] bg-white/5 border border-emerald-500/20 flex items-center justify-center shadow-2xl relative z-10 p-0.5">
+                           <div className="w-full h-full rounded-[1.3rem] md:rounded-[1.8rem] overflow-hidden bg-zinc-900">
+                              {user.photo ? <img src={user.photo} alt={user.name} className="w-full h-full object-cover" /> : <span className="text-2xl md:text-6xl flex items-center justify-center h-full">👤</span>}
                            </div>
-                           <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-[3px] border-zinc-950 z-20 shadow-lg"></div>
+                           <div className="absolute -bottom-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-emerald-500 rounded-full border-[3px] border-zinc-950 z-20 shadow-lg"></div>
                         </div>
                      </div>
 
                      <div className="flex flex-col min-w-0">
-                        <p className="text-emerald-500/50 font-black uppercase text-[8px] md:text-[11px] tracking-[0.4em] mb-1">DASHBOARD</p>
-                        <h1 className="text-2xl sm:text-3xl md:text-7xl font-serif-premium font-bold text-white tracking-tight leading-none drop-shadow-xl flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0 mb-2 text-balance">
-                           <span className="opacity-60 text-lg sm:text-2xl md:text-5xl font-light">Olá,</span>
-                           <LetterPuller text={user.name.split(' ')[0]} />
+                        <p className="text-emerald-500/50 font-black uppercase text-[8px] md:text-[11px] tracking-widest md:tracking-[0.4em] mb-1">DASHBOARD</p>
+                        <h1 className="text-xl md:text-7xl font-serif-premium font-bold text-white tracking-tight leading-none drop-shadow-xl flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0 mb-2">
+                           <span className="opacity-60 text-base md:text-5xl font-light">Olá,</span>
+                           <span className="font-bold">{user.name.split(' ')[0]}</span>
                         </h1>
                         <div className="flex items-center gap-2">
                            <span className="text-emerald-400 font-bold text-[9px] md:text-xs tracking-widest uppercase">

@@ -20,8 +20,8 @@ const Navigation: React.FC<NavigationProps> = ({ currentView }) => {
   return (
     <>
       {/* Mobile Bottom Navigation - Floating Island Design */}
-      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-sm md:hidden z-50">
-        <div className="bg-zinc-950/80 backdrop-blur-2xl px-4 py-4 rounded-[2.5rem] flex justify-between items-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 relative overflow-hidden">
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-sm md:hidden z-50">
+        <div className="bg-zinc-950/90 px-3 py-3 rounded-[2rem] flex justify-between items-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-50 pointer-events-none"></div>
 
           {tabs.map((tab) => {
@@ -30,7 +30,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView }) => {
                 key={tab.id}
                 to={tab.path}
                 className={({ isActive }) => `
-                  relative flex flex-col items-center justify-center w-12 h-12 transition-all duration-300 active:scale-90
+                  relative flex flex-col items-center justify-center w-10 h-10 transition-all duration-300 active:scale-90
                 `}
               >
                 {({ isActive }) => (
