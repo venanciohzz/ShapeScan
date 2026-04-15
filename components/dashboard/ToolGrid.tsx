@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from '../../types';
+import { View, User as UserType } from '../../types';
 import { Scan, User, LineChart, NotebookPen, Save, Droplets, Scale, Flame, Target, MessageSquare, Zap, Lock, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -83,15 +83,19 @@ const PremiumButton: React.FC<PremiumButtonProps> = ({ onClick, icon, title, sub
 );
 
 interface ToolGridProps {
+    user: UserType;
     onNavigate: (view: View) => void;
     onUpgrade: () => void;
 }
 
-const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate, onUpgrade }) => {
+const ToolGrid: React.FC<ToolGridProps> = ({ user, onNavigate, onUpgrade }) => {
+    const isPaid = user.isPremium || user.isAdmin;
+
     return (
         <div className="space-y-8 pb-20">
 
-            {/* ═══ BANNER DE BLOQUEIO — Shape Analysis ═══ */}
+            {/* ═══ BANNER DE BLOQUEIO — Shape Analysis (somente free) ═══ */}
+            {!isPaid && (
             <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -140,6 +144,7 @@ const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate, onUpgrade }) => {
                     </motion.button>
                 </div>
             </motion.div>
+            )}
 
             {/* ═══ FERRAMENTAS PREMIUM — destaque ═══ */}
             <section>
@@ -151,30 +156,70 @@ const ToolGrid: React.FC<ToolGridProps> = ({ onNavigate, onUpgrade }) => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                    <PremiumButton
-                        onClick={onUpgrade}
-                        icon={<Scan className="w-8 h-8" />}
-                        title="Análise por Foto"
-                        subtitle="IA nutricional"
-                    />
-                    <PremiumButton
-                        onClick={onUpgrade}
-                        icon={<User className="w-8 h-8" />}
-                        title="Análise Física"
-                        subtitle="% gordura"
-                    />
-                    <PremiumButton
-                        onClick={onUpgrade}
-                        icon={<MessageSquare className="w-8 h-8" />}
-                        title="Personal 24h"
-                        subtitle="Suporte IA"
-                    />
-                    <PremiumButton
-                        onClick={onUpgrade}
-                        icon={<LineChart className="w-8 h-8" />}
-                        title="Sua Evolução"
-                        subtitle="Analytics"
-                    />
+                    {isPaid ? (
+                        <ActionButton
+                            onClick={() => onNavigate('food_ai')}
+                            icon={<Scan className="w-8 h-8" />}
+                            title="Análise por Foto"
+                            subtitle="IA nutricional"
+                            highlight={true}
+                        />
+                    ) : (
+                        <PremiumButton
+                            onClick={onUpgrade}
+                            icon={<Scan className="w-8 h-8" />}
+                            title="Análise por Foto"
+                            subtitle="IA nutricional"
+                        />
+                    )}
+                    {isPaid ? (
+                        <ActionButton
+                            onClick={() => onNavigate('shape')}
+                            icon={<User className="w-8 h-8" />}
+                            title="Análise Física"
+                            subtitle="% gordura"
+                            highlight={true}
+                        />
+                    ) : (
+                        <PremiumButton
+                            onClick={onUpgrade}
+                            icon={<User className="w-8 h-8" />}
+                            title="Análise Física"
+                            subtitle="% gordura"
+                        />
+                    )}
+                    {isPaid ? (
+                        <ActionButton
+                            onClick={() => onNavigate('chat')}
+                            icon={<MessageSquare className="w-8 h-8" />}
+                            title="Personal 24h"
+                            subtitle="Suporte IA"
+                            highlight={true}
+                        />
+                    ) : (
+                        <PremiumButton
+                            onClick={onUpgrade}
+                            icon={<MessageSquare className="w-8 h-8" />}
+                            title="Personal 24h"
+                            subtitle="Suporte IA"
+                        />
+                    )}
+                    {isPaid ? (
+                        <ActionButton
+                            onClick={() => onNavigate('evolution')}
+                            icon={<LineChart className="w-8 h-8" />}
+                            title="Sua Evolução"
+                            subtitle="Analytics"
+                            highlight={true}
+                        />
+                    ) : (
+                        <PremiumButton
+                            onClick={onUpgrade}
+                            icon={<LineChart className="w-8 h-8" />}
+                            title="Sua Evolução"
+                            subtitle="Analytics"
+                        />
+                    )}
                 </div>
             </section>
 

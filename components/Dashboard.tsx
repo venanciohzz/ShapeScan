@@ -271,7 +271,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
                <div className="w-full md:w-[40%] space-y-8">
                   <DailyFeedbackCard feedback={dailyFeedback} loading={loadingFeedback} />
                   
-                  <ToolGrid onNavigate={onNavigate} onUpgrade={onUpgrade} />
+                  <ToolGrid user={user} onNavigate={onNavigate} onUpgrade={onUpgrade} />
 
                   <MealHistory
                      todayLogs={todayLogs}

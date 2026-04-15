@@ -217,7 +217,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
             setEditingUser(null);
             setSelectedExpiry('');
             loadData();
-            onShowToast('Plano atualizado com sucesso!', 'success');
+            onShowToast('Plano atualizado! O usuário precisa fazer logout e login para as mudanças tomarem efeito.', 'success');
         } catch (error) {
             onShowToast('Erro ao atualizar plano', 'error');
         }
