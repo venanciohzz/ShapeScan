@@ -108,7 +108,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, logs, onNavigate, onLogout,
    };
 
    return (
-      <PremiumBackground className="pt-20 md:pt-28 pb-32 md:pb-12 h-screen overflow-y-auto scrollbar-hide overflow-x-hidden">
+      <PremiumBackground className="pt-16 md:pt-28 pb-36 md:pb-12 min-h-screen overflow-x-hidden">
          <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
