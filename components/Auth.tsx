@@ -92,7 +92,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   return (
     <PremiumBackground className="flex items-center justify-center p-6" dim={true} intensity={1.0}>
       <div className="w-full max-w-md relative z-20">
-        <div className="glass-card w-full p-8 md:p-12 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
+        <div className="glass-card w-full p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
           {/* Subtle decoration */}
           <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
@@ -107,7 +107,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
             <h2 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
               <LetterPuller text={isRegistering ? 'Crie sua conta' : 'Acessar Conta'} />
             </h2>
-            <p className="text-zinc-400 font-medium text-sm md:text-base uppercase tracking-widest opacity-70">
+            <p className="text-zinc-400 font-medium text-sm md:text-base uppercase tracking-wider md:tracking-widest opacity-70">
               Evolução Física Inteligente
             </p>
           </div>

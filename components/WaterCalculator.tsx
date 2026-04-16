@@ -57,13 +57,13 @@ const WaterCalculator: React.FC<WaterCalculatorProps> = ({ user, onBack, onUpdat
           <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
             <LetterPuller text="Hidratação" />
           </h1>
-          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] opacity-80">
             Inteligência Metabólica
           </p>
         </div>
 
         {/* Liquid Glass Card */}
-        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
           {/* Subtle Ambient Glow */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none origin-center" />
 
@@ -131,7 +131,7 @@ const WaterCalculator: React.FC<WaterCalculatorProps> = ({ user, onBack, onUpdat
                     <div className="flex flex-col gap-1 items-center">
                       <span className="text-[10px] font-black text-emerald-500/70 uppercase tracking-[0.4em]">Protocolo Diário</span>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-6xl font-serif-premium font-bold text-white">{calculatedGoal}</span>
+                        <span className="text-5xl md:text-6xl font-serif-premium font-bold text-white">{calculatedGoal}</span>
                         <span className="text-xl font-bold text-emerald-500 uppercase tracking-tighter">ml</span>
                       </div>
                     </div>
@@ -155,7 +155,7 @@ const WaterCalculator: React.FC<WaterCalculatorProps> = ({ user, onBack, onUpdat
           </div>
         </div>
 
-        <p className="text-center text-[9px] font-black text-zinc-600 uppercase tracking-[0.5em] mt-10 opacity-50 px-6">
+        <p className="text-center text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] md:tracking-[0.5em] mt-10 opacity-50 px-6">
           ShapeScan Professional Matrix System
         </p>
       </div>

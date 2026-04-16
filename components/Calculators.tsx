@@ -34,12 +34,12 @@ export const BMICalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <h1 className="text-3xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
             <LetterPuller text="Índice IMC" />
           </h1>
-          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] opacity-80">
             Análise de Massa Corporal
           </p>
         </div>
 
-        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
 
           <div className="space-y-8 relative z-10">
@@ -59,8 +59,8 @@ export const BMICalculator: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
                   <Scale className="w-8 h-8 text-emerald-500 mx-auto mb-4 opacity-70" />
                   <p className="text-[10px] font-black text-emerald-500/70 uppercase mb-2 tracking-[0.3em]">Score Identificado</p>
-                  <p className="text-6xl font-serif-premium font-bold text-white mb-2">{result.bmi.toFixed(1)}</p>
-                  <p className="font-black text-emerald-500 text-xs uppercase tracking-[0.4em]">{result.label}</p>
+                  <p className="text-5xl md:text-6xl font-serif-premium font-bold text-white mb-2">{result.bmi.toFixed(1)}</p>
+                  <p className="font-black text-emerald-500 text-xs uppercase tracking-[0.2em] md:tracking-[0.4em]">{result.label}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -101,12 +101,12 @@ export const DailyCalorieCalculator: React.FC<{ onBack: () => void }> = ({ onBac
           <h1 className="text-3xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
             <LetterPuller text="Bio Termo" />
           </h1>
-          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] opacity-80">
             Gasto Calórico Estimado
           </p>
         </div>
 
-        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
 
           <div className="space-y-8 relative z-10">
@@ -154,7 +154,7 @@ export const DailyCalorieCalculator: React.FC<{ onBack: () => void }> = ({ onBac
                   <Flame className="w-8 h-8 text-emerald-500 mx-auto mb-4 opacity-70" />
                   <p className="text-[10px] font-black text-emerald-500/70 uppercase mb-2 tracking-[0.3em]">Manutenção Estimada</p>
                   <div className="flex items-baseline justify-center gap-2">
-                    <span className="text-6xl font-serif-premium font-bold text-white tracking-tighter">{calories}</span>
+                    <span className="text-5xl md:text-6xl font-serif-premium font-bold text-white tracking-tighter">{calories}</span>
                     <span className="text-sm font-bold text-emerald-500 uppercase">kcal/dia</span>
                   </div>
                 </motion.div>

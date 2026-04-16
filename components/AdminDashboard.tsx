@@ -326,7 +326,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
     if (!user.isAdmin) {
         return (
             <PremiumBackground className="flex items-center justify-center min-h-screen p-4" dim={true} intensity={1.5}>
-                <div className="bg-zinc-950/40 backdrop-blur-3xl p-12 rounded-[3.5rem] border border-red-500/20 shadow-2xl text-center max-w-lg w-full">
+                <div className="bg-zinc-950/40 backdrop-blur-3xl p-6 md:p-12 rounded-[2rem] md:rounded-[3.5rem] border border-red-500/20 shadow-2xl text-center max-w-lg w-full">
                     <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-red-500/30">
                         <ShieldX className="w-10 h-10 text-red-500" />
                     </div>
@@ -352,7 +352,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                             <h1 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white mb-1">
                                 <LetterPuller text="Painel Administrativo" />
                             </h1>
-                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 opacity-80">Controle de Autoridade Master</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.4em] text-emerald-500 opacity-80">Controle de Autoridade Master</p>
                         </div>
                     </div>
                     <button
@@ -481,12 +481,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onBack, onShowToa
                 {/* Users List */}
                 <div className="space-y-3">
                     {loading ? (
-                        <div className="bg-zinc-950/40 backdrop-blur-3xl p-16 rounded-[2.5rem] border border-white/5 text-center">
+                        <div className="bg-zinc-950/40 backdrop-blur-3xl p-8 md:p-16 rounded-[2.5rem] border border-white/5 text-center">
                             <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                             <p className="text-zinc-500 text-sm font-black uppercase tracking-widest">Acessando Banco de Dados...</p>
                         </div>
                     ) : filteredUsers.length === 0 ? (
-                        <div className="bg-zinc-950/40 p-16 rounded-[2.5rem] border border-white/5 text-center">
+                        <div className="bg-zinc-950/40 p-8 md:p-16 rounded-[2.5rem] border border-white/5 text-center">
                             <p className="text-zinc-500 text-sm font-black uppercase tracking-widest">Nenhum usuário encontrado</p>
                         </div>
                     ) : (

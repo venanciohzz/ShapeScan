@@ -274,7 +274,7 @@ const CaloriePlan: React.FC<CaloriePlanProps> = ({ user, onBack, onUpdateGoal })
       </div>
 
       {/* Result Sticky Footer */}
-      <div className={`fixed bottom-0 left-0 right-0 p-6 z-50 transition-transform duration-300 ${actualCalories > 0 ? 'translate-y-0' : 'translate-y-full'}`}>
+      <div className={`fixed bottom-0 left-0 right-0 px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] z-50 transition-transform duration-300 ${actualCalories > 0 ? 'translate-y-0' : 'translate-y-full'}`}>
           <div className="max-w-xl mx-auto bg-zinc-900 border-4 border-emerald-500 text-white p-6 rounded-[2rem] shadow-[0_0_30px_rgba(16,185,129,0.2)] flex flex-col gap-4">
               <div className="flex justify-between items-center pb-4 border-b border-zinc-800">
                   <div>

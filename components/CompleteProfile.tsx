@@ -99,7 +99,7 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
   return (
     <PremiumBackground className="flex items-center justify-center p-6 min-h-screen" dim={true} intensity={1.0}>
       <div className="w-full max-w-md relative z-20">
-        <div className="glass-card w-full p-8 md:p-12 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
+        <div className="glass-card w-full p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
           {/* Avatar do Google */}
@@ -176,7 +176,7 @@ const CompleteProfile: React.FC<CompleteProfileProps> = ({ user, onComplete }) =
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-white text-zinc-950 py-5 rounded-full font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center uppercase tracking-widest text-xs"
+              className="w-full bg-white text-zinc-950 py-5 rounded-full font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center uppercase tracking-widest text-xs"
             >
               {isLoading ? 'Salvando...' : 'Continuar →'}
             </button>

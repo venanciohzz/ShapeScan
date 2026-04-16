@@ -66,7 +66,7 @@ const DailyFeedbackCard: React.FC<DailyFeedbackCardProps> = ({ feedback, loading
             </div>
           </div>
           <div className="flex flex-col items-end">
-            <span className={`text-4xl font-serif-premium font-bold ${config.color} tracking-tighter`}>{feedback.score}%</span>
+            <span className={`text-3xl md:text-4xl font-serif-premium font-bold ${config.color} tracking-tighter`}>{feedback.score}%</span>
             <span className="text-[8px] font-black text-white/20 uppercase tracking-widest">Aderência</span>
           </div>
         </div>

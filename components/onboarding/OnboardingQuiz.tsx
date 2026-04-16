@@ -66,7 +66,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 
             {/* STEP 1: GENDER */}
             {step === 1 && (
-                <div className="space-y-10">
+                <div className="space-y-6 md:space-y-10">
                     <div className="text-center space-y-4 mb-2">
                         <h2 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight text-balance">
                             <LetterPuller text="Qual seu gênero?" />
@@ -94,7 +94,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 
             {/* STEP 2: MEASUREMENTS */}
             {step === 2 && (
-                <div className="space-y-10">
+                <div className="space-y-6 md:space-y-10">
                     <div className="text-center space-y-4 mb-2">
                         <h2 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight text-balance">
                             <LetterPuller text="Suas medidas" />
@@ -116,7 +116,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 
             {/* STEP 3: BIRTH YEAR */}
             {step === 3 && (
-                <div className="space-y-10">
+                <div className="space-y-6 md:space-y-10">
                     <div className="text-center space-y-4 mb-2">
                         <h2 className="text-4xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight">
                             <LetterPuller text="Ano de Nascimento" />
@@ -136,7 +136,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 
             {/* STEP 4: GOAL */}
             {step === 4 && (
-                <div className="space-y-10">
+                <div className="space-y-6 md:space-y-10">
                     <div className="text-center space-y-4 mb-2">
                         <h2 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight text-balance">
                             <LetterPuller text="Qual seu objetivo?" />
@@ -154,7 +154,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 
             {/* STEP 5: FREQUENCY */}
             {step === 5 && (
-                <div className="space-y-10">
+                <div className="space-y-6 md:space-y-10">
                     <div className="text-center space-y-4 mb-2">
                         <h2 className="text-3xl md:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight text-balance">
                             <LetterPuller text="Frequência de treino?" />
@@ -181,7 +181,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
             )}
 
             {/* FIXED FOOTER NAVIGATION */}
-            <div className="mt-12">
+            <div className="mt-6 md:mt-12">
                 <button
                     onClick={step === totalSteps ? handleFinish : next}
                     disabled={isLoading || !canContinue()}
@@ -205,7 +205,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
 const PremiumCard = ({ title, subtitle, icon, active, onClick }: { title: string, subtitle?: string, icon: string, active: boolean, onClick: () => void }) => (
     <button
         onClick={onClick}
-        className={`w-full p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border transition-all duration-500 flex items-center gap-6 sm:gap-8 group active:scale-[0.98] relative overflow-hidden ${active ? 'bg-white border-white shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]' : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.07] hover:border-white/20'}`}
+        className={`w-full p-4 sm:p-6 md:p-8 rounded-[1.5rem] sm:rounded-[2rem] md:rounded-[2.5rem] border transition-all duration-500 flex items-center gap-4 sm:gap-6 md:gap-8 group active:scale-[0.98] relative overflow-hidden ${active ? 'bg-white border-white shadow-[0_0_50px_-10px_rgba(255,255,255,0.3)]' : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.07] hover:border-white/20'}`}
     >
         <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center text-3xl sm:text-4xl transition-all duration-500 ${active ? 'bg-zinc-950/5 scale-110' : 'bg-white/5'}`}>
             {icon}

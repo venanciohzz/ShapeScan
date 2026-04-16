@@ -86,7 +86,7 @@ const EditMealModal: React.FC<EditMealModalProps> = ({ log, onClose, onSave, for
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-end md:items-center justify-center p-0 md:p-6">
-            <div className="bg-white dark:bg-zinc-950 w-full md:max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 border-t-2 md:border border-emerald-500/20 shadow-2xl flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-10 duration-200">
+            <div className="bg-white dark:bg-zinc-950 w-full md:max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-8 border-t-2 md:border border-emerald-500/20 shadow-2xl flex flex-col max-h-[85dvh] md:max-h-[90vh] animate-in slide-in-from-bottom-10 duration-200">
                 <div className="mb-6 text-center shrink-0">
                     <div className="w-12 h-1.5 bg-gray-200 dark:bg-zinc-800 rounded-full mx-auto mb-6 md:hidden"></div>
                     <h3 className="text-2xl font-black italic tracking-tighter text-gray-900 dark:text-white">

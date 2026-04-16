@@ -166,12 +166,12 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
           <h1 className="text-4xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
             <LetterPuller text="Painel de Controle" />
           </h1>
-          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] opacity-80">
             Ajustes e Personalização
           </p>
         </div>
 
-        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
 
           <div className="space-y-10 relative z-10">
@@ -191,7 +191,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="absolute -top-2 -right-12 z-30 flex items-center gap-2 bg-zinc-900/90 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-2xl shadow-2xl"
+                    className="absolute -top-2 -right-2 z-30 flex items-center gap-2 bg-zinc-900/90 backdrop-blur-xl border border-white/10 px-3 py-1.5 rounded-2xl shadow-2xl"
                   >
                     <div className="flex items-center gap-1">
                       <Flame className={`w-3 h-3 ${userStats.currentStreak > 0 ? 'text-orange-500 fill-orange-500 animate-pulse' : 'text-zinc-600'}`} />

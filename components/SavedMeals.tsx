@@ -65,7 +65,7 @@ const SavedMeals: React.FC<SavedMealsProps> = ({ user, onAddLog, onBack, onShowT
             </h1>
             <Bookmark className="w-8 h-8 text-emerald-500 opacity-60" />
           </div>
-          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] opacity-80">
             Arquivo de Nutrição Salva
           </p>
         </div>
@@ -76,10 +76,10 @@ const SavedMeals: React.FC<SavedMealsProps> = ({ user, onAddLog, onBack, onShowT
             <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Sincronizando Banco de Dados...</p>
           </div>
         ) : meals.length === 0 ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-24 bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] border border-white/5 border-dashed">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-24 bg-zinc-950/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] border border-white/5 border-dashed">
             <Bookmark className="w-16 h-16 text-emerald-500/20 mx-auto mb-6" />
             <p className="font-black text-zinc-400 uppercase text-[10px] tracking-[0.3em] mb-2 drop-shadow-sm">Arquivo Vazio</p>
-            <p className="text-sm text-zinc-300 font-medium px-12 drop-shadow-sm">Você ainda não salvou refeições. Use o scanner ou registro manual para alimentar seu arquivo.</p>
+            <p className="text-sm text-zinc-300 font-medium px-6 md:px-12 drop-shadow-sm">Você ainda não salvou refeições. Use o scanner ou registro manual para alimentar seu arquivo.</p>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 gap-6">

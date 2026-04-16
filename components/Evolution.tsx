@@ -40,7 +40,7 @@ const Evolution: React.FC<EvolutionProps> = ({ user, records, logs, onBack, onAd
   if (!user.isPremium && user.plan !== 'lifetime') {
     return (
       <PremiumBackground className="flex items-center justify-center p-6" dim={true} intensity={1.5}>
-        <div className="w-full max-w-lg bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-10 md:p-14 border border-emerald-500/20 text-center relative overflow-hidden shadow-2xl">
+        <div className="w-full max-w-lg bg-zinc-950/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] p-6 md:p-14 border border-emerald-500/20 text-center relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
 
           <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-10 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.1)]">
@@ -136,7 +136,7 @@ const Evolution: React.FC<EvolutionProps> = ({ user, records, logs, onBack, onAd
           <h1 className="text-3xl md:text-5xl font-serif-premium font-bold text-white tracking-tight mb-3">
             <LetterPuller text="Histórico" />
           </h1>
-          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] opacity-80">
+          <p className="text-emerald-500 font-black text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] opacity-80">
             Progressão de Performance
           </p>
         </div>
@@ -243,7 +243,7 @@ const Evolution: React.FC<EvolutionProps> = ({ user, records, logs, onBack, onAd
                 ) : (
                   <div className="text-center py-24 bg-zinc-950/40 rounded-[3rem] border border-white/5 shadow-xl">
                     <TrendingUp className="w-16 h-16 text-zinc-800 mx-auto mb-6 opacity-20" />
-                    <p className="font-black text-zinc-700 uppercase text-[10px] tracking-[0.4em]">Inicie sua Jornada Pro</p>
+                    <p className="font-black text-zinc-700 uppercase text-[10px] tracking-[0.2em] md:tracking-[0.4em]">Inicie sua Jornada Pro</p>
                   </div>
                 )}
               </AnimatePresence>
@@ -254,13 +254,13 @@ const Evolution: React.FC<EvolutionProps> = ({ user, records, logs, onBack, onAd
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onSubmit={handleSubmit}
-            className="bg-zinc-950/40 backdrop-blur-3xl p-10 md:p-14 rounded-[3.5rem] border border-white/5 shadow-2xl space-y-8 relative overflow-hidden"
+            className="bg-zinc-950/40 backdrop-blur-3xl p-6 md:p-14 rounded-[2rem] md:rounded-[3.5rem] border border-white/5 shadow-2xl space-y-8 relative overflow-hidden"
           >
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent"></div>
 
             <div className="text-center mb-10">
               <h2 className="text-2xl font-serif-premium font-bold text-white tracking-tight mb-2">Novo Marco</h2>
-              <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em]">Sincronização de Matriz</p>
+              <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] md:tracking-[0.4em]">Sincronização de Matriz</p>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
@@ -323,7 +323,7 @@ const Evolution: React.FC<EvolutionProps> = ({ user, records, logs, onBack, onAd
           </motion.form>
         )}
 
-        <p className="text-center text-[9px] font-black text-zinc-600 uppercase tracking-[0.5em] mt-10 opacity-40 px-6">
+        <p className="text-center text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] md:tracking-[0.5em] mt-10 opacity-40 px-6">
           ShapeScan Elite Analytics Module
         </p>
       </div>

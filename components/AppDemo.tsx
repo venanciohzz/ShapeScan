@@ -171,7 +171,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
     };
 
     const DemoHeader = () => (
-        <header className="flex justify-between items-center mb-12 z-20 relative px-6 md:px-0 mt-8 md:mt-0">
+        <header className="flex justify-between items-center mb-6 md:mb-12 z-20 relative px-6 md:px-0 mt-8 md:mt-0">
             <button onClick={onBack} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 text-white">
                 <span className="text-xl">←</span>
             </button>
@@ -229,12 +229,12 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                             </p>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto">
+                        <div className="grid md:grid-cols-2 gap-4 md:gap-8 w-full max-w-4xl mx-auto">
                             {/* Food Card */}
                             <motion.div
                                 whileHover={{ y: -5, scale: 1.02 }}
                                 onClick={simulateFoodScan}
-                                className="bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[3.5rem] p-10 hover:border-emerald-500/50 transition-all cursor-pointer group shadow-2xl relative overflow-hidden flex flex-col items-center text-center"
+                                className="bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[3.5rem] p-6 md:p-10 hover:border-emerald-500/50 transition-all cursor-pointer group shadow-2xl relative overflow-hidden flex flex-col items-center text-center"
                             >
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:bg-emerald-500/20 transition-colors"></div>
                                 <div className="w-24 h-24 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(16,185,129,0.1)] group-hover:scale-110 transition-transform">
@@ -253,7 +253,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                             <motion.div
                                 whileHover={{ y: -5, scale: 1.02 }}
                                 onClick={simulateShapeScan}
-                                className="bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[3.5rem] p-10 hover:border-emerald-500/50 transition-all cursor-pointer group shadow-2xl relative overflow-hidden flex flex-col items-center text-center"
+                                className="bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[3.5rem] p-6 md:p-10 hover:border-emerald-500/50 transition-all cursor-pointer group shadow-2xl relative overflow-hidden flex flex-col items-center text-center"
                             >
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:bg-emerald-500/20 transition-colors"></div>
                                 <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(255,255,255,0.05)] group-hover:scale-110 transition-transform group-hover:bg-emerald-500/10 group-hover:border-emerald-500/30">
@@ -293,14 +293,14 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                             <div className="space-y-8">
                                 <div className="space-y-2">
-                                    <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.4em] opacity-70">Resultado Identificado</span>
-                                    <h2 className="text-5xl md:text-6xl font-serif-premium font-bold text-white tracking-tight leading-none uppercase">
+                                    <span className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.4em] opacity-70">Resultado Identificado</span>
+                                    <h2 className="text-3xl md:text-6xl font-serif-premium font-bold text-white tracking-tight leading-none uppercase">
                                         {mockFoodData.mealName}
                                     </h2>
                                 </div>
 
                                 <div className="flex items-baseline gap-4">
-                                    <span className="text-8xl font-serif-premium font-bold text-white tracking-tighter hover:text-emerald-500 transition-colors duration-500">
+                                    <span className="text-5xl md:text-8xl font-serif-premium font-bold text-white tracking-tighter hover:text-emerald-500 transition-colors duration-500">
                                         {mockFoodData.totalCalories.toFixed(0)}
                                     </span>
                                     <span className="text-emerald-500/50 text-2xl font-serif-premium italic">kcal</span>
@@ -320,7 +320,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                                 </div>
                             </div>
 
-                            <div className="bg-zinc-950/40 backdrop-blur-2xl p-10 rounded-[3rem] border border-white/10 space-y-8 relative overflow-hidden group">
+                            <div className="bg-zinc-950/40 backdrop-blur-2xl p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-white/10 space-y-8 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-8 transform group-hover:rotate-12 transition-transform duration-700 opacity-10">
                                     <CheckCircle2 className="w-24 h-24 text-emerald-500" strokeWidth={0.5} />
                                 </div>
@@ -390,13 +390,13 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                     <div className="space-y-12 pb-32 animate-in fade-in slide-in-from-bottom-8 duration-1000 px-6 pt-6">
                         <DemoHeader />
 
-                        <div className="bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[3.5rem] p-12 shadow-2xl relative overflow-hidden flex flex-col items-center group">
+                        <div className="bg-zinc-950/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[3.5rem] p-6 md:p-12 shadow-2xl relative overflow-hidden flex flex-col items-center group">
                             <div className="absolute inset-0 z-0 opacity-20 bg-center bg-cover brightness-110 contrast-125" style={{ backgroundImage: "url('https://pub-e7d6666ba2834cfa9789396de6aa386a.r2.dev/shape.png')" }}>
                                 <div className="absolute inset-0 bg-zinc-950/80 mix-blend-multiply"></div>
                             </div>
                             <div className="relative z-10 flex flex-col items-center">
                                 <div className="flex items-baseline gap-2 mb-4">
-                                    <h2 className="text-8xl md:text-[10rem] font-serif-premium font-bold text-white leading-none tracking-tighter drop-shadow-2xl">
+                                    <h2 className="text-5xl md:text-[10rem] font-serif-premium font-bold text-white leading-none tracking-tighter drop-shadow-2xl">
                                         {mockShapeData.shape_score.toFixed(1)}
                                     </h2>
                                     <span className="text-3xl font-serif-premium text-zinc-500 font-bold tracking-tighter">/10</span>
@@ -435,7 +435,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-10 rounded-[3rem] space-y-8">
+                            <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] space-y-8">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                                         <Scale className="w-6 h-6 text-emerald-500" />
@@ -463,7 +463,7 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                                 </div>
                             </div>
 
-                            <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-10 rounded-[3rem] space-y-8">
+                            <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] space-y-8">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                                         <Target className="w-6 h-6 text-emerald-500" />
@@ -486,9 +486,9 @@ const AppDemo: React.FC<Props> = ({ onBack, onRegister }) => {
                             </div>
                         </div>
 
-                        <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-12 rounded-[3.5rem] relative overflow-hidden space-y-10 group mt-12 mb-12">
+                        <div className="bg-zinc-950/40 backdrop-blur-2xl border border-white/5 p-6 md:p-12 rounded-[2rem] md:rounded-[3.5rem] relative overflow-hidden space-y-10 group mt-12 mb-12">
                             <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 blur-[100px] rounded-full -mr-32 -mt-32 transition-colors"></div>
-                            <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.4em] mb-6 opacity-70">Diretriz Crítica: Ciclo de 60 Dias</p>
+                            <p className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.4em] mb-6 opacity-70">Diretriz Crítica: Ciclo de 60 Dias</p>
                             <p className="text-white text-3xl md:text-5xl font-serif-premium font-bold tracking-tight leading-tight italic drop-shadow-lg">
                                 "{mockShapeData.execution_strategy.primary_focus_next_60_days}"
                             </p>

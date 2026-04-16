@@ -18,7 +18,7 @@ const MealHistory: React.FC<MealHistoryProps> = ({
     return (
         <div className="space-y-6 pb-20">
             <div className="flex items-center gap-4 mb-8">
-                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.5em] opacity-30">
+                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.3em] md:tracking-[0.5em] opacity-30">
                     Registros Recentes
                 </h2>
                 <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
@@ -76,11 +76,11 @@ const MealHistory: React.FC<MealHistoryProps> = ({
                     ))}
                 </div>
             ) : (
-                <div className="bg-zinc-950/20 backdrop-blur-xl p-16 rounded-[3rem] text-center border border-dashed border-white/5 shadow-xl">
+                <div className="bg-zinc-950/20 backdrop-blur-xl p-8 md:p-16 rounded-[2rem] md:rounded-[3rem] text-center border border-dashed border-white/5 shadow-xl">
                     <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl text-zinc-400 opacity-80">
                         <Utensils className="w-8 h-8" />
                     </div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 opacity-80 drop-shadow-sm mb-6">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.4em] text-zinc-400 opacity-80 drop-shadow-sm mb-6">
                         Nenhuma análise hoje
                     </p>
                     <p className="text-xs text-zinc-600 font-medium max-w-[200px] mx-auto leading-relaxed">

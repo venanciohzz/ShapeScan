@@ -44,7 +44,7 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
             </button>
          </div>
 
-         <div className="relative z-10 max-w-4xl mx-auto px-6 pt-32 pb-24">
+         <div className="relative z-10 max-w-4xl mx-auto px-6 pt-20 md:pt-32 pb-24">
             <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
                <div className="inline-block px-4 py-1.5 rounded-full border border-red-500/30 bg-red-500/10 text-red-400 text-[10px] font-black uppercase tracking-widest mb-6 shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]">
                   Limite Diário Atingido
@@ -79,7 +79,7 @@ const UpgradePro: React.FC<UpgradeProProps> = ({ user, onBack, onShowToast }) =>
                </div>
 
                {/* PRO (Target) */}
-               <div className="bg-zinc-900/80 border-2 border-emerald-500 rounded-[2.5rem] p-8 shadow-2xl shadow-emerald-500/10 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+               <div className="bg-zinc-900/80 border-2 border-emerald-500 rounded-2xl md:rounded-[2.5rem] p-8 shadow-2xl shadow-emerald-500/10 relative overflow-hidden group hover:scale-[1.02] transition-transform">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
 
                   <div className="flex justify-between items-center mb-6">
