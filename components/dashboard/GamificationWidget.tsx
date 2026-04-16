@@ -41,7 +41,7 @@ const GamificationWidget: React.FC<GamificationWidgetProps> = ({ stats, loading 
             {/* Glow Effect */}
             <div className={`absolute -inset-4 rounded-[3rem] blur-3xl opacity-0 transition-all duration-1000 group-hover:opacity-20 pointer-events-none bg-amber-500`}></div>
 
-            <div className="relative bg-zinc-900/40 backdrop-blur-2xl rounded-[2rem] p-6 border border-white/5 shadow-xl overflow-hidden group-hover:border-white/10 transition-all duration-500">
+            <div className="relative bg-zinc-900/40 backdrop-blur-2xl rounded-[2rem] p-6 border border-white/5 shadow-xl group-hover:border-white/10 transition-all duration-500">
                 
                 <div className="relative z-10">
                     <header className="flex justify-between items-center mb-6">

@@ -171,7 +171,7 @@ const Settings: React.FC<SettingsProps> = ({ user, onUpdateProfile, onBack, dark
           </p>
         </div>
 
-        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+        <div className="bg-zinc-950/40 backdrop-blur-3xl rounded-[2rem] md:rounded-[3.5rem] p-8 md:p-12 border border-white/5 shadow-2xl relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
 
           <div className="space-y-10 relative z-10">
