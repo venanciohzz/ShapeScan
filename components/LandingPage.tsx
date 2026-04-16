@@ -442,8 +442,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
             <div className="order-1 lg:order-2">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif-premium font-bold tracking-tighter text-white mb-6 leading-tight">
-                <LetterPuller text="Sua alimentação," /> <br />
-                <LetterPuller text="analisada em segundos." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2" delay={0.3} />
+                <LetterPuller text="Sua alimentação," isMobile={isMobile} /> <br />
+                <LetterPuller text="analisada em segundos." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2" delay={0.3} isMobile={isMobile} />
               </h2>
               <p className="text-lg text-zinc-400 font-medium mb-8 leading-relaxed max-w-xl">
                 Esqueça planilhas e aplicativos complicados. Envie uma foto da refeição e receba uma análise completa com estimativa de calorias, macros e composição nutricional.
@@ -478,8 +478,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="order-2 lg:order-1">
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium font-bold tracking-tighter text-white mb-6 leading-tight">
-                <LetterPuller text="Bioimpedância" /> <br />
-                <LetterPuller text="Visual." className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2" delay={0.3} />
+                <LetterPuller text="Bioimpedância" isMobile={isMobile} /> <br />
+                <LetterPuller text="Visual." className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2" delay={0.3} isMobile={isMobile} />
               </h2>
               <p className="text-lg text-zinc-400 font-medium mb-10 leading-relaxed max-w-xl">
                 Esqueça o "olhômetro". Nossa tecnologia analisa proporções, simetria muscular e estima seu percentual de gordura através de comparação avançada com milhares de físicos.
@@ -585,7 +585,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16 lg:mb-24">
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium font-bold tracking-tighter text-white mb-6">
-                <LetterPuller text="Resultados" /> <LetterPuller text="Reais." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic" delay={0.3} />
+                <LetterPuller text="Resultados" isMobile={isMobile} /> <LetterPuller text="Reais." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic" delay={0.3} isMobile={isMobile} />
               </h2>
               <p className="text-lg lg:text-xl text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed">
                 Junte-se a milhares de usuários que já transformaram seus físicos com a inteligência do ShapeScan.
@@ -634,8 +634,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
           <div className="relative z-10 max-w-3xl mx-auto">
             <h2 className="text-5xl sm:text-6xl lg:text-7xl font-serif-premium font-bold tracking-tighter mb-8 text-white leading-tight drop-shadow-2xl">
-              <LetterPuller text="Sua melhor versão" /> <br />
-              <LetterPuller text="começa agora." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic" delay={0.3} />
+              <LetterPuller text="Sua melhor versão" isMobile={isMobile} /> <br />
+              <LetterPuller text="começa agora." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic" delay={0.3} isMobile={isMobile} />
             </h2>
             <p className="text-zinc-400 text-lg lg:text-xl mb-12 font-medium">
               Descubra seu percentual de gordura em segundos. Sem cartão para começar.
