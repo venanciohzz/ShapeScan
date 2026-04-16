@@ -27,10 +27,10 @@ const HydrationCard: React.FC<HydrationCardProps> = ({
 
     return (
         <div
-            className={`p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] relative overflow-hidden transition-all duration-700 bg-zinc-900/50 backdrop-blur-2xl group shadow-2xl`}
+            className={`p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] relative transition-all duration-700 bg-zinc-900/50 backdrop-blur-2xl group shadow-2xl`}
         >
             {/* Background Glow */}
-            <div className={`absolute -inset-10 bg-cyan-500/10 rounded-full blur-[100px] opacity-0 group-hover:opacity-30 transition-opacity duration-1000`}></div>
+            <div className={`absolute inset-0 bg-cyan-500/10 rounded-[2rem] md:rounded-[3rem] blur-[60px] opacity-0 group-hover:opacity-30 transition-opacity duration-1000 pointer-events-none`}></div>
 
             <div className="relative z-10">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-3 md:gap-6 mb-5 md:mb-10">
