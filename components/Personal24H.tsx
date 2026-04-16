@@ -279,7 +279,7 @@ const Personal24H: React.FC<PersonalIAProps> = ({ user, logs, evolution, onBack,
         </div>
 
         {/* Input Area - Back to flex flow for guaranteed touch interaction */}
-        <div className="flex-none w-full px-4 pb-12 pt-4 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent">
+        <div className="flex-none w-full px-4 pb-4 pt-4 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent" style={{paddingBottom: 'max(1rem, env(safe-area-inset-bottom))'}}>
           <div className="max-w-2xl mx-auto w-full">
             <form
               onSubmit={(e) => { e.preventDefault(); handleSend(); }}

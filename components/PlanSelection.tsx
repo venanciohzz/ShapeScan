@@ -190,9 +190,9 @@ const PlanCard = ({ title, price, period, features, highlightTag, onClick, loadi
             {title}
          </h3>
 
-         <div className="mb-2 flex items-baseline gap-2 whitespace-nowrap">
-            <span className="text-6xl md:text-7xl font-serif-premium font-bold text-white tracking-tighter drop-shadow-lg">
-               {price.includes('R$') ? '' : <span className="text-3xl font-black text-zinc-500 mr-1">R$</span>}{price}
+         <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-0">
+            <span className="text-4xl md:text-6xl lg:text-7xl font-serif-premium font-bold text-white tracking-tighter drop-shadow-lg">
+               {price.includes('R$') ? '' : <span className="text-2xl md:text-3xl font-black text-zinc-500 mr-1">R$</span>}{price}
             </span>
             <span className="text-zinc-500 font-bold text-[10px] uppercase tracking-widest">{period}</span>
          </div>

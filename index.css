@@ -136,42 +136,68 @@ body {
   }
 
   /* ── LAYOUT: Reduz paddings excessivos em mobile ─────────────────── */
-  /* Cards com p-10, p-12, p-14 ficam sem espaço em telas de 375px */
   .p-10 { padding: 1.25rem !important; }
   .p-12 { padding: 1.5rem !important; }
   .p-14 { padding: 1.5rem !important; }
   .p-16 { padding: 1.5rem !important; }
+  .p-8  { padding: 1rem !important; }
+
+  /* Padding-top excessivo em containers principais */
+  .pt-32 { padding-top: 5rem !important; }
+  .pt-28 { padding-top: 4rem !important; }
+  .pt-24 { padding-top: 3.5rem !important; }
+
+  /* Padding-bottom excessivo */
+  .pb-24 { padding-bottom: 3rem !important; }
+
+  /* Padding vertical excessivo */
+  .py-24 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+  .py-32 { padding-top: 3rem !important;   padding-bottom: 3rem !important; }
 
   /* Gap excessivo em grids/flex */
-  .gap-12 { gap: 1.25rem !important; }
-  .gap-16 { gap: 1.5rem !important; }
+  .gap-12 { gap: 1rem !important; }
+  .gap-16 { gap: 1.25rem !important; }
   .gap-20 { gap: 1.5rem !important; }
+  .gap-10 { gap: 0.875rem !important; }
+
+  /* Space-y excessivo */
+  .space-y-12 > * + * { margin-top: 1.25rem !important; }
+  .space-y-10 > * + * { margin-top: 1rem !important; }
 
   /* Border-radius gigante → mais compacto em mobile */
-  .rounded-\[3rem\]   { border-radius: 1.25rem !important; }
+  .rounded-\[3rem\]    { border-radius: 1.25rem !important; }
   .rounded-\[3\.5rem\] { border-radius: 1.5rem !important; }
-  .rounded-\[4rem\]   { border-radius: 1.5rem !important; }
+  .rounded-\[4rem\]    { border-radius: 1.5rem !important; }
+  .rounded-\[2\.5rem\] { border-radius: 1rem !important; }
 
   /* Textos heroicos gigantes → legíveis mas não estouram tela */
-  .text-7xl { font-size: 2.5rem !important; line-height: 1 !important; }
-  .text-8xl { font-size: 3rem !important;   line-height: 1 !important; }
-  .text-9xl { font-size: 3rem !important;   line-height: 1 !important; }
+  .text-5xl { font-size: 1.875rem !important; line-height: 1.1 !important; }
+  .text-6xl { font-size: 2rem !important;     line-height: 1 !important; }
+  .text-7xl { font-size: 2.25rem !important;  line-height: 1 !important; }
+  .text-8xl { font-size: 2.5rem !important;   line-height: 1 !important; }
+  .text-9xl { font-size: 2.5rem !important;   line-height: 1 !important; }
 
   /* Letter-spacing extremo → quebra layout em mobile */
-  .tracking-\[0\.4em\] { letter-spacing: 0.12em !important; }
-  .tracking-\[0\.5em\] { letter-spacing: 0.12em !important; }
-  .tracking-\[0\.3em\] { letter-spacing: 0.1em !important;  }
-  .tracking-\[0\.2em\] { letter-spacing: 0.08em !important; }
+  .tracking-\[0\.4em\] { letter-spacing: 0.1em !important; }
+  .tracking-\[0\.5em\] { letter-spacing: 0.1em !important; }
+  .tracking-\[0\.3em\] { letter-spacing: 0.08em !important; }
+  .tracking-\[0\.2em\] { letter-spacing: 0.06em !important; }
 
-  /* Margins grandes */
+  /* Margins excessivos */
+  .mb-10 { margin-bottom: 1.25rem !important; }
   .mb-12 { margin-bottom: 1.5rem !important; }
   .mb-16 { margin-bottom: 1.75rem !important; }
   .mb-20 { margin-bottom: 2rem !important; }
   .mb-24 { margin-bottom: 2rem !important; }
   .mb-28 { margin-bottom: 2rem !important; }
   .mb-32 { margin-bottom: 2rem !important; }
+  .mt-20 { margin-top: 2.5rem !important; }
+  .mt-16 { margin-top: 2rem !important; }
 
   /* min-h grandes em upload areas */
-  .min-h-\[400px\] { min-height: 220px !important; }
-  .min-h-\[500px\] { min-height: 260px !important; }
+  .min-h-\[400px\] { min-height: 200px !important; }
+  .min-h-\[500px\] { min-height: 240px !important; }
+
+  /* whitespace-nowrap que causa overflow com preços/textos longos */
+  .whitespace-nowrap { white-space: normal !important; }
 }

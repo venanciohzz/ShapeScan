@@ -197,7 +197,7 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
   return (
     <PremiumBackground>
-      <div className="max-w-4xl mx-auto px-6 py-12 md:py-20 flex flex-col min-h-screen relative">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-20 flex flex-col min-h-screen relative">
         <AnimatePresence>
           {showLimitModal && (
             <motion.div

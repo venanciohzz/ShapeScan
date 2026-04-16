@@ -576,21 +576,21 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
                 </div>
               </div>
 
-              <div className="fixed bottom-10 left-0 w-full px-6 z-50">
-                <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <motion.button 
+              <div className="fixed bottom-0 left-0 w-full px-4 pb-4 pt-2 z-50 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-transparent">
+                <div className="max-w-4xl mx-auto flex flex-col md:grid md:grid-cols-3 gap-3">
+                  <motion.button
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => confirmAdd(false)} 
-                    className="md:col-span-2 bg-white text-zinc-950 py-6 rounded-3xl font-black uppercase tracking-widest text-[10px] hover:bg-zinc-200 transition-all shadow-2xl flex items-center justify-center gap-3"
+                    onClick={() => confirmAdd(false)}
+                    className="md:col-span-2 bg-white text-zinc-950 py-4 rounded-2xl font-black uppercase tracking-wide text-[10px] hover:bg-zinc-200 transition-all shadow-2xl flex items-center justify-center gap-3"
                   >
                     Confirmar Registro <CheckCircle2 className="w-5 h-5" />
                   </motion.button>
-                  <motion.button 
+                  <motion.button
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => confirmAdd(true)} 
-                    className="bg-zinc-900 text-white py-6 rounded-3xl font-black uppercase tracking-widest text-[9px] border border-white/10 hover:bg-zinc-800 transition-all"
+                    onClick={() => confirmAdd(true)}
+                    className="bg-zinc-900 text-white py-4 rounded-2xl font-black uppercase tracking-wide text-[9px] border border-white/10 hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
                   >
-                    Salvar Favorito <Save className="w-4 h-4 ml-2 inline-block" />
+                    Salvar Favorito <Save className="w-4 h-4 inline-block" />
                   </motion.button>
                 </div>
               </div>
