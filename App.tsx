@@ -944,7 +944,7 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'success' | 
   const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
 
   return (
-    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-top-5 duration-300 w-full max-w-sm px-4">
+    <div className="fixed top-6 inset-x-4 z-[200] animate-in slide-in-from-top-5 duration-300 max-w-sm mx-auto">
       <div className={`${bg} text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md bg-opacity-90 border border-white/20`}>
         <span className="text-xl">{icon}</span>
         <p className="font-bold text-sm tracking-wide flex-1">{message}</p>
