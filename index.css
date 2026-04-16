@@ -198,6 +198,4 @@ body {
   .min-h-\[400px\] { min-height: 200px !important; }
   .min-h-\[500px\] { min-height: 240px !important; }
 
-  /* whitespace-nowrap que causa overflow com preços/textos longos */
-  .whitespace-nowrap { white-space: normal !important; }
 }
