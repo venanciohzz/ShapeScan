@@ -46,8 +46,8 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
             </button>
          </div>
 
-         <div className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-24">
-            <div className="text-center mb-16 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000">
+         <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 md:pt-32 pb-24">
+            <div className="text-center mb-8 md:mb-16 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000">
                {/* Badge de urgência */}
                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-black uppercase tracking-widest mb-6 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -66,7 +66,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
             </div>
 
             {/* Billing Toggle - Premium Redesign */}
-            <div className="flex justify-center mb-16 animate-in fade-in duration-1000 delay-200">
+            <div className="flex justify-center mb-8 md:mb-16 animate-in fade-in duration-1000 delay-200">
                <div className="bg-zinc-950/50 backdrop-blur-xl p-1.5 rounded-full border border-white/10 flex relative h-16 w-80 max-w-full items-center shadow-2xl">
                   {/* Monthly Button */}
                   <button
@@ -135,7 +135,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
 
             <div className="mt-20 max-w-3xl mx-auto text-center">
                <div className="p-8 rounded-[2rem] bg-zinc-950/40 backdrop-blur-xl border border-white/5 shadow-2xl">
-                  <h3 className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.4em] mb-4">Sobre os Limites</h3>
+                  <h3 className="text-zinc-500 font-black text-[10px] uppercase tracking-[0.2em] md:tracking-[0.4em] mb-4">Sobre os Limites</h3>
                   <p className="text-zinc-400 text-xs md:text-sm leading-relaxed font-medium">
                      Nossa tecnologia utiliza processamento avançado de alto desempenho em IA. Devido aos custos operacionais desta infraestrutura, aplicamos limites diários para manter a sustentabilidade do serviço.
                   </p>
@@ -168,7 +168,7 @@ const PlanCard = ({ title, price, period, features, highlightTag, onClick, loadi
    <div
       onClick={onClick}
       className={`
-      group relative rounded-[3rem] p-10 md:p-12 border flex flex-col justify-between h-full cursor-pointer
+      group relative rounded-[2rem] md:rounded-[3rem] p-6 md:p-12 border flex flex-col justify-between h-full cursor-pointer
       transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]
       ${isPro ? 'bg-zinc-950/60 backdrop-blur-3xl border-emerald-500/30 shadow-[0_0_50px_rgba(16,185,129,0.1)]' : 'bg-zinc-950/40 backdrop-blur-3xl border-white/10'}
       hover:border-emerald-500/50 hover:shadow-2xl hover:shadow-emerald-500/20 hover:-translate-y-4

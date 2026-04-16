@@ -304,12 +304,12 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md animate-in fade-in duration-500 overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95 duration-500">
+      <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95 duration-500">
 
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0"></div>
 
         {/* Header & Summary */}
-        <div className="p-10 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-900">
+        <div className="p-6 pb-4 md:p-10 md:pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-900">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -344,7 +344,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
           </div>
         </div>
 
-        <div className="px-10 py-10 flex-1">
+        <div className="px-6 py-6 md:px-10 md:py-10 flex-1">
           {error ? (
             <div className="py-16 text-center animate-in zoom-in duration-300">
               <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
@@ -431,7 +431,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
           ) : null}
         </div>
 
-        <div className="px-10 py-6 bg-zinc-900/50 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="px-6 py-4 md:px-10 md:py-6 bg-zinc-900/50 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
