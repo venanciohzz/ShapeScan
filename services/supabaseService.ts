@@ -1076,6 +1076,10 @@ function storeSession(session: { access_token: string; refresh_token: string; ex
   } catch { /* ignora */ }
 }
 
+// Mutex: evita dois refreshes paralelos quando o token expira e múltiplos
+// callers (getProfile + background data) chamam getValidToken() ao mesmo tempo.
+let _tokenRefreshPromise: Promise<string> | null = null;
+
 // Obtém um access token válido. Se expirado, faz refresh direto via fetch (sem SDK, sem lock).
 export async function getValidToken(): Promise<string> {
   const session = getStoredSession();
@@ -1083,28 +1087,42 @@ export async function getValidToken(): Promise<string> {
 
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = session.expires_at ?? 0;
-  // Renova se expirado ou expira em menos de 60s
+  // Token ainda válido — retorna imediatamente sem rede
   if (expiresAt > now + 60) return session.access_token;
 
-  // Token expirado — refresh direto sem SDK
-  console.log('[SupabaseService] 🔄 Token expirado, fazendo refresh direto...');
-  if (!session.refresh_token) throw new Error('Sem refresh_token. Faça login novamente.');
+  // Token expirado — refresh direto sem SDK, com mutex para evitar chamadas paralelas
+  if (_tokenRefreshPromise) return _tokenRefreshPromise;
 
-  const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'apikey': supabaseAnonKey },
-    body: JSON.stringify({ refresh_token: session.refresh_token }),
-  });
+  _tokenRefreshPromise = (async () => {
+    try {
+      if (!session.refresh_token) throw new Error('Sem refresh_token. Faça login novamente.');
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error_description || `Refresh falhou (${res.status}). Faça login novamente.`);
-  }
+      console.log('[SupabaseService] 🔄 Token expirado, fazendo refresh direto...');
 
-  const newSession = await res.json();
-  storeSession(newSession);
-  console.log('[SupabaseService] ✅ Token renovado com sucesso.');
-  return newSession.access_token;
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 12000); // 12s: suficiente para cold start leve
+      const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': supabaseAnonKey },
+        body: JSON.stringify({ refresh_token: session.refresh_token }),
+        signal: ctrl.signal,
+      }).finally(() => clearTimeout(tid));
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error_description || `Refresh falhou (${res.status}). Faça login novamente.`);
+      }
+
+      const newSession = await res.json();
+      storeSession(newSession);
+      console.log('[SupabaseService] ✅ Token renovado com sucesso.');
+      return newSession.access_token;
+    } finally {
+      _tokenRefreshPromise = null;
+    }
+  })();
+
+  return _tokenRefreshPromise;
 }
 
 // Mantém compatibilidade síncrona para casos onde token não precisa ser válido (leitura imediata).

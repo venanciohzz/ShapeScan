@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
 import { db } from '../services/db';
-import { supabase } from '../services/supabaseService';
+import { supabaseUrl } from '../services/supabaseService';
 import { sanitizeInput } from '../utils/security';
 import { pixel } from '../utils/pixel';
 import PremiumBackground from './ui/PremiumBackground';
@@ -24,28 +24,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     setGoogleLoading(true);
     setError('');
 
-    // Timeout de 20s: se o Supabase demorar (cold start), libera o botão
-    const timeout = setTimeout(() => {
-      setGoogleLoading(false);
-      setError('Tempo limite excedido. Verifique sua conexão e tente novamente.');
-    }, 20000);
-
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
-
-    clearTimeout(timeout);
-
-    if (oauthError) {
-      setError(oauthError.message || 'Erro ao conectar com o Google.');
-      setGoogleLoading(false);
-    }
-    // Se não der erro, o redirect acontece automaticamente — sem setar loading false
+    // Bypass total do SDK: supabase.auth.signInWithOAuth() chama getSession()
+    // internamente, que usa o mesmo lock que trava indefinidamente para usuários
+    // Google OAuth. Redirecionamos diretamente para o endpoint de autorização do
+    // Supabase — o resultado volta como #access_token=... na URL, que App.tsx
+    // já processa manualmente.
+    const redirectTo = encodeURIComponent(window.location.origin);
+    window.location.href = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
