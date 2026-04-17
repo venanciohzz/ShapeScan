@@ -259,11 +259,24 @@ export async function getProfile(userId: string): Promise<User> {
     'apikey': supabaseAnonKey,
   };
 
-  // Buscar perfil
-  const profileRes = await fetch(
-    `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=*&limit=1`,
-    { headers }
-  );
+  const fetchWithTimeout = (url: string, opts: RequestInit = {}, ms = 10000) => {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(id));
+  };
+
+  // Buscar perfil e plano em paralelo
+  const [profileRes, plansRes] = await Promise.all([
+    fetchWithTimeout(
+      `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=*&limit=1`,
+      { headers }
+    ),
+    fetchWithTimeout(
+      `${supabaseUrl}/rest/v1/user_plans?user_id=eq.${encodeURIComponent(userId)}&active=eq.true&select=plan_id,active&order=created_at.desc&limit=1`,
+      { headers }
+    ),
+  ]);
+
   if (!profileRes.ok) {
     const msg = `HTTP ${profileRes.status} ao buscar perfil`;
     console.error(`[SupabaseService] ❌ Erro ao buscar perfil (${userId}):`, msg);
@@ -273,13 +286,6 @@ export async function getProfile(userId: string): Promise<User> {
   const data = profileRows?.[0];
   if (!data) throw new Error('Perfil não encontrado');
 
-  console.log('[SupabaseService] 💳 Buscando planos do usuário...');
-
-  // Buscar plano do usuário
-  const plansRes = await fetch(
-    `${supabaseUrl}/rest/v1/user_plans?user_id=eq.${encodeURIComponent(userId)}&active=eq.true&select=plan_id,active&order=created_at.desc&limit=1`,
-    { headers }
-  );
   const plans = plansRes.ok ? await plansRes.json() : [];
   if (!plansRes.ok) {
     console.error('[SupabaseService] Erro ao carregar plano:', plansRes.status);
@@ -293,7 +299,7 @@ export async function getProfile(userId: string): Promise<User> {
   // Buscar status de confirmação de e-mail direto da Auth API
   let emailConfirmed = false;
   try {
-    const authUserRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    const authUserRes = await fetchWithTimeout(`${supabaseUrl}/auth/v1/user`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'apikey': supabaseAnonKey,

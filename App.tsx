@@ -493,7 +493,7 @@ const App: React.FC = () => {
         isSessionLoadingRef.current = false;
         resolved = true;
       }
-    }, 15000);
+    }, 25000);
 
     initSession();
 

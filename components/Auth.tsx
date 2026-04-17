@@ -27,10 +27,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     setError('');
+
+    // Timeout de 20s: se o Supabase demorar (cold start), libera o botão
+    const timeout = setTimeout(() => {
+      setGoogleLoading(false);
+      setError('Tempo limite excedido. Verifique sua conexão e tente novamente.');
+    }, 20000);
+
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     });
+
+    clearTimeout(timeout);
+
     if (oauthError) {
       setError(oauthError.message || 'Erro ao conectar com o Google.');
       setGoogleLoading(false);
