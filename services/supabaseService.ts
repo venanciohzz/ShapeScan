@@ -9,7 +9,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Variáveis de ambiente do Supabase não configuradas');
 }
 
-export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+// autoRefreshToken: false — o SDK fazia refresh próprio em paralelo com o nosso
+// getValidToken(), causando dois calls simultâneos a /auth/v1/token (que em cold
+// start do Supabase free tier viram 36s cada). Gerenciamos refresh manualmente
+// via getValidToken() que tem mutex + timeout de 12s.
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: true,
+  },
+});
 
 // ==================== AUTENTICAÇÃO ====================
 
@@ -1115,6 +1124,12 @@ export async function getValidToken(): Promise<string> {
 
       const newSession = await res.json();
       storeSession(newSession);
+      // Sincroniza o SDK interno silenciosamente (sem acionar onAuthStateChange),
+      // necessário para que supabase.auth.signOut() use o token atualizado.
+      supabase.auth.setSession({
+        access_token: newSession.access_token,
+        refresh_token: newSession.refresh_token,
+      }).catch(() => {}); // fire-and-forget — falha silenciosa é aceitável
       console.log('[SupabaseService] ✅ Token renovado com sucesso.');
       return newSession.access_token;
     } finally {

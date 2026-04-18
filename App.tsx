@@ -517,9 +517,11 @@ const App: React.FC = () => {
           console.log('[Auth] Usuário deslogado centralmente.');
           setUser(null);
           navigate('/', { replace: true });
-        } else if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session?.user?.id) {
+        } else if (event === 'SIGNED_IN' && session?.user?.id) {
+          // TOKEN_REFRESHED: o SDK dispara este evento após setSession() — não re-fetcha
+          // o perfil pois o token mudar não altera dados do usuário.
           // Evitar re-fetch se já temos o usuário com o mesmo ID (login explícito já fez o fetch)
-          if (userRef.current?.id === session.user.id && event === 'SIGNED_IN') {
+          if (userRef.current?.id === session.user.id) {
              console.log('[App] ℹ️ SIGNED_IN: perfil já carregado (mesmo userId). Pulando fetch redundante.');
              return;
           }
