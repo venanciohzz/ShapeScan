@@ -424,6 +424,32 @@ const App: React.FC = () => {
     };
 
     const loadProfileSafely = async (userId: string, email: string): Promise<boolean> => {
+      // ============================================================
+      // CARREGAMENTO OTIMISTA: se temos o perfil em cache do userId
+      // correto, mostramos o app IMEDIATAMENTE sem esperar a rede.
+      // O Supabase é atualizado em background (token refresh + fetch).
+      // Isso elimina a tela de loading para usuários retornando, mesmo
+      // quando o Supabase está em cold start (token expirado = 12–36s).
+      // ============================================================
+      let releasedLoadingFromCache = false;
+      try {
+        const cached = localStorage.getItem('shapescan_user_profile');
+        if (cached) {
+          const cachedProfile = JSON.parse(cached) as User;
+          if (cachedProfile?.id === userId) {
+            console.log('[App] ⚡ Cache hit — app disponível instantaneamente, Supabase atualiza em background.');
+            setUser(cachedProfile);
+            setAuthState('authenticated');
+            setIsSessionLoading(false);
+            isSessionLoadingRef.current = false;
+            releasedLoadingFromCache = true;
+            // Carrega dados em background imediatamente com o cache
+            loadUserDataBackground(userId);
+          }
+        }
+      } catch { /* cache corrompido — ignora e busca da rede */ }
+
+      // Busca perfil atualizado da rede (background se já tínhamos cache, foreground se não)
       try {
         const { getProfile } = await import('./services/supabaseService');
         const profile = await getProfile(userId);
@@ -438,31 +464,32 @@ const App: React.FC = () => {
         }
         return false;
       } catch (err) {
-        console.warn("[App] ⚠️ Erro ao carregar perfil do DB. Fallback ativado:", err);
-        // Fallback seguro: O Client tá logado mas o BD falhou em dar os meta-dados
-        const fallbackProfile = {
-          id: userId,
-          email: email,
-          name: 'Usuário',
-          username: 'usuario_' + userId.substring(0, 5),
-          phone: '',
-          isPremium: false,
-          isAdmin: false,
-          isPendingPayment: false,
-          plan: 'free',
-          dailyCalorieGoal: 2000,
-        } as User;
-
-        setUser(fallbackProfile);
+        console.warn("[App] ⚠️ Erro ao carregar perfil do DB.", releasedLoadingFromCache ? 'Cache já está sendo exibido.' : 'Fallback ativado.', err);
+        if (!releasedLoadingFromCache) {
+          // Sem cache E sem rede — usar fallback mínimo
+          const fallbackProfile = {
+            id: userId,
+            email: email,
+            name: 'Usuário',
+            username: 'usuario_' + userId.substring(0, 5),
+            phone: '',
+            isPremium: false,
+            isAdmin: false,
+            isPendingPayment: false,
+            plan: 'free',
+            dailyCalorieGoal: 2000,
+          } as User;
+          setUser(fallbackProfile);
+        }
         return false;
       } finally {
-        // Libera o loading DA SESSÃO E DA UI agora que o user (ou fallback) está definido
-        setIsSessionLoading(false);
-        isSessionLoadingRef.current = false;
-
-        // Carrega dados em background (food logs, evolução, água)
-        // Precisa estar no finally para executar após try/catch
-        loadUserDataBackground(userId);
+        if (!releasedLoadingFromCache) {
+          // Primeira visita / cache vazio — libera loading agora que temos dados (ou fallback)
+          setIsSessionLoading(false);
+          isSessionLoadingRef.current = false;
+          loadUserDataBackground(userId);
+        }
+        // Se usou cache: loading já foi liberado acima, loadUserDataBackground já disparado
       }
     };
 
