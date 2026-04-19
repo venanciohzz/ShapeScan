@@ -8,6 +8,7 @@ import {
   useElements
 } from '@stripe/react-stripe-js';
 import { getValidToken, callEdgeFunction } from '../../services/supabaseService';
+import { CheckCircle2 } from 'lucide-react';
 
 const stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -82,7 +83,7 @@ const PaymentForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/60">
+      <div className="rounded-2xl overflow-hidden border border-zinc-800">
         <PaymentElement
           options={{ layout: 'accordion' }}
           onReady={() => setElementReady(true)}
@@ -99,13 +100,9 @@ const PaymentForm = ({
         </div>
       )}
 
-      <p className="text-center text-[10px] text-zinc-500 font-medium leading-relaxed px-2">
-        Renovação automática {planPeriod?.includes('ano') ? 'anual' : 'mensal'}. Cancele quando quiser, sem taxas.
-      </p>
-
       <button
         disabled={isProcessing || !stripe}
-        className="group relative w-full px-6 py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all duration-200 shadow-lg shadow-emerald-500/25 overflow-hidden"
+        className="group relative w-full px-6 py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all duration-200 shadow-lg shadow-emerald-500/25"
       >
         <span className="relative z-10 flex items-center justify-center gap-2">
           {isProcessing ? (
@@ -115,20 +112,24 @@ const PaymentForm = ({
             </>
           ) : (
             <>
-              Assinar Agora
+              Desbloquear agora
               <span className="text-base group-hover:translate-x-0.5 transition-transform">→</span>
             </>
           )}
         </span>
       </button>
 
+      <p className="text-center text-[10px] text-zinc-600 font-medium leading-relaxed">
+        Cancele quando quiser · Sem fidelidade
+      </p>
+
       <button
         type="button"
         onClick={onCancel}
         disabled={isProcessing}
-        className="w-full py-3 text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase tracking-[0.2em] transition-colors"
+        className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors"
       >
-        Cancelar e Voltar
+        Voltar
       </button>
     </form>
   );
@@ -161,7 +162,9 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const [visible, setVisible] = useState(false);
   const appliedCouponRef = useRef<string | null>(null);
 
-  // Animate in after mount
+  // Derive a clean plan label for the header (e.g. "Plano Pro" from "Pro Mensal")
+  const planLabel = planName.toLowerCase().includes('pro') ? 'Plano Pro' : 'Plano Standard';
+
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 10);
     return () => clearTimeout(t);
@@ -272,22 +275,27 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     }
   };
 
+  // zinc-950 (#09090b) as background — elimina o azul escuro padrão do Stripe night theme
   const appearance = {
     theme: 'night' as const,
     variables: {
       colorPrimary: '#10b981',
-      colorBackground: 'transparent',
+      colorBackground: '#09090b',
       colorText: '#ffffff',
       colorSecondaryText: '#a1a1aa',
       colorDanger: '#ef4444',
       fontFamily: 'Inter, system-ui, sans-serif',
       spacingUnit: '4px',
-      borderRadius: '14px',
+      borderRadius: '12px',
+      colorIconTab: '#71717a',
+      colorIconTabSelected: '#10b981',
+      colorIconTabHover: '#a1a1aa',
     },
     rules: {
       '.Input': {
         border: '1px solid #27272a',
         backgroundColor: '#18181b',
+        color: '#ffffff',
         transition: 'border 0.2s ease, box-shadow 0.2s ease',
       },
       '.Input:focus': {
@@ -305,8 +313,31 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       '.Tab': {
         border: '1px solid #27272a',
         backgroundColor: '#18181b',
+        color: '#a1a1aa',
       },
       '.Tab--selected': {
+        border: '1px solid #10b981',
+        backgroundColor: '#18181b',
+        color: '#ffffff',
+      },
+      '.Tab:hover': {
+        backgroundColor: '#27272a',
+        color: '#ffffff',
+      },
+      '.Block': {
+        backgroundColor: '#09090b',
+        border: '1px solid #27272a',
+      },
+      '.AccordionItem': {
+        backgroundColor: '#09090b',
+        borderColor: '#27272a',
+      },
+      '.PickerItem': {
+        backgroundColor: '#18181b',
+        border: '1px solid #27272a',
+      },
+      '.PickerItem--selected': {
+        backgroundColor: '#18181b',
         border: '1px solid #10b981',
       },
     },
@@ -317,59 +348,42 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     : `R$ ${planPrice}`;
 
   return (
-    // Backdrop
     <div
       className="fixed inset-0 z-[100] flex flex-col justify-end md:justify-center md:items-center md:p-8 bg-black/80 backdrop-blur-sm transition-opacity duration-300"
       style={{ opacity: visible ? 1 : 0 }}
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
-      {/* Sheet / Modal */}
       <div
-        className={[
-          // Mobile: bottom sheet that slides up
-          'w-full md:max-w-lg bg-zinc-950 border-t border-zinc-800',
-          'md:border md:rounded-3xl md:shadow-2xl',
-          // Rounded top corners on mobile
-          'rounded-t-3xl',
-          'flex flex-col',
-          // Max height + scroll on mobile
-          'max-h-[92dvh] md:max-h-[90vh]',
-          'transition-transform duration-300 ease-out',
-        ].join(' ')}
-        style={{
-          transform: visible ? 'translateY(0)' : 'translateY(100%)',
-        }}
+        className="w-full md:max-w-lg bg-zinc-950 border-t border-zinc-800 md:border md:rounded-3xl md:shadow-2xl rounded-t-3xl flex flex-col max-h-[92dvh] md:max-h-[90vh] transition-transform duration-300 ease-out"
+        style={{ transform: visible ? 'translateY(0)' : 'translateY(100%)' }}
       >
         {/* Drag handle (mobile) */}
         <div className="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-zinc-700 rounded-full" />
+          <div className="w-10 h-1 bg-zinc-800 rounded-full" />
         </div>
 
-        {/* Top accent line */}
-        <div className="hidden md:block absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent rounded-t-3xl" />
-
-        {/* Header — compact, always visible */}
-        <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-zinc-800/80 flex-shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
-              <span className="text-zinc-950 font-black italic text-sm">S</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-white font-black text-sm leading-tight truncate">Assinatura ShapeScan</p>
-              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider truncate">{planName}</p>
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between gap-4 px-5 pt-4 pb-4 border-b border-zinc-800/80 flex-shrink-0">
+          <div className="min-w-0">
+            <p className="text-white font-black text-base leading-tight">{planLabel}</p>
+            <p className="text-zinc-500 text-[10px] font-medium mt-0.5">Acesso imediato após pagamento</p>
           </div>
 
-          <div className="flex items-end gap-1 flex-shrink-0">
+          <div className="flex flex-col items-end flex-shrink-0">
             {pricingOverview && pricingOverview.discount > 0 && (
-              <span className="text-zinc-500 text-xs line-through mb-0.5">
+              <span className="text-zinc-500 text-xs line-through leading-none mb-0.5">
                 R$ {pricingOverview.originalPrice.toFixed(2).replace('.', ',')}
               </span>
             )}
-            <div className="text-right">
-              <span className="text-lg font-black text-emerald-400 leading-none">{displayPrice}</span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="text-xl font-black text-emerald-400 leading-none">{displayPrice}</span>
               <span className="text-zinc-500 text-xs font-bold">{planPeriod}</span>
             </div>
+            {pricingOverview && pricingOverview.discount > 0 && (
+              <span className="text-[9px] text-emerald-500 font-bold mt-0.5">
+                − R$ {pricingOverview.discount.toFixed(2).replace('.', ',')} de desconto
+              </span>
+            )}
           </div>
         </div>
 
@@ -378,8 +392,8 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
           {error ? (
             <div className="py-10 text-center flex flex-col items-center gap-4">
-              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
-                <span className="text-3xl">⚠️</span>
+              <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
+                <span className="text-2xl">⚠️</span>
               </div>
               <div>
                 <h4 className="text-base font-black text-white mb-1 uppercase tracking-tight">Erro no Checkout</h4>
@@ -402,23 +416,42 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
             </div>
 
           ) : isInitializing ? (
-            <div className="py-16 flex flex-col items-center justify-center gap-4">
+            <div className="py-16 flex flex-col items-center justify-center gap-3">
               <div className="relative">
-                <div className="w-10 h-10 border-4 border-emerald-500/10 rounded-full" />
-                <div className="absolute top-0 left-0 w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-9 h-9 border-4 border-emerald-500/10 rounded-full" />
+                <div className="absolute top-0 left-0 w-9 h-9 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
               </div>
-              <p className="text-zinc-500 font-black uppercase tracking-[0.25em] text-[10px] animate-pulse">Preparando ambiente seguro...</p>
+              <p className="text-zinc-500 font-medium text-xs">Conectando com pagamento seguro…</p>
             </div>
 
           ) : clientSecret ? (
             <>
-              {/* Trust badge */}
-              <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/15 rounded-xl">
-                <span className="text-emerald-500 text-base flex-shrink-0">🛡️</span>
-                <p className="text-[10px] text-zinc-400 font-medium leading-tight">
-                  <span className="text-emerald-400 font-bold">Compra 100% Segura — </span>
-                  Dados encriptados e processados pela Stripe.
+              {/* O que você está desbloqueando */}
+              <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 px-4 py-3.5">
+                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-2.5">
+                  Você está desbloqueando:
                 </p>
+                <ul className="space-y-2">
+                  {[
+                    'Análise completa da sua refeição',
+                    'Seu percentual de gordura',
+                    'Personal trainer 24h',
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2 text-sm font-medium text-white">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Trust badge */}
+              <div className="flex items-center gap-3 px-3 py-2.5 bg-zinc-900/40 border border-zinc-800/60 rounded-xl">
+                <span className="text-base flex-shrink-0">🔒</span>
+                <div>
+                  <p className="text-white text-[11px] font-bold leading-tight">Pagamento seguro com Stripe</p>
+                  <p className="text-zinc-500 text-[10px] font-medium">Seus dados são criptografados</p>
+                </div>
               </div>
 
               {/* Payment form */}
@@ -433,18 +466,15 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                 />
               </Elements>
 
-              {/* Coupon — collapsible to save vertical space */}
-              <div className="border-t border-zinc-800/60 pt-4">
+              {/* Cupom colapsável */}
+              <div className="border-t border-zinc-800/50 pt-3">
                 {!showCouponInput ? (
                   <button
                     type="button"
                     onClick={() => setShowCouponInput(true)}
-                    className="text-zinc-500 hover:text-zinc-300 text-xs font-bold tracking-wider transition-colors flex items-center gap-1.5"
+                    className="text-zinc-600 hover:text-zinc-400 text-xs font-medium transition-colors"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    Tenho um cupom de desconto
+                    Tem um cupom?
                   </button>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -488,31 +518,21 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
                   </div>
                 )}
               </div>
-
-              {/* Discount badge if applied */}
-              {pricingOverview && pricingOverview.discount > 0 && (
-                <div className="flex items-center justify-between text-xs font-bold px-1">
-                  <span className="text-zinc-500">Desconto aplicado</span>
-                  <span className="text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded">
-                    − R$ {pricingOverview.discount.toFixed(2).replace('.', ',')}
-                  </span>
-                </div>
-              )}
             </>
           ) : null}
         </div>
 
-        {/* Footer — payment methods, always visible */}
+        {/* Footer fixo */}
         <div className="flex-shrink-0 px-5 py-3 border-t border-zinc-800/50 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-zinc-600">
-            <svg className="w-3.5 h-3.5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex items-center gap-1.5 text-zinc-600">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
             <span className="text-[9px] font-black uppercase tracking-widest">Garantia ShapeScan</span>
           </div>
           <div className="flex items-center gap-1.5">
             {['CARTÕES', 'APPLE PAY', 'GOOGLE PAY'].map(m => (
-              <span key={m} className="px-1.5 py-0.5 bg-zinc-800/60 border border-zinc-700/40 rounded text-[8px] font-black text-zinc-500 tracking-wide">
+              <span key={m} className="px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[8px] font-black text-zinc-500 tracking-wide">
                 {m}
               </span>
             ))}
