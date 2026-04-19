@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { pixel } from '../../utils/pixel';
 import {
@@ -9,7 +9,6 @@ import {
 } from '@stripe/react-stripe-js';
 import { getValidToken, callEdgeFunction } from '../../services/supabaseService';
 
-// Initialize Stripe with the publishable key
 const stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface StripeCheckoutProps {
@@ -18,19 +17,32 @@ interface StripeCheckoutProps {
   email: string;
   plan: string;
   onClose: () => void;
-  planName?: string;   // Nome do plano, ex: "Standard Mensal"
-  planPrice?: string;  // Valor formatado, ex: "29,90"
-  planPeriod?: string; // Período, ex: "/mês" ou "/ano"
+  planName?: string;
+  planPrice?: string;
+  planPeriod?: string;
 }
 
-const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue }: { onCancel: () => void; userId: string; planId: string; planPeriod: string; planName: string; planValue: number }) => {
+const PaymentForm = ({
+  onCancel,
+  userId,
+  planId,
+  planPeriod,
+  planName,
+  planValue,
+}: {
+  onCancel: () => void;
+  userId: string;
+  planId: string;
+  planPeriod: string;
+  planName: string;
+  planValue: number;
+}) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [elementReady, setElementReady] = useState(false);
 
-  // Timeout: se o PaymentElement não carregar em 20s, mostra erro
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!elementReady) {
@@ -42,13 +54,11 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!stripe || !elements) return;
 
     setIsProcessing(true);
     setErrorMessage(null);
 
-    // Gravar flag local ANTES do redirect para ativar o polling no retorno
     localStorage.setItem('awaiting_stripe_payment', 'true');
     localStorage.setItem('awaiting_stripe_plan_name', planName);
     localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
@@ -71,10 +81,10 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-      <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-3xl backdrop-blur-sm">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900/60">
         <PaymentElement
-          options={{ layout: 'tabs' }}
+          options={{ layout: 'accordion' }}
           onReady={() => setElementReady(true)}
           onLoadError={(e) => {
             console.error('[PaymentElement] Load error:', e);
@@ -84,40 +94,42 @@ const PaymentForm = ({ onCancel, userId, planId, planPeriod, planName, planValue
       </div>
 
       {errorMessage && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs font-bold flex items-center gap-3 animate-in zoom-in duration-300">
+        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold flex items-center gap-2">
           <span>⚠️</span> {errorMessage}
         </div>
       )}
 
-      <div className="flex flex-col gap-4 pt-2">
-        <p className="text-center text-[10px] text-zinc-500 font-medium px-4 leading-relaxed">
-          Sua assinatura tem renovação automática {planPeriod?.includes('ano') ? 'anual' : 'mensal'}. Você pode cancelar a qualquer momento sem taxas adicionais.
-        </p>
-        <button
-          disabled={isProcessing || !stripe}
-          className="group relative w-full px-8 py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-xs tracking-[0.2em] rounded-2xl transition-all duration-300 active:scale-95 shadow-xl shadow-emerald-500/20 overflow-hidden"
-        >
-          <span className="relative z-10 flex items-center justify-center gap-2">
-            {isProcessing ? (
-              <>
-                <div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin"></div>
-                Processando...
-              </>
-            ) : (
-              <>Assinar Agora <span className="text-lg group-hover:translate-x-1 transition-transform">→</span></>
-            )}
-          </span>
-        </button>
+      <p className="text-center text-[10px] text-zinc-500 font-medium leading-relaxed px-2">
+        Renovação automática {planPeriod?.includes('ano') ? 'anual' : 'mensal'}. Cancele quando quiser, sem taxas.
+      </p>
 
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={isProcessing}
-          className="w-full py-4 text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase tracking-[0.2em] transition-colors"
-        >
-          Cancelar e Voltar
-        </button>
-      </div>
+      <button
+        disabled={isProcessing || !stripe}
+        className="group relative w-full px-6 py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all duration-200 shadow-lg shadow-emerald-500/25 overflow-hidden"
+      >
+        <span className="relative z-10 flex items-center justify-center gap-2">
+          {isProcessing ? (
+            <>
+              <div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin" />
+              Processando...
+            </>
+          ) : (
+            <>
+              Assinar Agora
+              <span className="text-base group-hover:translate-x-0.5 transition-transform">→</span>
+            </>
+          )}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={isProcessing}
+        className="w-full py-3 text-zinc-500 hover:text-zinc-300 text-[10px] font-black uppercase tracking-[0.2em] transition-colors"
+      >
+        Cancelar e Voltar
+      </button>
     </form>
   );
 };
@@ -130,43 +142,47 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   onClose,
   planName = 'ShapeScan Premium',
   planPrice = '29,90',
-  planPeriod = '/mês'
+  planPeriod = '/mês',
 }) => {
   const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [couponCodeInput, setCouponCodeInput] = useState('');
-  // Ref (não state) para não re-disparar initializeCheckout ao aplicar cupom
   const [couponAppliedSuccess, setCouponAppliedSuccess] = useState(false);
   const [isCouponApplying, setIsCouponApplying] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [showCouponInput, setShowCouponInput] = useState(false);
   const [pricingOverview, setPricingOverview] = useState<{
     originalPrice: number;
     finalPrice: number;
     discount: number;
   } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const appliedCouponRef = React.useRef<string | null>(null);
+  const [visible, setVisible] = useState(false);
+  const appliedCouponRef = useRef<string | null>(null);
+
+  // Animate in after mount
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 10);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 300);
+  };
 
   const initializeCheckout = useCallback(async (signal: AbortSignal) => {
     setIsInitializing(true);
     setError(null);
 
     try {
-      console.log('[StripeCheckout] Iniciando checkout para priceId:', priceId);
-
-      // Bypass SDK — getUser() e getSession() podem travar com Google OAuth.
-      // userId já vem como prop; token via getValidToken() com refresh automático.
-      if (!userId) {
-        throw new Error('Usuário não autenticado. Faça login novamente para continuar.');
-      }
-
+      if (!userId) throw new Error('Usuário não autenticado. Faça login novamente para continuar.');
       if (signal.aborted) return;
 
-      const token = await getValidToken();
+      await getValidToken();
       if (signal.aborted) return;
 
-      // Ler UTMs capturados pelo script da Utmify (cookie "utmify")
       const getUtmParams = () => {
         try {
           const raw = document.cookie.split('; ').find(c => c.startsWith('utmify='));
@@ -176,9 +192,12 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       };
       const utmParams = getUtmParams();
 
-      // Timeout de 30s para não travar o loading infinito
-      const fetchPromise = callEdgeFunction('stripe-checkout', { priceId, couponCode: appliedCouponRef.current, plan, utmParams });
-
+      const fetchPromise = callEdgeFunction('stripe-checkout', {
+        priceId,
+        couponCode: appliedCouponRef.current,
+        plan,
+        utmParams,
+      });
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('O servidor demorou para responder. Tente novamente.')), 30000)
       );
@@ -187,13 +206,9 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       if (signal.aborted) return;
 
       if (data?.isError) throw new Error(data.error);
-
-      if (data?.pricing) {
-        setPricingOverview(data.pricing);
-      }
+      if (data?.pricing) setPricingOverview(data.pricing);
 
       if (data?.isFree) {
-        console.log('[StripeCheckout] Assinatura gratuita ativada com sucesso!');
         const freeValue = data.pricing?.finalPrice ?? 0;
         localStorage.setItem('awaiting_stripe_payment', 'true');
         localStorage.setItem('awaiting_stripe_plan_name', planName);
@@ -202,28 +217,20 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         return;
       }
 
-      if (!data?.clientSecret) {
-        throw new Error(data?.error || 'Falha ao obter chave de pagamento. Tente novamente.');
-      }
-
+      if (!data?.clientSecret) throw new Error(data?.error || 'Falha ao obter chave de pagamento. Tente novamente.');
       setClientSecret(data.clientSecret);
     } catch (err: any) {
       if (signal.aborted) return;
-      console.error('[StripeCheckout] Initialization error:', err);
       setError(err.message || 'Erro ao carregar o checkout. Tente novamente.');
     } finally {
-      if (!signal.aborted) {
-        setIsInitializing(false);
-      }
+      if (!signal.aborted) setIsInitializing(false);
     }
   }, [priceId, plan]);
 
   useEffect(() => {
     const controller = new AbortController();
     initializeCheckout(controller.signal);
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [initializeCheckout, retryCount]);
 
   const handleRetry = () => {
@@ -238,9 +245,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
     setCouponError(null);
 
     try {
-      // Bypass SDK — usar getValidToken() + callEdgeFunction direto.
-      await getValidToken(); // renova se expirado, para consistência
-
+      await getValidToken();
       const data = await callEdgeFunction('stripe-checkout', { priceId, couponCode: couponCodeInput, plan });
 
       if (data?.isError) throw new Error(data.error || 'Cupom inválido ou expirado.');
@@ -256,13 +261,11 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
       if (!data?.clientSecret) throw new Error(data?.error || 'Falha ao aplicar cupom.');
 
-      // Salvar o cupom aplicado via ref para que handleRetry o preserve
       appliedCouponRef.current = couponCodeInput;
       setCouponAppliedSuccess(true);
       if (data.pricing) setPricingOverview(data.pricing);
       setClientSecret(data.clientSecret);
     } catch (err: any) {
-      console.error('[StripeCheckout] Coupon error:', err);
       setCouponError(err.message || 'Cupom inválido ou expirado.');
     } finally {
       setIsCouponApplying(false);
@@ -279,7 +282,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       colorDanger: '#ef4444',
       fontFamily: 'Inter, system-ui, sans-serif',
       spacingUnit: '4px',
-      borderRadius: '16px',
+      borderRadius: '14px',
     },
     rules: {
       '.Input': {
@@ -299,156 +302,220 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         marginBottom: '8px',
         color: '#71717a',
       },
-    }
+      '.Tab': {
+        border: '1px solid #27272a',
+        backgroundColor: '#18181b',
+      },
+      '.Tab--selected': {
+        border: '1px solid #10b981',
+      },
+    },
   };
 
+  const displayPrice = pricingOverview
+    ? `R$ ${pricingOverview.finalPrice.toFixed(2).replace('.', ',')}`
+    : `R$ ${planPrice}`;
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md animate-in fade-in duration-500 overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col my-auto animate-in zoom-in-95 duration-500">
+    // Backdrop
+    <div
+      className="fixed inset-0 z-[100] flex flex-col justify-end md:justify-center md:items-center md:p-8 bg-black/80 backdrop-blur-sm transition-opacity duration-300"
+      style={{ opacity: visible ? 1 : 0 }}
+      onClick={(e) => e.target === e.currentTarget && handleClose()}
+    >
+      {/* Sheet / Modal */}
+      <div
+        className={[
+          // Mobile: bottom sheet that slides up
+          'w-full md:max-w-lg bg-zinc-950 border-t border-zinc-800',
+          'md:border md:rounded-3xl md:shadow-2xl',
+          // Rounded top corners on mobile
+          'rounded-t-3xl',
+          'flex flex-col',
+          // Max height + scroll on mobile
+          'max-h-[92dvh] md:max-h-[90vh]',
+          'transition-transform duration-300 ease-out',
+        ].join(' ')}
+        style={{
+          transform: visible ? 'translateY(0)' : 'translateY(100%)',
+        }}
+      >
+        {/* Drag handle (mobile) */}
+        <div className="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div className="w-10 h-1 bg-zinc-700 rounded-full" />
+        </div>
 
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0"></div>
+        {/* Top accent line */}
+        <div className="hidden md:block absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent rounded-t-3xl" />
 
-        {/* Header & Summary */}
-        <div className="p-6 pb-4 md:p-10 md:pb-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-900">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <span className="text-zinc-950 font-black italic">S</span>
-              </div>
-              <h3 className="text-xl font-black tracking-tight text-white uppercase italic">Assinatura ShapeScan</h3>
+        {/* Header — compact, always visible */}
+        <div className="flex items-center justify-between gap-4 px-5 py-4 border-b border-zinc-800/80 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
+              <span className="text-zinc-950 font-black italic text-sm">S</span>
             </div>
-            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] ml-11">{planName}</p>
+            <div className="min-w-0">
+              <p className="text-white font-black text-sm leading-tight truncate">Assinatura ShapeScan</p>
+              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider truncate">{planName}</p>
+            </div>
           </div>
 
-          <div className="flex flex-col md:items-end">
-            <span className="text-zinc-500 text-[8px] font-black uppercase tracking-widest mb-1">Total a Pagar</span>
-            {pricingOverview && pricingOverview.discount > 0 ? (
-              <div className="flex flex-col items-end">
-                <span className="line-through text-zinc-500 text-sm font-bold mb-0.5">
-                  R$ {pricingOverview.originalPrice.toFixed(2).replace('.', ',')}
-                </span>
-                <div className="text-2xl font-black text-emerald-400 tracking-tighter flex items-end gap-1">
-                  <span>R$ {pricingOverview.finalPrice.toFixed(2).replace('.', ',')}</span>
-                  <span className="text-zinc-500 text-sm font-bold mb-1">{planPeriod}</span>
-                </div>
-                <span className="text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded mt-1">
-                  Desconto de R$ {pricingOverview.discount.toFixed(2).replace('.', ',')}
-                </span>
-              </div>
-            ) : (
-              <div className="text-2xl font-black text-white tracking-tighter">
-                R$ {planPrice}
-                <span className="text-zinc-500 text-sm font-bold">{planPeriod}</span>
-              </div>
+          <div className="flex items-end gap-1 flex-shrink-0">
+            {pricingOverview && pricingOverview.discount > 0 && (
+              <span className="text-zinc-500 text-xs line-through mb-0.5">
+                R$ {pricingOverview.originalPrice.toFixed(2).replace('.', ',')}
+              </span>
             )}
+            <div className="text-right">
+              <span className="text-lg font-black text-emerald-400 leading-none">{displayPrice}</span>
+              <span className="text-zinc-500 text-xs font-bold">{planPeriod}</span>
+            </div>
           </div>
         </div>
 
-        <div className="px-6 py-6 md:px-10 md:py-10 flex-1">
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 flex flex-col gap-4">
+
           {error ? (
-            <div className="py-16 text-center animate-in zoom-in duration-300">
-              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
-                <span className="text-4xl">⚠️</span>
+            <div className="py-10 text-center flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
+                <span className="text-3xl">⚠️</span>
               </div>
-              <h4 className="text-xl font-black text-white mb-2 uppercase tracking-tight">Erro no Checkout</h4>
-              <p className="text-zinc-400 mb-8 max-w-xs mx-auto text-sm">{error}</p>
-              <div className="flex flex-col gap-3 max-w-xs mx-auto">
+              <div>
+                <h4 className="text-base font-black text-white mb-1 uppercase tracking-tight">Erro no Checkout</h4>
+                <p className="text-zinc-400 text-sm max-w-xs">{error}</p>
+              </div>
+              <div className="flex flex-col gap-2 w-full max-w-xs">
                 <button
                   onClick={handleRetry}
-                  className="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-xs tracking-widest rounded-2xl transition-all"
+                  className="px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-xs tracking-widest rounded-2xl transition-all active:scale-95"
                 >
                   Tentar Novamente
                 </button>
                 <button
-                  onClick={onClose}
-                  className="px-8 py-4 bg-zinc-900 border border-zinc-800 text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-zinc-800 transition-all"
+                  onClick={handleClose}
+                  className="px-6 py-3.5 bg-zinc-900 border border-zinc-800 text-white font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-zinc-800 transition-all active:scale-95"
                 >
                   Voltar
                 </button>
               </div>
             </div>
+
           ) : isInitializing ? (
-            <div className="py-32 flex flex-col items-center justify-center">
+            <div className="py-16 flex flex-col items-center justify-center gap-4">
               <div className="relative">
-                <div className="w-12 h-12 border-4 border-emerald-500/10 rounded-full"></div>
-                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-10 h-10 border-4 border-emerald-500/10 rounded-full" />
+                <div className="absolute top-0 left-0 w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
               </div>
-              <p className="mt-6 text-zinc-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Preparando ambiente seguro...</p>
-              <p className="mt-2 text-zinc-600 text-[9px] font-medium">Isso pode levar alguns segundos</p>
+              <p className="text-zinc-500 font-black uppercase tracking-[0.25em] text-[10px] animate-pulse">Preparando ambiente seguro...</p>
             </div>
+
           ) : clientSecret ? (
-            <div className="flex flex-col gap-6">
-              {/* Cupom Section */}
-              <div className="flex flex-col gap-2">
-                 <div className="flex items-center gap-2">
-                     <input
-                       type="text"
-                       value={couponCodeInput}
-                       onChange={e => { setCouponCodeInput(e.target.value); setCouponError(null); setCouponAppliedSuccess(false); }}
-                       onKeyDown={e => e.key === 'Enter' && couponCodeInput && handleApplyCoupon()}
-                       placeholder="Código de desconto"
-                       disabled={isCouponApplying}
-                       className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none transition-colors disabled:opacity-50"
-                     />
-                   <button
-                     type="button"
-                     onClick={handleApplyCoupon}
-                     disabled={!couponCodeInput || isCouponApplying}
-                     className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase px-6 py-3.5 rounded-xl transition-colors disabled:opacity-50 min-w-[80px] flex items-center justify-center gap-2"
-                   >
-                     {isCouponApplying ? (
-                       <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                     ) : 'Aplicar'}
-                   </button>
-                 </div>
-                 {couponAppliedSuccess && !couponError && (
-                    <div className="text-xs font-bold px-2 flex items-center gap-1 text-emerald-500">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <>
+              {/* Trust badge */}
+              <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/15 rounded-xl">
+                <span className="text-emerald-500 text-base flex-shrink-0">🛡️</span>
+                <p className="text-[10px] text-zinc-400 font-medium leading-tight">
+                  <span className="text-emerald-400 font-bold">Compra 100% Segura — </span>
+                  Dados encriptados e processados pela Stripe.
+                </p>
+              </div>
+
+              {/* Payment form */}
+              <Elements key={clientSecret} stripe={stripePromise} options={{ clientSecret, appearance }}>
+                <PaymentForm
+                  onCancel={handleClose}
+                  userId={userId}
+                  planId={priceId}
+                  planPeriod={planPeriod}
+                  planName={planName}
+                  planValue={parseFloat(planPrice.replace(',', '.'))}
+                />
+              </Elements>
+
+              {/* Coupon — collapsible to save vertical space */}
+              <div className="border-t border-zinc-800/60 pt-4">
+                {!showCouponInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowCouponInput(true)}
+                    className="text-zinc-500 hover:text-zinc-300 text-xs font-bold tracking-wider transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    Tenho um cupom de desconto
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={couponCodeInput}
+                        onChange={e => {
+                          setCouponCodeInput(e.target.value);
+                          setCouponError(null);
+                          setCouponAppliedSuccess(false);
+                        }}
+                        onKeyDown={e => e.key === 'Enter' && couponCodeInput && handleApplyCoupon()}
+                        placeholder="Código de desconto"
+                        disabled={isCouponApplying}
+                        autoFocus
+                        className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors disabled:opacity-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={!couponCodeInput || isCouponApplying}
+                        className="bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase px-5 py-3 rounded-xl transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5 min-w-[76px]"
+                      >
+                        {isCouponApplying ? (
+                          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        ) : 'Aplicar'}
+                      </button>
+                    </div>
+                    {couponAppliedSuccess && !couponError && (
+                      <p className="text-xs font-bold text-emerald-500 flex items-center gap-1 px-1">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>Cupom aplicado com sucesso!</span>
-                    </div>
-                 )}
-                 {couponError && (
-                    <div className="text-xs font-bold px-2 flex items-center gap-1 text-red-400">
-                        <span>⚠️ {couponError}</span>
-                    </div>
-                 )}
+                        Cupom aplicado com sucesso!
+                      </p>
+                    )}
+                    {couponError && (
+                      <p className="text-xs font-bold text-red-400 px-1">⚠️ {couponError}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-4 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
-                <div className="text-emerald-500 animate-pulse">🛡️</div>
-                <div className="text-[10px] text-zinc-400 font-medium leading-tight">
-                  <span className="text-emerald-500 font-bold block mb-0.5 uppercase tracking-wider">Compra 100% Segura</span>
-                  Suas informações são encriptadas de ponta a ponta e processadas confidencialmente pela Stripe.
+              {/* Discount badge if applied */}
+              {pricingOverview && pricingOverview.discount > 0 && (
+                <div className="flex items-center justify-between text-xs font-bold px-1">
+                  <span className="text-zinc-500">Desconto aplicado</span>
+                  <span className="text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded">
+                    − R$ {pricingOverview.discount.toFixed(2).replace('.', ',')}
+                  </span>
                 </div>
-              </div>
-
-              <Elements key={clientSecret} stripe={stripePromise} options={{ clientSecret, appearance }}>
-                <PaymentForm onCancel={onClose} userId={userId} planId={priceId} planPeriod={planPeriod} planName={planName} planValue={parseFloat(planPrice.replace(',', '.'))} />
-              </Elements>
-            </div>
+              )}
+            </>
           ) : null}
         </div>
 
-        <div className="px-6 py-4 md:px-10 md:py-6 bg-zinc-900/50 border-t border-zinc-800/50 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {/* Footer — payment methods, always visible */}
+        <div className="flex-shrink-0 px-5 py-3 border-t border-zinc-800/50 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-zinc-600">
+            <svg className="w-3.5 h-3.5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Garantia ShapeScan</span>
+            <span className="text-[9px] font-black uppercase tracking-widest">Garantia ShapeScan</span>
           </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800/50 border border-zinc-700/50 rounded text-[9px] font-black text-zinc-500 tracking-wider">
-              CARTÕES
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800/50 border border-zinc-700/50 rounded text-[9px] font-black text-zinc-500 tracking-wider">
-              APPLE PAY
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800/50 border border-zinc-700/50 rounded text-[9px] font-black text-zinc-500 tracking-wider">
-              GOOGLE PAY
-            </div>
+          <div className="flex items-center gap-1.5">
+            {['CARTÕES', 'APPLE PAY', 'GOOGLE PAY'].map(m => (
+              <span key={m} className="px-1.5 py-0.5 bg-zinc-800/60 border border-zinc-700/40 rounded text-[8px] font-black text-zinc-500 tracking-wide">
+                {m}
+              </span>
+            ))}
           </div>
         </div>
       </div>
