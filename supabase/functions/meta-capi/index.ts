@@ -23,6 +23,16 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Valida apikey: bloqueia chamadas sem a chave anon do projeto
+  const apiKey = req.headers.get('apikey');
+  const expectedAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  if (!apiKey || apiKey !== expectedAnonKey) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   const capiToken = Deno.env.get('META_CAPI_TOKEN');
   if (!capiToken) {
     console.error('[meta-capi] META_CAPI_TOKEN não configurado');

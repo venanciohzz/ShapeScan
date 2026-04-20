@@ -34,3 +34,8 @@ supabase/.temp/
 
 # Stripe temp/local files
 *stripe_webhooks*.json
+
+# Environment variables — NUNCA commitar credenciais reais
+.env
+.env.production
+.env.staging

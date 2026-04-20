@@ -27,6 +27,11 @@
     "noEmit": true
   },
   "include": [
-    "src"
+    "src",
+    "components",
+    "services",
+    "utils",
+    "*.ts",
+    "*.tsx"
   ]
 }

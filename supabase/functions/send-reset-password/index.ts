@@ -27,7 +27,8 @@ Deno.serve(async (req) => {
             throw new Error("E-mail é obrigatório");
         }
 
-        console.log(`Solicitação de recuperação de senha para: ${email}`);
+        const maskedEmail = email.replace(/^(.{2})(.*)(@.*)$/, (_, a, b, c) => a + '*'.repeat(Math.max(1, b.length)) + c);
+        console.log(`Solicitação de recuperação de senha para: ${maskedEmail}`);
 
         // 2. Gerar link de recuperação via Admin API
         const t1 = Date.now();
@@ -42,20 +43,21 @@ Deno.serve(async (req) => {
         console.log(`Link gerado em ${t2 - t1}ms`);
 
         if (linkError) {
-          console.error("Erro ao gerar link:", linkError);
-          // Retornamos erro real para depuração agora que sabemos que não está chegando
-          return new Response(JSON.stringify({ 
-            error: `Erro ao gerar link: ${linkError.message || 'Usuário possivelmente não encontrado'}` 
+          console.error("Erro ao gerar link de recuperação (detalhes omitidos por segurança)");
+          // Retorna sempre a mesma mensagem genérica — não revela se o email existe ou não
+          return new Response(JSON.stringify({
+            success: true,
+            message: "Se este e-mail estiver cadastrado, você receberá o link em breve."
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400
+            status: 200
           });
         }
 
         const recoveryLink = data.properties.action_link;
 
         // 3. Enviar Email via Resend
-        console.log(`Enviando e-mail de recuperação para ${email}...`);
+        console.log(`Enviando e-mail de recuperação para ${maskedEmail}...`);
         const t3 = Date.now();
         
         const emailHtml = `
@@ -138,7 +140,7 @@ Deno.serve(async (req) => {
             throw new Error(`Resend Error: ${JSON.stringify(resendData)}`);
         }
 
-        console.log(`E-mail de recuperação enviado com sucesso para ${email}`);
+        console.log(`E-mail de recuperação enviado com sucesso para ${maskedEmail}`);
 
         return new Response(JSON.stringify({ 
           success: true, 

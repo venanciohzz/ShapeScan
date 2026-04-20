@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
                 }
                 user = foundUser;
             } else {
-                console.error('Malformed Authorization header:', authHeader);
+                console.error('Malformed Authorization header received');
             }
         }
 
