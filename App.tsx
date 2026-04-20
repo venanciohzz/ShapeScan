@@ -63,6 +63,7 @@ const App: React.FC = () => {
   const [isQuizLoading, setIsQuizLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [isActivatingPlan, setIsActivatingPlan] = useState(false);
   const isMobile = useIsMobile();
 
   // Ref para controlar o estado do polling de pagamento e evitar loops exponenciais
@@ -196,6 +197,7 @@ const App: React.FC = () => {
           if (updatedUser?.isPremium) {
             setUser(updatedUser);
             localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+            localStorage.setItem('shapescan_user_profile_ts', String(Date.now()));
             showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
             const planName = localStorage.getItem('awaiting_stripe_plan_name') || 'ShapeScan Premium';
             const planValue = parseFloat(localStorage.getItem('awaiting_stripe_plan_value') || '0');
@@ -217,9 +219,14 @@ const App: React.FC = () => {
     };
 
     const pollForPremium = async () => {
+      setIsActivatingPlan(true);
+
       // Tenta ativação imediata primeiro
       const activated = await tryImmediateActivation();
-      if (activated) return;
+      if (activated) {
+        setIsActivatingPlan(false);
+        return;
+      }
 
       let elapsed = 0;
 
@@ -237,10 +244,12 @@ const App: React.FC = () => {
             if (updatedUser.isPremium || updatedUser.plan !== currentPlan) {
               setUser(updatedUser);
               localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+              localStorage.setItem('shapescan_user_profile_ts', String(Date.now()));
             }
 
             if (updatedUser.isPremium) {
               console.log(`[App] Plano premium ativado! (${elapsed / 1000}s)`);
+              setIsActivatingPlan(false);
               showToast('🎉 Pagamento confirmado! Seu plano premium está ativo.', 'success');
 
               // Meta Pixel Purchase
@@ -266,6 +275,7 @@ const App: React.FC = () => {
         if (elapsed >= remainingTime) {
           clearInterval(interval);
           isPollingPremiumRef.current = false;
+          setIsActivatingPlan(false);
           console.log('[App] Fim do polling (timeout atingido).');
           showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
           localStorage.removeItem('awaiting_stripe_payment');
@@ -431,13 +441,16 @@ const App: React.FC = () => {
       // Isso elimina a tela de loading para usuários retornando, mesmo
       // quando o Supabase está em cold start (token expirado = 12–36s).
       // ============================================================
+      const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
       let releasedLoadingFromCache = false;
       try {
         const cached = localStorage.getItem('shapescan_user_profile');
-        if (cached) {
+        const cacheTs = parseInt(localStorage.getItem('shapescan_user_profile_ts') || '0');
+        const isCacheFresh = cacheTs > 0 && (Date.now() - cacheTs) < CACHE_TTL_MS;
+        if (cached && isCacheFresh) {
           const cachedProfile = JSON.parse(cached) as User;
           if (cachedProfile?.id === userId) {
-            console.log('[App] ⚡ Cache hit — app disponível instantaneamente, Supabase atualiza em background.');
+            console.log('[App] ⚡ Cache hit (TTL ok) — app disponível instantaneamente, Supabase atualiza em background.');
             setUser(cachedProfile);
             setAuthState('authenticated');
             setIsSessionLoading(false);
@@ -446,6 +459,8 @@ const App: React.FC = () => {
             // Carrega dados em background imediatamente com o cache
             loadUserDataBackground(userId);
           }
+        } else if (cached && !isCacheFresh) {
+          console.log('[App] ⏰ Cache expirado (>1h) — ignorando, buscando perfil atualizado da rede.');
         }
       } catch { /* cache corrompido — ignora e busca da rede */ }
 
@@ -456,6 +471,7 @@ const App: React.FC = () => {
 
         setUser(profile);
         localStorage.setItem('shapescan_user_profile', JSON.stringify(profile));
+        localStorage.setItem('shapescan_user_profile_ts', String(Date.now()));
 
         // Usuário sem username ou sem phone → pede dados antes
         if (!profile.username || !profile.phone) {
@@ -559,6 +575,7 @@ const App: React.FC = () => {
             const freshProfile = await getProfile(session.user.id);
             setUser(freshProfile);
             localStorage.setItem('shapescan_user_profile', JSON.stringify(freshProfile));
+            localStorage.setItem('shapescan_user_profile_ts', String(Date.now()));
           } catch (e) {
             console.error('[App] onAuthStateChange: erro ao re-fetchar perfil:', e);
           }
@@ -585,6 +602,32 @@ const App: React.FC = () => {
       window.removeEventListener('storage', handleStorageChange);
     }
   }, []); // Apenas no mount
+
+  // ============================================================
+  // REFRESH PERIÓDICO DE PERFIL — a cada 30 min enquanto o app está aberto.
+  // Garante que plano, limites e dados reflitam estado real do servidor
+  // sem depender de reload manual (ex.: plano ativado via webhook enquanto
+  // o usuário estava com a aba aberta).
+  // ============================================================
+  useEffect(() => {
+    if (!user?.id) return;
+    const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutos
+    const timerId = setInterval(async () => {
+      try {
+        const { getProfile } = await import('./services/supabaseService');
+        const refreshed = await getProfile(user.id);
+        if (refreshed) {
+          setUser(refreshed);
+          localStorage.setItem('shapescan_user_profile', JSON.stringify(refreshed));
+          localStorage.setItem('shapescan_user_profile_ts', String(Date.now()));
+          console.log('[App] 🔄 Perfil atualizado periodicamente (30min).');
+        }
+      } catch (e) {
+        console.warn('[App] Refresh periódico de perfil falhou (ignorando):', e);
+      }
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(timerId);
+  }, [user?.id]);
 
   const loadUserData = async (userId: string) => {
     try {
@@ -645,6 +688,7 @@ const App: React.FC = () => {
   const handleCompleteProfile = (updatedUser: User) => {
     setUser(updatedUser);
     localStorage.setItem('shapescan_user_profile', JSON.stringify(updatedUser));
+    localStorage.setItem('shapescan_user_profile_ts', String(Date.now()));
     if (updatedUser.emailConfirmed === false) {
       navigate('/dashboard');
     } else if (!updatedUser.weight || !updatedUser.height) {
@@ -662,6 +706,7 @@ const App: React.FC = () => {
     setChatHistory([]);
     setWaterConsumed(0);
     localStorage.removeItem('shapescan_user_profile');
+    localStorage.removeItem('shapescan_user_profile_ts');
 
     // Usar signOut oficial e esperar apenas o processo natural
     await supabase.auth.signOut();
@@ -945,6 +990,14 @@ const App: React.FC = () => {
       </div>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* Banner de ativação de plano pós-pagamento */}
+      {isActivatingPlan && (
+        <div className="fixed top-0 inset-x-0 z-[190] bg-emerald-500/95 backdrop-blur-md py-3 px-6 flex items-center justify-center gap-3 shadow-lg animate-in slide-in-from-top-2 duration-300">
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+          <p className="text-white font-bold text-sm tracking-wide">Ativando seu plano PRO…</p>
+        </div>
+      )}
 
       <div className={`relative z-10 min-h-[100dvh] flex flex-col ${showMobileNav ? 'pb-32 md:pb-0' : ''} overflow-x-hidden`}>
         {renderView()}

@@ -133,7 +133,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                         {[
                            'Uso intensivo de análises por foto',
                            'Mais análises corporais por dia',
-                           'Personal trainer 24h com prioridade',
+                           'Personal trainer IA 24h ilimitado',
                            'Histórico completo de evolução',
                            'Acesso antecipado a novas funções',
                         ].map((f, i) => (
