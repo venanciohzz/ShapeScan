@@ -138,6 +138,23 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
       setLoading(false);
       return;
     }
+
+    // Validação de tipo MIME
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      onShowToast("Por favor, selecione apenas imagens JPEG, PNG ou WEBP.", 'error');
+      setLoading(false);
+      return;
+    }
+
+    // Validação de tamanho: máximo 5MB
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      onShowToast("A imagem deve ter no máximo 5MB.", 'error');
+      setLoading(false);
+      return;
+    }
+
     setSavedSuccess(false);
     try {
       const reader = new FileReader();

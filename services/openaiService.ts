@@ -67,7 +67,7 @@ const calculateMuscleScore = (protein: number, carbs: number, fat: number): numb
   return clamp(Math.round(score), 0, 10);
 };
 
-const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' }): Promise<string> => {
+const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemPrompt?: string, type: 'food' | 'shape' | 'chat' | 'manual' }): Promise<string> => {
   // Obtém token válido — renova automaticamente via fetch se expirado (sem SDK, sem lock).
   let token: string;
   try {
@@ -76,17 +76,31 @@ const callAIAnalyzer = async (payload: { image?: string, prompt: string, systemP
     throw new Error('401: Sua sessão expirou. Por favor, saia e entre novamente no aplicativo.');
   }
 
-  console.log(`[openaiService] Calling ai-analyzer for ${payload.type}...`);
+  // Timeout de 40s no frontend: evita tela travada se a edge function não responder.
+  // A edge function tem timeout de 25s para OpenAI + overhead de rede ≈ 35s total esperado.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 40_000);
 
-  const res = await fetch(EDGE_FUNCTION_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'apikey': (import.meta as any).env.VITE_SUPABASE_ANON_KEY,
-    },
-    body: JSON.stringify(payload),
-  });
+  let res: Response;
+  try {
+    res = await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'apikey': (import.meta as any).env.VITE_SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (fetchErr: any) {
+    if (fetchErr?.name === 'AbortError') {
+      throw new Error('A análise demorou demais para responder. Verifique sua conexão e tente novamente.');
+    }
+    throw new Error('Erro de conexão com o servidor de IA. Verifique sua internet e tente novamente.');
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   let data: any;
   try { data = await res.json(); } catch { data = {}; }

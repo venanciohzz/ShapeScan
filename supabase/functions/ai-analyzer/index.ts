@@ -52,7 +52,15 @@ Deno.serve(async (req) => {
 
         // ── 2. PARSE DO BODY ────────────────────────────────────────────────
         const rawBody = await req.text();
-        console.log(`REQ BODY SIZE: ${rawBody.length} bytes`);
+
+        // Limite de payload: 15MB (imagem base64 comprimida ≈ 2-4MB; 15MB é margem segura)
+        const MAX_BODY_BYTES = 15 * 1024 * 1024;
+        if (rawBody.length > MAX_BODY_BYTES) {
+            return new Response(JSON.stringify({
+                error: "Payload muito grande. Reduza o tamanho da imagem e tente novamente.",
+                isError: true
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 413 });
+        }
 
         let bodyJson;
         try {
@@ -65,7 +73,20 @@ Deno.serve(async (req) => {
         }
 
         const { image, prompt, systemPrompt, type } = bodyJson;
-        const requestType = type || 'chat';
+
+        // ── 2.1 WHITELIST DE TIPOS VÁLIDOS ──────────────────────────────────
+        const VALID_TYPES = ['food', 'shape', 'chat', 'manual'] as const;
+        type RequestType = typeof VALID_TYPES[number];
+        const requestType: RequestType = VALID_TYPES.includes(type) ? type : 'chat';
+
+        // ── 2.2 LIMITE DE TAMANHO DE PROMPT ─────────────────────────────────
+        const MAX_PROMPT_CHARS = 4000;
+        if (typeof prompt === 'string' && prompt.length > MAX_PROMPT_CHARS) {
+            return new Response(JSON.stringify({
+                error: "Texto muito longo. Por favor, reduza a descrição e tente novamente.",
+                isError: true
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+        }
 
         // ── 3. VERIFICAR PLANO ──────────────────────────────────────────────
         const { data: planData } = await adminClient
@@ -115,10 +136,54 @@ Deno.serve(async (req) => {
         };
 
         // ── 7. VERIFICAR E RESERVAR SLOT ATOMICAMENTE ───────────────────────
-        // Chat não consome quota (personal trainer 24h é ilimitado).
-        // Manual não consome quota (gratuito, limite de 10/dia controlado no frontend).
-        // Admin tem acesso ilimitado.
         // A reserva acontece ANTES da chamada à OpenAI para eliminar race conditions.
+        // Admin tem acesso ilimitado.
+
+        // ── 7a. Rate limit do CHAT: 100 mensagens/dia por usuário ───────────
+        // Chat não consome quota de scan, mas tem limite diário para proteger custo.
+        if (requestType === 'chat' && !isAdmin) {
+            const CHAT_DAILY_LIMIT = 100;
+            const { data: chatSlot, error: chatErr } = await adminClient
+                .rpc('claim_daily_slot', {
+                    p_user_id: user.id,
+                    p_type:    'chat',
+                    p_date:    today,
+                    p_limit:   CHAT_DAILY_LIMIT
+                });
+            if (chatErr) {
+                console.error('claim_daily_slot (chat) error:', chatErr.message);
+            } else if (!chatSlot) {
+                return new Response(JSON.stringify({
+                    error: "Você atingiu o limite de 100 mensagens por dia com o Personal Trainer. Retorne amanhã! 💪",
+                    isError: true,
+                    isLimitReached: true
+                }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
+            }
+        }
+
+        // ── 7b. Rate limit do MANUAL: 10 entradas/dia por usuário ───────────
+        // Limite movido do frontend para o backend para segurança.
+        if (requestType === 'manual' && !isAdmin) {
+            const MANUAL_DAILY_LIMIT = 10;
+            const { data: manualSlot, error: manualErr } = await adminClient
+                .rpc('claim_daily_slot', {
+                    p_user_id: user.id,
+                    p_type:    'manual',
+                    p_date:    today,
+                    p_limit:   MANUAL_DAILY_LIMIT
+                });
+            if (manualErr) {
+                console.error('claim_daily_slot (manual) error:', manualErr.message);
+            } else if (!manualSlot) {
+                return new Response(JSON.stringify({
+                    error: "Você atingiu o limite de 10 entradas manuais por dia. Tente novamente amanhã.",
+                    isError: true,
+                    isLimitReached: true
+                }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 });
+            }
+        }
+
+        // ── 7c. SCAN (food/shape): reserva atômica de slot por plano ────────
         if (requestType !== 'chat' && requestType !== 'manual' && !isAdmin) {
             const userIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim()
                         || req.headers.get('x-real-ip')?.trim()

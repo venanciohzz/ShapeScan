@@ -52,6 +52,19 @@ Deno.serve(async (req) => {
     if (!targetUserId) throw new Error('targetUserId é obrigatório');
     if (targetUserId === callerUserId) throw new Error('Não é possível excluir a própria conta pelo admin');
 
+    // Bloqueia deleção de outros admins — previne escalada acidental de privilégios
+    const { data: targetProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', targetUserId)
+      .maybeSingle();
+
+    if (targetProfile?.is_admin) {
+      return new Response(JSON.stringify({ error: 'Não é permitido excluir outro administrador' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Deletar do Auth (cascade apaga profile e dados relacionados via FK ON DELETE CASCADE)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId);
     if (deleteError) {

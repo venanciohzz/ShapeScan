@@ -6,3 +6,14 @@ verify_jwt = false
 
 [functions.ai-analyzer]
 verify_jwt = false
+
+# Reconciliação diária Stripe vs banco: roda às 6h UTC (3h Brasília).
+# Corrige divergências entre subscriptions no Stripe e user_plans no banco.
+[functions.stripe-reconcile]
+verify_jwt = false
+schedule = "0 6 * * *"
+
+# Lembrete de expiração: roda diariamente às 9h UTC (6h Brasília).
+[functions.stripe-expiry-reminder]
+verify_jwt = false
+schedule = "0 9 * * *"

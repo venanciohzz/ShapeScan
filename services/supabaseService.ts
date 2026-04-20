@@ -383,11 +383,14 @@ export async function updateProfile(userId: string, updates: Partial<User>): Pro
 // ==================== LOGS DE ALIMENTOS ====================
 
 export async function listFoodLogs(userId: string): Promise<FoodLog[]> {
+  // Limite de 500 registros: cobre ~3 meses de uso intensivo (6 refeições/dia).
+  // Evita transferir histórico ilimitado em usuários antigos.
   const { data, error } = await supabase
     .from('food_logs')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(500);
 
   if (error) throw new Error(error.message);
 
@@ -533,28 +536,22 @@ export async function deleteSavedMeal(userId: string, mealId: string): Promise<v
 // ==================== EVOLUÇÃO ====================
 
 export async function listEvolutionRecords(userId: string): Promise<EvolutionRecord[]> {
-  console.log('🔵 listEvolutionRecords - userId:', userId);
-
+  // Limite de 200 registros: cobre anos de uso (análises corporais são menos frequentes).
   const { data, error } = await supabase
     .from('evolution_records')
     .select('*')
     .eq('user_id', userId)
-    .order('record_date', { ascending: false });
+    .order('record_date', { ascending: false })
+    .limit(200);
 
   if (error) {
-    console.error('🔴 Erro ao listar evolução:', error);
     throw new Error(error.message);
   }
-
-  console.log('🟢 Registros encontrados:', data?.length || 0);
 
   return (data || []).map(mapEvolutionRecordFromDB);
 }
 
 export async function addEvolutionRecord(userId: string, record: Omit<EvolutionRecord, 'id'>): Promise<EvolutionRecord> {
-  console.log('🔵 supabaseService.addEvolutionRecord - userId:', userId);
-  console.log('🔵 Dados recebidos:', record);
-
   const dbRecord = {
     user_id: userId,
     record_date: record.date,
@@ -567,8 +564,6 @@ export async function addEvolutionRecord(userId: string, record: Omit<EvolutionR
     points_to_improve: record.pointsToImprove,
     macro_suggestions: record.macroSuggestions,
   };
-
-  console.log('🔵 Dados formatados para DB:', dbRecord);
 
   const { data, error } = await supabase
     .from('evolution_records')
