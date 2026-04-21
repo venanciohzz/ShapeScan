@@ -66,18 +66,37 @@ const PaymentForm = ({
 
     pixel.addPaymentInfo(planName, planValue, undefined, userId);
 
-    const { error } = await stripe.confirmPayment({
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: window.location.origin + '/dashboard?payment=success',
       },
+      // 'if_required' permite que Google Pay / Apple Pay confirmem inline
+      // sem forçar redirect desnecessário. Redirect só ocorre se o método exigir.
+      redirect: 'if_required',
     });
 
     if (error) {
       localStorage.removeItem('awaiting_stripe_payment');
-      setErrorMessage(error.message || 'Ocorreu um erro ao processar o pagamento.');
+      // Mensagem amigável por tipo de erro
+      const msg =
+        error.code === 'payment_intent_authentication_failure'
+          ? 'Autenticação falhou. Tente novamente ou use outro método de pagamento.'
+          : error.code === 'card_declined' || error.decline_code
+          ? `Pagamento recusado pelo banco. ${error.message || 'Tente outro cartão.'}`
+          : error.message || 'Ocorreu um erro ao processar o pagamento.';
+      setErrorMessage(msg);
+      setIsProcessing(false);
+      return;
     }
 
+    // Pagamento confirmado inline (sem redirect) — ex: Google Pay, Apple Pay
+    if (paymentIntent && (paymentIntent.status === 'succeeded' || paymentIntent.status === 'processing')) {
+      window.location.href = '/dashboard?payment=success';
+      return;
+    }
+
+    // Caso o Stripe decida não redirecionar e não retornar erro/PI (raro)
     setIsProcessing(false);
   };
 

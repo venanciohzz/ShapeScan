@@ -137,6 +137,19 @@ const App: React.FC = () => {
     const isPaymentSuccessParams = params.get('payment') === 'success';
     const isAwaitingStripePayment = localStorage.getItem('awaiting_stripe_payment') === 'true';
 
+    // Se o Stripe redirecionou de volta com redirect_status=failed (3DS falhou/cancelado),
+    // limpa o localStorage e não tenta ativar o plano.
+    const redirectStatus = params.get('redirect_status');
+    if (redirectStatus && redirectStatus !== 'succeeded') {
+      localStorage.removeItem('awaiting_stripe_payment');
+      localStorage.removeItem('awaiting_stripe_payment_started');
+      localStorage.removeItem('awaiting_stripe_plan_name');
+      localStorage.removeItem('awaiting_stripe_plan_value');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      showToast('Pagamento não concluído. Tente novamente com outro cartão.', 'error');
+      return;
+    }
+
     // Usar user?.id diretamente (está no array de deps, é confiável no início do efeito).
     // userRef.current?.id causava bug: o efeito de sync do ref roda após o efeito de polling,
     // então userRef.current ainda era null quando user?.id mudava de null → uuid.
