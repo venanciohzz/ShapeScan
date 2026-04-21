@@ -21,7 +21,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView }) => {
     <>
       {/* Mobile Bottom Navigation - Floating Island Design */}
       <nav className="fixed bottom-0 left-0 right-0 md:hidden z-50 px-3 pb-3 pt-0">
-        <div className="bg-zinc-950 px-2 py-2 rounded-[1.5rem] flex justify-between items-center shadow-[0_-4px_30px_rgba(0,0,0,0.4)] border border-white/10 relative overflow-hidden">
+        <div className="bg-zinc-950 px-1 py-2 rounded-[1.5rem] flex justify-between items-center shadow-[0_-4px_30px_rgba(0,0,0,0.4)] border border-white/10 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-50 pointer-events-none"></div>
 
           {tabs.map((tab) => {
@@ -30,30 +30,26 @@ const Navigation: React.FC<NavigationProps> = ({ currentView }) => {
                 key={tab.id}
                 to={tab.path}
                 className={({ isActive }) => `
-                  relative flex flex-col items-center justify-center w-10 h-10 transition-all duration-300 active:scale-90
+                  relative flex flex-col items-center justify-center gap-0.5 px-1 py-1.5 min-w-0 flex-1 transition-all duration-300 active:scale-90
                 `}
               >
                 {({ isActive }) => (
                   <>
                     <div className={`
-                        relative z-10 transition-all duration-500 flex flex-col items-center justify-center
+                        relative z-10 transition-all duration-500 flex items-center justify-center
                         ${isActive ? 'text-white scale-110' : 'text-zinc-500 hover:text-zinc-300'}
                       `}>
                       {tab.icon}
                     </div>
+                    <span className={`relative z-10 text-[9px] font-black uppercase tracking-tight leading-none truncate transition-colors duration-300 ${isActive ? 'text-white' : 'text-zinc-600'}`}>
+                      {tab.label === 'Personal 24H' ? 'Personal' : tab.label}
+                    </span>
 
                     {isActive && (
                       <motion.div
                         layoutId="activeTabMobile"
                         className="absolute inset-0 bg-emerald-500/20 rounded-2xl z-0"
                         transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
-                      />
-                    )}
-
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeDotMobile"
-                        className="absolute -bottom-1 w-1 h-1 bg-emerald-500 rounded-full"
                       />
                     )}
                   </>

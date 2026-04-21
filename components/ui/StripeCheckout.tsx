@@ -532,7 +532,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
           </div>
           <div className="flex items-center gap-1.5">
             {['CARTÕES', 'APPLE PAY', 'GOOGLE PAY'].map(m => (
-              <span key={m} className="px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[8px] font-black text-zinc-500 tracking-wide">
+              <span key={m} className="px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[10px] font-black text-zinc-500 tracking-wide">
                 {m}
               </span>
             ))}

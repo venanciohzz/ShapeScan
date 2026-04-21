@@ -208,7 +208,7 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ user, onSelect, onBack, o
                ].map(({ icon, text }) => (
                   <div key={text} className="flex flex-col items-center gap-1 text-center">
                      <span className="text-base">{icon}</span>
-                     <span className="text-zinc-600 text-[9px] font-bold uppercase tracking-wider leading-tight max-w-[70px]">{text}</span>
+                     <span className="text-zinc-600 text-[11px] font-bold uppercase tracking-wider leading-tight max-w-[80px]">{text}</span>
                   </div>
                ))}
             </div>
