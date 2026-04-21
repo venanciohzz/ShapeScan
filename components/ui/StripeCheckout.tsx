@@ -76,8 +76,11 @@ const PaymentForm = ({
     if (error) {
       localStorage.removeItem('awaiting_stripe_payment');
       // Mensagem amigável por tipo de erro Stripe
+      const isNetworkError = error.type === 'api_connection_error' || error.message?.toLowerCase().includes('network') || error.message?.toLowerCase().includes('connection');
       const msg =
-        error.code === 'payment_intent_authentication_failure'
+        isNetworkError
+          ? 'Erro de conexão com o Stripe. Se estiver usando Google Pay ou Apple Pay, desative ad blockers ou VPN e tente novamente — ou pague com cartão diretamente.'
+          : error.code === 'payment_intent_authentication_failure'
           ? 'Autenticação falhou. Tente novamente ou use outro método de pagamento.'
           : error.code === 'card_declined' || error.decline_code
           ? `Pagamento recusado. ${error.message || 'Verifique os dados ou tente outro cartão.'}`
