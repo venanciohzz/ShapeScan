@@ -61,8 +61,6 @@ const PaymentForm = ({
     setErrorMessage(null);
 
     localStorage.setItem('awaiting_stripe_payment', 'true');
-    localStorage.setItem('awaiting_stripe_plan_name', planName);
-    localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
 
     pixel.addPaymentInfo(planName, planValue, undefined, userId);
 
@@ -199,8 +197,10 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       const getUtmParams = () => {
         try {
           const raw = document.cookie.split('; ').find(c => c.startsWith('utmify='));
-          if (!raw) return {};
-          return JSON.parse(decodeURIComponent(raw.split('=').slice(1).join('=')));
+          if (raw) return JSON.parse(decodeURIComponent(raw.split('=').slice(1).join('=')));
+          const ss = sessionStorage.getItem('utm_params');
+          if (ss) return JSON.parse(ss);
+          return {};
         } catch { return {}; }
       };
       const utmParams = getUtmParams();

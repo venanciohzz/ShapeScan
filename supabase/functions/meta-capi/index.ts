@@ -43,6 +43,10 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || req.headers.get('x-real-ip')
+      || null;
+
     const body = await req.json();
     const { eventName, eventId, sourceUrl, email, fbp, fbc, value, currency, contentName, clientUserAgent, externalId } = body;
 
@@ -62,6 +66,7 @@ Deno.serve(async (req: Request) => {
     if (fbc && typeof fbc === 'string') userData['fbc'] = fbc;
     if (clientUserAgent && typeof clientUserAgent === 'string') userData['client_user_agent'] = clientUserAgent;
     if (externalId && typeof externalId === 'string') userData['external_id'] = await sha256(externalId);
+    if (clientIp) userData['client_ip_address'] = clientIp;
 
     // Montar evento
     const eventData: Record<string, any> = {

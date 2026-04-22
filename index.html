@@ -44,6 +44,18 @@
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
+    <!-- UTM fallback: captura params da URL antes do Utmify script carregar -->
+    <script>
+      (function() {
+        try {
+          var p = new URLSearchParams(window.location.search);
+          var keys = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'];
+          var captured = {};
+          keys.forEach(function(k) { var v = p.get(k); if (v) captured[k] = v; });
+          if (Object.keys(captured).length > 0) sessionStorage.setItem('utm_params', JSON.stringify(captured));
+        } catch(e) {}
+      })();
+    </script>
     <!-- Utmify Pixel: captura UTMs para atribuição de vendas às campanhas -->
     <script>
       window.pixelId = "69d43177d63237f9b52d128d";

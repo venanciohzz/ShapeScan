@@ -293,13 +293,29 @@ Deno.serve(async (req) => {
                   try {
                     const meta = retrievedSub?.metadata || {};
                     const eventDate = new Date(event.created * 1000).toISOString();
+
+                    // Detectar método real de pagamento via charge
+                    let utmifyPaymentMethod = 'credit_card';
+                    if (invoice.charge && typeof invoice.charge === 'string') {
+                      try {
+                        const charge = await stripe.charges.retrieve(invoice.charge);
+                        const pmType = charge.payment_method_details?.type;
+                        const walletType = (charge.payment_method_details as any)?.card?.wallet?.type;
+                        if (pmType === 'card' && walletType === 'google_pay') utmifyPaymentMethod = 'google_pay';
+                        else if (pmType === 'card' && walletType === 'apple_pay') utmifyPaymentMethod = 'apple_pay';
+                        else if (pmType === 'boleto') utmifyPaymentMethod = 'boleto';
+                        else if (pmType === 'pix') utmifyPaymentMethod = 'pix';
+                        else utmifyPaymentMethod = 'credit_card';
+                      } catch { /* mantém credit_card como fallback */ }
+                    }
+
                     await fetch('https://api.utmify.com.br/api-credentials/orders', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json', 'x-api-token': utmifyToken },
                       body: JSON.stringify({
                         orderId: invoice.id,
                         platform: 'shapescan',
-                        paymentMethod: 'credit_card',
+                        paymentMethod: utmifyPaymentMethod,
                         status: 'paid',
                         createdAt: eventDate,
                         approvedDate: eventDate,
