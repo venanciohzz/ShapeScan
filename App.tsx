@@ -143,8 +143,6 @@ const App: React.FC = () => {
     if (redirectStatus && redirectStatus !== 'succeeded') {
       localStorage.removeItem('awaiting_stripe_payment');
       localStorage.removeItem('awaiting_stripe_payment_started');
-      localStorage.removeItem('awaiting_stripe_plan_name');
-      localStorage.removeItem('awaiting_stripe_plan_value');
       window.history.replaceState({}, document.title, window.location.pathname);
       showToast('Pagamento não concluído. Tente novamente com outro cartão.', 'error');
       return;
@@ -279,8 +277,6 @@ const App: React.FC = () => {
           showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
           localStorage.removeItem('awaiting_stripe_payment');
           localStorage.removeItem('awaiting_stripe_payment_started');
-          localStorage.removeItem('awaiting_stripe_plan_name');
-          localStorage.removeItem('awaiting_stripe_plan_value');
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }, POLL_INTERVAL);
