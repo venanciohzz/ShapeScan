@@ -906,7 +906,9 @@ export async function getAllUsers(): Promise<User[]> {
   const hydrationCountMap = new Map<string, number>();
   hydrationLogsResult.data?.forEach((h: any) => hydrationCountMap.set(h.user_id, (hydrationCountMap.get(h.user_id) || 0) + 1));
 
-  return profiles.map((p: any) => {
+  const profileIds = new Set(profiles.map((p: any) => p.id));
+
+  const profileUsers = profiles.map((p: any) => {
     const plan = planMap.get(p.id);
     const planId = plan?.active ? plan.plan_id : 'free';
     const user = mapProfileToUser(p, planId, planId !== 'free', p.is_admin);
@@ -924,6 +926,53 @@ export async function getAllUsers(): Promise<User[]> {
     user.chatMsgsCount = chatMsgCountMap.get(p.id) || 0;
     return user;
   });
+
+  // Incluir usuários com plano pago mas sem perfil (ex: nunca completaram onboarding)
+  const orphanIds = (plansResult.data || [])
+    .filter((p: any) => p.active && p.plan_id !== 'free' && !profileIds.has(p.user_id))
+    .map((p: any) => p.user_id);
+
+  let orphanUsers: User[] = [];
+  if (orphanIds.length > 0) {
+    const { data: emailRows } = await supabase.rpc('get_auth_emails_for_ids', { user_ids: orphanIds });
+    const emailMap = new Map<string, string>();
+    (emailRows || []).forEach((r: any) => emailMap.set(r.id, r.email));
+
+    orphanUsers = orphanIds.map((userId: string) => {
+      const plan = planMap.get(userId);
+      const planId = plan?.active ? plan.plan_id : 'free';
+      const stub = {
+        id: userId,
+        email: emailMap.get(userId) || userId,
+        name: '',
+        username: '',
+        phone: '',
+        isPremium: planId !== 'free',
+        isAdmin: false,
+        isPendingPayment: false,
+        plan: planId as any,
+        freeScansUsed: 0,
+        emailConfirmed: false,
+        createdAt: 0,
+        adminNote: '',
+      } as any;
+      if (plan) {
+        stub.subscriptionStart = plan.subscription_start ?? null;
+        stub.subscriptionEnd = plan.current_period_end ?? null;
+        stub.cancelAtPeriodEnd = plan.cancel_at_period_end ?? false;
+        stub.cancelledAt = plan.cancelled_at ?? null;
+        stub.cancellationReason = plan.cancellation_reason ?? null;
+        stub.cancellationFeedback = plan.cancellation_feedback ?? null;
+      }
+      stub.foodLogsCount = 0;
+      stub.savedMealsCount = 0;
+      stub.hydrationLogsCount = 0;
+      stub.chatMsgsCount = 0;
+      return stub as User;
+    });
+  }
+
+  return [...profileUsers, ...orphanUsers];
 }
 
 export async function getRevenueStats() {
