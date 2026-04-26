@@ -48,6 +48,7 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, isLoading =
             age: calculateAge(),
             activityLevel: data.frequency === '0-2' ? '1.2' : data.frequency === '6 ou mais' ? '1.725' : '1.55',
         };
+        localStorage.setItem('shapescan_quiz_data', JSON.stringify({ ...metrics, frequency: data.frequency }));
         onComplete(metrics);
     };
 

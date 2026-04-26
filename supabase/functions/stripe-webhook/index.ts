@@ -96,6 +96,131 @@ function purchaseConfirmationEmail(customerName: string, planName: string, amoun
   </div>`;
 }
 
+function guestWelcomeEmail(recoveryLink: string) {
+  return `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0a; color: #f4f4f4; padding: 40px 30px; border-radius: 16px;">
+    <div style="text-align: center; margin-bottom: 32px;"><h1 style="font-size: 28px; font-weight: 900; color: #10b981; margin: 0;">🎉 Seu acesso está pronto!</h1></div>
+    <p>Parabéns! Seu pagamento foi confirmado e seu acesso ao <strong>ShapeScan</strong> está liberado.</p>
+    <p>Clique no botão abaixo para criar sua senha e entrar no app:</p>
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${recoveryLink}" style="background: #10b981; color: #0a0a0a; padding: 18px 36px; text-decoration: none; border-radius: 50px; font-weight: 900; font-size: 16px; display: inline-block;">
+        Criar minha senha →
+      </a>
+    </div>
+    <div style="background: #1a1a1a; border-radius: 12px; padding: 20px; margin-top: 24px;">
+      <p style="margin: 0; font-size: 13px; color: #a1a1aa;">⚠️ Este link é válido por 24 horas. Se expirar, acesse shapescan.com.br/recuperar-senha para gerar um novo.</p>
+    </div>
+  </div>`;
+}
+
+async function handleGuestUserCreation(
+  log: any,
+  supabase: any,
+  stripe: Stripe,
+  guestEmail: string,
+  planId: string,
+  invoice: Stripe.Invoice,
+  subscriptionMeta: Record<string, string>,
+  resendApiKey: string,
+): Promise<string | null> {
+  log('info', 'guest_checkout', 'creating_user', { guestEmail, planId });
+
+  // ── Idempotência: verificar por email na tabela profiles (mais rápido que listUsers) ──
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', guestEmail)
+    .maybeSingle();
+
+  let userId: string;
+  let isNewUser = false;
+
+  if (existingProfile?.id) {
+    userId = existingProfile.id;
+    log('info', 'guest_checkout', 'user_already_exists', { userId, guestEmail });
+  } else {
+    // Criar usuário com senha aleatória — usuário vai criar a própria senha via recovery link
+    const tempPassword = crypto.randomUUID() + crypto.randomUUID();
+    const { data: newAuth, error: createError } = await supabase.auth.admin.createUser({
+      email: guestEmail,
+      password: tempPassword,
+      email_confirm: true,
+    });
+
+    if (createError || !newAuth?.user) {
+      // Último fallback: email duplicado no auth mas sem perfil
+      if (createError?.message?.includes('already been registered') || createError?.code === 'email_exists') {
+        const { data: authUser } = await supabase.auth.admin.getUserByEmail(guestEmail);
+        if (authUser?.user?.id) {
+          userId = authUser.user.id;
+          log('warn', 'guest_checkout', 'auth_user_existed_no_profile', { userId, guestEmail });
+        } else {
+          log('error', 'guest_checkout', 'create_user_failed', { guestEmail, error: createError?.message });
+          return null;
+        }
+      } else {
+        log('error', 'guest_checkout', 'create_user_failed', { guestEmail, error: createError?.message });
+        return null;
+      }
+    } else {
+      userId = newAuth.user.id;
+      isNewUser = true;
+      log('info', 'guest_checkout', 'user_created', { userId, guestEmail });
+    }
+
+    // Parse quiz data (metadata Stripe é a fonte de verdade, localStorage foi serializado aqui)
+    let quizData: Record<string, any> = {};
+    try { quizData = JSON.parse(subscriptionMeta.quiz_data || '{}'); } catch {}
+
+    // Criar perfil (upsert para cobrir race conditions entre retries do webhook)
+    const { error: profileError } = await supabase.from('profiles').upsert({
+      id: userId,
+      email: guestEmail,
+      name: '',
+      username: '',
+      phone: '',
+      plan: planId,
+      gender: quizData.gender || null,
+      height: quizData.height ? Number(quizData.height) : null,
+      weight: quizData.weight ? Number(quizData.weight) : null,
+      age: quizData.age ? Number(quizData.age) : null,
+      goal: quizData.goal || null,
+      activityLevel: quizData.activityLevel || null,
+    }, { onConflict: 'id' });
+
+    if (profileError) {
+      log('warn', 'guest_checkout', 'profile_upsert_failed', { userId, error: profileError.message });
+    }
+  }
+
+  // Gerar link de recuperação de senha
+  try {
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email: guestEmail,
+      options: { redirectTo: 'https://shapescan.com.br/nova-senha' },
+    });
+
+    if (!linkError && linkData?.properties?.action_link) {
+      await sendEmail(log, guestEmail, '🎉 Seu acesso ShapeScan está pronto — crie sua senha', guestWelcomeEmail(linkData.properties.action_link), resendApiKey);
+    } else {
+      log('warn', 'guest_checkout', 'recovery_link_failed', { guestEmail, error: linkError?.message });
+    }
+  } catch (e) {
+    log('warn', 'guest_checkout', 'recovery_link_exception', { guestEmail, error: String(e) });
+  }
+
+  // Atualizar metadata da subscription com o userId para eventos futuros
+  try {
+    if (invoice.subscription) {
+      await stripe.subscriptions.update(invoice.subscription as string, {
+        metadata: { userId, supabase_user_id: userId, guest_checkout: 'true' },
+      });
+    }
+  } catch {}
+
+  return userId;
+}
+
 async function resolveUserId(event: Stripe.Event, stripe: Stripe, supabase: any): Promise<string | null> {
   const obj = event.data.object as any;
   let userId = obj.metadata?.userId || obj.metadata?.supabase_user_id || obj.subscription_details?.metadata?.userId;
@@ -228,9 +353,26 @@ Deno.serve(async (req) => {
 
         switch (event.type) {
           case 'invoice.payment_succeeded': {
-            if (!userId) break;
             const invoice = event.data.object as Stripe.Invoice;
-            if (!(await canUpgradeUser(userId, supabase, log, { pi: invoice.payment_intent as string, sub: invoice.subscription as string }))) break;
+
+            // ── Guest checkout: criar usuário antes de resolver userId ─────────
+            let resolvedUserId = userId;
+            if (!resolvedUserId && invoice.subscription) {
+              const sub = await stripe.subscriptions.retrieve(invoice.subscription as string);
+              if (sub.metadata?.guest_checkout === 'true') {
+                const guestEmail = sub.metadata?.guest_email || (await stripe.customers.retrieve(invoice.customer as string) as Stripe.Customer).email;
+                if (guestEmail) {
+                  let planId: string | null = sub.metadata?.plan || priceToPlan[invoice.lines.data[0]?.price?.id || ''];
+                  if (planId) {
+                    resolvedUserId = await handleGuestUserCreation(log, supabase, stripe, guestEmail, planId, invoice, sub.metadata as Record<string, string>, resendApiKey);
+                  }
+                }
+              }
+            }
+
+            if (!resolvedUserId) break;
+
+            if (!(await canUpgradeUser(resolvedUserId, supabase, log, { pi: invoice.payment_intent as string, sub: invoice.subscription as string }))) break;
 
             let planId: string | null = null;
             let retrievedSub: any = null;
@@ -239,6 +381,9 @@ Deno.serve(async (req) => {
               planId = retrievedSub.metadata?.plan || null;
             }
             if (!planId) planId = priceToPlan[invoice.lines.data[0]?.price?.id || ''];
+
+            // Usar resolvedUserId daqui para frente
+            const userId = resolvedUserId;
 
             if (planId) {
               // Primary upsert: include subscription_id and period data

@@ -32,6 +32,7 @@ const AppDemo = React.lazy(() => lazyRetry(() => import('./components/AppDemo'))
 const PasswordRecovery = React.lazy(() => lazyRetry(() => import('./components/PasswordRecovery')));
 const ResetPassword = React.lazy(() => lazyRetry(() => import('./components/ResetPassword')));
 const CompleteProfile = React.lazy(() => lazyRetry(() => import('./components/CompleteProfile')));
+const SalesPage = React.lazy(() => lazyRetry(() => import('./components/SalesPage')));
 import SuccessCelebration from './components/ui/SuccessCelebration';
 const { BMICalculator, DailyCalorieCalculator } = { 
   BMICalculator: React.lazy(() => lazyRetry(() => import('./components/Calculators').then(m => ({ default: m.BMICalculator })))),
@@ -942,16 +943,26 @@ const App: React.FC = () => {
           }>
             <Routes>
               {/* Public Routes */}
-              <Route path="/" element={<LandingPage onStart={() => { setAuthMode('registrar'); navigate('/registrar'); }} onLogin={() => { setAuthMode('entrar'); navigate('/entrar'); }} onHowItWorks={() => navigate('/como-funciona')} onAbout={() => navigate('/sobre')} />} />
-              <Route path="/como-funciona" element={<HowItWorks onBack={() => navigate('/')} onRegister={() => { setAuthMode('registrar'); navigate('/registrar'); }} />} />
-              <Route path="/sobre" element={<About onBack={() => navigate('/')} onRegister={() => { setAuthMode('registrar'); navigate('/registrar'); }} />} />
+              <Route path="/" element={<LandingPage onStart={() => navigate('/quiz')} onLogin={() => { setAuthMode('entrar'); navigate('/entrar'); }} onHowItWorks={() => navigate('/como-funciona')} onAbout={() => navigate('/sobre')} />} />
+              <Route path="/como-funciona" element={<HowItWorks onBack={() => navigate('/')} onRegister={() => navigate('/quiz')} />} />
+              <Route path="/sobre" element={<About onBack={() => navigate('/')} onRegister={() => navigate('/quiz')} />} />
               <Route path="/entrar" element={<Auth initialMode="entrar" onLogin={handleLogin} onBack={() => navigate('/')} />} />
               <Route path="/registrar" element={<Auth initialMode="registrar" onLogin={handleLogin} onBack={() => navigate('/')} />} />
               <Route path="/recuperar-senha" element={<PasswordRecovery />} />
               <Route path="/nova-senha" element={<ResetPassword />} />
+              {/* New funnel: quiz and sales page are public */}
+              <Route path="/quiz" element={user ? <Navigate to="/dashboard" replace /> : <OnboardingQuiz onComplete={() => navigate('/assinar')} />} />
+              <Route path="/assinar" element={<SalesPage user={user} onShowToast={showToast} />} />
 
               {/* Protected Routes Wrapper */}
               <Route path="/*" element={user ? (
+                /* Sem premium (e não admin): bloquear app, só permite completar-perfil */
+                (!user.isPremium && !user.isAdmin) ? (
+                  <Routes>
+                    <Route path="/completar-perfil" element={<CompleteProfile user={user} onComplete={handleCompleteProfile} />} />
+                    <Route path="*" element={<Navigate to="/assinar" replace />} />
+                  </Routes>
+                ) :
                 (!user.username || !user.phone || !user.name) ? (
                   /* Perfil incompleto: bloqueia todas as rotas e força completar-perfil */
                   <Routes>
@@ -990,7 +1001,7 @@ const App: React.FC = () => {
     );
   };
 
-  const hideNavPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/quiz', '/planos', '/assinatura', '/meta-agua', '/gasto-calorico', '/imc', '/minha-meta', '/refeicoes-salvas', '/personal-24h'];
+  const hideNavPaths = ['/', '/como-funciona', '/sobre', '/entrar', '/registrar', '/quiz', '/assinar', '/planos', '/assinatura', '/meta-agua', '/gasto-calorico', '/imc', '/minha-meta', '/refeicoes-salvas', '/personal-24h'];
   const showMobileNav = user && !hideNavPaths.includes(location.pathname);
 
   return (
