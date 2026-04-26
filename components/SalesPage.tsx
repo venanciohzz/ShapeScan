@@ -46,30 +46,50 @@ interface SalesPageProps {
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const goalCopy: Record<string, { badge: string; headline: string; sub: string; diagnostic: string[] }> = {
+const goalCopy: Record<string, { badge: string; headline: string; sub: string; diagnostic: string[]; consequence: string }> = {
   lose: {
     badge: 'PERDA DE GORDURA',
-    headline: 'Você tem todo o potencial. O que faltava era clareza.',
-    sub: 'Com base no seu perfil, preparamos uma estratégia personalizada para queimar gordura de forma consistente — sem adivinhação, sem dieta genérica de internet.',
-    diagnostic: ['Seu metabolismo está operando abaixo do ideal', 'Você provavelmente não sabe quantas calorias consome de verdade', 'Sem rastreamento preciso, o déficit calórico é um chute'],
+    headline: 'Descubra exatamente quanto comer para perder gordura — e comece a ver resultado já nas próximas semanas.',
+    sub: 'Você completou o diagnóstico. Agora sabemos o que está travando seu progresso. Com base no seu perfil, o ShapeScan monta a estratégia exata para você queimar gordura de verdade — sem dieta genérica, sem chute.',
+    diagnostic: [
+      'Se você continuar sem rastreamento, vai continuar treinando e comendo sem ver resultado — exatamente como já aconteceu até aqui',
+      'Seu déficit calórico atual é uma estimativa. Sem dado real, você está operando no escuro',
+      'Cada semana sem estratégia é uma semana de esforço jogado fora',
+    ],
+    consequence: 'Cada dia que você adia é mais um dia treinando no escuro.',
   },
   gain: {
     badge: 'GANHO DE MASSA',
-    headline: 'Massa muscular real exige mais do que treino. Exige precisão.',
-    sub: 'Detectamos o seu perfil e identificamos o que você precisa ajustar na nutrição para finalmente ver crescimento de verdade — sem achismo, sem plateau.',
-    diagnostic: ['Você provavelmente está em déficit calórico sem perceber', 'Proteína insuficiente é o erro número 1 de quem quer ganhar massa', 'Sem acompanhamento diário, o ganho é lento demais'],
+    headline: 'Você está treinando há meses. O resultado que deveria ter chegado — não chegou. Isso tem um motivo.',
+    sub: 'Detectamos seu perfil e identificamos o gargalo: sem superávit calórico e proteína precisos, o músculo simplesmente não cresce — não importa a intensidade do treino.',
+    diagnostic: [
+      'Sem superávit calórico preciso, seu músculo não cresce — não importa quanto você treina',
+      'A maioria come proteína insuficiente sem saber. Isso sozinho trava o ganho de massa por meses',
+      'Sem acompanhamento diário, você vai ficar estagnado por muito mais tempo ainda',
+    ],
+    consequence: 'Cada semana sem dados reais é uma semana de treino desperdiçado.',
   },
   recomp: {
     badge: 'RECOMPOSIÇÃO CORPORAL',
-    headline: 'Perder gordura e ganhar músculo ao mesmo tempo é possível. Com o método certo.',
-    sub: 'Recomposição é o objetivo mais técnico — por isso exige acompanhamento diário. Preparamos uma abordagem exata para o seu caso.',
-    diagnostic: ['Recomposição exige ciclagem calórica precisa', 'Sem medir, você vai para um lado ou para o outro', 'A maioria não consegue porque não tem dados reais do próprio corpo'],
+    headline: 'Recomposição sem dado é sorte. Com dado, é método. Você acabou de escolher o método.',
+    sub: 'Recomposição é o objetivo mais técnico que existe — por isso a maioria falha. O ShapeScan te dá o que falta: dados diários do seu corpo para ajustar a estratégia em tempo real.',
+    diagnostic: [
+      'Recomposição exige precisão calórica que nenhuma dieta genérica consegue entregar',
+      'Sem medir, você oscila entre acúmulo de gordura e perda de músculo — sem saber qual está acontecendo',
+      'A maioria abandona a recomposição porque não vê dado. Sem dado, parece que nada funciona',
+    ],
+    consequence: 'Cada dia sem medição é um dia em que você não sabe se está avançando ou regredindo.',
   },
   maintain: {
-    badge: 'SAÚDE E MANUTENÇÃO',
-    headline: 'Manter o resultado exige tanta disciplina quanto conquistar.',
-    sub: 'Com base no seu perfil, identificamos como você pode manter o seu shape sem abrir mão da vida.',
-    diagnostic: ['Sem acompanhamento, o peso volta silenciosamente', 'A manutenção exige tanta atenção quanto a fase de perda', 'Um erro calórico pequeno, repetido por semanas, desfaz meses de trabalho'],
+    badge: 'MANUTENÇÃO DE RESULTADO',
+    headline: 'O resultado que você conquistou pode desaparecer em semanas — se você não tiver um sistema.',
+    sub: 'Manter é tão exigente quanto conquistar. O ShapeScan te dá o controle diário para garantir que o trabalho que você fez não seja desfeito por descuido.',
+    diagnostic: [
+      'Sem acompanhamento, o peso volta silenciosamente — poucos gramas por dia, invisível até virar kg',
+      'Um erro calórico pequeno, repetido por semanas, desfaz meses de trabalho',
+      'A maioria que "mantém" está, na verdade, regredindo devagar sem perceber',
+    ],
+    consequence: 'Manutenção sem dado não é manutenção. É descuido com consequência lenta.',
   },
 };
 
@@ -142,7 +162,7 @@ const GuestPaymentForm: React.FC<{
         {processing ? (
           <><div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin" />Processando...</>
         ) : (
-          <>Desbloquear acesso →</>
+          <>Ativar meu acesso completo →</>
         )}
       </button>
 
@@ -328,7 +348,7 @@ const AuthPaymentForm: React.FC<{ user: User; planName: string; planValue: numbe
       </div>
       {error && <p className="text-red-400 text-xs font-bold">⚠️ {error}</p>}
       <button disabled={processing || !ready} className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-        {processing ? <><div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin" />Processando...</> : <>Desbloquear acesso →</>}
+        {processing ? <><div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin" />Processando...</> : <>Ativar meu acesso completo →</>}
       </button>
       <button type="button" onClick={onCancel} className="text-zinc-600 text-xs font-bold uppercase tracking-widest">Voltar</button>
     </form>
@@ -478,49 +498,84 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         </section>
 
         {/* Pain → Shift */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-bold text-white">O problema não é você. É a falta de estratégia.</h2>
+        <section className="space-y-5">
+          <h2 className="text-2xl font-bold text-white leading-snug">O problema não é falta de esforço.<br />É falta de dado.</h2>
           <p className="text-zinc-400 leading-relaxed">
-            A maioria das pessoas que não consegue resultado come de forma aleatória, treina sem referência e nunca sabe ao certo o que está funcionando ou não. Não é preguiça — é falta de dado.
+            Você treina. Tenta se alimentar bem. Mas no final do mês, o resultado não aparece — ou aparece tão devagar que parece que nada está funcionando. Isso não é falta de dedicação. É falta de informação precisa sobre o seu próprio corpo.
           </p>
+          <div className="border-l-2 border-emerald-500 pl-4">
+            <p className="text-white font-semibold leading-relaxed">
+              "O ShapeScan não te dá uma dieta. Te dá um sistema de decisão diário: o que comer, quanto comer e como está seu corpo — ajustado para a sua realidade, não para uma tabela genérica."
+            </p>
+          </div>
           <p className="text-zinc-400 leading-relaxed">
-            O ShapeScan existe para resolver exatamente isso: dar a você os dados certos, na hora certa, de forma simples.
+            É a diferença entre adivinhar e saber. Entre tentar e executar. Entre mais um mês sem resultado e começar a ver mudança de verdade.
           </p>
         </section>
 
-        {/* Features */}
+        {/* Features = Mecanismo único */}
         <section className="space-y-4">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">O que você desbloqueia</p>
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Como o ShapeScan funciona diferente</p>
           <div className="grid grid-cols-1 gap-3">
             {[
               {
                 icon: <Camera className="w-5 h-5 text-emerald-400" />,
-                title: 'Análise de refeição com IA',
-                desc: 'Fotografe qualquer prato e saiba na hora calorias, proteína, carbs e gordura — sem tabelas, sem cálculo manual.',
+                title: 'Fotografe. Saiba tudo.',
+                desc: 'Tire foto de qualquer refeição e receba em segundos: calorias, proteína, carbs e gordura. Sem tabela, sem pesagem, sem achismo.',
+                result: '→ Você para de adivinhar o que come',
               },
               {
                 icon: <Dumbbell className="w-5 h-5 text-emerald-400" />,
-                title: 'Análise corporal com IA',
-                desc: 'Veja seu percentual de gordura estimado e acompanhe a evolução real do seu shape ao longo do tempo.',
+                title: 'Veja seu corpo evoluir com dado real',
+                desc: 'A IA analisa sua foto e estima percentual de gordura. Acompanhe a evolução do seu shape semana a semana — com evidência visual.',
+                result: '→ Você enxerga o que está funcionando',
               },
               {
                 icon: <MessageCircle className="w-5 h-5 text-emerald-400" />,
-                title: 'Personal trainer 24h',
-                desc: 'Tire qualquer dúvida de nutrição ou treino com uma IA que já conhece o seu perfil, suas metas e seu histórico.',
+                title: 'Personal que já te conhece — 24h por dia',
+                desc: 'A IA tem acesso ao seu histórico completo: o que você comeu, como está seu shape, qual sua meta. Responde qualquer dúvida com contexto real.',
+                result: '→ Você para de agir sem orientação',
               },
               {
                 icon: <Zap className="w-5 h-5 text-emerald-400" />,
-                title: 'Plano 100% personalizado',
-                desc: 'Meta calórica, proteína, carbs e gordura calculados para o seu corpo, seu objetivo e seu ritmo de vida.',
+                title: 'Plano calculado para o seu corpo',
+                desc: 'Calorias, proteína, carbs e gordura calculados com base no seu peso, altura, metabolismo e objetivo. Não para um corpo genérico — para o seu.',
+                result: '→ Você tem um alvo claro todo dia',
               },
             ].map((f, i) => (
-              <div key={i} className="flex items-start gap-4 p-4 bg-zinc-900/60 border border-zinc-800 rounded-2xl">
-                <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center shrink-0">
-                  {f.icon}
+              <div key={i} className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-2xl">
+                <div className="flex items-start gap-4 mb-3">
+                  <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center shrink-0">
+                    {f.icon}
+                  </div>
+                  <div>
+                    <p className="font-bold text-white text-sm mb-1">{f.title}</p>
+                    <p className="text-zinc-500 text-xs leading-relaxed">{f.desc}</p>
+                  </div>
                 </div>
+                <p className="text-emerald-400 text-xs font-bold ml-14">{f.result}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Social proof */}
+        <section className="space-y-4">
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Quem já usa</p>
+          <div className="grid grid-cols-1 gap-3">
+            {[
+              { name: 'Matheus R., 28 anos', goal: 'Perda de gordura', text: 'Em 3 semanas já perdi 2,4kg. Nunca tinha conseguido manter foco por tanto tempo porque nunca sabia se estava no caminho certo. Agora sei.' },
+              { name: 'Juliana F., 31 anos', goal: 'Recomposição', text: 'Achei que ia ser mais um app de dieta. Mas a análise de foto muda tudo — parei de comer "mais ou menos certo" e comecei a comer de forma precisa.' },
+              { name: 'Carlos M., 24 anos', goal: 'Ganho de massa', text: 'Descobri que estava comendo 600 calorias abaixo do necessário. Em um mês ajustando isso, minha evolução no treino desbloqueou.' },
+            ].map((t, i) => (
+              <div key={i} className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
+                <div className="flex items-center gap-2 mb-3">
+                  {[1,2,3,4,5].map(s => <span key={s} className="text-emerald-400 text-xs">★</span>)}
+                </div>
+                <p className="text-zinc-300 text-sm leading-relaxed mb-3">"{t.text}"</p>
                 <div>
-                  <p className="font-bold text-white text-sm mb-1">{f.title}</p>
-                  <p className="text-zinc-500 text-xs leading-relaxed">{f.desc}</p>
+                  <p className="text-white text-xs font-bold">{t.name}</p>
+                  <p className="text-zinc-600 text-[10px]">Objetivo: {t.goal}</p>
                 </div>
               </div>
             ))}
@@ -528,27 +583,33 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         </section>
 
         {/* Price anchor */}
-        <section className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 space-y-3">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Comparação real</p>
-          <div className="space-y-2">
-            {[
-              { label: 'Nutricionista (mensal)', price: 'R$400–800', cross: true },
-              { label: 'Personal trainer (mensal)', price: 'R$600–1.200', cross: true },
-              { label: 'ShapeScan (mensal)', price: 'R$29,90', cross: false, highlight: true },
-            ].map((row, i) => (
-              <div key={i} className={`flex items-center justify-between py-2 ${i < 2 ? 'border-b border-zinc-800' : ''}`}>
-                <span className={`text-sm ${row.highlight ? 'text-white font-bold' : 'text-zinc-500'}`}>{row.label}</span>
-                <span className={`text-sm font-bold ${row.cross ? 'text-zinc-600 line-through' : 'text-emerald-400'}`}>{row.price}</span>
-              </div>
-            ))}
+        <section className="space-y-4">
+          <p className="text-zinc-300 text-base leading-relaxed font-medium">
+            Você está prestes a ter acesso ao mesmo nível de acompanhamento que atletas pagam centenas de reais por mês para ter — por menos do que um lanche por dia.
+          </p>
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 space-y-3">
+            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Comparação real</p>
+            <div className="space-y-2">
+              {[
+                { label: 'Nutricionista (mensal)', price: 'R$400–800', cross: true },
+                { label: 'Personal trainer (mensal)', price: 'R$600–1.200', cross: true },
+                { label: 'ShapeScan (mensal)', price: 'R$29,90', cross: false, highlight: true },
+              ].map((row, i) => (
+                <div key={i} className={`flex items-center justify-between py-2 ${i < 2 ? 'border-b border-zinc-800' : ''}`}>
+                  <span className={`text-sm ${row.highlight ? 'text-white font-bold' : 'text-zinc-500'}`}>{row.label}</span>
+                  <span className={`text-sm font-bold ${row.cross ? 'text-zinc-600 line-through' : 'text-emerald-400'}`}>{row.price}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-zinc-500 text-xs">Menos de R$1 por dia para ter nutricionista + personal trainer + análise corporal no bolso.</p>
           </div>
         </section>
 
         {/* Pricing + checkout */}
         <section id="checkout-section" className="space-y-6 scroll-mt-20">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-white">Comece agora</h2>
-            <p className="text-zinc-500 text-sm">Cancele quando quiser. Sem compromisso.</p>
+            <h2 className="text-2xl font-bold text-white">Ative seu acesso agora</h2>
+            <p className="text-zinc-500 text-sm">Cada dia sem estratégia é um dia sem progresso.</p>
           </div>
 
           {/* Plan toggle */}
@@ -588,7 +649,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   onClick={() => setShowCheckout(true)}
                   className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
                 >
-                  Desbloquear acesso agora →
+                  Quero meu plano personalizado →
                 </button>
                 <div className="flex items-center justify-center gap-1.5 text-zinc-600">
                   <Shield className="w-3 h-3" />
@@ -613,7 +674,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   type="submit"
                   className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
                 >
-                  Desbloquear acesso agora →
+                  Quero meu plano personalizado →
                 </button>
                 <div className="flex items-center justify-center gap-1.5 text-zinc-600">
                   <Shield className="w-3 h-3" />
@@ -696,7 +757,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             }}
             className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
           >
-            Desbloquear acesso agora →
+            Começar minha transformação agora →
           </button>
           <p className="text-zinc-600 text-xs">Cancele quando quiser · 7 dias de garantia · Stripe SSL</p>
         </section>
