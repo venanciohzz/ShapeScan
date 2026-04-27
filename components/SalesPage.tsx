@@ -234,7 +234,7 @@ const GuestPaymentForm: React.FC<{
     localStorage.setItem('awaiting_stripe_plan_value', String(pricing.finalPrice));
     localStorage.setItem('guest_checkout_email', email);
 
-    pixel.addPaymentInfo(planName, pricing.finalPrice, undefined, '');
+    pixel.addPaymentInfo(planName, pricing.finalPrice, email, '');
 
     const { error: confirmError } = await stripe.confirmPayment({
       elements,
@@ -447,7 +447,7 @@ const AuthPaymentForm: React.FC<{
     localStorage.setItem('awaiting_stripe_plan_name', planName);
     localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
 
-    pixel.addPaymentInfo(planName, planValue, undefined, user.id);
+    pixel.addPaymentInfo(planName, planValue, user.email, user.id);
 
     const { error: confirmError } = await stripe.confirmPayment({
       elements,

@@ -107,11 +107,13 @@ export const pixel = {
     sendCapi('AddPaymentInfo', id, { contentName: planName, value, currency: 'BRL', email, externalId });
   },
 
-  /** Compra confirmada (webhook processado) */
+  /** Compra confirmada (webhook processado).
+   * CAPI é enviado pelo stripe-webhook com event_id autoritativo (purchase-${invoiceId}).
+   * Aqui só disparamos o browser fbq para capturar fbp/fbc — sem sendCapi duplicado. */
   purchase: (planName: string, value: number, email?: string, externalId?: string) => {
     const id = generateEventId();
     fbqTrack('Purchase', { content_name: planName, value, currency: 'BRL' }, id);
-    sendCapi('Purchase', id, { contentName: planName, value, currency: 'BRL', email, externalId });
+    // sendCapi omitido intencionalmente: stripe-webhook já envia CAPI com event_id estável
   },
 
   /** PageView — disparado em cada mudança de rota */

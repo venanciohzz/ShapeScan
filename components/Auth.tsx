@@ -67,7 +67,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
         };
 
         const newUser = await db.auth.signUp(userData, cleanPassword);
-        pixel.completeRegistration(cleanEmail, newUser.id);
+        // CompleteRegistration disparado em CompleteProfile.tsx (ponto definitivo do cadastro)
         if (!newUser.needsEmailConfirmation) {
           await db.auth.setSession(newUser);
         }
