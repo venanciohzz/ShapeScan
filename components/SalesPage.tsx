@@ -72,19 +72,30 @@ const GoogleIcon = () => (
 // ── Mockup iPhone pronto (PNG com fundo transparente) ────────────────────────
 
 const AppMockup = () => (
-  /* 100vw + calc(-50vw + 50%) = full-bleed independente de qualquer padding pai */
-  <div
-    className="relative select-none overflow-hidden"
-    style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}
-  >
-    <img
-      src="/app-mockup.jpg"
-      alt="ShapeScan app no iPhone"
-      className="w-full h-auto"
-      style={{ filter: 'drop-shadow(0 32px 64px rgba(0,0,0,0.5))' }}
-      draggable={false}
-    />
-  </div>
+  <>
+    {/* Mobile: full-bleed 100vw */}
+    <div
+      className="relative select-none overflow-hidden md:hidden"
+      style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}
+    >
+      <img
+        src="/app-mockup.jpg"
+        alt="ShapeScan app no iPhone"
+        className="w-full h-auto"
+        draggable={false}
+      />
+    </div>
+    {/* Desktop: centralizado com largura limitada */}
+    <div className="hidden md:flex justify-center">
+      <img
+        src="/app-mockup.jpg"
+        alt="ShapeScan app no iPhone"
+        className="h-auto"
+        style={{ maxWidth: 540 }}
+        draggable={false}
+      />
+    </div>
+  </>
 );
 
 // ── Static copy ───────────────────────────────────────────────────────────────
