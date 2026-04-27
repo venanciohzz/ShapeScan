@@ -72,12 +72,13 @@ const GoogleIcon = () => (
 // ── Mockup iPhone pronto (PNG com fundo transparente) ────────────────────────
 
 const AppMockup = () => (
-  <div className="relative mx-auto select-none" style={{ maxWidth: 420 }}>
+  /* -mx-5 quebra o padding do container → imagem ocupa largura total da tela */
+  <div className="relative select-none -mx-5 md:-mx-20">
     <img
       src="/app-mockup.png"
       alt="ShapeScan app no iPhone"
-      className="w-full h-auto drop-shadow-2xl"
-      style={{ filter: 'drop-shadow(0 24px 48px rgba(0,0,0,0.35))' }}
+      className="w-full h-auto"
+      style={{ filter: 'drop-shadow(0 32px 64px rgba(0,0,0,0.5))' }}
       draggable={false}
     />
   </div>
