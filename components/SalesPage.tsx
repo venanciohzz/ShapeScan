@@ -99,66 +99,18 @@ const AppMockup = () => (
   </>
 );
 
-// ── Static copy ───────────────────────────────────────────────────────────────
-
-const goalCopy: Record<string, { badge: string; headline: string; sub: string; diagnostic: string[]; consequence: string }> = {
-  lose: {
-    badge: 'PERDA DE GORDURA',
-    headline: 'Descubra exatamente quanto comer para perder gordura — e comece a ver resultado ainda essa semana.',
-    sub: 'Você completou o diagnóstico. Agora sabemos o que está travando seu progresso. Com base no seu perfil, o ShapeScan monta a estratégia exata para você queimar gordura de verdade — sem dieta genérica, sem chute.',
-    diagnostic: [
-      'Se você continuar sem rastreamento, vai continuar treinando e comendo sem ver resultado — exatamente como já aconteceu até aqui',
-      'Seu déficit calórico atual é uma estimativa. Sem dado real, você está operando no escuro',
-      'Cada semana sem estratégia é uma semana de esforço jogado fora',
-    ],
-    consequence: 'Cada dia que você adia é mais um dia treinando no escuro.',
-  },
-  gain: {
-    badge: 'GANHO DE MASSA',
-    headline: 'Você está treinando há meses. O resultado que deveria ter chegado — não chegou. Isso tem um motivo.',
-    sub: 'Detectamos seu perfil e identificamos o gargalo: sem superávit calórico e proteína precisos, o músculo simplesmente não cresce — não importa a intensidade do treino.',
-    diagnostic: [
-      'Sem superávit calórico preciso, seu músculo não cresce — não importa quanto você treina',
-      'A maioria come proteína insuficiente sem saber. Isso sozinho trava o ganho de massa por meses',
-      'Sem acompanhamento diário, você vai ficar estagnado por muito mais tempo ainda',
-    ],
-    consequence: 'Cada semana sem dados reais é uma semana de treino desperdiçado.',
-  },
-  recomp: {
-    badge: 'RECOMPOSIÇÃO CORPORAL',
-    headline: 'Recomposição sem dado é sorte. Com dado, é método. Você acabou de escolher o método.',
-    sub: 'Recomposição é o objetivo mais técnico que existe — por isso a maioria falha. O ShapeScan te dá o que falta: dados diários do seu corpo para ajustar a estratégia em tempo real.',
-    diagnostic: [
-      'Recomposição exige precisão calórica que nenhuma dieta genérica consegue entregar',
-      'Sem medir, você oscila entre acúmulo de gordura e perda de músculo — sem saber qual está acontecendo',
-      'A maioria abandona a recomposição porque não vê dado. Sem dado, parece que nada funciona',
-    ],
-    consequence: 'Cada dia sem medição é um dia em que você não sabe se está avançando ou regredindo.',
-  },
-  maintain: {
-    badge: 'MANUTENÇÃO DE RESULTADO',
-    headline: 'O resultado que você conquistou pode desaparecer em semanas — se você não tiver um sistema.',
-    sub: 'Manter é tão exigente quanto conquistar. O ShapeScan te dá o controle diário para garantir que o trabalho que você fez não seja desfeito por descuido.',
-    diagnostic: [
-      'Sem acompanhamento, o peso volta silenciosamente — poucos gramas por dia, invisível até virar kg',
-      'Um erro calórico pequeno, repetido por semanas, desfaz meses de trabalho',
-      'A maioria que "mantém" está, na verdade, regredindo devagar sem perceber',
-    ],
-    consequence: 'Manutenção sem dado não é manutenção. É descuido com consequência lenta.',
-  },
-};
+// ── FAQs ──────────────────────────────────────────────────────────────────────
 
 const faqs = [
-  { q: 'Preciso saber de nutrição para usar?', a: 'Não. O app faz todo o trabalho técnico por você. Basta fotografar o que comeu.' },
+  { q: 'Preciso saber de nutrição para usar?', a: 'Não. O app faz tudo por você. Basta fotografar o que comeu.' },
   { q: 'Funciona sem academia?', a: 'Sim. O ShapeScan acompanha sua nutrição e evolução independente de onde você treina — ou se treina.' },
   { q: 'Quando tenho acesso?', a: 'Imediatamente após o pagamento. Você receberá um e-mail para criar sua senha e acessar o app.' },
-  { q: 'Posso cancelar quando quiser?', a: 'Sim, sem burocracia. Cancele pelo próprio app, a qualquer momento, sem precisar entrar em contato.' },
-  { q: 'E se eu não gostar?', a: 'Garantia de 7 dias. Se por qualquer motivo não ficar satisfeito, devolvemos 100% do valor pago — sem perguntas.' },
+  { q: 'Posso cancelar quando quiser?', a: 'Sim. Cancele pelo próprio app, a qualquer momento, sem precisar entrar em contato.' },
+  { q: 'E se eu não gostar?', a: 'Garantia de 7 dias. Se não fizer sentido pra você, devolvemos 100% do valor — sem perguntas.' },
 ];
 
 // ── Reusable UI ───────────────────────────────────────────────────────────────
 
-/** Faixa de selos de segurança usada em vários pontos */
 const TrustRow: React.FC<{ className?: string }> = ({ className = '' }) => (
   <div className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-1 ${className}`}>
     <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold">
@@ -173,7 +125,6 @@ const TrustRow: React.FC<{ className?: string }> = ({ className = '' }) => (
   </div>
 );
 
-/** Resumo do pedido exibido dentro do bloco de pagamento */
 const PurchaseSummaryCard: React.FC<{
   planName: string;
   planPeriod: 'monthly' | 'annual';
@@ -271,7 +222,6 @@ const GuestPaymentForm: React.FC<{
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <PurchaseSummaryCard planName={planName} planPeriod={planPeriod} pricing={pricing} />
 
-      {/* PaymentElement — wallets (Apple/Google Pay) aparecem automaticamente quando disponíveis */}
       <div className="rounded-2xl overflow-hidden border border-zinc-800">
         <PaymentElement
           options={{
@@ -279,8 +229,8 @@ const GuestPaymentForm: React.FC<{
             wallets: { applePay: 'auto', googlePay: 'auto' },
             fields: {
               billingDetails: {
-                email: 'never',    // já coletamos acima
-                name: name.trim() ? 'never' : 'auto', // ocultar se já temos o nome
+                email: 'never',
+                name: name.trim() ? 'never' : 'auto',
               },
             },
             defaultValues: {
@@ -609,19 +559,15 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
   const [quizData, setQuizData] = useState<QuizData>({});
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
 
-  // Guest form fields
   const [email, setEmail] = useState('');
   const [emailDirty, setEmailDirty] = useState(false);
   const [name, setName] = useState('');
 
-  // Coupon
   const [couponCode, setCouponCode] = useState('');
   const [showCoupon, setShowCoupon] = useState(false);
 
-  // Checkout state
   const [showCheckout, setShowCheckout] = useState(false);
 
-  // Google OAuth
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
@@ -634,7 +580,6 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
           queryParams: { prompt: 'select_account' },
         },
       });
-      // Supabase redireciona o navegador — não precisa resetar loading
     } catch (err) {
       console.error('[SalesPage] Google OAuth erro:', err);
       setGoogleLoading(false);
@@ -650,8 +595,6 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
     pixel.pageView(user?.id);
   }, [user]);
 
-  const goal = quizData.goal || 'lose';
-  const copy = goalCopy[goal] || goalCopy.lose;
   const plan = PAYMENT_CONFIG[selectedPlan];
 
   const emailValid = isValidEmail(email);
@@ -719,27 +662,48 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
 
       <div className="max-w-2xl mx-auto px-5 py-10 space-y-16">
 
-        {/* Hero visual + headline */}
+        {/* ── HERO ── */}
         <section className="space-y-8">
-          {/* Mockup do app — full-bleed 100vw */}
           <AppMockup />
 
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4">
-              {copy.headline}
+          <div className="text-center space-y-5">
+            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
+              Você treina<br />
+              tenta comer melhor<br />
+              e mesmo assim… nada muda
             </h1>
-            <p className="text-zinc-400 text-base leading-relaxed">{copy.sub}</p>
+            <div className="space-y-1">
+              <p className="text-zinc-500 text-lg">e o pior</p>
+              <p className="text-zinc-300 text-base leading-relaxed">
+                você nem sabe exatamente o que está errando
+              </p>
+            </div>
           </div>
 
-          {/* Personalized diagnostic */}
+          {/* Transição pós-diagnóstico */}
+          <div className="bg-zinc-900/40 rounded-2xl p-5 text-center space-y-1">
+            <p className="text-zinc-300 text-base font-medium">Você não estava travado à toa</p>
+            <p className="text-zinc-500 text-sm">você só estava tentando no escuro</p>
+            <p className="text-white font-bold text-base mt-2">Agora isso ficou claro</p>
+          </div>
+
+          {/* Bloco diagnóstico personalizado */}
           {quizData.goal && (
             <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5">
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Baseado no seu perfil, detectamos:</p>
-              <div className="space-y-3">
-                {copy.diagnostic.map((item, i) => (
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Baseado no seu perfil</p>
+              <div className="space-y-4">
+                {[
+                  { cond: 'se você continuar sem rastrear', cons: 'vai continuar se esforçando… sem ver resultado' },
+                  { cond: 'se continuar comendo no "achismo"', cons: 'vai errar mesmo tentando acertar' },
+                  { cond: 'se não souber o quanto seu corpo precisa', cons: 'vai sempre ficar perto… mas nunca chegar' },
+                ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <span className="text-red-400 mt-0.5 shrink-0 text-base">✗</span>
-                    <p className="text-zinc-300 text-sm">{item}</p>
+                    <p className="text-zinc-300 text-sm leading-relaxed">
+                      <span className="text-white font-medium">{item.cond}</span>
+                      <br />
+                      {item.cons}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -761,58 +725,79 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
           )}
         </section>
 
-        {/* Pain → Shift */}
-        <section className="space-y-5">
-          <h2 className="text-2xl font-bold text-white leading-snug">
-            O problema não é falta de esforço.<br />É falta de um sistema que te diga exatamente o que fazer — todos os dias.
-          </h2>
-          <p className="text-zinc-400 leading-relaxed">
-            Você treina. Tenta se alimentar bem. Mas no final do mês, o resultado não aparece — ou aparece tão devagar que parece que nada está funcionando. Isso não é falta de dedicação. É falta de informação precisa sobre o seu próprio corpo.
+        {/* ── PROBLEMA ── */}
+        <section className="space-y-6">
+          <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">
+            E é aqui que começa a frustração de verdade
           </p>
-          <div className="bg-emerald-500/5 border border-emerald-500/25 rounded-2xl p-5">
-            <p className="text-emerald-300 text-[10px] font-black uppercase tracking-widest mb-3">O diferencial do ShapeScan</p>
-            <p className="text-white font-bold text-lg leading-snug mb-2">
-              Você não precisa de mais uma dieta.
+
+          <div className="space-y-5 text-zinc-300 text-base leading-loose">
+            <p>
+              você sai da academia cansado<br />
+              com a sensação de "hoje foi"
             </p>
-            <p className="text-zinc-300 text-base leading-relaxed">
-              Você precisa de um sistema que te diga{' '}
-              <span className="text-emerald-400 font-semibold">o que fazer todos os dias</span>{' '}
-              — baseado no seu corpo real, não em uma tabela genérica.
+            <p>
+              chega em casa<br />
+              olha pra comida<br />
+              e decide no olho
+            </p>
+            <p>
+              às vezes come menos achando que ajuda<br />
+              às vezes exagera sem perceber
+            </p>
+            <p>
+              no outro dia<br />
+              repete tudo de novo
+            </p>
+            <p className="text-white font-bold text-xl">e nada muda</p>
+          </div>
+
+          {/* Quebra de crença */}
+          <div className="text-center space-y-2 py-2">
+            <p className="text-zinc-400 text-base">o problema não é falta de esforço</p>
+            <p className="text-white font-bold text-lg leading-snug">
+              é não saber se o que você está fazendo<br />
+              realmente funciona
             </p>
           </div>
-          <p className="text-zinc-400 leading-relaxed">
-            É a diferença entre adivinhar e saber. Entre tentar e executar. Entre mais um mês sem resultado e começar a ver mudança de verdade.
-          </p>
+
+          {/* Introdução ShapeScan */}
+          <div className="bg-emerald-500/5 border border-emerald-500/25 rounded-2xl p-5 space-y-2">
+            <p className="text-zinc-400 text-sm">foi aí que tudo começou a fazer sentido</p>
+            <p className="text-white font-bold text-xl leading-snug">
+              O ShapeScan existe pra tirar você desse chute
+            </p>
+          </div>
         </section>
 
-        {/* Features = Mecanismo único */}
+        {/* ── FUNCIONALIDADES ── */}
         <section className="space-y-4">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Como o ShapeScan funciona diferente</p>
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Como funciona</p>
           <div className="grid grid-cols-1 gap-3">
             {[
               {
                 icon: <Camera className="w-5 h-5 text-emerald-400" />,
-                title: 'Fotografe. Saiba tudo.',
-                desc: 'Tire foto de qualquer refeição e receba em segundos: calorias, proteína, carbs e gordura. Sem tabela, sem pesagem, sem achismo.',
-                result: '→ Você para de adivinhar o que come',
+                title: 'Foto da refeição',
+                desc: 'você tira uma foto\ne para de tentar adivinhar o que está acontecendo',
+                result: '→ Sem pesagem. Sem tabela. Sem chute.',
               },
               {
                 icon: <Dumbbell className="w-5 h-5 text-emerald-400" />,
-                title: 'Veja seu corpo evoluir com dado real',
-                desc: 'A IA analisa sua foto e estima percentual de gordura. Acompanhe a evolução do seu shape semana a semana — com evidência visual.',
-                result: '→ Você enxerga o que está funcionando',
+                title: 'Análise do corpo',
+                desc: 'você vê seu corpo mudando\ne entende o que realmente está funcionando',
+                result: '→ Dado real. Semana a semana.',
               },
               {
                 icon: <MessageCircle className="w-5 h-5 text-emerald-400" />,
-                title: 'Personal que já te conhece — 24h por dia',
-                desc: 'A IA tem acesso ao seu histórico completo: o que você comeu, como está seu shape, qual sua meta. Responde qualquer dúvida com contexto real.',
-                result: '→ Você para de agir sem orientação',
+                title: 'IA Personal',
+                desc: 'você pergunta\ne recebe resposta baseada no que você realmente faz',
+                result: '→ Contexto real. 24h por dia.',
               },
               {
                 icon: <Zap className="w-5 h-5 text-emerald-400" />,
-                title: 'Plano calculado para o seu corpo',
-                desc: 'Calorias, proteína, carbs e gordura calculados com base no seu peso, altura, metabolismo e objetivo. Não para um corpo genérico — para o seu.',
-                result: '→ Você tem um alvo claro todo dia',
+                title: 'Plano personalizado',
+                desc: 'você acorda já sabendo o que fazer\nsem dúvida\nsem tentativa',
+                result: '→ Um alvo claro. Todo dia.',
               },
             ].map((f, i) => (
               <div key={i} className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-2xl">
@@ -822,70 +807,87 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   </div>
                   <div>
                     <p className="font-bold text-white text-sm mb-1">{f.title}</p>
-                    <p className="text-zinc-500 text-xs leading-relaxed">{f.desc}</p>
+                    <p className="text-zinc-500 text-xs leading-relaxed whitespace-pre-line">{f.desc}</p>
                   </div>
                 </div>
                 <p className="text-emerald-400 text-xs font-bold ml-14">{f.result}</p>
               </div>
             ))}
           </div>
+
+          {/* Não é sobre fazer mais */}
+          <div className="text-center py-4 space-y-1">
+            <p className="text-zinc-400 text-base">não é sobre fazer mais</p>
+            <p className="text-white font-bold text-xl">é sobre fazer certo</p>
+          </div>
         </section>
 
-        {/* Social proof */}
+        {/* ── DEPOIMENTOS ── */}
         <section className="space-y-4">
           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Quem já usa</p>
           <div className="grid grid-cols-1 gap-3">
             {[
-              { name: 'Matheus R., 28 anos', goal: 'Perda de gordura', text: 'Em 3 semanas perdi 2,4kg sem cortar tudo que gosto — só ajustando o que o app mostrou. Nunca tinha conseguido manter foco por tanto tempo porque nunca sabia se estava no caminho certo. Agora sei.' },
-              { name: 'Juliana F., 31 anos', goal: 'Recomposição', text: 'Achei que ia ser mais um app de dieta. Mas fotografar a refeição e ver os macros na hora muda tudo — parei de comer "mais ou menos certo" e comecei a comer com precisão. Em 5 semanas minha composição mudou visivelmente.' },
-              { name: 'Carlos M., 24 anos', goal: 'Ganho de massa', text: 'Descobri que estava comendo 600 calorias abaixo do necessário todo dia. Em um mês ajustando isso com o plano do app, desbloqueei uma evolução no treino que não acontecia há meses.' },
+              {
+                name: 'Matheus R.',
+                age: '28 anos',
+                text: 'eu achei que era só treinar mais…\nmas eu tava comendo errado o tempo todo',
+              },
+              {
+                name: 'Juliana F.',
+                age: '31 anos',
+                text: 'já tinha tentado de tudo\nquando vi os números pela primeira vez\nfez sentido na hora',
+              },
+              {
+                name: 'Carlos M.',
+                age: '24 anos',
+                text: 'no começo eu não acreditei\nmas foi a primeira vez que eu soube exatamente o que fazer',
+              },
             ].map((t, i) => (
               <div key={i} className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
                 <div className="flex items-center gap-1 mb-3">
                   {[1,2,3,4,5].map(s => <span key={s} className="text-emerald-400 text-xs">★</span>)}
                 </div>
-                <p className="text-zinc-300 text-sm leading-relaxed mb-3">"{t.text}"</p>
+                <p className="text-zinc-300 text-sm leading-relaxed mb-3 whitespace-pre-line">"{t.text}"</p>
                 <div>
                   <p className="text-white text-xs font-bold">{t.name}</p>
-                  <p className="text-zinc-600 text-[10px]">Objetivo: {t.goal}</p>
+                  <p className="text-zinc-600 text-[10px]">{t.age}</p>
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Price anchor */}
-        <section className="space-y-4">
-          <p className="text-zinc-300 text-base leading-relaxed font-medium">
-            Se você fosse montar isso separado, precisaria de:
-          </p>
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 space-y-3">
-            <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Comparação real</p>
-            <div className="space-y-2">
-              {[
-                { label: 'Nutricionista (mensal)', price: 'R$400–800', cross: true },
-                { label: 'Personal trainer (mensal)', price: 'R$600–1.200', cross: true },
-                { label: 'Avaliação corporal constante', price: 'R$150–300', cross: true },
-                { label: 'ShapeScan — tudo isso junto', price: 'R$29,90', cross: false, highlight: true },
-              ].map((row, i) => (
-                <div key={i} className={`flex items-center justify-between py-2 ${i < 3 ? 'border-b border-zinc-800' : ''}`}>
-                  <span className={`text-sm ${row.highlight ? 'text-white font-bold' : 'text-zinc-500'}`}>{row.label}</span>
-                  <span className={`text-sm font-bold ${row.cross ? 'text-zinc-600 line-through' : 'text-emerald-400'}`}>{row.price}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-zinc-500 text-xs">Menos de R$1 por dia para ter nutricionista + personal trainer + análise corporal no bolso.</p>
+        {/* ── PREÇO ── */}
+        <section className="space-y-5">
+          <div className="space-y-4 text-base leading-loose">
+            <p className="text-zinc-400">
+              ou você continua gastando com dieta<br />
+              tentando plano daqui e dali
+            </p>
+            <p className="text-white font-bold text-lg">ou resolve isso de forma simples</p>
+          </div>
+          <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 space-y-2">
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              por menos de <span className="text-white font-bold">1 real por dia</span>
+            </p>
+            <p className="text-zinc-300 text-sm leading-loose">
+              você sai do achismo<br />
+              e entra na clareza
+            </p>
           </div>
         </section>
 
-        {/* ── Pricing + checkout ── */}
+        {/* ── CHECKOUT ── */}
         <section id="checkout-section" className="space-y-6 scroll-mt-20">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-white">Ative seu acesso agora</h2>
-            <p className="text-zinc-500 text-sm">Cada dia sem estratégia é um dia sem progresso.</p>
+            <h2 className="text-2xl font-bold text-white">Ativar meu acesso agora</h2>
+            <p className="text-zinc-500 text-sm leading-relaxed">
+              cada dia que você continua no chute<br />
+              é mais um dia sem resultado
+            </p>
           </div>
 
-          {/* Plan toggle — desabilitado após abrir checkout */}
+          {/* Seleção de plano */}
           <div className="grid grid-cols-2 gap-3">
             {(['monthly', 'annual'] as const).map(p => {
               const active = selectedPlan === p;
@@ -912,12 +914,9 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             })}
           </div>
 
-          {/* ── Checkout embed ── */}
           {!showCheckout ? (
             user ? (
-              /* Logado: vai direto pro checkout */
               <div className="space-y-3">
-                {/* Coupon for auth */}
                 <div>
                   <button
                     type="button"
@@ -938,20 +937,17 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                     />
                   )}
                 </div>
-
                 <button
                   onClick={() => setShowCheckout(true)}
                   className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
                 >
-                  Quero meu plano exato agora →
+                  Ativar meu acesso agora →
                 </button>
                 <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
                 <TrustRow />
               </div>
             ) : (
-              /* Guest: opção Google + formulário email */
               <div className="space-y-3">
-                {/* Botão Google */}
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
@@ -966,100 +962,94 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   {googleLoading ? 'Redirecionando...' : 'Continuar com Google'}
                 </button>
 
-                {/* Divisor */}
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-px bg-zinc-800" />
                   <span className="text-zinc-600 text-[11px] font-bold">ou continue com e-mail</span>
                   <div className="flex-1 h-px bg-zinc-800" />
                 </div>
 
-              <form onSubmit={handleEmailSubmit} className="space-y-3">
-                {/* Email */}
-                <div>
-                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
-                    Seu e-mail <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={e => { setEmail(e.target.value); setEmailDirty(true); }}
-                      onBlur={() => setEmailDirty(true)}
-                      placeholder="seu@email.com"
-                      required
-                      className={`w-full bg-zinc-900 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors pr-10 ${
-                        emailError
-                          ? 'border-red-500/60 focus:border-red-500'
-                          : emailDirty && emailValid
-                          ? 'border-emerald-500/60 focus:border-emerald-500'
-                          : 'border-zinc-800 focus:border-emerald-500'
-                      }`}
-                    />
-                    {emailDirty && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm">
-                        {emailValid ? '✓' : ''}
-                      </span>
+                <form onSubmit={handleEmailSubmit} className="space-y-3">
+                  <div>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
+                      Seu e-mail <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => { setEmail(e.target.value); setEmailDirty(true); }}
+                        onBlur={() => setEmailDirty(true)}
+                        placeholder="seu@email.com"
+                        required
+                        className={`w-full bg-zinc-900 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors pr-10 ${
+                          emailError
+                            ? 'border-red-500/60 focus:border-red-500'
+                            : emailDirty && emailValid
+                            ? 'border-emerald-500/60 focus:border-emerald-500'
+                            : 'border-zinc-800 focus:border-emerald-500'
+                        }`}
+                      />
+                      {emailDirty && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm">
+                          {emailValid ? '✓' : ''}
+                        </span>
+                      )}
+                    </div>
+                    {emailError && (
+                      <p className="text-red-400 text-[10px] font-bold mt-1">Digite um e-mail válido.</p>
                     )}
                   </div>
-                  {emailError && (
-                    <p className="text-red-400 text-[10px] font-bold mt-1">Digite um e-mail válido.</p>
-                  )}
-                </div>
 
-                {/* Nome completo */}
-                <div>
-                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
-                    Nome completo <span className="text-zinc-600 font-normal normal-case">(recomendado)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Seu nome"
-                    autoComplete="name"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors"
-                  />
-                </div>
-
-                {/* Cupom colapsável */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowCoupon(v => !v)}
-                    className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs font-bold transition-colors py-1"
-                  >
-                    <Tag className="w-3 h-3" />
-                    {showCoupon ? 'Fechar cupom' : 'Tem um cupom?'}
-                    {showCoupon ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
-                  {showCoupon && (
+                  <div>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
+                      Nome completo <span className="text-zinc-600 font-normal normal-case">(recomendado)</span>
+                    </label>
                     <input
                       type="text"
-                      value={couponCode}
-                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="CÓDIGO DO CUPOM"
-                      className="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="Seu nome"
+                      autoComplete="name"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors"
                     />
-                  )}
-                </div>
+                  </div>
 
-                <button
-                  type="submit"
-                  disabled={emailDirty && !emailValid}
-                  className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
-                >
-                  Quero meu plano exato agora →
-                </button>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setShowCoupon(v => !v)}
+                      className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs font-bold transition-colors py-1"
+                    >
+                      <Tag className="w-3 h-3" />
+                      {showCoupon ? 'Fechar cupom' : 'Tem um cupom?'}
+                      {showCoupon ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                    {showCoupon && (
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="CÓDIGO DO CUPOM"
+                        className="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
+                      />
+                    )}
+                  </div>
 
-                <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
-                <TrustRow />
-              </form>
+                  <button
+                    type="submit"
+                    disabled={emailDirty && !emailValid}
+                    className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
+                  >
+                    Ativar meu acesso agora →
+                  </button>
+
+                  <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
+                  <TrustRow />
+                </form>
               </div>
             )
           ) : (
-            /* ── Formulário de pagamento ── */
             <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5">
-              {/* Header do embed */}
               <div className="flex items-center gap-3 mb-5 pb-4 border-b border-zinc-800">
                 <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center shrink-0">
                   <Lock className="w-4 h-4 text-emerald-400" />
@@ -1070,7 +1060,6 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 </div>
               </div>
 
-              {/* What you unlock */}
               <ul className="space-y-2 mb-5">
                 {['Análise completa de refeições por foto', 'Análise corporal com IA', 'Personal trainer 24h com contexto real'].map(item => (
                   <li key={item} className="flex items-center gap-2 text-sm text-white">
@@ -1080,7 +1069,6 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 ))}
               </ul>
 
-              {/* Checkout embed */}
               {user ? (
                 <AuthCheckoutWrapper
                   user={user}
@@ -1110,20 +1098,21 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
           )}
         </section>
 
-        {/* Guarantee */}
+        {/* ── GARANTIA ── */}
         <section className="flex items-start gap-4 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
           <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center shrink-0 border border-emerald-500/20">
             <Shield className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <p className="font-bold text-white mb-1">Garantia de 7 dias</p>
+            <p className="font-bold text-white mb-1">teste por 7 dias</p>
             <p className="text-zinc-500 text-sm leading-relaxed">
-              Se por qualquer motivo você não ficar satisfeito nos primeiros 7 dias, devolvemos 100% do valor pago — sem perguntas, sem burocracia.
+              se não fizer sentido pra você<br />
+              você recebe tudo de volta
             </p>
           </div>
         </section>
 
-        {/* FAQ */}
+        {/* ── FAQ ── */}
         <section className="space-y-4">
           <h2 className="text-xl font-bold text-white">Dúvidas frequentes</h2>
           <div className="space-y-2">
@@ -1131,11 +1120,14 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
           </div>
         </section>
 
-        {/* Bottom CTA */}
+        {/* ── BLOCO FINAL ── */}
         <section className="text-center space-y-4 pb-10">
-          <div className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl text-left space-y-2">
-            <p className="text-zinc-400 text-sm leading-relaxed">Você pode continuar fazendo do jeito que sempre fez…</p>
-            <p className="text-white font-bold text-base leading-relaxed">ou começar hoje com um plano exato que funciona para o seu corpo.</p>
+          <div className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl text-left space-y-3">
+            <p className="text-zinc-400 text-base leading-relaxed">ou você continua tentando no escuro</p>
+            <p className="text-white font-bold text-base leading-relaxed">
+              ou começa hoje<br />
+              sabendo exatamente o que fazer
+            </p>
           </div>
           <button
             onClick={() => {
@@ -1143,7 +1135,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             }}
             className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
           >
-            Começar minha transformação agora →
+            Começar agora →
           </button>
           <p className="text-zinc-600 text-xs">Cancele quando quiser · 7 dias de garantia · Stripe SSL</p>
         </section>
