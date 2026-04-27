@@ -39,3 +39,6 @@ supabase/.temp/
 .env
 .env.production
 .env.staging
+
+# Graphify cache
+graphify-out/cache/
