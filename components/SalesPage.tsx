@@ -69,74 +69,17 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ── iPhone 17 mockup com screenshot real ────────────────────────────────────
+// ── Mockup iPhone pronto (PNG com fundo transparente) ────────────────────────
 
 const AppMockup = () => (
-  <div className="relative mx-auto" style={{ width: 260, perspective: '1000px' }}>
-    {/* Sombra ambiente */}
-    <div
-      className="absolute inset-0 rounded-[52px] blur-3xl -z-10"
-      style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.18) 0%, transparent 70%)', transform: 'translateY(24px) scale(0.85)' }}
+  <div className="relative mx-auto select-none" style={{ maxWidth: 420 }}>
+    <img
+      src="/app-mockup.png"
+      alt="ShapeScan app no iPhone"
+      className="w-full h-auto drop-shadow-2xl"
+      style={{ filter: 'drop-shadow(0 24px 48px rgba(0,0,0,0.35))' }}
+      draggable={false}
     />
-
-    {/* iPhone 17 frame */}
-    <div
-      style={{
-        transform: 'rotateY(-6deg) rotateX(3deg)',
-        transformStyle: 'preserve-3d',
-        width: 260,
-        borderRadius: 52,
-        background: '#1a1a1c',
-        boxShadow: '0 0 0 1.5px #3a3a3c, 0 0 0 3px #1a1a1c, 0 30px 80px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.4)',
-        padding: '10px',
-        position: 'relative',
-      }}
-    >
-      {/* Botão lateral direito (power) */}
-      <div style={{ position: 'absolute', right: -3, top: 110, width: 3, height: 72, background: '#2c2c2e', borderRadius: '0 2px 2px 0' }} />
-      {/* Botões volume esquerdo */}
-      <div style={{ position: 'absolute', left: -3, top: 90, width: 3, height: 36, background: '#2c2c2e', borderRadius: '2px 0 0 2px' }} />
-      <div style={{ position: 'absolute', left: -3, top: 136, width: 3, height: 36, background: '#2c2c2e', borderRadius: '2px 0 0 2px' }} />
-      {/* Silêncio switch */}
-      <div style={{ position: 'absolute', left: -3, top: 64, width: 3, height: 20, background: '#2c2c2e', borderRadius: '2px 0 0 2px' }} />
-
-      {/* Tela interna */}
-      <div
-        style={{
-          borderRadius: 44,
-          overflow: 'hidden',
-          position: 'relative',
-          background: '#000',
-          aspectRatio: '9/19.5',
-        }}
-      >
-        {/* Dynamic Island */}
-        <div style={{
-          position: 'absolute',
-          top: 12,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 90,
-          height: 30,
-          background: '#000',
-          borderRadius: 20,
-          zIndex: 10,
-        }} />
-
-        {/* Screenshot real do app */}
-        <img
-          src="/app-screenshot-1.png"
-          alt="ShapeScan dashboard"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'top',
-            display: 'block',
-          }}
-        />
-      </div>
-    </div>
   </div>
 );
 
