@@ -82,6 +82,7 @@ const AppMockup = () => (
         src="/app-mockup.jpg"
         alt="ShapeScan app no iPhone"
         className="w-full h-auto"
+        style={{ mixBlendMode: 'screen' }}
         draggable={false}
       />
     </div>
@@ -91,7 +92,7 @@ const AppMockup = () => (
         src="/app-mockup.jpg"
         alt="ShapeScan app no iPhone"
         className="h-auto"
-        style={{ maxWidth: 540 }}
+        style={{ maxWidth: 540, mixBlendMode: 'screen' }}
         draggable={false}
       />
     </div>
