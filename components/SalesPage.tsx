@@ -72,8 +72,11 @@ const GoogleIcon = () => (
 // ── Mockup iPhone pronto (PNG com fundo transparente) ────────────────────────
 
 const AppMockup = () => (
-  /* -mx-5 quebra o padding do container → imagem ocupa largura total da tela */
-  <div className="relative select-none -mx-5 md:-mx-20">
+  /* 100vw + calc(-50vw + 50%) = full-bleed independente de qualquer padding pai */
+  <div
+    className="relative select-none overflow-hidden"
+    style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}
+  >
     <img
       src="/app-mockup.png"
       alt="ShapeScan app no iPhone"
@@ -706,10 +709,8 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
 
         {/* Hero visual + headline */}
         <section className="space-y-8">
-          {/* Mockup do app — quebra de texto imediato */}
-          <div className="flex justify-center pt-2">
-            <AppMockup />
-          </div>
+          {/* Mockup do app — full-bleed 100vw */}
+          <AppMockup />
 
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4">
