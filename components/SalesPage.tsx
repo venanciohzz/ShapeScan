@@ -161,15 +161,9 @@ const faqs = [
 /** Faixa de selos de segurança usada em vários pontos */
 const TrustRow: React.FC<{ className?: string }> = ({ className = '' }) => (
   <div className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-1 ${className}`}>
-    <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold">
-      <Lock className="w-2.5 h-2.5 text-emerald-500 shrink-0" />SSL 256-bit
-    </span>
-    <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold">
-      <Shield className="w-2.5 h-2.5 text-emerald-500 shrink-0" />Dados criptografados
-    </span>
-    <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold">
-      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 shrink-0" />Garantia de 7 dias
-    </span>
+    <span className="text-zinc-500 text-[10px] font-bold">🔒 Compra protegida com segurança bancária</span>
+    <span className="text-zinc-500 text-[10px] font-bold">🛡️ Seus dados ficam 100% protegidos</span>
+    <span className="text-zinc-500 text-[10px] font-bold">✅ Teste por 7 dias sem risco</span>
   </div>
 );
 
