@@ -78,7 +78,7 @@ const AppMockup = () => (
     style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}
   >
     <img
-      src="/app-mockup.png"
+      src="/app-mockup.jpg"
       alt="ShapeScan app no iPhone"
       className="w-full h-auto"
       style={{ filter: 'drop-shadow(0 32px 64px rgba(0,0,0,0.5))' }}
