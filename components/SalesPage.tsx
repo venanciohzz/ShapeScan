@@ -69,65 +69,74 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ── App mockup visual ────────────────────────────────────────────────────────
+// ── iPhone 17 mockup com screenshot real ────────────────────────────────────
 
 const AppMockup = () => (
-  <div className="relative mx-auto w-52" style={{ perspective: '800px' }}>
-    {/* Phone frame */}
+  <div className="relative mx-auto" style={{ width: 260, perspective: '1000px' }}>
+    {/* Sombra ambiente */}
     <div
-      className="bg-zinc-900 rounded-[36px] border-2 border-zinc-700 shadow-2xl overflow-hidden"
-      style={{ transform: 'rotateY(-8deg) rotateX(4deg)' }}
+      className="absolute inset-0 rounded-[52px] blur-3xl -z-10"
+      style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.18) 0%, transparent 70%)', transform: 'translateY(24px) scale(0.85)' }}
+    />
+
+    {/* iPhone 17 frame */}
+    <div
+      style={{
+        transform: 'rotateY(-6deg) rotateX(3deg)',
+        transformStyle: 'preserve-3d',
+        width: 260,
+        borderRadius: 52,
+        background: '#1a1a1c',
+        boxShadow: '0 0 0 1.5px #3a3a3c, 0 0 0 3px #1a1a1c, 0 30px 80px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.4)',
+        padding: '10px',
+        position: 'relative',
+      }}
     >
-      {/* Status bar */}
-      <div className="h-7 bg-zinc-950 flex items-center justify-between px-5">
-        <span className="text-white text-[9px] font-bold">9:41</span>
-        <div className="w-16 h-3 bg-zinc-800 rounded-full" />
-        <span className="text-zinc-500 text-[9px]">●●●</span>
-      </div>
-      <div className="px-3 pt-2 pb-4 space-y-2">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <span className="text-white text-xs font-bold">ShapeScan</span>
-          <span className="text-emerald-400 text-[9px] font-black">HOJ HOJE</span>
-        </div>
-        {/* Food photo */}
-        <div className="h-20 rounded-xl bg-gradient-to-br from-amber-500/25 to-orange-600/20 border border-amber-500/20 flex items-center justify-center relative overflow-hidden">
-          <span className="text-4xl">🍛</span>
-          <div className="absolute bottom-2 right-2 bg-black/60 rounded-lg px-2 py-0.5">
-            <span className="text-emerald-400 text-[9px] font-black">IA ✓</span>
-          </div>
-        </div>
-        {/* Macros */}
-        <div className="bg-zinc-800/80 rounded-xl p-2.5">
-          <p className="text-white text-[10px] font-bold mb-1.5">Frango grelhado + arroz</p>
-          <div className="grid grid-cols-4 gap-1">
-            {[{ l: 'Cal', v: '412', c: 'text-emerald-400' }, { l: 'Prot', v: '36g', c: 'text-blue-400' }, { l: 'Carbs', v: '48g', c: 'text-yellow-400' }, { l: 'Fat', v: '8g', c: 'text-orange-400' }].map(m => (
-              <div key={m.l} className="bg-zinc-900 rounded-lg p-1 text-center">
-                <p className={`${m.c} text-[10px] font-black`}>{m.v}</p>
-                <p className="text-zinc-600 text-[8px]">{m.l}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        {/* Progress */}
-        <div className="bg-zinc-800/60 rounded-xl p-2.5 space-y-1.5">
-          <p className="text-zinc-500 text-[8px] font-black uppercase tracking-widest">Meta diária</p>
-          {[{ label: 'Calorias', pct: 68, color: 'bg-emerald-500' }, { label: 'Proteína', pct: 82, color: 'bg-blue-500' }].map(b => (
-            <div key={b.label}>
-              <div className="flex justify-between mb-0.5">
-                <span className="text-zinc-400 text-[8px]">{b.label}</span>
-                <span className="text-emerald-400 text-[8px] font-bold">{b.pct}%</span>
-              </div>
-              <div className="h-1.5 bg-zinc-700 rounded-full overflow-hidden">
-                <div className={`h-full ${b.color} rounded-full transition-all`} style={{ width: `${b.pct}%` }} />
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Botão lateral direito (power) */}
+      <div style={{ position: 'absolute', right: -3, top: 110, width: 3, height: 72, background: '#2c2c2e', borderRadius: '0 2px 2px 0' }} />
+      {/* Botões volume esquerdo */}
+      <div style={{ position: 'absolute', left: -3, top: 90, width: 3, height: 36, background: '#2c2c2e', borderRadius: '2px 0 0 2px' }} />
+      <div style={{ position: 'absolute', left: -3, top: 136, width: 3, height: 36, background: '#2c2c2e', borderRadius: '2px 0 0 2px' }} />
+      {/* Silêncio switch */}
+      <div style={{ position: 'absolute', left: -3, top: 64, width: 3, height: 20, background: '#2c2c2e', borderRadius: '2px 0 0 2px' }} />
+
+      {/* Tela interna */}
+      <div
+        style={{
+          borderRadius: 44,
+          overflow: 'hidden',
+          position: 'relative',
+          background: '#000',
+          aspectRatio: '9/19.5',
+        }}
+      >
+        {/* Dynamic Island */}
+        <div style={{
+          position: 'absolute',
+          top: 12,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 90,
+          height: 30,
+          background: '#000',
+          borderRadius: 20,
+          zIndex: 10,
+        }} />
+
+        {/* Screenshot real do app */}
+        <img
+          src="/app-screenshot-1.png"
+          alt="ShapeScan dashboard"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'top',
+            display: 'block',
+          }}
+        />
       </div>
     </div>
-    {/* Glow */}
-    <div className="absolute -inset-6 bg-emerald-500/8 rounded-[60px] blur-2xl -z-10" />
   </div>
 );
 
