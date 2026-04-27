@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { CheckCircle2, Shield, ChevronDown, ChevronUp, Camera, Dumbbell, MessageCircle, Zap, Lock, Tag } from 'lucide-react';
+import { CheckCircle2, Shield, ChevronDown, ChevronUp, Camera, Dumbbell, MessageCircle, Zap, Lock, Tag, ArrowRight, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
+import '@fontsource/playfair-display/700.css';
+import '@fontsource/playfair-display/400.css';
 import { PAYMENT_CONFIG } from '../services/paymentConfig';
 import { User } from '../types';
 import { callEdgeFunction, supabaseUrl, supabaseAnonKey, supabase } from '../services/supabaseService';
@@ -69,11 +72,10 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// ── Mockup iPhone pronto (PNG com fundo transparente) ────────────────────────
+// ── App Mockup ────────────────────────────────────────────────────────────────
 
 const AppMockup = () => (
   <>
-    {/* Mobile: full-bleed 100vw */}
     <div
       className="relative select-none overflow-hidden md:hidden"
       style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}
@@ -86,7 +88,6 @@ const AppMockup = () => (
         draggable={false}
       />
     </div>
-    {/* Desktop: centralizado com largura limitada */}
     <div className="hidden md:flex justify-center">
       <img
         src="/app-mockup.jpg"
@@ -108,6 +109,18 @@ const faqs = [
   { q: 'Posso cancelar quando quiser?', a: 'Sim. Cancele pelo próprio app, a qualquer momento, sem precisar entrar em contato.' },
   { q: 'E se eu não gostar?', a: 'Garantia de 7 dias. Se não fizer sentido pra você, devolvemos 100% do valor — sem perguntas.' },
 ];
+
+// ── Animation variants ────────────────────────────────────────────────────────
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as any } },
+};
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12 } },
+};
 
 // ── Reusable UI ───────────────────────────────────────────────────────────────
 
@@ -253,7 +266,7 @@ const GuestPaymentForm: React.FC<{
 
       <button
         disabled={processing || !stripe || !ready}
-        className="w-full px-6 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+        className="w-full px-6 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)]"
       >
         {processing ? (
           <>
@@ -444,7 +457,7 @@ const AuthPaymentForm: React.FC<{
 
       <button
         disabled={processing || !ready}
-        className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+        className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)]"
       >
         {processing ? (
           <>
@@ -535,12 +548,12 @@ const FaqItem: React.FC<{ q: string; a: string }> = ({ q, a }) => {
   return (
     <button
       onClick={() => setOpen(o => !o)}
-      className="w-full text-left border border-zinc-800 rounded-2xl p-5 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors"
+      className="w-full text-left bg-zinc-900/60 backdrop-blur-sm border border-white/5 hover:border-emerald-500/30 rounded-2xl p-5 transition-all duration-300"
     >
       <div className="flex items-center justify-between gap-4">
         <span className="font-bold text-white text-sm">{q}</span>
         {open
-          ? <ChevronUp className="w-4 h-4 text-zinc-500 shrink-0" />
+          ? <ChevronUp className="w-4 h-4 text-emerald-500 shrink-0" />
           : <ChevronDown className="w-4 h-4 text-zinc-500 shrink-0" />}
       </div>
       {open && <p className="text-zinc-400 text-sm mt-3 leading-relaxed">{a}</p>}
@@ -647,245 +660,392 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-zinc-950 text-white">
+    <div className="min-h-[100dvh] bg-[#020202] text-white overflow-x-hidden">
+      <style>{`
+        .font-serif-premium {
+          font-family: 'Playfair Display', serif;
+          letter-spacing: -0.02em;
+        }
+        .text-gradient {
+          background: linear-gradient(to right, #34d399, #10b981, #14b8a6);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .glow-emerald {
+          filter: drop-shadow(0 0 30px rgba(16,185,129,0.4));
+        }
+      `}</style>
 
       {/* Sticky header */}
-      <header className="sticky top-0 z-50 border-b border-zinc-900 bg-zinc-950/90 backdrop-blur-md px-5 py-3 flex items-center justify-between">
-        <span className="font-serif font-bold text-white text-lg tracking-tight">ShapeScan</span>
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl px-5 py-3 flex items-center justify-between">
+        <span className="font-serif-premium font-bold text-white text-lg">ShapeScan<span className="text-emerald-500">.</span></span>
         <button
           onClick={() => navigate('/entrar')}
-          className="text-zinc-500 hover:text-zinc-300 text-xs font-bold uppercase tracking-widest transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 hover:border-emerald-500/40 hover:bg-emerald-500/5 text-zinc-400 hover:text-white text-[11px] font-black uppercase tracking-[0.15em] transition-all"
         >
           Já tenho conta
         </button>
       </header>
 
-      <div className="max-w-2xl mx-auto px-5 py-10 space-y-16">
+      {/* ── HERO ── */}
+      <section className="relative pt-10 pb-0 overflow-hidden">
+        {/* Glow blob */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-emerald-500/8 blur-[120px] rounded-full pointer-events-none" />
 
-        {/* ── HERO ── */}
-        <section className="space-y-8">
-          <AppMockup />
+        <div className="relative z-10 max-w-2xl mx-auto px-5">
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex justify-center mb-6"
+          >
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Diagnóstico completo
+            </span>
+          </motion.div>
 
-          <div className="text-center space-y-5">
-            <h1 className="text-4xl md:text-5xl font-bold text-white leading-tight">
-              Você treina<br />
-              tenta comer melhor<br />
-              e mesmo assim… nada muda
+          {/* Headline */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center mb-6"
+          >
+            <h1 className="font-serif-premium text-[clamp(2rem,8vw,3.5rem)] font-bold text-white leading-[1.1] mb-4">
+              Você treina, tenta comer melhor
+              <br />
+              <span className="text-gradient italic glow-emerald">e mesmo assim… nada muda</span>
             </h1>
-            <div className="space-y-1">
-              <p className="text-zinc-500 text-lg">e o pior</p>
-              <p className="text-zinc-300 text-base leading-relaxed">
-                você nem sabe exatamente o que está errando
-              </p>
-            </div>
-          </div>
+            <p className="text-zinc-500 text-lg font-medium">e o pior</p>
+            <p className="text-zinc-300 text-base mt-1">
+              você nem sabe exatamente o que está errando
+            </p>
+          </motion.div>
+        </div>
 
-          {/* Transição pós-diagnóstico */}
-          <div className="bg-zinc-900/40 rounded-2xl p-5 text-center space-y-1">
+        {/* Mockup full-bleed */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <AppMockup />
+        </motion.div>
+
+        {/* Transição */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.5 }}
+          className="max-w-2xl mx-auto px-5 mt-8"
+        >
+          <div className="relative pl-4 border-l-2 border-emerald-500/40 py-2 space-y-1">
             <p className="text-zinc-300 text-base font-medium">Você não estava travado à toa</p>
             <p className="text-zinc-500 text-sm">você só estava tentando no escuro</p>
-            <p className="text-white font-bold text-base mt-2">Agora isso ficou claro</p>
+            <p className="text-white font-bold text-base mt-1">Agora isso ficou claro</p>
           </div>
+        </motion.div>
+      </section>
 
-          {/* Bloco diagnóstico personalizado */}
-          {quizData.goal && (
-            <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5">
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Baseado no seu perfil</p>
-              <div className="space-y-4">
+      <div className="max-w-2xl mx-auto px-5 space-y-20 pt-16 pb-10">
+
+        {/* ── DIAGNÓSTICO PERSONALIZADO ── */}
+        {quizData.goal && (
+          <motion.section
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+          >
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/5 rounded-3xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 blur-[60px] rounded-full pointer-events-none" />
+              <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-5">
+                Baseado no seu perfil
+              </p>
+              <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="space-y-4">
                 {[
                   { cond: 'se você continuar sem rastrear', cons: 'vai continuar se esforçando… sem ver resultado' },
                   { cond: 'se continuar comendo no "achismo"', cons: 'vai errar mesmo tentando acertar' },
                   { cond: 'se não souber o quanto seu corpo precisa', cons: 'vai sempre ficar perto… mas nunca chegar' },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <span className="text-red-400 mt-0.5 shrink-0 text-base">✗</span>
-                    <p className="text-zinc-300 text-sm leading-relaxed">
-                      <span className="text-white font-medium">{item.cond}</span>
-                      <br />
-                      {item.cons}
+                  <motion.div key={i} variants={fadeUp} className="flex items-start gap-3">
+                    <span className="mt-1 shrink-0 w-5 h-5 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 text-[10px] font-black">✗</span>
+                    <p className="text-sm leading-relaxed">
+                      <span className="text-white font-semibold">{item.cond}</span>
+                      <span className="text-zinc-400"> — {item.cons}</span>
                     </p>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
               {quizData.height && quizData.weight && (
-                <div className="mt-4 pt-4 border-t border-zinc-800 grid grid-cols-3 gap-3">
+                <div className="mt-5 pt-5 border-t border-white/5 grid grid-cols-3 gap-3">
                   {[
                     { label: 'Altura', value: `${quizData.height} cm` },
                     { label: 'Peso', value: `${quizData.weight} kg` },
                     { label: 'Frequência', value: quizData.frequency === '0-2' ? 'Iniciante' : quizData.frequency === '6 ou mais' ? 'Avançado' : 'Moderado' },
                   ].map(s => (
-                    <div key={s.label} className="text-center">
+                    <div key={s.label} className="text-center bg-white/[0.03] rounded-xl p-3 border border-white/5">
                       <p className="text-white font-bold text-sm">{s.value}</p>
-                      <p className="text-zinc-600 text-[10px] uppercase tracking-widest">{s.label}</p>
+                      <p className="text-zinc-600 text-[10px] uppercase tracking-widest mt-0.5">{s.label}</p>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          )}
-        </section>
+          </motion.section>
+        )}
 
         {/* ── PROBLEMA ── */}
-        <section className="space-y-6">
-          <p className="text-zinc-400 text-xs font-black uppercase tracking-widest">
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          className="relative"
+        >
+          <div className="absolute -left-20 top-1/2 w-64 h-64 bg-red-500/5 blur-[80px] rounded-full pointer-events-none" />
+
+          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-8">
             E é aqui que começa a frustração de verdade
           </p>
 
-          <div className="space-y-5 text-zinc-300 text-base leading-loose">
-            <p>
-              você sai da academia cansado<br />
-              com a sensação de "hoje foi"
-            </p>
-            <p>
-              chega em casa<br />
-              olha pra comida<br />
-              e decide no olho
-            </p>
-            <p>
-              às vezes come menos achando que ajuda<br />
-              às vezes exagera sem perceber
-            </p>
-            <p>
-              no outro dia<br />
-              repete tudo de novo
-            </p>
-            <p className="text-white font-bold text-xl">e nada muda</p>
+          <div className="space-y-6 relative z-10">
+            {[
+              'você sai da academia cansado\ncom a sensação de "hoje foi"',
+              'chega em casa\nolha pra comida\ne decide no olho',
+              'às vezes come menos achando que ajuda\nàs vezes exagera sem perceber',
+              'no outro dia\nrepete tudo de novo',
+            ].map((block, i) => (
+              <motion.p
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="text-zinc-300 text-base leading-loose whitespace-pre-line"
+              >
+                {block}
+              </motion.p>
+            ))}
+            <motion.p
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="font-serif-premium text-3xl font-bold text-white"
+            >
+              e nada muda
+            </motion.p>
           </div>
 
           {/* Quebra de crença */}
-          <div className="text-center space-y-2 py-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-12 text-center space-y-2 py-6"
+          >
             <p className="text-zinc-400 text-base">o problema não é falta de esforço</p>
-            <p className="text-white font-bold text-lg leading-snug">
-              é não saber se o que você está fazendo<br />
-              realmente funciona
+            <p className="font-serif-premium text-2xl font-bold text-white leading-snug">
+              é não saber se o que você está fazendo
+              <br />
+              <span className="text-gradient italic glow-emerald">realmente funciona</span>
             </p>
-          </div>
+          </motion.div>
 
-          {/* Introdução ShapeScan */}
-          <div className="bg-emerald-500/5 border border-emerald-500/25 rounded-2xl p-5 space-y-2">
-            <p className="text-zinc-400 text-sm">foi aí que tudo começou a fazer sentido</p>
-            <p className="text-white font-bold text-xl leading-snug">
+          {/* ShapeScan intro */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-6 relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-emerald-500/5 p-6"
+          >
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/10 blur-[50px] rounded-full pointer-events-none" />
+            <p className="text-zinc-400 text-sm mb-2">foi aí que tudo começou a fazer sentido</p>
+            <p className="font-serif-premium text-2xl font-bold text-white leading-snug">
               O ShapeScan existe pra tirar você desse chute
             </p>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* ── FUNCIONALIDADES ── */}
-        <section className="space-y-4">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Como funciona</p>
-          <div className="grid grid-cols-1 gap-3">
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+        >
+          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-6">Como funciona</p>
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 gap-3">
             {[
               {
                 icon: <Camera className="w-5 h-5 text-emerald-400" />,
                 title: 'Foto da refeição',
                 desc: 'você tira uma foto\ne para de tentar adivinhar o que está acontecendo',
-                result: '→ Sem pesagem. Sem tabela. Sem chute.',
+                result: 'Sem pesagem. Sem tabela. Sem chute.',
               },
               {
                 icon: <Dumbbell className="w-5 h-5 text-emerald-400" />,
                 title: 'Análise do corpo',
                 desc: 'você vê seu corpo mudando\ne entende o que realmente está funcionando',
-                result: '→ Dado real. Semana a semana.',
+                result: 'Dado real. Semana a semana.',
               },
               {
                 icon: <MessageCircle className="w-5 h-5 text-emerald-400" />,
                 title: 'IA Personal',
                 desc: 'você pergunta\ne recebe resposta baseada no que você realmente faz',
-                result: '→ Contexto real. 24h por dia.',
+                result: 'Contexto real. 24h por dia.',
               },
               {
                 icon: <Zap className="w-5 h-5 text-emerald-400" />,
                 title: 'Plano personalizado',
                 desc: 'você acorda já sabendo o que fazer\nsem dúvida\nsem tentativa',
-                result: '→ Um alvo claro. Todo dia.',
+                result: 'Um alvo claro. Todo dia.',
               },
             ].map((f, i) => (
-              <div key={i} className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-2xl">
-                <div className="flex items-start gap-4 mb-3">
-                  <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center shrink-0">
+              <motion.div
+                key={i}
+                variants={fadeUp}
+                className="group p-5 bg-zinc-900/60 backdrop-blur-sm border border-white/5 hover:border-emerald-500/30 rounded-3xl transition-all duration-300"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-emerald-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-emerald-500/20 transition-colors border border-emerald-500/10">
                     {f.icon}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-bold text-white text-sm mb-1">{f.title}</p>
-                    <p className="text-zinc-500 text-xs leading-relaxed whitespace-pre-line">{f.desc}</p>
+                    <p className="text-zinc-500 text-xs leading-relaxed whitespace-pre-line mb-2">{f.desc}</p>
+                    <span className="inline-flex items-center gap-1.5 text-emerald-400 text-[10px] font-bold uppercase tracking-wide">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {f.result}
+                    </span>
                   </div>
                 </div>
-                <p className="text-emerald-400 text-xs font-bold ml-14">{f.result}</p>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
 
-          {/* Não é sobre fazer mais */}
-          <div className="text-center py-4 space-y-1">
-            <p className="text-zinc-400 text-base">não é sobre fazer mais</p>
-            <p className="text-white font-bold text-xl">é sobre fazer certo</p>
-          </div>
-        </section>
+          {/* não é sobre fazer mais */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mt-10 text-center"
+          >
+            <p className="text-zinc-500 text-base mb-1">não é sobre fazer mais</p>
+            <p className="font-serif-premium text-3xl font-bold">
+              é sobre{' '}
+              <span className="text-gradient italic glow-emerald">fazer certo</span>
+            </p>
+          </motion.div>
+        </motion.section>
 
         {/* ── DEPOIMENTOS ── */}
-        <section className="space-y-4">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Quem já usa</p>
-          <div className="grid grid-cols-1 gap-3">
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+        >
+          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-6">Quem já usa</p>
+          <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="space-y-4">
             {[
               {
                 name: 'Matheus R.',
                 age: '28 anos',
-                text: 'eu achei que era só treinar mais…\nmas eu tava comendo errado o tempo todo',
+                text: 'eu achei que era só treinar mais… mas eu tava comendo errado o tempo todo',
               },
               {
                 name: 'Juliana F.',
                 age: '31 anos',
-                text: 'já tinha tentado de tudo\nquando vi os números pela primeira vez\nfez sentido na hora',
+                text: 'já tinha tentado de tudo. quando vi os números pela primeira vez, fez sentido na hora',
               },
               {
                 name: 'Carlos M.',
                 age: '24 anos',
-                text: 'no começo eu não acreditei\nmas foi a primeira vez que eu soube exatamente o que fazer',
+                text: 'no começo eu não acreditei. mas foi a primeira vez que eu soube exatamente o que fazer',
               },
             ].map((t, i) => (
-              <div key={i} className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
-                <div className="flex items-center gap-1 mb-3">
-                  {[1,2,3,4,5].map(s => <span key={s} className="text-emerald-400 text-xs">★</span>)}
+              <motion.div
+                key={i}
+                variants={fadeUp}
+                className="relative p-6 bg-zinc-900/60 backdrop-blur-md border border-white/5 hover:border-emerald-500/20 rounded-3xl transition-all duration-300 group"
+              >
+                <div className="absolute top-6 right-6 font-serif-premium text-5xl text-emerald-500/10 leading-none pointer-events-none">"</div>
+                <div className="flex gap-1 mb-4">
+                  {[1,2,3,4,5].map(s => <Star key={s} className="w-3.5 h-3.5 text-emerald-500 fill-emerald-500" />)}
                 </div>
-                <p className="text-zinc-300 text-sm leading-relaxed mb-3 whitespace-pre-line">"{t.text}"</p>
+                <p className="text-zinc-300 text-sm leading-relaxed mb-4 group-hover:text-zinc-200 transition-colors">
+                  "{t.text}"
+                </p>
                 <div>
                   <p className="text-white text-xs font-bold">{t.name}</p>
-                  <p className="text-zinc-600 text-[10px]">{t.age}</p>
+                  <p className="text-zinc-600 text-[10px] mt-0.5">{t.age}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* ── PREÇO ── */}
-        <section className="space-y-5">
-          <div className="space-y-4 text-base leading-loose">
-            <p className="text-zinc-400">
-              ou você continua gastando com dieta<br />
-              tentando plano daqui e dali
-            </p>
-            <p className="text-white font-bold text-lg">ou resolve isso de forma simples</p>
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          className="relative"
+        >
+          <div className="absolute right-0 top-0 w-48 h-48 bg-emerald-500/5 blur-[70px] rounded-full pointer-events-none" />
+          <div className="space-y-5 relative z-10">
+            <div className="space-y-3">
+              <p className="text-zinc-400 text-base leading-relaxed">
+                ou você continua gastando com dieta<br />
+                tentando plano daqui e dali
+              </p>
+              <p className="font-serif-premium text-2xl font-bold text-white">
+                ou resolve isso de{' '}
+                <span className="text-gradient italic">forma simples</span>
+              </p>
+            </div>
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/5 rounded-3xl p-6 space-y-3">
+              <p className="text-zinc-400 text-sm">por menos de</p>
+              <p className="font-serif-premium text-4xl font-bold text-white">
+                <span className="text-gradient">1 real</span>{' '}
+                <span className="text-zinc-500 text-lg font-normal">por dia</span>
+              </p>
+              <p className="text-zinc-300 text-sm leading-loose">
+                você sai do achismo<br />
+                e entra na clareza
+              </p>
+            </div>
           </div>
-          <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 space-y-2">
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              por menos de <span className="text-white font-bold">1 real por dia</span>
-            </p>
-            <p className="text-zinc-300 text-sm leading-loose">
-              você sai do achismo<br />
-              e entra na clareza
-            </p>
-          </div>
-        </section>
+        </motion.section>
 
         {/* ── CHECKOUT ── */}
-        <section id="checkout-section" className="space-y-6 scroll-mt-20">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-white">Ativar meu acesso agora</h2>
+        <section id="checkout-section" className="scroll-mt-20 space-y-6">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="text-center space-y-2"
+          >
+            <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">Acesso imediato</p>
+            <h2 className="font-serif-premium text-3xl font-bold text-white">
+              Ativar meu acesso{' '}
+              <span className="text-gradient italic">agora</span>
+            </h2>
             <p className="text-zinc-500 text-sm leading-relaxed">
               cada dia que você continua no chute<br />
               é mais um dia sem resultado
             </p>
-          </div>
+          </motion.div>
 
           {/* Seleção de plano */}
           <div className="grid grid-cols-2 gap-3">
@@ -896,7 +1056,11 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   key={p}
                   onClick={() => { if (!showCheckout) setSelectedPlan(p); }}
                   disabled={showCheckout}
-                  className={`relative p-4 rounded-2xl border text-left transition-all ${active ? 'border-emerald-500 bg-emerald-500/5' : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'} disabled:opacity-60`}
+                  className={`relative p-4 rounded-2xl border text-left transition-all duration-300 ${
+                    active
+                      ? 'border-emerald-500/60 bg-emerald-500/5 shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]'
+                      : 'border-white/5 bg-zinc-900/40 hover:border-white/10'
+                  } disabled:opacity-60`}
                 >
                   {p === 'annual' && (
                     <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-emerald-500 text-zinc-950 text-[9px] font-black uppercase rounded-full whitespace-nowrap">
@@ -939,11 +1103,12 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 </div>
                 <button
                   onClick={() => setShowCheckout(true)}
-                  className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
+                  className="group relative w-full py-5 rounded-2xl overflow-hidden bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-[0_0_40px_-10px_rgba(16,185,129,0.6)]"
                 >
-                  Ativar meu acesso agora →
+                  <span>Ativar meu acesso agora</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
                 </button>
-                <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
+                <p className="text-center text-zinc-600 text-[11px]">Leva menos de 2 minutos para começar</p>
                 <TrustRow />
               </div>
             ) : (
@@ -963,9 +1128,9 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 </button>
 
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-zinc-800" />
+                  <div className="flex-1 h-px bg-white/5" />
                   <span className="text-zinc-600 text-[11px] font-bold">ou continue com e-mail</span>
-                  <div className="flex-1 h-px bg-zinc-800" />
+                  <div className="flex-1 h-px bg-white/5" />
                 </div>
 
                 <form onSubmit={handleEmailSubmit} className="space-y-3">
@@ -981,18 +1146,16 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                         onBlur={() => setEmailDirty(true)}
                         placeholder="seu@email.com"
                         required
-                        className={`w-full bg-zinc-900 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors pr-10 ${
+                        className={`w-full bg-zinc-900/80 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors pr-10 ${
                           emailError
                             ? 'border-red-500/60 focus:border-red-500'
                             : emailDirty && emailValid
                             ? 'border-emerald-500/60 focus:border-emerald-500'
-                            : 'border-zinc-800 focus:border-emerald-500'
+                            : 'border-white/10 focus:border-emerald-500'
                         }`}
                       />
-                      {emailDirty && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm">
-                          {emailValid ? '✓' : ''}
-                        </span>
+                      {emailDirty && emailValid && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400 text-sm">✓</span>
                       )}
                     </div>
                     {emailError && (
@@ -1010,7 +1173,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                       onChange={e => setName(e.target.value)}
                       placeholder="Seu nome"
                       autoComplete="name"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors"
+                      className="w-full bg-zinc-900/80 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors"
                     />
                   </div>
 
@@ -1030,7 +1193,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                         value={couponCode}
                         onChange={e => setCouponCode(e.target.value.toUpperCase())}
                         placeholder="CÓDIGO DO CUPOM"
-                        className="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
+                        className="w-full mt-2 bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
                       />
                     )}
                   </div>
@@ -1038,20 +1201,21 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   <button
                     type="submit"
                     disabled={emailDirty && !emailValid}
-                    className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
+                    className="group relative w-full py-5 rounded-2xl overflow-hidden bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-[0_0_40px_-10px_rgba(16,185,129,0.6)]"
                   >
-                    Ativar meu acesso agora →
+                    <span>Ativar meu acesso agora</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
                   </button>
 
-                  <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
+                  <p className="text-center text-zinc-600 text-[11px]">Leva menos de 2 minutos para começar</p>
                   <TrustRow />
                 </form>
               </div>
             )
           ) : (
-            <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-5 pb-4 border-b border-zinc-800">
-                <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center shrink-0">
+            <div className="bg-zinc-900/60 backdrop-blur-sm border border-white/5 rounded-3xl p-5">
+              <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/5">
+                <div className="w-8 h-8 bg-emerald-500/10 rounded-xl flex items-center justify-center shrink-0 border border-emerald-500/10">
                   <Lock className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div>
@@ -1099,46 +1263,74 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         </section>
 
         {/* ── GARANTIA ── */}
-        <section className="flex items-start gap-4 p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
-          <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center shrink-0 border border-emerald-500/20">
-            <Shield className="w-6 h-6 text-emerald-400" />
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+        >
+          <div className="flex items-start gap-4 p-6 bg-zinc-900/60 backdrop-blur-sm border border-white/5 rounded-3xl">
+            <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center shrink-0 border border-emerald-500/10">
+              <Shield className="w-6 h-6 text-emerald-400" />
+            </div>
+            <div>
+              <p className="font-bold text-white mb-1 text-base">teste por 7 dias</p>
+              <p className="text-zinc-400 text-sm leading-relaxed">
+                se não fizer sentido pra você, você recebe tudo de volta — sem perguntas, sem burocracia
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="font-bold text-white mb-1">teste por 7 dias</p>
-            <p className="text-zinc-500 text-sm leading-relaxed">
-              se não fizer sentido pra você<br />
-              você recebe tudo de volta
-            </p>
-          </div>
-        </section>
+        </motion.section>
 
         {/* ── FAQ ── */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-bold text-white">Dúvidas frequentes</h2>
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+          className="space-y-4"
+        >
+          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest">Dúvidas frequentes</p>
           <div className="space-y-2">
             {faqs.map((faq, i) => <FaqItem key={i} {...faq} />)}
           </div>
-        </section>
+        </motion.section>
 
         {/* ── BLOCO FINAL ── */}
-        <section className="text-center space-y-4 pb-10">
-          <div className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl text-left space-y-3">
-            <p className="text-zinc-400 text-base leading-relaxed">ou você continua tentando no escuro</p>
-            <p className="text-white font-bold text-base leading-relaxed">
-              ou começa hoje<br />
-              sabendo exatamente o que fazer
-            </p>
+        <motion.section
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+          className="relative pb-10"
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/20 via-transparent to-transparent rounded-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-emerald-500/10 blur-[60px] rounded-full pointer-events-none" />
+
+          <div className="relative z-10 text-center space-y-6">
+            <div className="space-y-3">
+              <p className="text-zinc-500 text-base">ou você continua tentando no escuro</p>
+              <h2 className="font-serif-premium text-3xl font-bold text-white leading-snug">
+                ou começa hoje<br />
+                <span className="text-gradient italic glow-emerald">sabendo exatamente o que fazer</span>
+              </h2>
+            </div>
+
+            <button
+              onClick={() => {
+                document.getElementById('checkout-section')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="group relative w-full py-5 rounded-2xl overflow-hidden bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-[0_0_50px_-10px_rgba(16,185,129,0.7)]"
+            >
+              <span>Começar agora</span>
+              <div className="w-7 h-7 rounded-full bg-zinc-950/20 flex items-center justify-center group-hover:bg-zinc-950/30 transition-colors">
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
+              </div>
+            </button>
+
+            <p className="text-zinc-700 text-xs">Cancele quando quiser · 7 dias de garantia · Stripe SSL</p>
           </div>
-          <button
-            onClick={() => {
-              document.getElementById('checkout-section')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
-          >
-            Começar agora →
-          </button>
-          <p className="text-zinc-600 text-xs">Cancele quando quiser · 7 dias de garantia · Stripe SSL</p>
-        </section>
+        </motion.section>
 
       </div>
     </div>
