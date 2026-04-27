@@ -487,10 +487,15 @@ const App: React.FC = () => {
         localStorage.setItem('shapescan_user_profile', JSON.stringify(profile));
         localStorage.setItem('shapescan_user_profile_ts', String(Date.now()));
 
-        // Usuário sem username ou sem phone → pede dados antes
+        // Usuário sem username ou sem phone → pede dados antes.
+        // EXCEÇÃO: se o usuário está no funil de vendas (/assinar), não interromper —
+        // ele pode pagar primeiro e completar o perfil depois.
         if (!profile.username || !profile.phone) {
-            navigate('/completar-perfil', { replace: true });
-            return true;
+            const inSalesFunnel = window.location.pathname.includes('/assinar');
+            if (!inSalesFunnel) {
+                navigate('/completar-perfil', { replace: true });
+                return true;
+            }
         }
         return false;
       } catch (err) {
@@ -706,7 +711,10 @@ const App: React.FC = () => {
     if (updatedUser.emailConfirmed === false) {
       navigate('/dashboard');
     } else if (!updatedUser.weight || !updatedUser.height) {
-      navigate('/quiz');
+      // Se o usuário já fez o quiz (ex: clicou Google na página de vendas após o quiz),
+      // manda direto para /assinar em vez de refazer o quiz.
+      const hasQuizData = !!localStorage.getItem('shapescan_quiz_data');
+      navigate(hasQuizData ? '/assinar' : '/quiz');
     } else {
       navigate('/dashboard');
     }
@@ -951,7 +959,14 @@ const App: React.FC = () => {
               <Route path="/recuperar-senha" element={<PasswordRecovery />} />
               <Route path="/nova-senha" element={<ResetPassword />} />
               {/* New funnel: quiz and sales page are public */}
-              <Route path="/quiz" element={user ? <Navigate to="/dashboard" replace /> : <OnboardingQuiz onComplete={() => navigate('/assinar')} />} />
+              {/* Se o usuário já fez o quiz (dados no localStorage), vai direto para /assinar */}
+              <Route path="/quiz" element={
+                user
+                  ? <Navigate to="/dashboard" replace />
+                  : localStorage.getItem('shapescan_quiz_data')
+                  ? <Navigate to="/assinar" replace />
+                  : <OnboardingQuiz onComplete={() => navigate('/assinar')} />
+              } />
               <Route path="/assinar" element={<SalesPage user={user} onShowToast={showToast} />} />
 
               {/* Protected Routes Wrapper */}

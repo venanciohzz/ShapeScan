@@ -5,7 +5,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 import { CheckCircle2, Shield, ChevronDown, ChevronUp, Camera, Dumbbell, MessageCircle, Zap, Lock, Tag } from 'lucide-react';
 import { PAYMENT_CONFIG } from '../services/paymentConfig';
 import { User } from '../types';
-import { callEdgeFunction, supabaseUrl, supabaseAnonKey } from '../services/supabaseService';
+import { callEdgeFunction, supabaseUrl, supabaseAnonKey, supabase } from '../services/supabaseService';
 import { pixel } from '../utils/pixel';
 
 const stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -57,6 +57,79 @@ interface SalesPageProps {
   user: User | null;
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
+
+// ── Google OAuth icon ────────────────────────────────────────────────────────
+
+const GoogleIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" xmlns="http://www.w3.org/2000/svg">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
+
+// ── App mockup visual ────────────────────────────────────────────────────────
+
+const AppMockup = () => (
+  <div className="relative mx-auto w-52" style={{ perspective: '800px' }}>
+    {/* Phone frame */}
+    <div
+      className="bg-zinc-900 rounded-[36px] border-2 border-zinc-700 shadow-2xl overflow-hidden"
+      style={{ transform: 'rotateY(-8deg) rotateX(4deg)' }}
+    >
+      {/* Status bar */}
+      <div className="h-7 bg-zinc-950 flex items-center justify-between px-5">
+        <span className="text-white text-[9px] font-bold">9:41</span>
+        <div className="w-16 h-3 bg-zinc-800 rounded-full" />
+        <span className="text-zinc-500 text-[9px]">●●●</span>
+      </div>
+      <div className="px-3 pt-2 pb-4 space-y-2">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <span className="text-white text-xs font-bold">ShapeScan</span>
+          <span className="text-emerald-400 text-[9px] font-black">HOJ HOJE</span>
+        </div>
+        {/* Food photo */}
+        <div className="h-20 rounded-xl bg-gradient-to-br from-amber-500/25 to-orange-600/20 border border-amber-500/20 flex items-center justify-center relative overflow-hidden">
+          <span className="text-4xl">🍛</span>
+          <div className="absolute bottom-2 right-2 bg-black/60 rounded-lg px-2 py-0.5">
+            <span className="text-emerald-400 text-[9px] font-black">IA ✓</span>
+          </div>
+        </div>
+        {/* Macros */}
+        <div className="bg-zinc-800/80 rounded-xl p-2.5">
+          <p className="text-white text-[10px] font-bold mb-1.5">Frango grelhado + arroz</p>
+          <div className="grid grid-cols-4 gap-1">
+            {[{ l: 'Cal', v: '412', c: 'text-emerald-400' }, { l: 'Prot', v: '36g', c: 'text-blue-400' }, { l: 'Carbs', v: '48g', c: 'text-yellow-400' }, { l: 'Fat', v: '8g', c: 'text-orange-400' }].map(m => (
+              <div key={m.l} className="bg-zinc-900 rounded-lg p-1 text-center">
+                <p className={`${m.c} text-[10px] font-black`}>{m.v}</p>
+                <p className="text-zinc-600 text-[8px]">{m.l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Progress */}
+        <div className="bg-zinc-800/60 rounded-xl p-2.5 space-y-1.5">
+          <p className="text-zinc-500 text-[8px] font-black uppercase tracking-widest">Meta diária</p>
+          {[{ label: 'Calorias', pct: 68, color: 'bg-emerald-500' }, { label: 'Proteína', pct: 82, color: 'bg-blue-500' }].map(b => (
+            <div key={b.label}>
+              <div className="flex justify-between mb-0.5">
+                <span className="text-zinc-400 text-[8px]">{b.label}</span>
+                <span className="text-emerald-400 text-[8px] font-bold">{b.pct}%</span>
+              </div>
+              <div className="h-1.5 bg-zinc-700 rounded-full overflow-hidden">
+                <div className={`h-full ${b.color} rounded-full transition-all`} style={{ width: `${b.pct}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+    {/* Glow */}
+    <div className="absolute -inset-6 bg-emerald-500/8 rounded-[60px] blur-2xl -z-10" />
+  </div>
+);
 
 // ── Static copy ───────────────────────────────────────────────────────────────
 
@@ -580,6 +653,26 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
   // Checkout state
   const [showCheckout, setShowCheckout] = useState(false);
 
+  // Google OAuth
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/assinar',
+          queryParams: { prompt: 'select_account' },
+        },
+      });
+      // Supabase redireciona o navegador — não precisa resetar loading
+    } catch (err) {
+      console.error('[SalesPage] Google OAuth erro:', err);
+      setGoogleLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user?.isPremium) { navigate('/dashboard', { replace: true }); return; }
     try {
@@ -658,8 +751,13 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
 
       <div className="max-w-2xl mx-auto px-5 py-10 space-y-16">
 
-        {/* Quiz result banner */}
-        <section className="space-y-6">
+        {/* Hero visual + headline */}
+        <section className="space-y-8">
+          {/* Mockup do app — quebra de texto imediato */}
+          <div className="flex justify-center pt-2">
+            <AppMockup />
+          </div>
+
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4">
               {copy.headline}
@@ -885,7 +983,30 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 <TrustRow />
               </div>
             ) : (
-              /* Guest: coleta email + nome + cupom */
+              /* Guest: opção Google + formulário email */
+              <div className="space-y-3">
+                {/* Botão Google */}
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={googleLoading}
+                  className="w-full flex items-center justify-center gap-3 py-4 bg-white hover:bg-zinc-100 disabled:bg-zinc-200 text-zinc-900 font-bold rounded-2xl transition-all border border-zinc-200 text-sm active:scale-[0.98]"
+                >
+                  {googleLoading ? (
+                    <div className="w-4 h-4 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" />
+                  ) : (
+                    <GoogleIcon />
+                  )}
+                  {googleLoading ? 'Redirecionando...' : 'Continuar com Google'}
+                </button>
+
+                {/* Divisor */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-zinc-800" />
+                  <span className="text-zinc-600 text-[11px] font-bold">ou continue com e-mail</span>
+                  <div className="flex-1 h-px bg-zinc-800" />
+                </div>
+
               <form onSubmit={handleEmailSubmit} className="space-y-3">
                 {/* Email */}
                 <div>
@@ -967,6 +1088,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
                 <TrustRow />
               </form>
+              </div>
             )
           ) : (
             /* ── Formulário de pagamento ── */
