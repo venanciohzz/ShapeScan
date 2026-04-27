@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { CheckCircle2, Shield, ChevronDown, ChevronUp, Camera, Dumbbell, MessageCircle, Zap } from 'lucide-react';
+import { CheckCircle2, Shield, ChevronDown, ChevronUp, Camera, Dumbbell, MessageCircle, Zap, Lock, Tag } from 'lucide-react';
 import { PAYMENT_CONFIG } from '../services/paymentConfig';
 import { User } from '../types';
-import { callEdgeFunction, getValidToken, supabaseUrl, supabaseAnonKey } from '../services/supabaseService';
+import { callEdgeFunction, supabaseUrl, supabaseAnonKey } from '../services/supabaseService';
 import { pixel } from '../utils/pixel';
 
 const stripePromise = loadStripe((import.meta as any).env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -28,8 +28,14 @@ const stripeAppearance = {
     '.Label': { fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#71717a' },
     '.Tab': { border: '1px solid #27272a', backgroundColor: '#18181b', color: '#a1a1aa' },
     '.Tab--selected': { border: '1px solid #10b981', backgroundColor: '#18181b', color: '#ffffff' },
+    '.Block': { backgroundColor: '#09090b', border: '1px solid #27272a' },
+    '.WalletButton': { borderRadius: '12px' },
   },
 };
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 interface QuizData {
   gender?: 'male' | 'female';
@@ -41,10 +47,18 @@ interface QuizData {
   frequency?: string;
 }
 
+interface PricingInfo {
+  originalPrice: number;
+  finalPrice: number;
+  discount: number;
+}
+
 interface SalesPageProps {
   user: User | null;
   onShowToast?: (msg: string, type?: 'success' | 'error' | 'info') => void;
 }
+
+// ── Static copy ───────────────────────────────────────────────────────────────
 
 const goalCopy: Record<string, { badge: string; headline: string; sub: string; diagnostic: string[]; consequence: string }> = {
   lose: {
@@ -101,14 +115,73 @@ const faqs = [
   { q: 'E se eu não gostar?', a: 'Garantia de 7 dias. Se por qualquer motivo não ficar satisfeito, devolvemos 100% do valor pago — sem perguntas.' },
 ];
 
-// ── Inner payment form ──────────────────────────────────────────────────────
+// ── Reusable UI ───────────────────────────────────────────────────────────────
+
+/** Faixa de selos de segurança usada em vários pontos */
+const TrustRow: React.FC<{ className?: string }> = ({ className = '' }) => (
+  <div className={`flex flex-wrap items-center justify-center gap-x-4 gap-y-1 ${className}`}>
+    <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold">
+      <Lock className="w-2.5 h-2.5 text-emerald-500 shrink-0" />SSL 256-bit
+    </span>
+    <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold">
+      <Shield className="w-2.5 h-2.5 text-emerald-500 shrink-0" />Dados criptografados
+    </span>
+    <span className="flex items-center gap-1 text-zinc-500 text-[10px] font-bold">
+      <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 shrink-0" />Garantia de 7 dias
+    </span>
+  </div>
+);
+
+/** Resumo do pedido exibido dentro do bloco de pagamento */
+const PurchaseSummaryCard: React.FC<{
+  planName: string;
+  planPeriod: 'monthly' | 'annual';
+  pricing: PricingInfo;
+}> = ({ planName, planPeriod, pricing }) => (
+  <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 mb-4">
+    <p className="text-zinc-600 text-[9px] font-black uppercase tracking-widest mb-3">Resumo do pedido</p>
+    <div className="flex items-start justify-between gap-2">
+      <div>
+        <p className="text-white font-bold text-sm">{planName}</p>
+        <p className="text-zinc-600 text-[10px] mt-0.5">
+          {planPeriod === 'annual' ? 'Cobrado anualmente · R$247/ano' : 'Cobrado mensalmente'}
+        </p>
+      </div>
+      <div className="text-right shrink-0">
+        {pricing.discount > 0 && (
+          <p className="text-zinc-600 text-xs line-through">
+            R${pricing.originalPrice.toFixed(2).replace('.', ',')}
+          </p>
+        )}
+        <p className="text-emerald-400 font-black text-xl leading-none">
+          R${pricing.finalPrice.toFixed(2).replace('.', ',')}
+        </p>
+        {planPeriod === 'monthly' && (
+          <p className="text-zinc-600 text-[9px]">/mês</p>
+        )}
+      </div>
+    </div>
+    {pricing.discount > 0 && (
+      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800">
+        <Tag className="w-3 h-3 text-emerald-400 shrink-0" />
+        <span className="text-emerald-400 text-xs font-bold">
+          Cupom aplicado — economia de R${pricing.discount.toFixed(2).replace('.', ',')}
+        </span>
+      </div>
+    )}
+  </div>
+);
+
+// ── GuestPaymentForm ──────────────────────────────────────────────────────────
 
 const GuestPaymentForm: React.FC<{
   email: string;
+  name: string;
   planName: string;
-  planValue: number;
+  planPeriod: 'monthly' | 'annual';
+  pricing: PricingInfo;
   onCancel: () => void;
-}> = ({ email, planName, planValue, onCancel }) => {
+}> = ({ email, name, planName, planPeriod, pricing, onCancel }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
@@ -123,35 +196,67 @@ const GuestPaymentForm: React.FC<{
 
     localStorage.setItem('awaiting_stripe_payment', 'true');
     localStorage.setItem('awaiting_stripe_plan_name', planName);
-    localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
+    localStorage.setItem('awaiting_stripe_plan_value', String(pricing.finalPrice));
     localStorage.setItem('guest_checkout_email', email);
 
-    pixel.addPaymentInfo(planName, planValue, undefined, '');
+    pixel.addPaymentInfo(planName, pricing.finalPrice, undefined, '');
 
     const { error: confirmError } = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: window.location.origin + '/assinar?payment=success' },
+      confirmParams: {
+        return_url: window.location.origin + '/assinar?payment=success',
+        payment_method_data: {
+          billing_details: {
+            email: email.toLowerCase().trim(),
+            ...(name.trim() ? { name: name.trim() } : {}),
+          },
+        },
+      },
     });
 
     if (confirmError) {
       localStorage.removeItem('awaiting_stripe_payment');
       const isNetwork = confirmError.type === 'api_connection_error';
-      setError(isNetwork
-        ? 'Erro de conexão. Desative ad blockers ou VPN e tente novamente.'
-        : confirmError.message || 'Erro ao processar pagamento.');
+      setError(
+        isNetwork
+          ? 'Erro de conexão. Desative ad blockers ou VPN e tente novamente.'
+          : confirmError.message || 'Erro ao processar pagamento.'
+      );
     }
     setProcessing(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <PurchaseSummaryCard planName={planName} planPeriod={planPeriod} pricing={pricing} />
+
+      {/* PaymentElement — wallets (Apple/Google Pay) aparecem automaticamente quando disponíveis */}
       <div className="rounded-2xl overflow-hidden border border-zinc-800">
-        <PaymentElement options={{ layout: 'accordion' }} onReady={() => setReady(true)} />
+        <PaymentElement
+          options={{
+            layout: 'accordion',
+            wallets: { applePay: 'auto', googlePay: 'auto' },
+            fields: {
+              billingDetails: {
+                email: 'never',    // já coletamos acima
+                name: name.trim() ? 'never' : 'auto', // ocultar se já temos o nome
+              },
+            },
+            defaultValues: {
+              billingDetails: {
+                email: email.toLowerCase().trim(),
+                ...(name.trim() ? { name: name.trim() } : {}),
+              },
+            },
+          }}
+          onReady={() => setReady(true)}
+        />
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold flex items-center gap-2">
-          <span>⚠️</span> {error}
+        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold flex items-start gap-2">
+          <span className="shrink-0 mt-0.5">⚠️</span>
+          <span>{error}</span>
         </div>
       )}
 
@@ -160,33 +265,44 @@ const GuestPaymentForm: React.FC<{
         className="w-full px-6 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
       >
         {processing ? (
-          <><div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin" />Processando...</>
+          <>
+            <div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin" />
+            Processando pagamento...
+          </>
         ) : (
           <>Ativar meu acesso completo →</>
         )}
       </button>
 
-      <p className="text-center text-[10px] text-zinc-600">Cancele quando quiser · Sem fidelidade · 7 dias de garantia</p>
+      <TrustRow />
 
-      <button type="button" onClick={onCancel} className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="w-full py-2 text-zinc-600 hover:text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors"
+      >
         Voltar
       </button>
     </form>
   );
 };
 
-// ── Checkout initializer for guest mode ─────────────────────────────────────
+// ── GuestCheckoutWrapper ──────────────────────────────────────────────────────
 
 const GuestCheckoutWrapper: React.FC<{
   email: string;
+  name: string;
   priceId: string;
   plan: string;
   planName: string;
+  planPeriod: 'monthly' | 'annual';
   planValue: number;
   quizData: QuizData;
+  couponCode: string;
   onCancel: () => void;
-}> = ({ email, priceId, plan, planName, planValue, quizData, onCancel }) => {
+}> = ({ email, name, priceId, plan, planName, planPeriod, planValue, quizData, couponCode, onCancel }) => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [pricing, setPricing] = useState<PricingInfo>({ originalPrice: planValue, finalPrice: planValue, discount: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -201,24 +317,30 @@ const GuestCheckoutWrapper: React.FC<{
         } catch { return {}; }
       })();
 
+      const body: Record<string, any> = { email, priceId, plan, quizData, utmParams };
+      if (couponCode.trim()) body.couponCode = couponCode.trim().toUpperCase();
+
       const res = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout-guest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': supabaseAnonKey },
-        body: JSON.stringify({ email, priceId, plan, quizData, utmParams }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || 'Erro ao iniciar checkout.');
+
       if (data.isFree) {
         window.location.href = '/assinar?payment=success';
         return;
       }
+
+      if (data.pricing) setPricing(data.pricing);
       setClientSecret(data.clientSecret);
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar checkout. Tente novamente.');
     } finally {
       setLoading(false);
     }
-  }, [email, priceId, plan]);
+  }, [email, priceId, plan, couponCode]);
 
   useEffect(() => { init(); }, [init]);
 
@@ -238,10 +360,13 @@ const GuestCheckoutWrapper: React.FC<{
     return (
       <div className="py-8 flex flex-col items-center gap-4 text-center">
         <p className="text-red-400 text-sm font-bold">⚠️ {error}</p>
-        <button onClick={init} className="px-6 py-3 bg-emerald-500 text-zinc-950 font-black uppercase text-xs tracking-widest rounded-2xl">
+        <button
+          onClick={init}
+          className="px-6 py-3 bg-emerald-500 text-zinc-950 font-black uppercase text-xs tracking-widest rounded-2xl"
+        >
           Tentar novamente
         </button>
-        <button onClick={onCancel} className="text-zinc-600 text-xs">Voltar</button>
+        <button onClick={onCancel} className="text-zinc-600 text-xs underline">Voltar</button>
       </div>
     );
   }
@@ -250,21 +375,117 @@ const GuestCheckoutWrapper: React.FC<{
 
   return (
     <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-      <GuestPaymentForm email={email} planName={planName} planValue={planValue} onCancel={onCancel} />
+      <GuestPaymentForm
+        email={email}
+        name={name}
+        planName={planName}
+        planPeriod={planPeriod}
+        pricing={pricing}
+        onCancel={onCancel}
+      />
     </Elements>
   );
 };
 
-// ── Auth checkout wrapper (for logged-in non-premium users) ─────────────────
+// ── AuthPaymentForm ───────────────────────────────────────────────────────────
+
+const AuthPaymentForm: React.FC<{
+  user: User;
+  planName: string;
+  planPeriod: 'monthly' | 'annual';
+  planValue: number;
+  onCancel: () => void;
+}> = ({ user, planName, planPeriod, planValue, onCancel }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setProcessing(true);
+    setError(null);
+
+    localStorage.setItem('awaiting_stripe_payment', 'true');
+    localStorage.setItem('awaiting_stripe_plan_name', planName);
+    localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
+
+    pixel.addPaymentInfo(planName, planValue, undefined, user.id);
+
+    const { error: confirmError } = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: window.location.origin + '/dashboard?payment=success' },
+    });
+
+    if (confirmError) {
+      localStorage.removeItem('awaiting_stripe_payment');
+      setError(confirmError.message || 'Erro ao processar pagamento.');
+    }
+    setProcessing(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <PurchaseSummaryCard
+        planName={planName}
+        planPeriod={planPeriod}
+        pricing={{ originalPrice: planValue, finalPrice: planValue, discount: 0 }}
+      />
+
+      <div className="rounded-2xl overflow-hidden border border-zinc-800">
+        <PaymentElement
+          options={{
+            layout: 'accordion',
+            wallets: { applePay: 'auto', googlePay: 'auto' },
+          }}
+          onReady={() => setReady(true)}
+        />
+      </div>
+
+      {error && (
+        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold flex items-start gap-2">
+          <span className="shrink-0 mt-0.5">⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
+
+      <button
+        disabled={processing || !ready}
+        className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+      >
+        {processing ? (
+          <>
+            <div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin" />
+            Processando pagamento...
+          </>
+        ) : (
+          <>Ativar meu acesso completo →</>
+        )}
+      </button>
+
+      <TrustRow />
+
+      <button type="button" onClick={onCancel} className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">
+        Voltar
+      </button>
+    </form>
+  );
+};
+
+// ── AuthCheckoutWrapper ───────────────────────────────────────────────────────
 
 const AuthCheckoutWrapper: React.FC<{
   user: User;
   priceId: string;
   plan: string;
   planName: string;
+  planPeriod: 'monthly' | 'annual';
   planValue: number;
+  couponCode: string;
   onCancel: () => void;
-}> = ({ user, priceId, plan, planName, planValue, onCancel }) => {
+}> = ({ user, priceId, plan, planName, planPeriod, planValue, couponCode, onCancel }) => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -273,7 +494,9 @@ const AuthCheckoutWrapper: React.FC<{
     setLoading(true);
     setError(null);
     try {
-      const data = await callEdgeFunction('stripe-checkout', { priceId, plan });
+      const body: Record<string, any> = { priceId, plan };
+      if (couponCode.trim()) body.couponCode = couponCode.trim().toUpperCase();
+      const data = await callEdgeFunction('stripe-checkout', body);
       if (data.isFree) { window.location.href = '/dashboard?payment=success'; return; }
       if (!data.clientSecret) throw new Error(data.error || 'Erro ao obter checkout.');
       setClientSecret(data.clientSecret);
@@ -282,12 +505,9 @@ const AuthCheckoutWrapper: React.FC<{
     } finally {
       setLoading(false);
     }
-  }, [priceId, plan]);
+  }, [priceId, plan, couponCode]);
 
   useEffect(() => { init(); }, [init]);
-
-  const stripe = useStripe();
-  const elements = useElements();
 
   if (loading) return (
     <div className="py-10 flex flex-col items-center gap-3">
@@ -300,9 +520,11 @@ const AuthCheckoutWrapper: React.FC<{
   );
 
   if (error) return (
-    <div className="py-6 text-center">
-      <p className="text-red-400 text-sm mb-4">⚠️ {error}</p>
-      <button onClick={init} className="px-6 py-3 bg-emerald-500 text-zinc-950 font-black uppercase text-xs rounded-2xl">Tentar novamente</button>
+    <div className="py-6 text-center space-y-3">
+      <p className="text-red-400 text-sm">⚠️ {error}</p>
+      <button onClick={init} className="px-6 py-3 bg-emerald-500 text-zinc-950 font-black uppercase text-xs rounded-2xl">
+        Tentar novamente
+      </button>
     </div>
   );
 
@@ -310,60 +532,25 @@ const AuthCheckoutWrapper: React.FC<{
 
   return (
     <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-      <AuthPaymentForm user={user} planName={planName} planValue={planValue} onCancel={onCancel} />
+      <AuthPaymentForm user={user} planName={planName} planPeriod={planPeriod} planValue={planValue} onCancel={onCancel} />
     </Elements>
   );
 };
 
-const AuthPaymentForm: React.FC<{ user: User; planName: string; planValue: number; onCancel: () => void }> = ({ user, planName, planValue, onCancel }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-    setProcessing(true);
-    localStorage.setItem('awaiting_stripe_payment', 'true');
-    localStorage.setItem('awaiting_stripe_plan_name', planName);
-    localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
-    pixel.addPaymentInfo(planName, planValue, undefined, user.id);
-    const { error: confirmError } = await stripe.confirmPayment({
-      elements,
-      confirmParams: { return_url: window.location.origin + '/dashboard?payment=success' },
-    });
-    if (confirmError) {
-      localStorage.removeItem('awaiting_stripe_payment');
-      setError(confirmError.message || 'Erro ao processar pagamento.');
-    }
-    setProcessing(false);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 mt-4">
-      <div className="rounded-2xl overflow-hidden border border-zinc-800">
-        <PaymentElement options={{ layout: 'accordion' }} onReady={() => setReady(true)} />
-      </div>
-      {error && <p className="text-red-400 text-xs font-bold">⚠️ {error}</p>}
-      <button disabled={processing || !ready} className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm rounded-2xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-        {processing ? <><div className="w-4 h-4 border-2 border-zinc-950/20 border-t-zinc-950 rounded-full animate-spin" />Processando...</> : <>Ativar meu acesso completo →</>}
-      </button>
-      <button type="button" onClick={onCancel} className="text-zinc-600 text-xs font-bold uppercase tracking-widest">Voltar</button>
-    </form>
-  );
-};
-
-// ── FAQ item ─────────────────────────────────────────────────────────────────
+// ── FAQ item ──────────────────────────────────────────────────────────────────
 
 const FaqItem: React.FC<{ q: string; a: string }> = ({ q, a }) => {
   const [open, setOpen] = useState(false);
   return (
-    <button onClick={() => setOpen(o => !o)} className="w-full text-left border border-zinc-800 rounded-2xl p-5 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors">
+    <button
+      onClick={() => setOpen(o => !o)}
+      className="w-full text-left border border-zinc-800 rounded-2xl p-5 bg-zinc-900/40 hover:bg-zinc-900/80 transition-colors"
+    >
       <div className="flex items-center justify-between gap-4">
         <span className="font-bold text-white text-sm">{q}</span>
-        {open ? <ChevronUp className="w-4 h-4 text-zinc-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-zinc-500 shrink-0" />}
+        {open
+          ? <ChevronUp className="w-4 h-4 text-zinc-500 shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-zinc-500 shrink-0" />}
       </div>
       {open && <p className="text-zinc-400 text-sm mt-3 leading-relaxed">{a}</p>}
     </button>
@@ -380,8 +567,17 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
 
   const [quizData, setQuizData] = useState<QuizData>({});
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
+
+  // Guest form fields
   const [email, setEmail] = useState('');
-  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [emailDirty, setEmailDirty] = useState(false);
+  const [name, setName] = useState('');
+
+  // Coupon
+  const [couponCode, setCouponCode] = useState('');
+  const [showCoupon, setShowCoupon] = useState(false);
+
+  // Checkout state
   const [showCheckout, setShowCheckout] = useState(false);
 
   useEffect(() => {
@@ -397,10 +593,13 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
   const copy = goalCopy[goal] || goalCopy.lose;
   const plan = PAYMENT_CONFIG[selectedPlan];
 
+  const emailValid = isValidEmail(email);
+  const emailError = emailDirty && !emailValid;
+
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) return;
-    setEmailSubmitted(true);
+    setEmailDirty(true);
+    if (!emailValid) return;
     setShowCheckout(true);
     pixel.initiateCheckout(plan.name, plan.price, user?.id || '', email);
     setTimeout(() => {
@@ -408,7 +607,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
     }, 100);
   };
 
-  // ── Payment success screen ─────────────────────────────────────────────────
+  // ── Payment success screen ────────────────────────────────────────────────
   if (isPaymentSuccess) {
     return (
       <div className="min-h-[100dvh] bg-zinc-950 flex flex-col items-center justify-center p-6 text-center">
@@ -432,7 +631,10 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
               </div>
             ))}
           </div>
-          <button onClick={() => navigate('/entrar')} className="w-full py-4 border border-zinc-700 text-zinc-400 font-bold text-sm rounded-2xl hover:border-zinc-600 transition-colors">
+          <button
+            onClick={() => navigate('/entrar')}
+            className="w-full py-4 border border-zinc-700 text-zinc-400 font-bold text-sm rounded-2xl hover:border-zinc-600 transition-colors"
+          >
             Já tenho minha senha → Entrar
           </button>
         </div>
@@ -446,7 +648,10 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
       {/* Sticky header */}
       <header className="sticky top-0 z-50 border-b border-zinc-900 bg-zinc-950/90 backdrop-blur-md px-5 py-3 flex items-center justify-between">
         <span className="font-serif font-bold text-white text-lg tracking-tight">ShapeScan</span>
-        <button onClick={() => navigate('/entrar')} className="text-zinc-500 hover:text-zinc-300 text-xs font-bold uppercase tracking-widest transition-colors">
+        <button
+          onClick={() => navigate('/entrar')}
+          className="text-zinc-500 hover:text-zinc-300 text-xs font-bold uppercase tracking-widest transition-colors"
+        >
           Já tenho conta
         </button>
       </header>
@@ -494,7 +699,9 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
 
         {/* Pain → Shift */}
         <section className="space-y-5">
-          <h2 className="text-2xl font-bold text-white leading-snug">O problema não é falta de esforço.<br />É falta de um sistema que te diga exatamente o que fazer — todos os dias.</h2>
+          <h2 className="text-2xl font-bold text-white leading-snug">
+            O problema não é falta de esforço.<br />É falta de um sistema que te diga exatamente o que fazer — todos os dias.
+          </h2>
           <p className="text-zinc-400 leading-relaxed">
             Você treina. Tenta se alimentar bem. Mas no final do mês, o resultado não aparece — ou aparece tão devagar que parece que nada está funcionando. Isso não é falta de dedicação. É falta de informação precisa sobre o seu próprio corpo.
           </p>
@@ -504,7 +711,9 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
               Você não precisa de mais uma dieta.
             </p>
             <p className="text-zinc-300 text-base leading-relaxed">
-              Você precisa de um sistema que te diga <span className="text-emerald-400 font-semibold">o que fazer todos os dias</span> — baseado no seu corpo real, não em uma tabela genérica.
+              Você precisa de um sistema que te diga{' '}
+              <span className="text-emerald-400 font-semibold">o que fazer todos os dias</span>{' '}
+              — baseado no seu corpo real, não em uma tabela genérica.
             </p>
           </div>
           <p className="text-zinc-400 leading-relaxed">
@@ -568,7 +777,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
               { name: 'Carlos M., 24 anos', goal: 'Ganho de massa', text: 'Descobri que estava comendo 600 calorias abaixo do necessário todo dia. Em um mês ajustando isso com o plano do app, desbloqueei uma evolução no treino que não acontecia há meses.' },
             ].map((t, i) => (
               <div key={i} className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-1 mb-3">
                   {[1,2,3,4,5].map(s => <span key={s} className="text-emerald-400 text-xs">★</span>)}
                 </div>
                 <p className="text-zinc-300 text-sm leading-relaxed mb-3">"{t.text}"</p>
@@ -605,24 +814,23 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
           </div>
         </section>
 
-        {/* Pricing + checkout */}
+        {/* ── Pricing + checkout ── */}
         <section id="checkout-section" className="space-y-6 scroll-mt-20">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold text-white">Ative seu acesso agora</h2>
             <p className="text-zinc-500 text-sm">Cada dia sem estratégia é um dia sem progresso.</p>
           </div>
 
-          {/* Plan toggle */}
+          {/* Plan toggle — desabilitado após abrir checkout */}
           <div className="grid grid-cols-2 gap-3">
             {(['monthly', 'annual'] as const).map(p => {
-              const cfg = PAYMENT_CONFIG[p];
               const active = selectedPlan === p;
               return (
                 <button
                   key={p}
                   onClick={() => { if (!showCheckout) setSelectedPlan(p); }}
                   disabled={showCheckout}
-                  className={`relative p-4 rounded-2xl border text-left transition-all ${active ? 'border-emerald-500 bg-emerald-500/5' : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'}`}
+                  className={`relative p-4 rounded-2xl border text-left transition-all ${active ? 'border-emerald-500 bg-emerald-500/5' : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'} disabled:opacity-60`}
                 >
                   {p === 'annual' && (
                     <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-emerald-500 text-zinc-950 text-[9px] font-black uppercase rounded-full whitespace-nowrap">
@@ -640,11 +848,33 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             })}
           </div>
 
-          {/* Checkout section */}
+          {/* ── Checkout embed ── */}
           {!showCheckout ? (
             user ? (
-              /* Logged-in non-premium: go straight to checkout */
+              /* Logado: vai direto pro checkout */
               <div className="space-y-3">
+                {/* Coupon for auth */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCoupon(v => !v)}
+                    className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs font-bold transition-colors mb-2"
+                  >
+                    <Tag className="w-3 h-3" />
+                    {showCoupon ? 'Fechar cupom' : 'Tem um cupom?'}
+                    {showCoupon ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                  {showCoupon && (
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="CÓDIGO DO CUPOM"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
+                    />
+                  )}
+                </div>
+
                 <button
                   onClick={() => setShowCheckout(true)}
                   className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
@@ -652,52 +882,109 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   Quero meu plano exato agora →
                 </button>
                 <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
-                <div className="flex items-center justify-center gap-1.5 text-zinc-600">
-                  <Shield className="w-3 h-3" />
-                  <span className="text-[10px] font-bold">Garantia de 7 dias · Pagamento seguro com Stripe</span>
-                </div>
+                <TrustRow />
               </div>
             ) : (
-              /* Guest: collect email first */
+              /* Guest: coleta email + nome + cupom */
               <form onSubmit={handleEmailSubmit} className="space-y-3">
+                {/* Email */}
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">Seu e-mail</label>
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
+                    Seu e-mail <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => { setEmail(e.target.value); setEmailDirty(true); }}
+                      onBlur={() => setEmailDirty(true)}
+                      placeholder="seu@email.com"
+                      required
+                      className={`w-full bg-zinc-900 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors pr-10 ${
+                        emailError
+                          ? 'border-red-500/60 focus:border-red-500'
+                          : emailDirty && emailValid
+                          ? 'border-emerald-500/60 focus:border-emerald-500'
+                          : 'border-zinc-800 focus:border-emerald-500'
+                      }`}
+                    />
+                    {emailDirty && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm">
+                        {emailValid ? '✓' : ''}
+                      </span>
+                    )}
+                  </div>
+                  {emailError && (
+                    <p className="text-red-400 text-[10px] font-bold mt-1">Digite um e-mail válido.</p>
+                  )}
+                </div>
+
+                {/* Nome completo */}
+                <div>
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
+                    Nome completo <span className="text-zinc-600 font-normal normal-case">(recomendado)</span>
+                  </label>
                   <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="seu@email.com"
-                    required
+                    type="text"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Seu nome"
+                    autoComplete="name"
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors"
                   />
                 </div>
+
+                {/* Cupom colapsável */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCoupon(v => !v)}
+                    className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs font-bold transition-colors py-1"
+                  >
+                    <Tag className="w-3 h-3" />
+                    {showCoupon ? 'Fechar cupom' : 'Tem um cupom?'}
+                    {showCoupon ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  </button>
+                  {showCoupon && (
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                      placeholder="CÓDIGO DO CUPOM"
+                      className="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
+                    />
+                  )}
+                </div>
+
                 <button
                   type="submit"
-                  className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
+                  disabled={emailDirty && !emailValid}
+                  className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
                 >
                   Quero meu plano exato agora →
                 </button>
+
                 <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
-                <div className="flex items-center justify-center gap-1.5 text-zinc-600">
-                  <Shield className="w-3 h-3" />
-                  <span className="text-[10px] font-bold">Garantia de 7 dias · Pagamento seguro com Stripe</span>
-                </div>
+                <TrustRow />
               </form>
             )
           ) : (
+            /* ── Formulário de pagamento ── */
             <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5">
-              {/* Trust badge */}
-              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-zinc-800">
-                <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
+              {/* Header do embed */}
+              <div className="flex items-center gap-3 mb-5 pb-4 border-b border-zinc-800">
+                <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center shrink-0">
+                  <Lock className="w-4 h-4 text-emerald-400" />
+                </div>
                 <div>
-                  <p className="text-white text-xs font-bold">Pagamento 100% seguro com Stripe</p>
-                  <p className="text-zinc-600 text-[10px]">Seus dados são criptografados</p>
+                  <p className="text-white text-xs font-bold">Pagamento 100% seguro</p>
+                  <p className="text-zinc-600 text-[10px]">Processado por Stripe · SSL 256-bit · PCI-DSS</p>
                 </div>
               </div>
 
               {/* What you unlock */}
-              <ul className="space-y-2 mb-4">
-                {['Análise completa de refeições', 'Análise corporal com IA', 'Personal trainer 24h'].map(item => (
+              <ul className="space-y-2 mb-5">
+                {['Análise completa de refeições por foto', 'Análise corporal com IA', 'Personal trainer 24h com contexto real'].map(item => (
                   <li key={item} className="flex items-center gap-2 text-sm text-white">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     {item}
@@ -712,17 +999,22 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   priceId={plan.stripePriceId}
                   plan={plan.id}
                   planName={plan.name}
+                  planPeriod={selectedPlan}
                   planValue={plan.price}
+                  couponCode={couponCode}
                   onCancel={() => setShowCheckout(false)}
                 />
               ) : (
                 <GuestCheckoutWrapper
                   email={email}
+                  name={name}
                   priceId={plan.stripePriceId}
                   plan={plan.id}
                   planName={plan.name}
+                  planPeriod={selectedPlan}
                   planValue={plan.price}
                   quizData={quizData}
+                  couponCode={couponCode}
                   onCancel={() => setShowCheckout(false)}
                 />
               )}
