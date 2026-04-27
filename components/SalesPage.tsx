@@ -641,8 +641,21 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
       const raw = localStorage.getItem('shapescan_quiz_data');
       if (raw) setQuizData(JSON.parse(raw));
     } catch {}
-    pixel.pageView(user?.id);
+    // pixel.pageView já é disparado pelo App.tsx em cada mudança de rota — não duplicar aqui
   }, [user]);
+
+  // Limpa localStorage e exibe erro se 3DS falhou para guest (redirect_status != succeeded)
+  useEffect(() => {
+    const redirectStatus = params.get('redirect_status');
+    if (redirectStatus && redirectStatus !== 'succeeded') {
+      localStorage.removeItem('awaiting_stripe_payment');
+      localStorage.removeItem('awaiting_stripe_payment_started');
+      localStorage.removeItem('awaiting_stripe_plan_name');
+      localStorage.removeItem('awaiting_stripe_plan_value');
+      onShowToast?.('Pagamento não concluído. Verifique seus dados e tente novamente.', 'error');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const goal = quizData.goal || 'lose';
   const copy = goalCopy[goal] || goalCopy.lose;
