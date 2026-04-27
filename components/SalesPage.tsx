@@ -105,29 +105,29 @@ const goalCopy: Record<string, { badge: string; headline: string; sub: string; d
   lose: {
     badge: 'PERDA DE GORDURA',
     headline: 'Descubra exatamente quanto comer para perder gordura — e comece a ver resultado ainda essa semana.',
-    sub: 'Você completou o diagnóstico. Agora sabemos o que está travando seu progresso. Com base no seu perfil, o ShapeScan monta a estratégia exata para você queimar gordura de verdade — sem dieta genérica, sem chute.',
+    sub: 'Você completou o diagnóstico. Agora sabemos exatamente o que está travando seu progresso. O ShapeScan monta o plano certo para o seu corpo — sem dieta genérica, sem chute.',
     diagnostic: [
-      'Se você continuar sem rastreamento, vai continuar treinando e comendo sem ver resultado — exatamente como já aconteceu até aqui',
-      'Seu déficit calórico atual é uma estimativa. Sem dado real, você está operando no escuro',
-      'Cada semana sem estratégia é uma semana de esforço jogado fora',
+      'Você treina, tenta se alimentar bem — e o resultado não aparece. Sem rastreamento, tudo é chute',
+      'Seu déficit calórico atual é uma estimativa. Sem número real, você pode estar comendo 400 cal a mais — sem saber',
+      'Cada semana sem plano preciso é uma semana de treino e dieta que não somam',
     ],
     consequence: 'Cada dia que você adia é mais um dia treinando no escuro.',
   },
   gain: {
     badge: 'GANHO DE MASSA',
     headline: 'Você está treinando há meses. O resultado que deveria ter chegado — não chegou. Isso tem um motivo.',
-    sub: 'Detectamos seu perfil e identificamos o gargalo: sem superávit calórico e proteína precisos, o músculo simplesmente não cresce — não importa a intensidade do treino.',
+    sub: 'O gargalo é claro: sem superávit calórico e proteína precisos, o músculo não cresce — não importa o quanto você treina. O ShapeScan te dá os números exatos para mudar isso.',
     diagnostic: [
       'Sem superávit calórico preciso, seu músculo não cresce — não importa quanto você treina',
       'A maioria come proteína insuficiente sem saber. Isso sozinho trava o ganho de massa por meses',
-      'Sem acompanhamento diário, você vai ficar estagnado por muito mais tempo ainda',
+      'Sem acompanhamento diário, a estagnação continua — sem explicação e sem saída clara',
     ],
     consequence: 'Cada semana sem dados reais é uma semana de treino desperdiçado.',
   },
   recomp: {
     badge: 'RECOMPOSIÇÃO CORPORAL',
     headline: 'Recomposição sem dado é sorte. Com dado, é método. Você acabou de escolher o método.',
-    sub: 'Recomposição é o objetivo mais técnico que existe — por isso a maioria falha. O ShapeScan te dá o que falta: dados diários do seu corpo para ajustar a estratégia em tempo real.',
+    sub: 'Recomposição é o objetivo mais técnico que existe — por isso a maioria falha. O que falta não é esforço: são dados diários do seu corpo para ajustar a estratégia em tempo real.',
     diagnostic: [
       'Recomposição exige precisão calórica que nenhuma dieta genérica consegue entregar',
       'Sem medir, você oscila entre acúmulo de gordura e perda de músculo — sem saber qual está acontecendo',
@@ -138,7 +138,7 @@ const goalCopy: Record<string, { badge: string; headline: string; sub: string; d
   maintain: {
     badge: 'MANUTENÇÃO DE RESULTADO',
     headline: 'O resultado que você conquistou pode desaparecer em semanas — se você não tiver um sistema.',
-    sub: 'Manter é tão exigente quanto conquistar. O ShapeScan te dá o controle diário para garantir que o trabalho que você fez não seja desfeito por descuido.',
+    sub: 'Manter resultado é tão exigente quanto conquistar. O ShapeScan te dá o controle diário para garantir que o que você construiu — não seja desfeito por descuido.',
     diagnostic: [
       'Sem acompanhamento, o peso volta silenciosamente — poucos gramas por dia, invisível até virar kg',
       'Um erro calórico pequeno, repetido por semanas, desfaz meses de trabalho',
@@ -149,11 +149,11 @@ const goalCopy: Record<string, { badge: string; headline: string; sub: string; d
 };
 
 const faqs = [
-  { q: 'Preciso saber de nutrição para usar?', a: 'Não. O app faz todo o trabalho técnico por você. Basta fotografar o que comeu.' },
+  { q: 'Preciso saber de nutrição para usar?', a: 'Não. O app faz todo o trabalho técnico por você. Basta fotografar o que comeu — o ShapeScan calcula tudo.' },
   { q: 'Funciona sem academia?', a: 'Sim. O ShapeScan acompanha sua nutrição e evolução independente de onde você treina — ou se treina.' },
-  { q: 'Quando tenho acesso?', a: 'Imediatamente após o pagamento. Você receberá um e-mail para criar sua senha e acessar o app.' },
-  { q: 'Posso cancelar quando quiser?', a: 'Sim, sem burocracia. Cancele pelo próprio app, a qualquer momento, sem precisar entrar em contato.' },
-  { q: 'E se eu não gostar?', a: 'Garantia de 7 dias. Se por qualquer motivo não ficar satisfeito, devolvemos 100% do valor pago — sem perguntas.' },
+  { q: 'Quando tenho acesso?', a: 'Imediatamente após o pagamento. Você receberá um e-mail para criar sua senha e já começa hoje.' },
+  { q: 'Posso cancelar quando quiser?', a: 'Sim. Cancele direto pelo app, a qualquer momento, sem precisar entrar em contato com ninguém.' },
+  { q: 'E se eu não gostar?', a: 'Garantia total de 7 dias. Se por qualquer motivo não ficar satisfeito, devolvemos 100% do valor pago — sem perguntas, sem burocracia.' },
 ];
 
 // ── Reusable UI ───────────────────────────────────────────────────────────────
@@ -767,7 +767,10 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             O problema não é falta de esforço.<br />É falta de um sistema que te diga exatamente o que fazer — todos os dias.
           </h2>
           <p className="text-zinc-400 leading-relaxed">
-            Você treina. Tenta se alimentar bem. Mas no final do mês, o resultado não aparece — ou aparece tão devagar que parece que nada está funcionando. Isso não é falta de dedicação. É falta de informação precisa sobre o seu próprio corpo.
+            Você treina. Tenta se alimentar bem. Mas no final do mês, o resultado não aparece — ou aparece tão devagar que parece que nada está funcionando.
+          </p>
+          <p className="text-zinc-400 leading-relaxed">
+            Isso não é falta de dedicação. É falta de informação precisa sobre o seu próprio corpo.
           </p>
           <div className="bg-emerald-500/5 border border-emerald-500/25 rounded-2xl p-5">
             <p className="text-emerald-300 text-[10px] font-black uppercase tracking-widest mb-3">O diferencial do ShapeScan</p>
@@ -777,17 +780,17 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             <p className="text-zinc-300 text-base leading-relaxed">
               Você precisa de um sistema que te diga{' '}
               <span className="text-emerald-400 font-semibold">o que fazer todos os dias</span>{' '}
-              — baseado no seu corpo real, não em uma tabela genérica.
+              — baseado no <span className="text-white font-semibold">seu</span> corpo real, não em uma tabela genérica.
             </p>
           </div>
           <p className="text-zinc-400 leading-relaxed">
-            É a diferença entre adivinhar e saber. Entre tentar e executar. Entre mais um mês sem resultado e começar a ver mudança de verdade.
+            É a diferença entre adivinhar e saber. Entre tentar e executar. Entre mais um mês sem resultado — e começar a ver mudança de verdade.
           </p>
         </section>
 
         {/* Features = Mecanismo único */}
         <section className="space-y-4">
-          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Como o ShapeScan funciona diferente</p>
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">O que você desbloqueia hoje</p>
           <div className="grid grid-cols-1 gap-3">
             {[
               {
@@ -857,7 +860,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         {/* Price anchor */}
         <section className="space-y-4">
           <p className="text-zinc-300 text-base leading-relaxed font-medium">
-            Se você fosse montar isso separado, precisaria de:
+            Montar isso separado custaria mais de R$1.000/mês:
           </p>
           <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 space-y-3">
             <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Comparação real</p>
@@ -874,15 +877,15 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 </div>
               ))}
             </div>
-            <p className="text-zinc-500 text-xs">Menos de R$1 por dia para ter nutricionista + personal trainer + análise corporal no bolso.</p>
+            <p className="text-zinc-500 text-xs">Menos de R$1 por dia. Nutricionista, personal e análise corporal — no bolso, 24h por dia.</p>
           </div>
         </section>
 
         {/* ── Pricing + checkout ── */}
         <section id="checkout-section" className="space-y-6 scroll-mt-20">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-white">Ative seu acesso agora</h2>
-            <p className="text-zinc-500 text-sm">Cada dia sem estratégia é um dia sem progresso.</p>
+            <h2 className="text-2xl font-bold text-white">Comece com um plano feito para o seu corpo</h2>
+            <p className="text-zinc-500 text-sm">Cada dia sem estratégia é um dia de esforço sem direção.</p>
           </div>
 
           {/* Plan toggle — desabilitado após abrir checkout */}
@@ -1116,7 +1119,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             <Shield className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <p className="font-bold text-white mb-1">Garantia de 7 dias</p>
+            <p className="font-bold text-white mb-1">Risco zero — garantia de 7 dias</p>
             <p className="text-zinc-500 text-sm leading-relaxed">
               Se por qualquer motivo você não ficar satisfeito nos primeiros 7 dias, devolvemos 100% do valor pago — sem perguntas, sem burocracia.
             </p>
@@ -1134,8 +1137,8 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         {/* Bottom CTA */}
         <section className="text-center space-y-4 pb-10">
           <div className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl text-left space-y-2">
-            <p className="text-zinc-400 text-sm leading-relaxed">Você pode continuar fazendo do jeito que sempre fez…</p>
-            <p className="text-white font-bold text-base leading-relaxed">ou começar hoje com um plano exato que funciona para o seu corpo.</p>
+            <p className="text-zinc-400 text-sm leading-relaxed">Você pode continuar no modo tentativa e erro — treinando forte, comendo "bem", sem resultado claro.</p>
+            <p className="text-white font-bold text-base leading-relaxed">Ou começar hoje com um plano exato para o seu corpo. A escolha é simples.</p>
           </div>
           <button
             onClick={() => {
@@ -1145,7 +1148,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
           >
             Começar minha transformação agora →
           </button>
-          <p className="text-zinc-600 text-xs">Cancele quando quiser · 7 dias de garantia · Stripe SSL</p>
+          <p className="text-zinc-600 text-xs">Cancele quando quiser · Garantia de 7 dias · Pagamento 100% seguro</p>
         </section>
 
       </div>
