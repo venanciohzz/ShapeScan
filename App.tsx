@@ -962,7 +962,9 @@ const App: React.FC = () => {
               {/* Se o usuário já fez o quiz (dados no localStorage), vai direto para /assinar */}
               <Route path="/quiz" element={
                 user
-                  ? <Navigate to="/dashboard" replace />
+                  ? (!user.weight || !user.height)
+                    ? <OnboardingQuiz onComplete={handleQuizComplete} isLoading={isQuizLoading} />
+                    : <Navigate to="/dashboard" replace />
                   : localStorage.getItem('shapescan_quiz_data')
                   ? <Navigate to="/assinar" replace />
                   : <OnboardingQuiz onComplete={() => navigate('/assinar')} />

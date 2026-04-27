@@ -532,7 +532,13 @@ const AuthCheckoutWrapper: React.FC<{
       const body: Record<string, any> = { priceId, plan };
       if (couponCode.trim()) body.couponCode = couponCode.trim().toUpperCase();
       const data = await callEdgeFunction('stripe-checkout', body);
-      if (data.isFree) { window.location.href = '/dashboard?payment=success'; return; }
+      if (data.isFree) {
+        localStorage.setItem('awaiting_stripe_payment', 'true');
+        localStorage.setItem('awaiting_stripe_plan_name', planName);
+        localStorage.setItem('awaiting_stripe_plan_value', String(data.pricing?.finalPrice ?? 0));
+        window.location.href = '/dashboard?payment=success';
+        return;
+      }
       if (!data.clientSecret) throw new Error(data.error || 'Erro ao obter checkout.');
       setClientSecret(data.clientSecret);
     } catch (err: any) {
