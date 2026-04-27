@@ -73,10 +73,10 @@ const GoogleIcon = () => (
 
 const AppMockup = () => (
   <>
-    {/* Mobile: full-bleed 100vw */}
+    {/* Mobile: full-bleed ~120vw — phones maiores, fundo transparente via screen blend */}
     <div
-      className="relative select-none overflow-hidden md:hidden"
-      style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}
+      className="relative select-none md:hidden"
+      style={{ width: '120vw', marginLeft: 'calc(-60vw + 50%)' }}
     >
       <img
         src="/app-mockup.jpg"
