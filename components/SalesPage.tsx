@@ -170,42 +170,45 @@ const TrustRow: React.FC<{ className?: string }> = ({ className = '' }) => (
 /** Resumo do pedido exibido dentro do bloco de pagamento */
 const PurchaseSummaryCard: React.FC<{
   planName: string;
-  planPeriod: 'monthly' | 'annual';
+  planPeriod: string;
   pricing: PricingInfo;
-}> = ({ planName, planPeriod, pricing }) => (
-  <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 mb-4">
-    <p className="text-zinc-600 text-[9px] font-black uppercase tracking-widest mb-3">Resumo do pedido</p>
-    <div className="flex items-start justify-between gap-2">
-      <div>
-        <p className="text-white font-bold text-sm">{planName}</p>
-        <p className="text-zinc-600 text-[10px] mt-0.5">
-          {planPeriod === 'annual' ? 'Cobrado anualmente · R$247/ano' : 'Cobrado mensalmente'}
-        </p>
-      </div>
-      <div className="text-right shrink-0">
-        {pricing.discount > 0 && (
-          <p className="text-zinc-600 text-xs line-through">
-            R${pricing.originalPrice.toFixed(2).replace('.', ',')}
+}> = ({ planName, planPeriod, pricing }) => {
+  const isAnnual = planPeriod === 'annual' || planPeriod === 'pro_annual';
+  return (
+    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 mb-4">
+      <p className="text-zinc-600 text-[9px] font-black uppercase tracking-widest mb-3">Resumo do pedido</p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-white font-bold text-sm">{planName}</p>
+          <p className="text-zinc-600 text-[10px] mt-0.5">
+            {isAnnual
+              ? `Cobrado anualmente · R$${pricing.originalPrice.toFixed(0)}/ano`
+              : 'Cobrado mensalmente'}
           </p>
-        )}
-        <p className="text-emerald-400 font-black text-xl leading-none">
-          R${pricing.finalPrice.toFixed(2).replace('.', ',')}
-        </p>
-        {planPeriod === 'monthly' && (
-          <p className="text-zinc-600 text-[9px]">/mês</p>
-        )}
+        </div>
+        <div className="text-right shrink-0">
+          {pricing.discount > 0 && (
+            <p className="text-zinc-600 text-xs line-through">
+              R${pricing.originalPrice.toFixed(2).replace('.', ',')}
+            </p>
+          )}
+          <p className="text-emerald-400 font-black text-xl leading-none">
+            R${pricing.finalPrice.toFixed(2).replace('.', ',')}
+          </p>
+          {!isAnnual && <p className="text-zinc-600 text-[9px]">/mês</p>}
+        </div>
       </div>
+      {pricing.discount > 0 && (
+        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800">
+          <Tag className="w-3 h-3 text-emerald-400 shrink-0" />
+          <span className="text-emerald-400 text-xs font-bold">
+            Cupom aplicado — economia de R${pricing.discount.toFixed(2).replace('.', ',')}
+          </span>
+        </div>
+      )}
     </div>
-    {pricing.discount > 0 && (
-      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800">
-        <Tag className="w-3 h-3 text-emerald-400 shrink-0" />
-        <span className="text-emerald-400 text-xs font-bold">
-          Cupom aplicado — economia de R${pricing.discount.toFixed(2).replace('.', ',')}
-        </span>
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 // ── GuestPaymentForm ──────────────────────────────────────────────────────────
 
@@ -213,7 +216,7 @@ const GuestPaymentForm: React.FC<{
   email: string;
   name: string;
   planName: string;
-  planPeriod: 'monthly' | 'annual';
+  planPeriod: string;
   pricing: PricingInfo;
   onCancel: () => void;
 }> = ({ email, name, planName, planPeriod, pricing, onCancel }) => {
@@ -330,30 +333,32 @@ const GuestCheckoutWrapper: React.FC<{
   priceId: string;
   plan: string;
   planName: string;
-  planPeriod: 'monthly' | 'annual';
+  planPeriod: string;
   planValue: number;
   quizData: QuizData;
-  couponCode: string;
   onCancel: () => void;
-}> = ({ email, name, priceId, plan, planName, planPeriod, planValue, quizData, couponCode, onCancel }) => {
+}> = ({ email, name, priceId, plan, planName, planPeriod, planValue, quizData, onCancel }) => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [pricing, setPricing] = useState<PricingInfo>({ originalPrice: planValue, finalPrice: planValue, discount: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplying, setCouponApplying] = useState(false);
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  const getUtmParams = () => {
+    try {
+      const raw = document.cookie.split('; ').find(c => c.startsWith('utmify='));
+      return raw ? JSON.parse(decodeURIComponent(raw.split('=').slice(1).join('='))) : {};
+    } catch { return {}; }
+  };
 
   const init = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const utmParams = (() => {
-        try {
-          const raw = document.cookie.split('; ').find(c => c.startsWith('utmify='));
-          return raw ? JSON.parse(decodeURIComponent(raw.split('=').slice(1).join('='))) : {};
-        } catch { return {}; }
-      })();
-
-      const body: Record<string, any> = { email, priceId, plan, quizData, utmParams };
-      if (couponCode.trim()) body.couponCode = couponCode.trim().toUpperCase();
+      const body: Record<string, any> = { email, priceId, plan, quizData, utmParams: getUtmParams() };
 
       const res = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout-guest`, {
         method: 'POST',
@@ -375,7 +380,38 @@ const GuestCheckoutWrapper: React.FC<{
     } finally {
       setLoading(false);
     }
-  }, [email, priceId, plan, couponCode]);
+  }, [email, priceId, plan]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim() || couponApplying) return;
+    setCouponApplying(true);
+    setCouponError(null);
+    try {
+      const body: Record<string, any> = {
+        email, priceId, plan, quizData, utmParams: getUtmParams(),
+        couponCode: couponInput.trim().toUpperCase(),
+      };
+      const res = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout-guest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': supabaseAnonKey },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'Cupom inválido.');
+      if (data.isFree) {
+        window.location.href = '/assinar?payment=success';
+        return;
+      }
+      if (!data.clientSecret) throw new Error('Cupom inválido ou expirado.');
+      if (data.pricing) setPricing(data.pricing);
+      setClientSecret(data.clientSecret);
+      setCouponApplied(true);
+    } catch (err: any) {
+      setCouponError(err.message || 'Cupom inválido ou expirado.');
+    } finally {
+      setCouponApplying(false);
+    }
+  };
 
   useEffect(() => { init(); }, [init]);
 
@@ -409,16 +445,59 @@ const GuestCheckoutWrapper: React.FC<{
   if (!clientSecret) return null;
 
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-      <GuestPaymentForm
-        email={email}
-        name={name}
-        planName={planName}
-        planPeriod={planPeriod}
-        pricing={pricing}
-        onCancel={onCancel}
-      />
-    </Elements>
+    <div className="space-y-3">
+      {/* Cupom */}
+      <div>
+        {couponApplied && pricing.discount > 0 ? (
+          <div className="flex items-center gap-2 px-1">
+            <Tag className="w-3 h-3 text-emerald-400 shrink-0" />
+            <span className="text-emerald-400 text-xs font-bold flex-1">
+              Cupom aplicado — economia de R${pricing.discount.toFixed(2).replace('.', ',')}
+            </span>
+            <button
+              onClick={() => { setCouponInput(''); setCouponApplied(false); setCouponError(null); setPricing({ originalPrice: planValue, finalPrice: planValue, discount: 0 }); init(); }}
+              className="text-zinc-600 hover:text-zinc-400 text-xs"
+            >✕ remover</button>
+          </div>
+        ) : (
+          <details className="group">
+            <summary className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs font-bold cursor-pointer list-none select-none">
+              <Tag className="w-3 h-3" />
+              Tem um cupom?
+              <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" />
+            </summary>
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={couponInput}
+                onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                placeholder="CÓDIGO DO CUPOM"
+                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
+              />
+              <button
+                onClick={handleApplyCoupon}
+                disabled={!couponInput.trim() || couponApplying}
+                className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-white text-xs font-black rounded-xl transition-all uppercase tracking-widest"
+              >
+                {couponApplying ? '...' : 'Aplicar'}
+              </button>
+            </div>
+            {couponError && <p className="text-red-400 text-xs font-bold mt-2 px-1">⚠️ {couponError}</p>}
+          </details>
+        )}
+      </div>
+      <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+        <GuestPaymentForm
+          email={email}
+          name={name}
+          planName={planName}
+          planPeriod={planPeriod}
+          pricing={pricing}
+          onCancel={onCancel}
+        />
+      </Elements>
+    </div>
   );
 };
 
@@ -427,10 +506,10 @@ const GuestCheckoutWrapper: React.FC<{
 const AuthPaymentForm: React.FC<{
   user: User;
   planName: string;
-  planPeriod: 'monthly' | 'annual';
-  planValue: number;
+  planPeriod: string;
+  pricing: PricingInfo;
   onCancel: () => void;
-}> = ({ user, planName, planPeriod, planValue, onCancel }) => {
+}> = ({ user, planName, planPeriod, pricing, onCancel }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [processing, setProcessing] = useState(false);
@@ -445,9 +524,9 @@ const AuthPaymentForm: React.FC<{
 
     localStorage.setItem('awaiting_stripe_payment', 'true');
     localStorage.setItem('awaiting_stripe_plan_name', planName);
-    localStorage.setItem('awaiting_stripe_plan_value', String(planValue));
+    localStorage.setItem('awaiting_stripe_plan_value', String(pricing.finalPrice));
 
-    pixel.addPaymentInfo(planName, planValue, user.email, user.id);
+    pixel.addPaymentInfo(planName, pricing.finalPrice, user.email, user.id);
 
     const { error: confirmError } = await stripe.confirmPayment({
       elements,
@@ -466,7 +545,7 @@ const AuthPaymentForm: React.FC<{
       <PurchaseSummaryCard
         planName={planName}
         planPeriod={planPeriod}
-        pricing={{ originalPrice: planValue, finalPrice: planValue, discount: 0 }}
+        pricing={pricing}
       />
 
       <div className="rounded-2xl overflow-hidden border border-zinc-800">
@@ -516,22 +595,24 @@ const AuthCheckoutWrapper: React.FC<{
   priceId: string;
   plan: string;
   planName: string;
-  planPeriod: 'monthly' | 'annual';
+  planPeriod: string;
   planValue: number;
-  couponCode: string;
   onCancel: () => void;
-}> = ({ user, priceId, plan, planName, planPeriod, planValue, couponCode, onCancel }) => {
+}> = ({ user, priceId, plan, planName, planPeriod, planValue, onCancel }) => {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pricing, setPricing] = useState<PricingInfo>({ originalPrice: planValue, finalPrice: planValue, discount: 0 });
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplying, setCouponApplying] = useState(false);
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
 
   const init = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const body: Record<string, any> = { priceId, plan };
-      if (couponCode.trim()) body.couponCode = couponCode.trim().toUpperCase();
-      const data = await callEdgeFunction('stripe-checkout', body);
+      const data = await callEdgeFunction('stripe-checkout', { priceId, plan });
       if (data.isFree) {
         localStorage.setItem('awaiting_stripe_payment', 'true');
         localStorage.setItem('awaiting_stripe_plan_name', planName);
@@ -541,14 +622,42 @@ const AuthCheckoutWrapper: React.FC<{
       }
       if (!data.clientSecret) throw new Error(data.error || 'Erro ao obter checkout.');
       setClientSecret(data.clientSecret);
+      if (data.pricing) setPricing(data.pricing);
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar checkout.');
     } finally {
       setLoading(false);
     }
-  }, [priceId, plan, couponCode]);
+  }, [priceId, plan]);
 
   useEffect(() => { init(); }, [init]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim() || couponApplying) return;
+    setCouponApplying(true);
+    setCouponError(null);
+    try {
+      const data = await callEdgeFunction('stripe-checkout', {
+        priceId, plan, couponCode: couponInput.trim().toUpperCase(),
+      });
+      if (data.isError || data.error) throw new Error(data.error || 'Cupom inválido.');
+      if (data.isFree) {
+        localStorage.setItem('awaiting_stripe_payment', 'true');
+        localStorage.setItem('awaiting_stripe_plan_name', planName);
+        localStorage.setItem('awaiting_stripe_plan_value', String(data.pricing?.finalPrice ?? 0));
+        window.location.href = '/dashboard?payment=success';
+        return;
+      }
+      if (!data.clientSecret) throw new Error('Cupom inválido ou expirado.');
+      setClientSecret(data.clientSecret);
+      if (data.pricing) setPricing(data.pricing);
+      setCouponApplied(true);
+    } catch (err: any) {
+      setCouponError(err.message || 'Cupom inválido ou expirado.');
+    } finally {
+      setCouponApplying(false);
+    }
+  };
 
   if (loading) return (
     <div className="py-10 flex flex-col items-center gap-3">
@@ -572,9 +681,52 @@ const AuthCheckoutWrapper: React.FC<{
   if (!clientSecret) return null;
 
   return (
-    <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-      <AuthPaymentForm user={user} planName={planName} planPeriod={planPeriod} planValue={planValue} onCancel={onCancel} />
-    </Elements>
+    <div className="space-y-3">
+      {/* Cupom */}
+      <div>
+        {couponApplied && pricing.discount > 0 ? (
+          <div className="flex items-center gap-2 px-1">
+            <Tag className="w-3 h-3 text-emerald-400 shrink-0" />
+            <span className="text-emerald-400 text-xs font-bold flex-1">
+              Cupom aplicado — economia de R${pricing.discount.toFixed(2).replace('.', ',')}
+            </span>
+            <button
+              onClick={() => { setCouponInput(''); setCouponApplied(false); setCouponError(null); setPricing({ originalPrice: planValue, finalPrice: planValue, discount: 0 }); init(); }}
+              className="text-zinc-600 hover:text-zinc-400 text-xs"
+            >✕ remover</button>
+          </div>
+        ) : (
+          <details className="group">
+            <summary className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs font-bold cursor-pointer list-none select-none">
+              <Tag className="w-3 h-3" />
+              Tem um cupom?
+              <ChevronDown className="w-3 h-3 group-open:rotate-180 transition-transform" />
+            </summary>
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={couponInput}
+                onChange={e => setCouponInput(e.target.value.toUpperCase())}
+                onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                placeholder="CÓDIGO DO CUPOM"
+                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
+              />
+              <button
+                onClick={handleApplyCoupon}
+                disabled={!couponInput.trim() || couponApplying}
+                className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-white text-xs font-black rounded-xl transition-all uppercase tracking-widest"
+              >
+                {couponApplying ? '...' : 'Aplicar'}
+              </button>
+            </div>
+            {couponError && <p className="text-red-400 text-xs font-bold mt-2 px-1">⚠️ {couponError}</p>}
+          </details>
+        )}
+      </div>
+      <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+        <AuthPaymentForm user={user} planName={planName} planPeriod={planPeriod} pricing={pricing} onCancel={onCancel} />
+      </Elements>
+    </div>
   );
 };
 
@@ -607,16 +759,12 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
   const isPaymentSuccess = params.get('payment') === 'success' || params.get('redirect_status') === 'succeeded';
 
   const [quizData, setQuizData] = useState<QuizData>({});
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('monthly');
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual' | 'pro_monthly' | 'pro_annual'>('pro_annual');
 
   // Guest form fields
   const [email, setEmail] = useState('');
   const [emailDirty, setEmailDirty] = useState(false);
   const [name, setName] = useState('');
-
-  // Coupon
-  const [couponCode, setCouponCode] = useState('');
-  const [showCoupon, setShowCoupon] = useState(false);
 
   // Checkout state
   const [showCheckout, setShowCheckout] = useState(false);
@@ -895,37 +1043,120 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         </section>
 
         {/* ── Pricing + checkout ── */}
-        <section id="checkout-section" className="space-y-6 scroll-mt-20">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-white">Comece com um plano feito para o seu corpo</h2>
-            <p className="text-zinc-500 text-sm">Cada dia sem estratégia é um dia de esforço sem direção.</p>
+        <section id="checkout-section" className="space-y-5 scroll-mt-20">
+          <div className="text-center space-y-1">
+            <h2 className="text-2xl font-bold text-white">Escolha seu plano</h2>
+            <p className="text-zinc-500 text-sm">Pro tem o dobro de capacidade. Por menos de R$0,50 a mais por dia.</p>
           </div>
 
-          {/* Plan toggle — desabilitado após abrir checkout */}
+          {/* ── Cabeçalhos das colunas ── */}
           <div className="grid grid-cols-2 gap-3">
-            {(['monthly', 'annual'] as const).map(p => {
-              const active = selectedPlan === p;
-              return (
-                <button
-                  key={p}
-                  onClick={() => { if (!showCheckout) setSelectedPlan(p); }}
-                  disabled={showCheckout}
-                  className={`relative p-4 rounded-2xl border text-left transition-all ${active ? 'border-emerald-500 bg-emerald-500/5' : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'} disabled:opacity-60`}
-                >
-                  {p === 'annual' && (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-emerald-500 text-zinc-950 text-[9px] font-black uppercase rounded-full whitespace-nowrap">
-                      Economize 31%
-                    </span>
-                  )}
-                  <p className="font-bold text-white text-sm">{p === 'monthly' ? 'Mensal' : 'Anual'}</p>
-                  <p className={`text-lg font-black mt-1 ${active ? 'text-emerald-400' : 'text-zinc-400'}`}>
-                    R$ {p === 'monthly' ? '29,90' : '20,58'}
-                    <span className="text-xs font-normal text-zinc-600">/mês</span>
-                  </p>
-                  {p === 'annual' && <p className="text-[10px] text-zinc-600 mt-0.5">R$247 cobrado anualmente</p>}
-                </button>
-              );
-            })}
+            <p className="text-center text-[10px] font-black text-zinc-600 uppercase tracking-widest">Standard</p>
+            <div className="flex justify-center">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                ⚡ Pro — Recomendado
+              </span>
+            </div>
+          </div>
+
+          {/* ── 4 cards de plano ── */}
+          <div className="grid grid-cols-2 gap-3">
+
+            {/* Standard Mensal */}
+            <button
+              disabled={showCheckout}
+              onClick={() => setSelectedPlan('monthly')}
+              className={`relative p-4 rounded-2xl border text-left transition-all disabled:opacity-50 ${
+                selectedPlan === 'monthly'
+                  ? 'border-zinc-500 bg-zinc-800/70 ring-1 ring-zinc-500'
+                  : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'
+              }`}
+            >
+              <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-2">Mensal</p>
+              <p className={`text-xl font-black leading-none ${selectedPlan === 'monthly' ? 'text-white' : 'text-zinc-400'}`}>
+                R$29,90
+              </p>
+              <p className="text-zinc-600 text-[10px] mt-1">/mês</p>
+            </button>
+
+            {/* Pro Mensal */}
+            <button
+              disabled={showCheckout}
+              onClick={() => setSelectedPlan('pro_monthly')}
+              className={`relative p-4 rounded-2xl border text-left transition-all disabled:opacity-50 ${
+                selectedPlan === 'pro_monthly'
+                  ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500'
+                  : 'border-emerald-900/50 bg-emerald-950/20 hover:border-emerald-700/50'
+              }`}
+            >
+              <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-2">Mensal</p>
+              <p className={`text-xl font-black leading-none ${selectedPlan === 'pro_monthly' ? 'text-emerald-300' : 'text-zinc-300'}`}>
+                R$44,90
+              </p>
+              <p className="text-zinc-600 text-[10px] mt-1">/mês</p>
+            </button>
+
+            {/* Standard Anual */}
+            <button
+              disabled={showCheckout}
+              onClick={() => setSelectedPlan('annual')}
+              className={`relative pt-6 pb-4 px-4 rounded-2xl border text-left transition-all disabled:opacity-50 ${
+                selectedPlan === 'annual'
+                  ? 'border-zinc-500 bg-zinc-800/70 ring-1 ring-zinc-500'
+                  : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'
+              }`}
+            >
+              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-700 text-zinc-200 text-[9px] font-black uppercase rounded-full whitespace-nowrap">
+                Economize 31%
+              </span>
+              <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-2">Anual</p>
+              <p className={`text-xl font-black leading-none ${selectedPlan === 'annual' ? 'text-white' : 'text-zinc-400'}`}>
+                R$20,58
+              </p>
+              <p className="text-zinc-600 text-[10px] mt-1">/mês · R$247/ano</p>
+            </button>
+
+            {/* Pro Anual — hero */}
+            <button
+              disabled={showCheckout}
+              onClick={() => setSelectedPlan('pro_annual')}
+              className={`relative pt-6 pb-4 px-4 rounded-2xl border-2 text-left transition-all disabled:opacity-50 shadow-lg ${
+                selectedPlan === 'pro_annual'
+                  ? 'border-emerald-500 bg-emerald-500/15 shadow-emerald-500/20'
+                  : 'border-emerald-600/40 bg-emerald-950/30 hover:border-emerald-500/70 shadow-emerald-900/20'
+              }`}
+            >
+              <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-emerald-500 text-zinc-950 text-[9px] font-black uppercase rounded-full whitespace-nowrap">
+                ⭐ Melhor valor
+              </span>
+              <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest mb-2">Anual</p>
+              <p className={`text-xl font-black leading-none ${selectedPlan === 'pro_annual' ? 'text-emerald-300' : 'text-emerald-300/70'}`}>
+                R$28,92
+              </p>
+              <p className="text-zinc-600 text-[10px] mt-1">/mês · R$347/ano</p>
+            </button>
+
+          </div>
+
+          {/* ── Comparativo de features ── */}
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-4">
+            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mb-3 text-center">O que muda no Pro</p>
+            <div className="grid grid-cols-3 gap-x-2 gap-y-3 items-center">
+              <div />
+              <p className="text-center text-[10px] font-black text-zinc-600 uppercase tracking-wider">Standard</p>
+              <p className="text-center text-[10px] font-black text-emerald-500 uppercase tracking-wider">Pro ⚡</p>
+              {[
+                ['Refeições / dia', '6', '12'],
+                ['Análise de shape', '2 / dia', '4 / dia'],
+                ['Análises por IA', 'Básico', 'Dobro ✓'],
+              ].map(([label, std, pro]) => (
+                <React.Fragment key={label}>
+                  <p className="text-zinc-400 text-xs">{label}</p>
+                  <p className="text-center text-zinc-600 text-xs font-bold">{std}</p>
+                  <p className="text-center text-emerald-400 text-xs font-black">{pro}</p>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
 
           {/* ── Checkout embed ── */}
@@ -933,30 +1164,12 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             user ? (
               /* Logado: vai direto pro checkout */
               <div className="space-y-3">
-                {/* Coupon for auth */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowCoupon(v => !v)}
-                    className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs font-bold transition-colors mb-2"
-                  >
-                    <Tag className="w-3 h-3" />
-                    {showCoupon ? 'Fechar cupom' : 'Tem um cupom?'}
-                    {showCoupon ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
-                  {showCoupon && (
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="CÓDIGO DO CUPOM"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
-                    />
-                  )}
-                </div>
-
                 <button
-                  onClick={() => setShowCheckout(true)}
+                  onClick={() => {
+                    setShowCheckout(true);
+                    pixel.initiateCheckout(plan.name, plan.price, user?.id || '', user?.email || '');
+                    setTimeout(() => document.getElementById('checkout-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                  }}
                   className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
                 >
                   Quero meu plano exato agora →
@@ -965,9 +1178,8 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 <TrustRow />
               </div>
             ) : (
-              /* Guest: opção Google + formulário email */
+              /* Guest: Google + formulário email */
               <div className="space-y-3">
-                {/* Botão Google */}
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
@@ -982,100 +1194,73 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   {googleLoading ? 'Redirecionando...' : 'Continuar com Google'}
                 </button>
 
-                {/* Divisor */}
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-px bg-zinc-800" />
                   <span className="text-zinc-600 text-[11px] font-bold">ou continue com e-mail</span>
                   <div className="flex-1 h-px bg-zinc-800" />
                 </div>
 
-              <form onSubmit={handleEmailSubmit} className="space-y-3">
-                {/* Email */}
-                <div>
-                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
-                    Seu e-mail <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={e => { setEmail(e.target.value); setEmailDirty(true); }}
-                      onBlur={() => setEmailDirty(true)}
-                      placeholder="seu@email.com"
-                      required
-                      className={`w-full bg-zinc-900 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors pr-10 ${
-                        emailError
-                          ? 'border-red-500/60 focus:border-red-500'
-                          : emailDirty && emailValid
-                          ? 'border-emerald-500/60 focus:border-emerald-500'
-                          : 'border-zinc-800 focus:border-emerald-500'
-                      }`}
-                    />
-                    {emailDirty && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm">
-                        {emailValid ? '✓' : ''}
-                      </span>
+                <form onSubmit={handleEmailSubmit} className="space-y-3">
+                  <div>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
+                      Seu e-mail <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => { setEmail(e.target.value); setEmailDirty(true); }}
+                        onBlur={() => setEmailDirty(true)}
+                        placeholder="seu@email.com"
+                        required
+                        className={`w-full bg-zinc-900 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors pr-10 ${
+                          emailError
+                            ? 'border-red-500/60 focus:border-red-500'
+                            : emailDirty && emailValid
+                            ? 'border-emerald-500/60 focus:border-emerald-500'
+                            : 'border-zinc-800 focus:border-emerald-500'
+                        }`}
+                      />
+                      {emailDirty && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm">
+                          {emailValid ? '✓' : ''}
+                        </span>
+                      )}
+                    </div>
+                    {emailError && (
+                      <p className="text-red-400 text-[10px] font-bold mt-1">Digite um e-mail válido.</p>
                     )}
                   </div>
-                  {emailError && (
-                    <p className="text-red-400 text-[10px] font-bold mt-1">Digite um e-mail válido.</p>
-                  )}
-                </div>
 
-                {/* Nome completo */}
-                <div>
-                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
-                    Nome completo <span className="text-zinc-600 font-normal normal-case">(recomendado)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="Seu nome"
-                    autoComplete="name"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors"
-                  />
-                </div>
-
-                {/* Cupom colapsável */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowCoupon(v => !v)}
-                    className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs font-bold transition-colors py-1"
-                  >
-                    <Tag className="w-3 h-3" />
-                    {showCoupon ? 'Fechar cupom' : 'Tem um cupom?'}
-                    {showCoupon ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
-                  {showCoupon && (
+                  <div>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
+                      Nome completo <span className="text-zinc-600 font-normal normal-case">(recomendado)</span>
+                    </label>
                     <input
                       type="text"
-                      value={couponCode}
-                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="CÓDIGO DO CUPOM"
-                      className="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 font-mono uppercase focus:border-emerald-500 focus:outline-none transition-colors"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="Seu nome"
+                      autoComplete="name"
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors"
                     />
-                  )}
-                </div>
+                  </div>
 
-                <button
-                  type="submit"
-                  disabled={emailDirty && !emailValid}
-                  className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
-                >
-                  Quero meu plano exato agora →
-                </button>
-
-                <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
-                <TrustRow />
-              </form>
+                  <button
+                    type="submit"
+                    disabled={emailDirty && !emailValid}
+                    className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
+                  >
+                    Quero meu plano exato agora →
+                  </button>
+                  <p className="text-center text-zinc-500 text-[11px] font-semibold">Leva menos de 2 minutos para começar</p>
+                  <TrustRow />
+                </form>
               </div>
             )
           ) : (
             /* ── Formulário de pagamento ── */
             <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5">
-              {/* Header do embed */}
               <div className="flex items-center gap-3 mb-5 pb-4 border-b border-zinc-800">
                 <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center shrink-0">
                   <Lock className="w-4 h-4 text-emerald-400" />
@@ -1086,7 +1271,6 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 </div>
               </div>
 
-              {/* What you unlock */}
               <ul className="space-y-2 mb-5">
                 {['Análise completa de refeições por foto', 'Análise corporal com IA', 'Personal trainer 24h com contexto real'].map(item => (
                   <li key={item} className="flex items-center gap-2 text-sm text-white">
@@ -1096,7 +1280,6 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 ))}
               </ul>
 
-              {/* Checkout embed */}
               {user ? (
                 <AuthCheckoutWrapper
                   user={user}
@@ -1105,7 +1288,6 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   planName={plan.name}
                   planPeriod={selectedPlan}
                   planValue={plan.price}
-                  couponCode={couponCode}
                   onCancel={() => setShowCheckout(false)}
                 />
               ) : (
@@ -1118,7 +1300,6 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                   planPeriod={selectedPlan}
                   planValue={plan.price}
                   quizData={quizData}
-                  couponCode={couponCode}
                   onCancel={() => setShowCheckout(false)}
                 />
               )}
