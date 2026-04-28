@@ -205,11 +205,16 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       };
       const utmParams = getUtmParams();
 
+      // Gera event_id estável para deduplicação browser-pixel + CAPI (Meta)
+      const purchaseEventId = `purchase-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem('pending_purchase_event_id', purchaseEventId);
+
       const fetchPromise = callEdgeFunction('stripe-checkout', {
         priceId,
         couponCode: appliedCouponRef.current,
         plan,
         utmParams,
+        purchaseEventId,
       });
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('O servidor demorou para responder. Tente novamente.')), 30000)

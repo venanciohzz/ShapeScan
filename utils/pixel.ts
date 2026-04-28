@@ -108,10 +108,11 @@ export const pixel = {
   },
 
   /** Compra confirmada (webhook processado).
-   * CAPI é enviado pelo stripe-webhook com event_id autoritativo (purchase-${invoiceId}).
-   * Aqui só disparamos o browser fbq para capturar fbp/fbc — sem sendCapi duplicado. */
-  purchase: (planName: string, value: number, email?: string, externalId?: string) => {
-    const id = generateEventId();
+   * CAPI é enviado pelo stripe-webhook com event_id autoritativo.
+   * O browser usa o mesmo eventId (pending_purchase_event_id) para deduplicação correta no Meta.
+   * Quando eventId é passado, usa ele; caso contrário gera um novo (fallback). */
+  purchase: (planName: string, value: number, email?: string, externalId?: string, eventId?: string) => {
+    const id = eventId || generateEventId();
     fbqTrack('Purchase', { content_name: planName, value, currency: 'BRL' }, id);
     // sendCapi omitido intencionalmente: stripe-webhook já envia CAPI com event_id estável
   },

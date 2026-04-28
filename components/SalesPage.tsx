@@ -795,7 +795,8 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
       const raw = localStorage.getItem('shapescan_quiz_data');
       if (raw) setQuizData(JSON.parse(raw));
     } catch {}
-    // pixel.pageView já é disparado pelo App.tsx em cada mudança de rota — não duplicar aqui
+    // pageView já é disparado pelo App.tsx — mas ViewContent sinaliza intenção de compra para o Meta
+    pixel.viewContent('Página de Planos', user?.id);
   }, [user]);
 
   // Limpa localStorage e exibe erro se 3DS falhou para guest (redirect_status != succeeded)

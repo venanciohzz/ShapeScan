@@ -18,16 +18,19 @@ async function sendMetaCapi(log: any, eventType: string, params: {
   amountPaidCents: number;
   planName: string;
   eventCreated: number;
+  eventId?: string; // Quando fornecido, permite deduplicação correta com o browser pixel
 }) {
   const capiToken = Deno.env.get('META_CAPI_TOKEN');
   if (!capiToken) { log('warn', eventType, 'capi_skipped', { reason: 'META_CAPI_TOKEN not set' }); return; }
   try {
     const hashedEmail = await sha256(params.email);
+    // Usa o eventId passado (gerado no browser e salvo no Stripe metadata) para deduplicação
+    const resolvedEventId = params.eventId || `purchase-${params.invoiceId}`;
     const payload = {
       data: [{
         event_name: 'Purchase',
         event_time: params.eventCreated,
-        event_id: `purchase-${params.invoiceId}`,
+        event_id: resolvedEventId,
         action_source: 'website',
         event_source_url: 'https://www.shapescan.com.br/dashboard',
         user_data: { em: hashedEmail },
@@ -478,12 +481,14 @@ Deno.serve(async (req) => {
 
               // ── META CAPI: Reportar compra server-side (paid AND free/coupon) ──
               if (customer.email) {
+                const purchaseEventIdFromMeta = retrievedSub?.metadata?.purchase_event_id || undefined;
                 await sendMetaCapi(log, event.type, {
                   email: customer.email,
                   invoiceId: invoice.id,
                   amountPaidCents: invoice.amount_paid,
                   planName: planNames[planId] || planId,
                   eventCreated: event.created,
+                  eventId: purchaseEventIdFromMeta,
                 });
               }
             }
