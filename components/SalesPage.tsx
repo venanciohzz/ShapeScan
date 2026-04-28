@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -793,6 +793,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
 
   // Google OAuth
   const [googleLoading, setGoogleLoading] = useState(false);
+  const viewContentFired = useRef(false);
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
@@ -817,8 +818,11 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
       const raw = localStorage.getItem('shapescan_quiz_data');
       if (raw) setQuizData(JSON.parse(raw));
     } catch {}
-    // pageView já é disparado pelo App.tsx — mas ViewContent sinaliza intenção de compra para o Meta
-    pixel.viewContent('Página de Planos', user?.id);
+    // Guard: dispara ViewContent apenas uma vez por montagem, mesmo se user re-renderizar
+    if (!viewContentFired.current) {
+      viewContentFired.current = true;
+      pixel.viewContent('Página de Planos', user?.id);
+    }
   }, [user]);
 
   // Limpa localStorage e exibe erro se 3DS falhou para guest (redirect_status != succeeded)
