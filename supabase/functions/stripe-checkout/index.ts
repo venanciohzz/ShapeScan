@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
     try { body = JSON.parse(rawBody); }
     catch { throw new Error('Body não é JSON válido'); }
 
-    const { priceId, couponCode, plan, utmParams, purchaseEventId } = body;
+    const { priceId, couponCode, plan, utmParams, purchaseEventId, fbp, fbc, clientUserAgent, sourceUrl } = body;
 
     // ── Prevenção de Múltiplas Assinaturas (Recompra Indesejada) ─────────────
     const { data: userPlan } = await supabaseClient
@@ -206,7 +206,11 @@ Deno.serve(async (req) => {
           utm_content: utmParams?.utm_content || '',
           utm_term: utmParams?.utm_term || '',
           purchase_event_id: purchaseEventId || '',
-        }, // CRÍTICO: Passar o plano, UTMs e purchase_event_id no metadata!
+          meta_fbp: (typeof fbp === 'string' ? fbp : '').slice(0, 100),
+          meta_fbc: (typeof fbc === 'string' ? fbc : '').slice(0, 100),
+          meta_ua: (typeof clientUserAgent === 'string' ? clientUserAgent : '').slice(0, 490),
+          meta_source_url: (typeof sourceUrl === 'string' ? sourceUrl : '').slice(0, 490),
+        }, // CRÍTICO: Passar o plano, UTMs, purchase_event_id e sinais Meta no metadata!
       };
 
       if (couponCode && typeof couponCode === 'string') {
