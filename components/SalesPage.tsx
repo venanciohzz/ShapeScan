@@ -818,6 +818,32 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
   const emailValid = isValidEmail(email);
   const emailError = emailDirty && !emailValid;
 
+  // Derived active variants for each card's toggle (independent of the other card)
+  const stdActive = (selectedPlan === 'monthly' || selectedPlan === 'annual') ? selectedPlan : ('monthly' as const);
+  const proActive = (selectedPlan === 'pro_monthly' || selectedPlan === 'pro_annual') ? selectedPlan : ('pro_annual' as const);
+
+  const handleStandardCta = () => {
+    setSelectedPlan(stdActive);
+    if (user) {
+      pixel.initiateCheckout(PAYMENT_CONFIG[stdActive].name, PAYMENT_CONFIG[stdActive].price, user.id, user.email);
+      setShowCheckout(true);
+      setTimeout(() => document.getElementById('checkout-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    } else {
+      setTimeout(() => document.getElementById('email-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  };
+
+  const handleProCta = () => {
+    setSelectedPlan(proActive);
+    if (user) {
+      pixel.initiateCheckout(PAYMENT_CONFIG[proActive].name, PAYMENT_CONFIG[proActive].price, user.id, user.email);
+      setShowCheckout(true);
+      setTimeout(() => document.getElementById('checkout-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    } else {
+      setTimeout(() => document.getElementById('email-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  };
+
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setEmailDirty(true);
@@ -1043,251 +1069,212 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         </section>
 
         {/* ── Pricing + checkout ── */}
-        <section id="checkout-section" className="space-y-6 scroll-mt-20">
+        <section id="checkout-section" className="space-y-14 scroll-mt-20">
 
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-white">Escolha seu plano</h2>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Mais de 8 em cada 10 usuários escolhem PRO<br className="hidden sm:block" /> para acelerar resultados de verdade.
-            </p>
+          {/* Section header */}
+          <div className="text-center space-y-3">
+            <h2 className="text-3xl font-bold text-white tracking-tight">Escolha seu plano ideal</h2>
+            <p className="text-zinc-500 text-base">Comece hoje e acelere seus resultados com o plano certo.</p>
           </div>
 
-          {/* ── 2 colunas premium (Standard | PRO) ── */}
+          {/* ── Plan cards ── */}
           {!showCheckout && (
-            <div className="flex gap-3 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
 
-              {/* ── STANDARD — coluna menor, apagada ── */}
-              <div className="w-[42%] rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 flex flex-col gap-4">
-                <div>
-                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Standard</p>
-                  <p className="text-zinc-600 text-[11px] mt-0.5">Bom para testar</p>
+              {/* STANDARD */}
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 flex flex-col">
+                <div className="mb-7">
+                  <p className="text-base font-semibold text-zinc-300 mb-1">Standard</p>
+                  <p className="text-zinc-600 text-sm">Para começar a monitorar</p>
                 </div>
 
-                {/* Toggle mensal / anual */}
-                <div className="flex gap-1 p-1 bg-zinc-800/70 rounded-xl">
+                <div className="flex p-1 bg-zinc-800/60 rounded-lg mb-7">
                   {(['monthly', 'annual'] as const).map(p => (
-                    <button key={p} onClick={() => setSelectedPlan(p)}
-                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
-                        selectedPlan === p ? 'bg-zinc-600 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                    <button key={p}
+                      onClick={() => setSelectedPlan(p)}
+                      className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${
+                        stdActive === p ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'
                       }`}>
                       {p === 'monthly' ? 'Mensal' : 'Anual'}
                     </button>
                   ))}
                 </div>
 
-                {/* Preço */}
-                <div className="flex-1">
-                  <p className="text-2xl font-black text-zinc-300 leading-none">
-                    R${selectedPlan === 'annual' ? '20,58' : '29,90'}
-                  </p>
-                  <p className="text-zinc-600 text-[10px] mt-1">
-                    {selectedPlan === 'annual' ? '/mês · R$247/ano' : '/mês'}
-                  </p>
-                  {selectedPlan === 'annual' && (
-                    <span className="inline-block mt-2 px-2 py-0.5 bg-zinc-700/80 text-zinc-300 text-[9px] font-black uppercase rounded-full">
-                      −31%
+                <div className="mb-7">
+                  <div className="flex items-baseline gap-1.5 mb-1.5">
+                    <span className="text-4xl font-bold text-zinc-200 tracking-tight">
+                      R${stdActive === 'annual' ? '20,58' : '29,90'}
                     </span>
-                  )}
+                    <span className="text-zinc-500 text-sm font-normal">/mês</span>
+                  </div>
+                  <p className="text-zinc-600 text-xs">
+                    {stdActive === 'annual' ? 'R$247/ano · R$0,68/dia' : 'R$0,99/dia'}
+                  </p>
                 </div>
+
+                <ul className="space-y-3 mb-8 flex-1">
+                  {[
+                    '6 análises de refeição por dia',
+                    '2 análises de shape por dia',
+                    'Personal IA integrado',
+                  ].map(item => (
+                    <li key={item} className="flex items-center gap-2.5 text-sm text-zinc-500">
+                      <span className="w-1.5 h-1.5 rounded-full bg-zinc-700 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={handleStandardCta}
+                  className="w-full py-3.5 border border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800/60 text-zinc-400 hover:text-white font-medium text-sm rounded-xl transition-all"
+                >
+                  Começar com Standard
+                </button>
               </div>
 
-              {/* ── PRO — coluna maior, hero, glow ── */}
-              <div className={`relative flex-1 rounded-2xl border-2 p-5 flex flex-col gap-4 transition-all ${
-                selectedPlan === 'pro_monthly' || selectedPlan === 'pro_annual'
-                  ? 'border-emerald-500 bg-gradient-to-b from-emerald-950/60 to-zinc-900/90 shadow-xl shadow-emerald-500/15'
-                  : 'border-emerald-600/50 bg-gradient-to-b from-emerald-950/30 to-zinc-900/70 shadow-lg shadow-emerald-900/20'
-              }`}>
-
-                {/* Badge */}
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-emerald-500 text-zinc-950 text-[9px] font-black uppercase rounded-full whitespace-nowrap shadow-lg shadow-emerald-500/40">
-                  ⭐ Recomendado
-                </span>
-
-                <div className="pt-1">
-                  <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">PRO</p>
-                  <p className="text-zinc-300 text-[11px] mt-0.5">Para acelerar resultado real</p>
+              {/* PRO */}
+              <div className="relative rounded-2xl border border-zinc-700 bg-zinc-900/70 p-7 flex flex-col shadow-xl shadow-black/30">
+                <div className="flex items-start justify-between mb-7">
+                  <div>
+                    <p className="text-base font-semibold text-white mb-1">Pro</p>
+                    <p className="text-zinc-500 text-sm">Para resultado real</p>
+                  </div>
+                  <span className="text-[10px] font-medium text-zinc-400 bg-zinc-800 border border-zinc-700/50 px-2.5 py-1 rounded-full shrink-0 mt-0.5">
+                    Mais escolhido
+                  </span>
                 </div>
 
-                {/* Toggle mensal / anual */}
-                <div className="flex gap-1 p-1 bg-zinc-800/70 rounded-xl">
+                <div className="flex p-1 bg-zinc-800/60 rounded-lg mb-7">
                   {(['pro_monthly', 'pro_annual'] as const).map(p => (
-                    <button key={p} onClick={() => setSelectedPlan(p)}
-                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${
-                        selectedPlan === p ? 'bg-emerald-500 text-zinc-950' : 'text-zinc-400 hover:text-zinc-200'
+                    <button key={p}
+                      onClick={() => setSelectedPlan(p)}
+                      className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${
+                        proActive === p ? 'bg-emerald-500 text-zinc-950' : 'text-zinc-500 hover:text-zinc-300'
                       }`}>
                       {p === 'pro_monthly' ? 'Mensal' : 'Anual'}
                     </button>
                   ))}
                 </div>
 
-                {/* Preço — grande */}
-                <div>
-                  <p className="text-4xl font-black text-white leading-none">
-                    R${selectedPlan === 'pro_annual' ? '28,92' : '44,90'}
+                <div className="mb-7">
+                  <div className="flex items-baseline gap-1.5 mb-1.5">
+                    <span className="text-5xl font-bold text-white tracking-tight">
+                      R${proActive === 'pro_annual' ? '28,92' : '44,90'}
+                    </span>
+                    <span className="text-zinc-500 text-sm font-normal">/mês</span>
+                  </div>
+                  <p className="text-zinc-500 text-xs">
+                    {proActive === 'pro_annual' ? 'R$347/ano · R$0,95/dia' : 'R$1,50/dia'}
                   </p>
-                  <p className="text-zinc-500 text-[11px] mt-1">
-                    {selectedPlan === 'pro_annual' ? '/mês · R$347/ano' : '/mês'}
-                  </p>
-                  <p className="text-emerald-400 text-xs font-bold mt-1.5">
-                    apenas R${selectedPlan === 'pro_annual' ? '0,95' : '1,50'}/dia
-                  </p>
+                  {proActive === 'pro_annual' && (
+                    <p className="text-emerald-500 text-xs mt-1">Economize R$191 vs mensal</p>
+                  )}
                 </div>
 
-                {/* Bullets de valor */}
-                <div className="space-y-1.5 pt-2 border-t border-emerald-900/40 flex-1">
-                  {selectedPlan === 'pro_annual' && (
-                    <p className="flex items-center gap-1.5 text-[11px] text-emerald-300 font-bold">
-                      <span>✅</span> Economize R$191 vs mensal
-                    </p>
-                  )}
-                  <p className="flex items-center gap-1.5 text-[11px] text-zinc-300">
-                    <span className="text-emerald-400">✅</span> 2× mais análises de refeição
-                  </p>
-                  <p className="flex items-center gap-1.5 text-[11px] text-zinc-300">
-                    <span className="text-emerald-400">✅</span> 2× mais análises de shape
-                  </p>
-                  <p className="flex items-center gap-1.5 text-[11px] text-zinc-300">
-                    <span className="text-emerald-400">✅</span> Mais escolhido
-                  </p>
-                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {[
+                    '12 análises de refeição por dia',
+                    '4 análises de shape por dia',
+                    'Personal IA avançado com histórico',
+                  ].map(item => (
+                    <li key={item} className="flex items-center gap-2.5 text-sm text-zinc-300">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={handleProCta}
+                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-zinc-950 font-semibold text-sm rounded-xl transition-all"
+                >
+                  Começar agora
+                </button>
+                <p className="text-center text-zinc-600 text-xs mt-3">7 dias de garantia · cancele quando quiser</p>
               </div>
 
             </div>
           )}
 
-          {/* ── Tabela comparativa ── */}
+          {/* ── Comparison table ── */}
           {!showCheckout && (
-            <div className="rounded-2xl border border-zinc-800 overflow-hidden">
-              {/* Cabeçalho */}
-              <div className="grid grid-cols-3 bg-zinc-900/60">
-                <div className="px-4 py-3" />
-                <div className="px-3 py-3 border-l border-zinc-800 text-center">
-                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-wider">Standard</p>
-                </div>
-                <div className="px-3 py-3 border-l border-emerald-900/50 bg-emerald-950/20 text-center">
-                  <p className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">Pro ⚡</p>
-                </div>
+            <div>
+              <div className="grid grid-cols-3 pb-3 border-b border-zinc-800/60">
+                <div />
+                <p className="text-xs text-zinc-600 font-medium text-center uppercase tracking-wider">Standard</p>
+                <p className="text-xs text-zinc-400 font-medium text-center uppercase tracking-wider">Pro</p>
               </div>
-              {/* Linhas */}
               {[
-                { label: '🍽 Refeições / dia', std: '6', pro: '✅ 12' },
-                { label: '📷 Shape IA / dia',  std: '2', pro: '✅ 4' },
-                { label: '🤖 Respostas IA',    std: 'Básico', pro: '⚡ Avançado' },
+                { feature: 'Análises de refeição', std: '6 / dia', pro: '12 / dia' },
+                { feature: 'Análises de shape',    std: '2 / dia', pro: '4 / dia' },
+                { feature: 'Personal IA',          std: 'Básico',  pro: 'Avançado' },
               ].map((row, i) => (
-                <div key={i} className="grid grid-cols-3 border-t border-zinc-800">
-                  <div className="px-4 py-3">
-                    <p className="text-zinc-400 text-xs">{row.label}</p>
-                  </div>
-                  <div className="px-3 py-3 border-l border-zinc-800 text-center">
-                    <p className="text-zinc-500 text-xs font-bold">{row.std}</p>
-                  </div>
-                  <div className="px-3 py-3 border-l border-emerald-900/50 bg-emerald-950/10 text-center">
-                    <p className="text-emerald-400 text-xs font-black">{row.pro}</p>
-                  </div>
+                <div key={i} className="grid grid-cols-3 py-4 border-b border-zinc-800/40 last:border-0">
+                  <p className="text-zinc-500 text-sm">{row.feature}</p>
+                  <p className="text-zinc-600 text-sm text-center">{row.std}</p>
+                  <p className="text-zinc-300 text-sm font-medium text-center">{row.pro}</p>
                 </div>
               ))}
             </div>
           )}
 
-          {/* ── Checkout CTAs / embed ── */}
-          {!showCheckout ? (
-            user ? (
-              <div className="space-y-3">
-                <p className="text-center text-xs font-bold text-zinc-400">
-                  🔥 83% dos usuários escolhem PRO
-                </p>
-                <button
-                  onClick={() => {
-                    setShowCheckout(true);
-                    pixel.initiateCheckout(plan.name, plan.price, user?.id || '', user?.email || '');
-                    setTimeout(() => document.getElementById('checkout-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-                  }}
-                  className={`w-full py-5 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98] ${
-                    selectedPlan === 'pro_monthly' || selectedPlan === 'pro_annual'
-                      ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/25'
-                      : 'bg-zinc-200 hover:bg-white text-zinc-950'
-                  }`}
-                >
-                  {selectedPlan === 'pro_monthly' || selectedPlan === 'pro_annual'
-                    ? '🟢 Começar no PRO agora →'
-                    : 'Continuar com Standard →'}
-                </button>
-                <p className="text-center text-zinc-600 text-[11px]">🛡 7 dias de garantia total · Cancele quando quiser</p>
+          {/* ── Guest: Google + e-mail form ── */}
+          {!showCheckout && !user && (
+            <div id="email-section" className="space-y-4">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={googleLoading}
+                className="w-full flex items-center justify-center gap-3 py-4 bg-white hover:bg-zinc-100 disabled:bg-zinc-200 text-zinc-900 font-semibold rounded-2xl transition-all text-sm active:scale-[0.98]"
+              >
+                {googleLoading
+                  ? <div className="w-4 h-4 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" />
+                  : <GoogleIcon />}
+                {googleLoading ? 'Redirecionando...' : 'Continuar com Google'}
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-zinc-800" />
+                <span className="text-zinc-600 text-xs">ou continue com e-mail</span>
+                <div className="flex-1 h-px bg-zinc-800" />
               </div>
-            ) : (
-              /* Guest: Google + formulário email */
-              <div className="space-y-3">
-                <p className="text-center text-xs font-bold text-zinc-400">
-                  🔥 83% dos usuários escolhem PRO
-                </p>
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  disabled={googleLoading}
-                  className="w-full flex items-center justify-center gap-3 py-4 bg-white hover:bg-zinc-100 disabled:bg-zinc-200 text-zinc-900 font-bold rounded-2xl transition-all border border-zinc-200 text-sm active:scale-[0.98]"
-                >
-                  {googleLoading ? <div className="w-4 h-4 border-2 border-zinc-400 border-t-zinc-900 rounded-full animate-spin" /> : <GoogleIcon />}
-                  {googleLoading ? 'Redirecionando...' : 'Continuar com Google'}
-                </button>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-zinc-800" />
-                  <span className="text-zinc-600 text-[11px] font-bold">ou continue com e-mail</span>
-                  <div className="flex-1 h-px bg-zinc-800" />
-                </div>
-
-                <form onSubmit={handleEmailSubmit} className="space-y-3">
-                  <div>
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
-                      Seu e-mail <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="email" value={email}
-                        onChange={e => { setEmail(e.target.value); setEmailDirty(true); }}
-                        onBlur={() => setEmailDirty(true)}
-                        placeholder="seu@email.com" required
-                        className={`w-full bg-zinc-900 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors pr-10 ${
-                          emailError ? 'border-red-500/60 focus:border-red-500'
-                          : emailDirty && emailValid ? 'border-emerald-500/60 focus:border-emerald-500'
-                          : 'border-zinc-800 focus:border-emerald-500'
-                        }`}
-                      />
-                      {emailDirty && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm">{emailValid ? '✓' : ''}</span>}
-                    </div>
-                    {emailError && <p className="text-red-400 text-[10px] font-bold mt-1">Digite um e-mail válido.</p>}
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
-                      Nome completo <span className="text-zinc-600 font-normal normal-case">(recomendado)</span>
-                    </label>
-                    <input
-                      type="text" value={name} onChange={e => setName(e.target.value)}
-                      placeholder="Seu nome" autoComplete="name"
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-emerald-500 focus:outline-none transition-colors"
-                    />
-                  </div>
-
-                  <button
-                    type="submit" disabled={emailDirty && !emailValid}
-                    className={`w-full py-5 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98] disabled:bg-zinc-800 disabled:text-zinc-500 ${
-                      selectedPlan === 'pro_monthly' || selectedPlan === 'pro_annual'
-                        ? 'bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/25'
-                        : 'bg-zinc-200 hover:bg-white text-zinc-950'
+              <form onSubmit={handleEmailSubmit} className="space-y-3">
+                <div>
+                  <input
+                    type="email" value={email}
+                    onChange={e => { setEmail(e.target.value); setEmailDirty(true); }}
+                    onBlur={() => setEmailDirty(true)}
+                    placeholder="seu@email.com" required
+                    className={`w-full bg-zinc-900 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${
+                      emailError ? 'border-red-500/60 focus:border-red-500'
+                      : emailDirty && emailValid ? 'border-zinc-700 focus:border-zinc-600'
+                      : 'border-zinc-800 focus:border-zinc-700'
                     }`}
-                  >
-                    {selectedPlan === 'pro_monthly' || selectedPlan === 'pro_annual'
-                      ? '🟢 Começar no PRO agora →'
-                      : 'Continuar com Standard →'}
-                  </button>
-                  <p className="text-center text-zinc-600 text-[11px]">🛡 7 dias de garantia total · Cancele quando quiser</p>
-                </form>
-              </div>
-            )
-          ) : (
-            /* ── Formulário de pagamento ── */
+                  />
+                  {emailError && <p className="text-red-400 text-xs mt-1.5 font-medium">Digite um e-mail válido.</p>}
+                </div>
+                <div>
+                  <input
+                    type="text" value={name} onChange={e => setName(e.target.value)}
+                    placeholder="Seu nome (opcional)" autoComplete="name"
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:border-zinc-700 focus:outline-none transition-colors"
+                  />
+                </div>
+                <button
+                  type="submit" disabled={emailDirty && !emailValid}
+                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-500 text-zinc-950 font-semibold text-sm rounded-xl transition-all active:scale-[0.98]"
+                >
+                  Começar agora
+                </button>
+                <p className="text-center text-zinc-600 text-xs">Pagamento 100% seguro · 7 dias de garantia</p>
+              </form>
+            </div>
+          )}
+
+          {/* ── Payment form (checkout step) ── */}
+          {showCheckout && (
             <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5">
               <div className="flex items-center gap-3 mb-5 pb-4 border-b border-zinc-800">
                 <div className="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center shrink-0">
@@ -1333,6 +1320,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
               )}
             </div>
           )}
+
         </section>
 
         {/* Guarantee */}
