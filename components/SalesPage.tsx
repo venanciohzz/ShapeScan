@@ -354,11 +354,28 @@ const GuestCheckoutWrapper: React.FC<{
     } catch { return {}; }
   };
 
+  const getMetaCookie = (name: string) => {
+    try {
+      const m = document.cookie.match(new RegExp(`${name}=([^;]+)`));
+      return m ? m[1] : null;
+    } catch { return null; }
+  };
+
   const init = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const body: Record<string, any> = { email, priceId, plan, quizData, utmParams: getUtmParams() };
+      const purchaseEventId = `purchase-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem('pending_purchase_event_id', purchaseEventId);
+
+      const body: Record<string, any> = {
+        email, priceId, plan, quizData, utmParams: getUtmParams(),
+        purchaseEventId,
+        fbp: getMetaCookie('_fbp'),
+        fbc: getMetaCookie('_fbc'),
+        clientUserAgent: navigator.userAgent.slice(0, 490),
+        sourceUrl: window.location.href,
+      };
 
       const res = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout-guest`, {
         method: 'POST',
@@ -390,6 +407,11 @@ const GuestCheckoutWrapper: React.FC<{
       const body: Record<string, any> = {
         email, priceId, plan, quizData, utmParams: getUtmParams(),
         couponCode: couponInput.trim().toUpperCase(),
+        purchaseEventId: localStorage.getItem('pending_purchase_event_id') || undefined,
+        fbp: getMetaCookie('_fbp'),
+        fbc: getMetaCookie('_fbc'),
+        clientUserAgent: navigator.userAgent.slice(0, 490),
+        sourceUrl: window.location.href,
       };
       const res = await fetch(`${supabaseUrl}/functions/v1/stripe-checkout-guest`, {
         method: 'POST',

@@ -205,6 +205,13 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
       };
       const utmParams = getUtmParams();
 
+      const getMetaCookie = (name: string) => {
+        try {
+          const m = document.cookie.match(new RegExp(`${name}=([^;]+)`));
+          return m ? m[1] : null;
+        } catch { return null; }
+      };
+
       // Gera event_id estável para deduplicação browser-pixel + CAPI (Meta)
       const purchaseEventId = `purchase-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       localStorage.setItem('pending_purchase_event_id', purchaseEventId);
@@ -215,6 +222,10 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         plan,
         utmParams,
         purchaseEventId,
+        fbp: getMetaCookie('_fbp'),
+        fbc: getMetaCookie('_fbc'),
+        clientUserAgent: navigator.userAgent.slice(0, 490),
+        sourceUrl: window.location.href,
       });
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('O servidor demorou para responder. Tente novamente.')), 30000)

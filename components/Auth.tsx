@@ -77,7 +77,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
         // Login Logic via Database Service
         const user = await db.auth.signIn(cleanEmail, cleanPassword);
         await db.auth.setSession(user);
-        pixel.lead(cleanEmail, user.id);
+        if (!localStorage.getItem('lead_fired')) {
+          pixel.lead(cleanEmail, user.id);
+          localStorage.setItem('lead_fired', '1');
+        }
         onLogin(user, false);
       }
     } catch (err: any) {

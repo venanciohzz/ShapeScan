@@ -18,22 +18,33 @@ async function sendMetaCapi(log: any, eventType: string, params: {
   amountPaidCents: number;
   planName: string;
   eventCreated: number;
-  eventId?: string; // Quando fornecido, permite deduplicação correta com o browser pixel
+  eventId?: string;
+  fbp?: string;
+  fbc?: string;
+  clientUserAgent?: string;
+  externalId?: string;
+  sourceUrl?: string;
 }) {
   const capiToken = Deno.env.get('META_CAPI_TOKEN');
   if (!capiToken) { log('warn', eventType, 'capi_skipped', { reason: 'META_CAPI_TOKEN not set' }); return; }
   try {
     const hashedEmail = await sha256(params.email);
-    // Usa o eventId passado (gerado no browser e salvo no Stripe metadata) para deduplicação
     const resolvedEventId = params.eventId || `purchase-${params.invoiceId}`;
+
+    const userData: Record<string, string> = { em: hashedEmail };
+    if (params.fbp) userData['fbp'] = params.fbp;
+    if (params.fbc) userData['fbc'] = params.fbc;
+    if (params.clientUserAgent) userData['client_user_agent'] = params.clientUserAgent;
+    if (params.externalId) userData['external_id'] = await sha256(params.externalId);
+
     const payload = {
       data: [{
         event_name: 'Purchase',
         event_time: params.eventCreated,
         event_id: resolvedEventId,
         action_source: 'website',
-        event_source_url: 'https://www.shapescan.com.br/dashboard',
-        user_data: { em: hashedEmail },
+        event_source_url: params.sourceUrl || 'https://www.shapescan.com.br/assinar',
+        user_data: userData,
         custom_data: {
           value: params.amountPaidCents / 100,
           currency: 'BRL',
@@ -481,14 +492,19 @@ Deno.serve(async (req) => {
 
               // ── META CAPI: Reportar compra server-side (paid AND free/coupon) ──
               if (customer.email) {
-                const purchaseEventIdFromMeta = retrievedSub?.metadata?.purchase_event_id || undefined;
+                const meta = retrievedSub?.metadata || {};
                 await sendMetaCapi(log, event.type, {
                   email: customer.email,
                   invoiceId: invoice.id,
                   amountPaidCents: invoice.amount_paid,
                   planName: planNames[planId] || planId,
                   eventCreated: event.created,
-                  eventId: purchaseEventIdFromMeta,
+                  eventId: meta.purchase_event_id || undefined,
+                  fbp: meta.meta_fbp || undefined,
+                  fbc: meta.meta_fbc || undefined,
+                  clientUserAgent: meta.meta_ua || undefined,
+                  externalId: meta.userId || meta.supabase_user_id || undefined,
+                  sourceUrl: meta.meta_source_url || undefined,
                 });
               }
             }

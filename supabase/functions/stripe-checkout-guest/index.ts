@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Body inválido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  const { email, priceId, plan, quizData, utmParams, couponCode } = body;
+  const { email, priceId, plan, quizData, utmParams, couponCode, purchaseEventId, fbp, fbc, clientUserAgent, sourceUrl } = body;
 
   // Validações básicas
   if (!email || typeof email !== 'string' || !email.includes('@')) {
@@ -110,6 +110,11 @@ Deno.serve(async (req) => {
         utm_medium: utmParams?.utm_medium || '',
         utm_content: utmParams?.utm_content || '',
         utm_term: utmParams?.utm_term || '',
+        purchase_event_id: purchaseEventId || '',
+        meta_fbp: (typeof fbp === 'string' ? fbp : '').slice(0, 100),
+        meta_fbc: (typeof fbc === 'string' ? fbc : '').slice(0, 100),
+        meta_ua: (typeof clientUserAgent === 'string' ? clientUserAgent : '').slice(0, 490),
+        meta_source_url: (typeof sourceUrl === 'string' ? sourceUrl : '').slice(0, 490),
         ...quizMeta,
       },
     };
