@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '../types';
 import { db } from '../services/db';
-import { supabaseUrl } from '../services/supabaseService';
+import { supabaseUrl, supabase } from '../services/supabaseService';
 import { sanitizeInput } from '../utils/security';
 import { pixel } from '../utils/pixel';
 import PremiumBackground from './ui/PremiumBackground';
@@ -23,6 +23,24 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+
+  const isEmailNotConfirmedError = (msg: string) =>
+    /confirme seu e-mail|email not confirmed|email_not_confirmed|verifique seu e-mail/i.test(msg);
+
+  const handleResendEmail = async () => {
+    if (!email || resendLoading || resendSent) return;
+    setResendLoading(true);
+    try {
+      await supabase.auth.resend({ type: 'signup', email: email.trim() });
+      setResendSent(true);
+    } catch {
+      // silencia — o erro do resend não deve sobrepor o erro principal
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleGoogleLogin = () => {
     setGoogleLoading(true);
@@ -115,8 +133,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onBack, initialMode = 'entrar' }) 
           </div>
 
           {error && (
-            <div className="bg-red-500/10 text-red-400 p-4 rounded-2xl mb-8 text-xs font-bold border border-red-500/20 animate-in fade-in slide-in-from-top-2">
-              {error}
+            <div className="bg-red-500/10 text-red-400 p-4 rounded-2xl mb-8 text-xs font-bold border border-red-500/20 animate-in fade-in slide-in-from-top-2 space-y-3">
+              <p>{error}</p>
+              {isEmailNotConfirmedError(error) && (
+                resendSent ? (
+                  <p className="text-emerald-400">✓ Email reenviado! Verifique sua caixa de entrada e spam.</p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResendEmail}
+                    disabled={resendLoading}
+                    className="underline underline-offset-2 text-red-300 hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    {resendLoading ? 'Reenviando...' : 'Reenviar email de confirmação'}
+                  </button>
+                )
+              )}
             </div>
           )}
 

@@ -173,7 +173,8 @@ const App: React.FC = () => {
       console.log('[App] Janela de polling expirada. Limpando flags.');
       localStorage.removeItem('awaiting_stripe_payment');
       localStorage.removeItem('awaiting_stripe_payment_started');
-      showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
+      showToast('Ativando seu plano... A página será atualizada em instantes.', 'info');
+      setTimeout(() => window.location.reload(), 3000);
       return;
     }
 
@@ -295,7 +296,8 @@ const App: React.FC = () => {
           isPollingPremiumRef.current = false;
           setIsActivatingPlan(false);
           console.log('[App] Fim do polling (timeout atingido).');
-          showToast('Pagamento recebido! Aguarde alguns instantes e atualize a página.', 'info');
+          showToast('Ativando seu plano... A página será atualizada em instantes.', 'info');
+      setTimeout(() => window.location.reload(), 3000);
           localStorage.removeItem('awaiting_stripe_payment');
           localStorage.removeItem('awaiting_stripe_payment_started');
           localStorage.removeItem('awaiting_stripe_plan_name');
@@ -495,8 +497,9 @@ const App: React.FC = () => {
         // EXCEÇÃO: se o usuário está no funil de vendas (/assinar), não interromper —
         // ele pode pagar primeiro e completar o perfil depois.
         if (!profile.username || !profile.phone) {
-            const inSalesFunnel = window.location.pathname.includes('/assinar');
-            if (!inSalesFunnel) {
+            const exemptPaths = ['/assinar', '/quiz', '/completar-perfil'];
+            const inExemptPath = exemptPaths.some(p => window.location.pathname.includes(p));
+            if (!inExemptPath) {
                 navigate('/completar-perfil', { replace: true });
                 return true;
             }
@@ -699,7 +702,12 @@ const App: React.FC = () => {
   const handleLogin = (user: User, isNew: boolean) => {
     setUser(user);
     loadUserData(user.id);
-    if (!user.username || !user.phone) {
+    // Novos não-premium: pula CompleteProfile, vai direto para quiz/vendas.
+    // Perfil (username/phone) é coletado após o pagamento, quando há mais comprometimento.
+    if (isNew && !user.isPremium) {
+      const hasQuizData = !!localStorage.getItem('shapescan_quiz_data');
+      navigate((hasQuizData || (user.weight && user.height)) ? '/assinar' : '/quiz');
+    } else if (!user.username || !user.phone) {
       navigate('/completar-perfil');
     } else if (isNew && (!user.weight || !user.height)) {
       navigate('/quiz');
@@ -981,10 +989,10 @@ const App: React.FC = () => {
                 (!user.isPremium && !user.isAdmin) ? (
                   <Routes>
                     <Route path="/completar-perfil" element={<CompleteProfile user={user} onComplete={handleCompleteProfile} />} />
-                    <Route path="*" element={<Navigate to="/assinar" replace />} />
+                    <Route path="*" element={<Navigate to={`/assinar?from=${encodeURIComponent(location.pathname)}`} replace />} />
                   </Routes>
                 ) :
-                (!user.username || !user.phone || !user.name) ? (
+                (!user.username || !user.phone) ? (
                   /* Perfil incompleto: bloqueia todas as rotas e força completar-perfil */
                   <Routes>
                     <Route path="/completar-perfil" element={<CompleteProfile user={user} onComplete={handleCompleteProfile} />} />

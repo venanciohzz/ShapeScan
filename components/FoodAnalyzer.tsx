@@ -74,6 +74,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
       if ((user.freeScansUsed || 0) >= 1) {
         setLimitModalType('free');
         setShowLimitModal(true);
+        import('../utils/pixel').then(({ pixel }) => pixel.scanLimitReached('free', user.id));
         return false;
       }
       return true;

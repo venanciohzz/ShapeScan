@@ -123,4 +123,31 @@ export const pixel = {
     fbqTrack('PageView', {}, id);
     sendCapi('PageView', id, { externalId });
   },
+
+  /** Usuário atingiu o limite de scans sem converter */
+  scanLimitReached: (plan: string, externalId?: string) => {
+    const id = generateEventId();
+    if (typeof (window as any).fbq === 'function') {
+      (window as any).fbq('trackCustom', 'ScanLimitReached', { plan }, { eventID: id });
+    }
+    sendCapi('ScanLimitReached', id, { externalId, contentName: plan });
+  },
+
+  /** Usuário tentou acessar feature premium e foi bloqueado */
+  featureBlocked: (featureName: string, externalId?: string) => {
+    const id = generateEventId();
+    if (typeof (window as any).fbq === 'function') {
+      (window as any).fbq('trackCustom', 'FeatureBlocked', { feature: featureName }, { eventID: id });
+    }
+    sendCapi('FeatureBlocked', id, { externalId, contentName: featureName });
+  },
+
+  /** Evento customizado genérico */
+  customEvent: (eventName: string, params?: Record<string, any>, externalId?: string) => {
+    const id = generateEventId();
+    if (typeof (window as any).fbq === 'function') {
+      (window as any).fbq('trackCustom', eventName, params || {}, { eventID: id });
+    }
+    sendCapi(eventName, id, { externalId, contentName: params?.content_name });
+  },
 };

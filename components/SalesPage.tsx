@@ -825,6 +825,38 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
     }
   }, [user]);
 
+  // Rastreia a feature que o usuário tentou acessar antes de ser redirecionado para /assinar
+  useEffect(() => {
+    const from = params.get('from');
+    if (from) {
+      pixel.featureBlocked(decodeURIComponent(from), user?.id);
+    }
+  }, []);
+
+  // Rastreia quando o usuário alcança a seção de planos (IntersectionObserver)
+  useEffect(() => {
+    const section = document.getElementById('checkout-section');
+    if (!section) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          pixel.customEvent('PlanSectionViewed', {}, user?.id);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
+  // Rastreia tempo de engajamento na página (30s e 60s)
+  useEffect(() => {
+    const t30 = setTimeout(() => pixel.customEvent('SalesPage30s', {}, user?.id), 30_000);
+    const t60 = setTimeout(() => pixel.customEvent('SalesPage60s', {}, user?.id), 60_000);
+    return () => { clearTimeout(t30); clearTimeout(t60); };
+  }, []);
+
   // Limpa localStorage e exibe erro se 3DS falhou para guest (redirect_status != succeeded)
   useEffect(() => {
     const redirectStatus = params.get('redirect_status');
