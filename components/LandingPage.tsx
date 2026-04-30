@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { ArrowRight, CheckCircle2, Star, Play } from 'lucide-react';
 import '@fontsource/playfair-display/700.css';
 import '@fontsource/playfair-display/400.css';
 import { motion, useScroll, useTransform, AnimatePresence, Variants } from 'framer-motion';
-import { LiquidShaderBackground } from './ui/LiquidShaderBackground';
-import { NeonFlow } from './ui/NeonFlow';
 import SimulatedAnalysisModal from './landing/SimulatedAnalysisModal';
 import { useIsMobile } from '../src/utils/useIsMobile';
+
+// Three.js effects: lazy-loaded só em desktop, nunca baixam em mobile (~187 KB gzip economizados)
+const LiquidShaderBackground = React.lazy(() =>
+  import('./ui/LiquidShaderBackground').then(m => ({ default: m.LiquidShaderBackground }))
+);
+const NeonFlow = React.lazy(() =>
+  import('./ui/NeonFlow').then(m => ({ default: m.NeonFlow }))
+);
 
 // --- Utility Components for God Mode UI ---
 
@@ -240,9 +246,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
       `}</style>
 
       <div className="fixed inset-0 z-0 bg-[#020202] overflow-hidden pointer-events-none">
-        {/* WebGL desabilitado em mobile — causa heating/travamento */}
-        {!isMobile && <LiquidShaderBackground />}
-        {!isMobile && <NeonFlow className="opacity-60" />}
+        {/* WebGL desabilitado em mobile — causa heating/travamento. Lazy: Three.js só baixa em desktop */}
+        {!isMobile && (
+          <Suspense fallback={null}>
+            <LiquidShaderBackground />
+            <NeonFlow className="opacity-60" />
+          </Suspense>
+        )}
 
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05]" />
 
