@@ -319,7 +319,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         </div>
       </div>
 
-      {/* Hero Section V2 - Omi Premium Style with Framer Motion */}
+      {/* ─── HERO ─── */}
       <section className="relative pt-40 pb-24 lg:pt-36 lg:pb-20 px-6 max-w-7xl mx-auto z-10 w-full min-h-screen flex flex-col justify-center items-center text-center">
 
         {/* Glow Element Behind Text */}
@@ -328,34 +328,49 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         <div className="w-full max-w-5xl mx-auto relative z-20">
           <div className="flex flex-col items-center space-y-8 pt-8 relative z-30">
 
-            <h1 className="flex flex-col items-center text-[clamp(1.6rem,6.5vw,3.75rem)] lg:text-6xl font-serif-premium tracking-tight text-white leading-[1.1] sm:leading-[1.1] drop-shadow-2xl px-4 z-20 overflow-visible text-balance">
-              <span className="block w-full">
-                <LetterPuller text="Descubra seu % de gordura" isMobile={isMobile} />
+            <h1 className="flex flex-col items-center gap-1 text-[clamp(1.6rem,6.5vw,3.75rem)] lg:text-6xl font-serif-premium tracking-tight text-white leading-[1.15] drop-shadow-2xl px-4 z-20 overflow-visible text-balance">
+              <span className="block w-full text-zinc-200">
+                <LetterPuller text="Você treina." isMobile={isMobile} />
               </span>
-              <span className="block w-full">
+              <span className="block w-full text-zinc-300">
+                <LetterPuller text="Tenta comer melhor." delay={0.15} isMobile={isMobile} />
+              </span>
+              <span className="block w-full mt-2">
                 <LetterPuller
-                  text="por foto em segundos."
-                  className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic font-medium drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
-                  delay={0.5}
+                  text="E mesmo assim nada muda."
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic drop-shadow-[0_0_30px_rgba(52,211,153,0.4)]"
+                  delay={0.4}
                   isMobile={isMobile}
                 />
               </span>
             </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-              className="text-lg sm:text-xl lg:text-2xl text-zinc-300 font-medium max-w-3xl mx-auto leading-relaxed px-4 z-20 text-pretty"
+              transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
+              className="flex flex-col items-center gap-1 px-4 z-20"
             >
-              Analise seu físico ou suas refeições com inteligência artificial e acompanhe sua evolução de forma simples, rápida e sem esforço.
+              <p className="text-base sm:text-lg text-zinc-500 font-medium italic">e o pior —</p>
+              <p className="text-xl sm:text-2xl lg:text-3xl text-zinc-300 font-semibold">
+                você nem sabe o que está errando
+              </p>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.7, ease: "easeOut" }}
+              className="text-sm sm:text-base text-zinc-500 font-medium tracking-wide uppercase z-20"
+            >
+              O problema não é esforço&nbsp;&nbsp;—&nbsp;&nbsp;é <span className="text-emerald-500">ajuste errado</span>
             </motion.p>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
-              className="flex flex-col sm:flex-row items-center gap-3 pt-8"
+              transition={{ duration: 0.8, delay: 0.9, ease: "easeOut" }}
+              className="flex flex-col sm:flex-row items-center gap-3 pt-6"
             >
               {/* CTA primário → cadastro direto */}
               <button
@@ -364,7 +379,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-white/40 to-transparent rotate-45 animate-sweep" />
-                <span className="relative z-10">Começar agora</span>
+                <span className="relative z-10">Descobrir o que ajustar agora</span>
                 <div className="relative z-10 w-7 h-7 rounded-full bg-zinc-950/20 flex items-center justify-center">
                   <ArrowRight className="w-3.5 h-3.5 text-zinc-950 group-hover:translate-x-0.5 transition-transform" strokeWidth={3} />
                 </div>
@@ -386,7 +401,74 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
       {/* Main Container Wrapper */}
       <div className="relative w-full overflow-hidden">
-        {/* Feature 1: Food Scan */}
+
+        {/* ─── QUEBRA DE CRENÇA ─── */}
+        <motion.section
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          className="py-24 lg:py-36 px-6 relative text-center"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent pointer-events-none" />
+          <div className="max-w-3xl mx-auto relative z-10">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif-premium font-bold tracking-tight text-white leading-[1.2] mb-8">
+              <LetterPuller text="Se fosse só" isMobile={isMobile} />{" "}
+              <LetterPuller
+                text='"treinar mais"'
+                className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic"
+                delay={0.2}
+                isMobile={isMobile}
+              />
+              <br />
+              <LetterPuller text="você já teria resultado" delay={0.4} isMobile={isMobile} />
+            </h2>
+
+            <div className="space-y-5 text-lg sm:text-xl text-zinc-400 font-medium leading-relaxed max-w-2xl mx-auto">
+              <p>Se fosse só <span className="text-zinc-300">"comer melhor"</span>,<br className="hidden sm:block" /> também já teria.</p>
+              <p className="text-zinc-500 text-base">O que trava seu corpo não é falta de esforço.</p>
+              <p className="text-white text-2xl sm:text-3xl font-serif-premium font-bold">
+                É falta de direção.
+              </p>
+              <p className="text-zinc-500 text-base pt-2">
+                Sem saber o que ajustar,<br />
+                você só tenta — e repete o mesmo mês de novo.
+              </p>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ─── INTRODUÇÃO DO PRODUTO ─── */}
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="py-12 lg:py-16 px-6 text-center"
+        >
+          <div className="max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-8">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Inteligência artificial aplicada ao seu corpo
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight mb-6">
+              <LetterPuller text="O ShapeScan mostra" isMobile={isMobile} />{" "}
+              <LetterPuller
+                text="exatamente"
+                className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic"
+                delay={0.2}
+                isMobile={isMobile}
+              />
+              <br />
+              <LetterPuller text="o que está travando seu resultado" delay={0.4} isMobile={isMobile} />
+            </h2>
+            <p className="text-zinc-500 text-lg font-medium">
+              em segundos — sem chute, sem dieta genérica, sem tentativa e erro
+            </p>
+          </div>
+        </motion.section>
+
+        {/* ─── FEATURE 1: Análise de Alimentação ─── */}
         <motion.section
           initial={{ opacity: 0, y: 60 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -441,13 +523,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
 
             <div className="order-1 lg:order-2">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif-premium font-bold tracking-tighter text-white mb-6 leading-tight">
-                <LetterPuller text="Sua alimentação," isMobile={isMobile} /> <br />
-                <LetterPuller text="analisada em segundos." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2" delay={0.3} isMobile={isMobile} />
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif-premium font-bold tracking-tighter text-white mb-4 leading-tight">
+                <LetterPuller text="Você acha que está" isMobile={isMobile} />{" "}
+                <LetterPuller text="comendo certo." delay={0.2} isMobile={isMobile} />
+                <br />
+                <LetterPuller
+                  text="Mas está errando sem perceber."
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2"
+                  delay={0.4}
+                  isMobile={isMobile}
+                />
               </h2>
-              <p className="text-lg text-zinc-400 font-medium mb-8 leading-relaxed max-w-xl">
-                Esqueça planilhas e aplicativos complicados. Envie uma foto da refeição e receba uma análise completa com estimativa de calorias, macros e composição nutricional.
+              <p className="text-lg text-zinc-400 font-medium mb-3 leading-relaxed max-w-xl">
+                Envie uma foto da sua refeição e veja:
               </p>
+              <ul className="space-y-2 text-zinc-300 font-medium mb-6 text-base">
+                <li className="flex items-center gap-2"><span className="text-emerald-500 font-bold">→</span> calorias</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-500 font-bold">→</span> macros</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-500 font-bold">→</span> ajustes exatos</li>
+              </ul>
+              <p className="text-zinc-500 text-sm mb-8">tudo em segundos — sem planilha, sem complicação</p>
               <ul className="space-y-5">
                 <FeatureList text="Identificação automática dos alimentos" />
                 <FeatureList text="Cálculo estimado de porções e macros" />
@@ -467,7 +562,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           </div>
         </motion.section>
 
-        {/* Feature 2: Visual Bioimpedance */}
+        {/* ─── FEATURE 2: Bioimpedância Visual ─── */}
         <motion.section
           initial={{ opacity: 0, scale: 0.98, y: 40 }}
           whileInView={{ opacity: 1, scale: 1, y: 0 }}
@@ -477,13 +572,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         >
           <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="order-2 lg:order-1">
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium font-bold tracking-tighter text-white mb-6 leading-tight">
-                <LetterPuller text="Bioimpedância" isMobile={isMobile} /> <br />
-                <LetterPuller text="Visual." className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2" delay={0.3} isMobile={isMobile} />
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium font-bold tracking-tighter text-white mb-4 leading-tight">
+                <LetterPuller text="Pare de" isMobile={isMobile} />{" "}
+                <LetterPuller text='"achar"' isMobile={isMobile} />{" "}
+                <LetterPuller text="como está" isMobile={isMobile} />{" "}
+                <LetterPuller
+                  text="seu corpo."
+                  className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 drop-shadow-[0_0_30px_rgba(52,211,153,0.4)] italic pb-2"
+                  delay={0.3}
+                  isMobile={isMobile}
+                />
               </h2>
-              <p className="text-lg text-zinc-400 font-medium mb-10 leading-relaxed max-w-xl">
-                Esqueça o "olhômetro". Nossa tecnologia analisa proporções, simetria muscular e estima seu percentual de gordura através de comparação avançada com milhares de físicos.
+              <p className="text-zinc-500 text-base font-medium mb-6 italic">o olho engana</p>
+              <p className="text-lg text-zinc-400 font-medium mb-6 leading-relaxed max-w-xl">
+                O ShapeScan analisa seu físico e mostra:
               </p>
+              <ul className="space-y-2 text-zinc-300 font-medium mb-8 text-base">
+                <li className="flex items-center gap-2"><span className="text-emerald-500 font-bold">→</span> % de gordura</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-500 font-bold">→</span> simetria muscular</li>
+                <li className="flex items-center gap-2"><span className="text-emerald-500 font-bold">→</span> proporção corporal</li>
+              </ul>
+              <p className="text-zinc-500 text-sm mb-8">sem equipamento, sem clínica</p>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white/5 p-5 rounded-2xl border border-white/5 hover:border-emerald-500/30 transition-colors group">
@@ -568,13 +677,42 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   </div>
                 </div>
               </motion.div>
-
-
             </div>
           </div>
         </motion.section>
 
-        {/* Testimonials Section */}
+        {/* ─── PROBLEMA REAL: "Você está no escuro" ─── */}
+        <motion.section
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
+          className="py-24 lg:py-32 px-6 text-center relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-zinc-900/30 to-transparent pointer-events-none" />
+          <div className="max-w-2xl mx-auto relative z-10">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif-premium font-bold tracking-tight text-white leading-[1.2] mb-6">
+              <LetterPuller text="Você não está travado." isMobile={isMobile} />
+              <br />
+              <LetterPuller
+                text="Você está no escuro."
+                className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic"
+                delay={0.3}
+                isMobile={isMobile}
+              />
+            </h2>
+            <div className="space-y-3 text-zinc-400 text-lg font-medium leading-relaxed">
+              <p>Treinando sem saber exatamente o que ajustar.</p>
+              <p>Comendo sem entender onde está errando.</p>
+              <p className="text-zinc-500 pt-2">
+                E esperando resultado de algo<br />
+                que você não consegue controlar.
+              </p>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ─── DEPOIMENTOS ─── */}
         <motion.section
           initial={{ opacity: 0, y: 60 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -585,10 +723,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16 lg:mb-24">
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-serif-premium font-bold tracking-tighter text-white mb-6">
-                <LetterPuller text="Resultados" isMobile={isMobile} /> <LetterPuller text="Reais." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic" delay={0.3} isMobile={isMobile} />
+                <LetterPuller text="Quem parou de" isMobile={isMobile} />{" "}
+                <LetterPuller
+                  text="tentar no escuro."
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic"
+                  delay={0.3}
+                  isMobile={isMobile}
+                />
               </h2>
               <p className="text-lg lg:text-xl text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed">
-                Junte-se a milhares de usuários que já transformaram seus físicos com a inteligência do ShapeScan.
+                Pessoas que treinavam, se esforçavam e não viam resultado — até saberem o que ajustar.
               </p>
             </div>
 
@@ -614,14 +758,53 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   name="Lucas Martins"
                   role="Iniciante"
                   image="https://randomuser.me/api/portraits/men/86.jpg"
-                  text="Baixei de 28% para 21% de gordura em 3 meses. A análise por foto me mostrou exatamente onde eu estava e o que precisava mudar."
+                  text="Baixei de 28% pra 21% em 3 meses. Antes treinava e não sabia o que ajustar. Depois que comecei a usar, sabia exatamente o que mudar — e o resultado começou a aparecer."
                 />
               </motion.div>
             </div>
           </div>
         </motion.section>
 
-        {/* Footer CTA */}
+        {/* ─── ANCORAGEM DE VALOR ─── */}
+        <motion.section
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="py-20 lg:py-28 px-6 text-center relative"
+        >
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl font-serif-premium font-bold text-white mb-10">
+              Se fosse fazer isso sozinho:
+            </h2>
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              {[
+                { label: "Nutricionista", value: "R$300+" },
+                { label: "Personal", value: "R$200+" },
+                { label: "Avaliação física", value: "R$150+" },
+              ].map((item) => (
+                <div key={item.label} className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <p className="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-2">{item.label}</p>
+                  <p className="text-white text-xl font-black">{item.value}</p>
+                  <p className="text-zinc-600 text-[10px] font-medium">por mês</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-zinc-500 text-sm mb-6">mais de <span className="text-white font-bold">R$600 por mês</span> — e ainda sem saber o que ajustar</p>
+
+            <div className="w-full h-px bg-white/10 my-8" />
+
+            <p className="text-zinc-400 text-base mb-3">com o ShapeScan:</p>
+            <p className="text-3xl sm:text-4xl font-serif-premium font-bold text-white mb-2">
+              menos que um café
+              {" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500 italic">por dia</span>
+            </p>
+            <p className="text-zinc-500 text-sm">e você sabe exatamente o que mudar</p>
+          </div>
+        </motion.section>
+
+        {/* ─── CTA FINAL ─── */}
         <motion.section
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -635,17 +818,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           <div className="relative z-10 max-w-3xl mx-auto">
             <h2 className="text-5xl sm:text-6xl lg:text-7xl font-serif-premium font-bold tracking-tighter mb-8 text-white leading-tight drop-shadow-2xl">
               <LetterPuller text="Sua melhor versão" isMobile={isMobile} /> <br />
-              <LetterPuller text="começa agora." className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic" delay={0.3} isMobile={isMobile} />
+              <LetterPuller text="não começa com mais esforço." delay={0.2} isMobile={isMobile} />
+              <br />
+              <LetterPuller
+                text="começa com o ajuste certo."
+                className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500 italic"
+                delay={0.5}
+                isMobile={isMobile}
+              />
             </h2>
             <p className="text-zinc-400 text-lg lg:text-xl mb-12 font-medium">
-              Descubra seu percentual de gordura em segundos. Sem cartão para começar.
+              Sem cartão para começar.
             </p>
             <button
               onClick={onStart}
               className="group relative px-8 py-4 sm:px-12 sm:py-5 rounded-full overflow-hidden font-black tracking-[0.15em] text-base md:text-lg uppercase transition-all duration-500 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-4 shadow-[0_0_40px_-5px_rgba(16,185,129,0.4)] mx-auto bg-emerald-500 hover:bg-emerald-400 text-zinc-950"
             >
               <div className="absolute top-0 -left-[100%] w-[150%] h-[200%] bg-gradient-to-br from-transparent via-white/30 to-transparent rotate-45 animate-sweep"></div>
-              <span className="relative z-10">Criar minha conta agora</span>
+              <span className="relative z-10">Ver o que está travando meu corpo agora</span>
               <div className="relative z-10 w-8 h-8 rounded-full bg-zinc-950/20 flex items-center justify-center">
                 <ArrowRight className="w-4 h-4 text-zinc-950 group-hover:translate-x-1 transition-transform duration-300" strokeWidth={3} />
               </div>
