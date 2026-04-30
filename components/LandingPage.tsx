@@ -447,11 +447,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           className="py-12 lg:py-16 px-6 text-center"
         >
           <div className="max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Inteligência artificial aplicada ao seu corpo
-            </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight mb-6">
+<h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif-premium font-bold tracking-tight text-white leading-tight mb-6">
               <LetterPuller text="O ShapeScan mostra" isMobile={isMobile} />{" "}
               <LetterPuller
                 text="exatamente"
