@@ -815,9 +815,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
 
             <p className="text-zinc-400 text-base mb-3">com o ShapeScan:</p>
             <p className="text-3xl sm:text-4xl font-serif-premium font-bold text-white mb-2">
-              menos que um café
-              {" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500 italic">por dia</span>
+              menos de{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500 italic">R$1 por dia</span>
             </p>
             <p className="text-zinc-500 text-sm">e você sabe exatamente o que mudar</p>
           </div>
