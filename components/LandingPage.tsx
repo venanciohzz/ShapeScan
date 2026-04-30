@@ -199,6 +199,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
         }
         .animate-sweep { animation: sweep 2.5s ease-in-out infinite; }
 
+        /* Bio scan — CSS-driven para sincronização perfeita em mobile */
+        @keyframes bio-reveal {
+          0%, 100% { clip-path: inset(0 100% 0 0); }
+          50% { clip-path: inset(0 0% 0 0); }
+        }
+        @keyframes bio-scanline {
+          0%, 100% { left: 0%; }
+          50% { left: 100%; }
+        }
+        .bio-reveal { animation: bio-reveal 12s linear infinite; }
+        .bio-scanline {
+          position: absolute;
+          top: 0; bottom: 0;
+          animation: bio-scanline 12s linear infinite;
+        }
+
         /* Typography overrides for Premium V2 */
         .font-serif-premium {
           font-family: 'Playfair Display', serif;
@@ -633,26 +649,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                   />
 
                   {/* Imagem "Depois" (Revelada) */}
-                  <motion.div
-                    initial={{ clipPath: 'inset(0 100% 0 0)' }}
-                    animate={{ clipPath: ['inset(0 100% 0 0)', 'inset(0 0% 0 0)', 'inset(0 100% 0 0)'] }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0 z-10"
-                  >
+                  <div className="absolute inset-0 z-10 bio-reveal">
                     <img
                       src="/after.png"
                       alt="Depois"
                       className="w-full h-full object-cover scale-105"
                     />
-                  </motion.div>
+                  </div>
 
-                  {/* Linha de Varredura (Sincronização Absoluta) */}
-                  <motion.div
-                    initial={{ left: "0%" }}
-                    animate={{ left: ["0%", "100%", "0%"] }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                    className="absolute top-0 bottom-0 w-[2px] bg-emerald-400 shadow-[0_0_50px_rgba(52,211,153,1)] z-20"
-                  />
+                  {/* Linha de Varredura — CSS para sync perfeita em mobile */}
+                  <div className="bio-scanline w-[2px] bg-emerald-400 shadow-[0_0_50px_rgba(52,211,153,1)] z-20" />
                 </div>
               </div>
 
@@ -770,10 +776,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
           className="py-20 lg:py-28 px-6 text-center relative"
         >
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl font-serif-premium font-bold text-white mb-10">
+            <h2 className="text-2xl sm:text-3xl font-serif-premium font-bold text-white mb-8">
               Se fosse fazer isso sozinho:
             </h2>
-            <div className="grid grid-cols-3 gap-4 mb-8">
+
+            {/* Mobile: lista horizontal compacta */}
+            <div className="flex flex-col gap-2 sm:hidden mb-6">
+              {[
+                { label: "Nutricionista", value: "R$300+" },
+                { label: "Personal trainer", value: "R$200+" },
+                { label: "Avaliação física", value: "R$150+" },
+              ].map((item) => (
+                <div key={item.label} className="bg-white/5 border border-white/10 rounded-xl px-5 py-3 flex items-center justify-between">
+                  <p className="text-zinc-400 text-sm font-semibold">{item.label}</p>
+                  <p className="text-white text-lg font-black">{item.value}<span className="text-zinc-500 text-xs font-normal ml-1">/mês</span></p>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: grid 3 colunas */}
+            <div className="hidden sm:grid grid-cols-3 gap-4 mb-8">
               {[
                 { label: "Nutricionista", value: "R$300+" },
                 { label: "Personal", value: "R$200+" },
@@ -786,6 +808,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onLogin, onHowItWork
                 </div>
               ))}
             </div>
+
             <p className="text-zinc-500 text-sm mb-6">mais de <span className="text-white font-bold">R$600 por mês</span> — e ainda sem saber o que ajustar</p>
 
             <div className="w-full h-px bg-white/10 my-8" />
