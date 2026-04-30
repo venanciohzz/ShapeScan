@@ -971,18 +971,27 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
           <AppMockup />
 
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-4">
-              {copy.headline}
+            <p className="text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-3">{copy.badge}</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-3">
+              Você está fazendo tudo certo<br />
+              <span className="text-zinc-400">e mesmo assim não vê resultado</span>
             </h1>
-            <p className="text-zinc-400 text-base leading-relaxed">{copy.sub}</p>
+            <p className="text-zinc-500 text-sm font-bold mb-4">e isso está te fazendo perder meses</p>
+            <p className="text-zinc-400 text-base leading-relaxed">
+              Você já completou o diagnóstico. Agora você vai ver exatamente o que está travando seu corpo — sem chute, sem tentativa e erro.
+            </p>
           </div>
 
           {/* Personalized diagnostic */}
           {quizData.goal && (
             <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-5">
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Baseado no seu perfil, detectamos:</p>
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Com base no seu perfil, ficou claro:</p>
               <div className="space-y-3">
-                {copy.diagnostic.map((item, i) => (
+                {[
+                  'Você está treinando sem saber o que ajustar',
+                  'Pode estar consumindo calorias erradas — sem perceber',
+                  'Cada semana assim é mais tempo perdido sem resultado',
+                ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <span className="text-red-400 mt-0.5 shrink-0 text-base">✗</span>
                     <p className="text-zinc-300 text-sm">{item}</p>
@@ -1010,28 +1019,27 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         {/* Pain → Shift */}
         <section className="space-y-5">
           <h2 className="text-2xl font-bold text-white leading-snug">
-            O problema não é falta de esforço.<br />É falta de um sistema que te diga exatamente o que fazer — todos os dias.
+            O problema não é falta de esforço.<br />
+            <span className="text-zinc-400">é você não saber exatamente o que fazer — todos os dias.</span>
           </h2>
           <p className="text-zinc-400 leading-relaxed">
-            Você treina. Tenta se alimentar bem. Mas no final do mês, o resultado não aparece — ou aparece tão devagar que parece que nada está funcionando.
-          </p>
-          <p className="text-zinc-400 leading-relaxed">
-            Isso não é falta de dedicação. É falta de informação precisa sobre o seu próprio corpo.
+            Sem um plano claro, você tenta, erra, ajusta errado — e recomeça tudo de novo.
           </p>
           <div className="bg-emerald-500/5 border border-emerald-500/25 rounded-2xl p-5">
-            <p className="text-emerald-300 text-[10px] font-black uppercase tracking-widest mb-3">O diferencial do ShapeScan</p>
-            <p className="text-white font-bold text-lg leading-snug mb-2">
-              Você não precisa de mais uma dieta.
+            <p className="text-white font-bold text-lg leading-snug mb-3">
+              Você não precisa de mais uma dieta.<br />
+              <span className="text-emerald-400">você precisa parar de adivinhar.</span>
             </p>
-            <p className="text-zinc-300 text-base leading-relaxed">
-              Você precisa de um sistema que te diga{' '}
-              <span className="text-emerald-400 font-semibold">o que fazer todos os dias</span>{' '}
-              — baseado no <span className="text-white font-semibold">seu</span> corpo real, não em uma tabela genérica.
+            <p className="text-zinc-300 text-sm leading-relaxed mb-2">O ShapeScan te mostra exatamente:</p>
+            <ul className="space-y-1 mb-3">
+              {['o que fazer', 'quanto comer', 'quando ajustar'].map(item => (
+                <li key={item} className="text-emerald-400 text-sm font-semibold">→ {item}</li>
+              ))}
+            </ul>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              baseado no seu corpo real — não em uma média genérica.
             </p>
           </div>
-          <p className="text-zinc-400 leading-relaxed">
-            É a diferença entre adivinhar e saber. Entre tentar e executar. Entre mais um mês sem resultado — e começar a ver mudança de verdade.
-          </p>
         </section>
 
         {/* Features = Mecanismo único */}
@@ -1041,26 +1049,26 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
             {[
               {
                 icon: <Camera className="w-5 h-5 text-emerald-400" />,
-                title: 'Fotografe. Saiba tudo.',
-                desc: 'Tire foto de qualquer refeição e receba em segundos: calorias, proteína, carbs e gordura. Sem tabela, sem pesagem, sem achismo.',
+                title: 'Tire uma foto da sua refeição',
+                desc: 'e descubra na hora se está comendo certo ou errado — sem tabela, sem pesagem, sem achismo.',
                 result: '→ Você para de adivinhar o que come',
               },
               {
                 icon: <Dumbbell className="w-5 h-5 text-emerald-400" />,
-                title: 'Veja seu corpo evoluir com dado real',
-                desc: 'A IA analisa sua foto e estima percentual de gordura. Acompanhe a evolução do seu shape semana a semana — com evidência visual.',
+                title: "Pare de 'achar' que está evoluindo",
+                desc: 'veja o que realmente está mudando — a IA analisa sua foto e mostra o progresso do seu shape com evidência visual.',
                 result: '→ Você enxerga o que está funcionando',
               },
               {
                 icon: <MessageCircle className="w-5 h-5 text-emerald-400" />,
-                title: 'Personal que já te conhece — 24h por dia',
-                desc: 'A IA tem acesso ao seu histórico completo: o que você comeu, como está seu shape, qual sua meta. Responde qualquer dúvida com contexto real.',
+                title: 'Você nunca mais fica perdido',
+                desc: 'sem saber o que fazer. A IA conhece seu histórico completo e responde qualquer dúvida com contexto real — 24h por dia.',
                 result: '→ Você para de agir sem orientação',
               },
               {
                 icon: <Zap className="w-5 h-5 text-emerald-400" />,
-                title: 'Plano calculado para o seu corpo',
-                desc: 'Calorias, proteína, carbs e gordura calculados com base no seu peso, altura, metabolismo e objetivo. Não para um corpo genérico — para o seu.',
+                title: 'Você sabe exatamente o que fazer',
+                desc: 'todos os dias. Calorias, proteína, carbs e gordura calculados para o seu corpo real — não para uma média genérica.',
                 result: '→ Você tem um alvo claro todo dia',
               },
             ].map((f, i) => (
@@ -1085,9 +1093,9 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Quem já usa</p>
           <div className="grid grid-cols-1 gap-3">
             {[
-              { name: 'Matheus R., 28 anos', goal: 'Perda de gordura', text: 'Em 3 semanas perdi 2,4kg sem cortar tudo que gosto — só ajustando o que o app mostrou. Nunca tinha conseguido manter foco por tanto tempo porque nunca sabia se estava no caminho certo. Agora sei.' },
-              { name: 'Juliana F., 31 anos', goal: 'Recomposição', text: 'Achei que ia ser mais um app de dieta. Mas fotografar a refeição e ver os macros na hora muda tudo — parei de comer "mais ou menos certo" e comecei a comer com precisão. Em 5 semanas minha composição mudou visivelmente.' },
-              { name: 'Carlos M., 24 anos', goal: 'Ganho de massa', text: 'Descobri que estava comendo 600 calorias abaixo do necessário todo dia. Em um mês ajustando isso com o plano do app, desbloqueei uma evolução no treino que não acontecia há meses.' },
+              { name: 'Matheus R., 28 anos', goal: 'Perda de gordura', text: 'Perdi 2,4kg em 3 semanas — sem mudar tudo, só ajustando o que o app mostrou. Nunca soube se estava no caminho certo. Agora sei.' },
+              { name: 'Juliana F., 31 anos', goal: 'Recomposição', text: 'Parei de comer "mais ou menos certo" e comecei a comer com precisão. Em 5 semanas minha composição mudou de forma visível — sem dieta maluca.' },
+              { name: 'Carlos M., 24 anos', goal: 'Ganho de massa', text: 'Descobri que estava 600 calorias abaixo do necessário todo dia. Corrigi isso com o plano do app — em um mês, a evolução que não acontecia há meses aconteceu.' },
             ].map((t, i) => (
               <div key={i} className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl">
                 <div className="flex items-center gap-1 mb-3">
@@ -1106,7 +1114,7 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
         {/* Price anchor */}
         <section className="space-y-4">
           <p className="text-zinc-300 text-base leading-relaxed font-medium">
-            Montar isso separado custaria mais de R$1.000/mês:
+            Se você fosse montar isso sozinho:
           </p>
           <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 space-y-3">
             <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Comparação real</p>
@@ -1123,7 +1131,10 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
                 </div>
               ))}
             </div>
-            <p className="text-zinc-500 text-xs">Menos de R$1 por dia. Nutricionista, personal e análise corporal — no bolso, 24h por dia.</p>
+            <div className="pt-1">
+              <p className="text-zinc-400 text-sm font-medium">com o ShapeScan:</p>
+              <p className="text-emerald-400 text-xl font-bold">menos de R$1 por dia</p>
+            </div>
           </div>
         </section>
 
@@ -1132,8 +1143,11 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
 
           {/* Section header */}
           <div className="text-center space-y-3">
-            <h2 className="text-3xl font-bold text-white tracking-tight">Escolha seu plano ideal</h2>
-            <p className="text-zinc-500 text-base">Comece hoje e acelere seus resultados com o plano certo.</p>
+            <p className="text-zinc-400 text-base leading-relaxed">
+              Você pode continuar tentando no escuro<br />
+              ou começar hoje sabendo exatamente o que fazer
+            </p>
+            <h2 className="text-3xl font-bold text-white tracking-tight">Escolha seu plano</h2>
           </div>
 
           {/* ── Plan cards ── */}
@@ -1405,19 +1419,15 @@ const SalesPage: React.FC<SalesPageProps> = ({ user, onShowToast }) => {
 
         {/* Bottom CTA */}
         <section className="text-center space-y-4 pb-10">
-          <div className="p-5 bg-zinc-900/40 border border-zinc-800 rounded-2xl text-left space-y-2">
-            <p className="text-zinc-400 text-sm leading-relaxed">Você pode continuar no modo tentativa e erro — treinando forte, comendo "bem", sem resultado claro.</p>
-            <p className="text-white font-bold text-base leading-relaxed">Ou começar hoje com um plano exato para o seu corpo. A escolha é simples.</p>
-          </div>
           <button
             onClick={() => {
               document.getElementById('checkout-section')?.scrollIntoView({ behavior: 'smooth' });
             }}
             className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase text-sm tracking-[0.15em] rounded-2xl transition-all active:scale-[0.98]"
           >
-            Começar minha transformação agora →
+            Ver exatamente o que ajustar no meu corpo →
           </button>
-          <p className="text-zinc-600 text-xs">Cancele quando quiser · Garantia de 7 dias · Pagamento 100% seguro</p>
+          <p className="text-zinc-600 text-xs">Sem cartão · 7 dias de garantia · cancele quando quiser</p>
         </section>
 
       </div>
