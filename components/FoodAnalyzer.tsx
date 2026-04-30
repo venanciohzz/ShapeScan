@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { User, FoodLog, FoodAnalysisResult, FoodItem } from '../types';
 import { analyzePlate, getManualFoodMacros } from '../services/openaiService';
 import { compressImage } from '../utils/security';
@@ -28,7 +28,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
   const [manualName, setManualName] = useState('');
   const [error, setError] = useState('');
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [limitModalType, setLimitModalType] = useState<'free' | 'daily'>('daily');
+  const [limitModalType, setLimitModalType] = useState<'daily'>('daily');
   const [scanStep, setScanStep] = useState(0);
   const [mealDescription, setMealDescription] = useState('');
 
@@ -70,34 +70,18 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
 
   const checkUsageLimit = async () => {
     if (user.isAdmin) return true;
-    if (user.plan === 'free') {
-      if ((user.freeScansUsed || 0) >= 1) {
-        setLimitModalType('free');
-        setShowLimitModal(true);
-        import('../utils/pixel').then(({ pixel }) => pixel.scanLimitReached('free', user.id));
-        return false;
-      }
-      return true;
-    }
     const limit = getDailyLimit();
     const currentUsage = await db.usage.getDaily(user.id, 'food');
     if (currentUsage >= limit) {
       setLimitModalType('daily');
       setShowLimitModal(true);
+      import('../utils/pixel').then(({ pixel }) => pixel.scanLimitReached(user.plan || 'unknown', user.id));
       return false;
     }
     return true;
   };
 
   const incrementUsage = async () => {
-    // Incremento controlado pela Edge Function — esta função é mantida apenas para sincronizar
-    // o estado local do usuário (freeScansUsed) após confirmar sucesso
-    if (user.isAdmin) return { success: true };
-    if (user.plan === 'free') {
-      // Apenas atualizar contagem local para UX imediata
-      onUpdateUser({ ...user, freeScansUsed: (user.freeScansUsed || 0) + 1 });
-      return { success: true };
-    }
     return { success: true };
   };
 
@@ -150,7 +134,7 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
           console.error("Erro no scanner:", err);
           // Se a Edge Function retornou limite atingido, mostrar modal
           if (err.isLimitReached) {
-            setLimitModalType(err.showPaywall ? 'free' : 'daily');
+            setLimitModalType('daily');
             setShowLimitModal(true);
             return;
           }
@@ -245,40 +229,6 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
     }
   };
 
-  const isFreeLocked = mode === 'ai' && user.plan === 'free' && !user.isAdmin;
-
-  if (isFreeLocked) {
-    return (
-      <PremiumBackground className="flex items-center justify-center p-6" dim={true} intensity={1.5}>
-        <div className="w-full max-w-lg bg-zinc-950/40 backdrop-blur-3xl rounded-[3.5rem] p-10 md:p-14 border border-emerald-500/20 text-center relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
-          <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-10 border border-emerald-500/20">
-            <ScanSearch className="w-10 h-10 text-emerald-500" />
-          </div>
-          <h2 className="text-4xl font-serif-premium font-bold text-white mb-4 tracking-tight">
-            <LetterPuller text="Acesso Exclusivo" />
-          </h2>
-          <p className="text-zinc-400 font-medium text-base mb-12 leading-relaxed max-w-xs mx-auto">
-            Acesse a nossa análise avançada para descobrir os macronutrientes exatos da sua refeição apenas tirando uma foto.
-          </p>
-          <motion.button 
-            whileTap={{ scale: 0.97 }}
-            onClick={onUpgrade} 
-            className="w-full py-6 bg-white text-zinc-950 rounded-[2rem] font-black uppercase tracking-widest text-xs mb-6 transition-all"
-          >
-            Fazer Upgrade Pro
-          </motion.button>
-          <motion.button 
-            whileTap={{ scale: 0.95 }}
-            onClick={onBack} 
-            className="flex items-center justify-center gap-2 mx-auto text-zinc-500 font-black text-[10px] uppercase tracking-widest hover:text-white transition-colors"
-          >
-            ← Voltar ao Painel
-          </motion.button>
-        </div>
-      </PremiumBackground>
-    );
-  }
 
   return (
     <PremiumBackground>
@@ -288,20 +238,18 @@ const FoodAnalyzer = ({ user, onAdd, onBack, mode, onUpdateUser, onUpgrade, onUp
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
               <div className="bg-zinc-950 w-full max-w-sm rounded-[3rem] p-10 border border-white/10 shadow-2xl text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-white/20 to-emerald-500"></div>
-                <div className="text-5xl mb-6">{limitModalType === 'daily' ? '🛑' : '🔒'}</div>
+                <div className="text-5xl mb-6">🛑</div>
                 <h3 className="text-2xl font-serif-premium font-bold text-white mb-4">Limite Atingido</h3>
                 <p className="text-zinc-500 mb-8 text-sm leading-relaxed tracking-wide">
-                  {limitModalType === 'daily'
-                    ? (user.isPremium && user.plan?.includes('pro')
-                        ? "Você atingiu o limite diário do plano Pro. Seu limite renova à meia-noite."
-                        : "Você atingiu o limite de scanners do seu plano hoje.")
-                    : "Sua análise experimental terminou."
+                  {user.plan?.includes('pro')
+                    ? "Você atingiu o limite diário do plano Pro. Seu limite renova à meia-noite."
+                    : "Você atingiu o limite de scanners do seu plano hoje."
                   }
                 </p>
-                {(limitModalType !== 'daily' || !(user.isPremium && user.plan?.includes('pro'))) && (
+                {!user.plan?.includes('pro') && (
                   <motion.button
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => { setShowLimitModal(false); if (limitModalType === 'daily') onUpgradePro(); else onUpgrade(); }}
+                    onClick={() => { setShowLimitModal(false); onUpgradePro(); }}
                     className="w-full py-5 bg-white text-zinc-950 rounded-2xl font-black uppercase tracking-widest text-[10px] mb-4 hover:bg-zinc-200 transition-all"
                   >
                     Fazer Upgrade

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { User, ShapeAnalysisResult } from '../types';
 import { analyzeShape } from '../services/openaiService';
 import { compressImage } from '../utils/security';
@@ -57,10 +57,6 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
 
   const checkUsageLimit = async () => {
     if (user.isAdmin) return true;
-    if (user.plan === 'free') {
-      onUpgrade();
-      return false;
-    }
     const limit = getDailyLimit();
     const currentUsage = await db.usage.getDaily(user.id, 'shape');
     if (currentUsage >= limit) {
@@ -204,40 +200,6 @@ const ShapeAnalyzer: React.FC<ShapeAnalyzerProps> = ({ user, onBack, onSaveToEvo
     setSavedSuccess(true);
   };
 
-  if (user.plan === 'free' && !user.isAdmin) {
-    return (
-      <PremiumBackground className="flex items-center justify-center p-6 min-h-screen" dim={true} intensity={1.5}>
-        <div className="w-full max-w-sm bg-zinc-950/50 backdrop-blur-3xl rounded-[2rem] p-8 border border-emerald-500/20 text-center relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50" />
-
-          <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.1)]">
-            <Focus className="w-9 h-9 text-emerald-500" />
-          </div>
-
-          <h2 className="text-3xl font-serif-premium font-bold text-white mb-3 tracking-tight">
-            Análise Física
-          </h2>
-          <p className="text-zinc-400 font-medium text-sm mb-8 leading-relaxed max-w-xs mx-auto">
-            Descubra seu percentual de gordura, estrutura corporal e metas personalizadas com IA de precisão.
-          </p>
-
-          <button
-            onClick={onUpgrade}
-            className="w-full py-5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-zinc-950 rounded-2xl font-black uppercase tracking-[0.15em] text-xs transition-all shadow-lg shadow-emerald-500/25 mb-4"
-          >
-            Desbloquear Análise Física
-          </button>
-
-          <button
-            onClick={onBack}
-            className="text-zinc-500 hover:text-zinc-300 font-black uppercase tracking-widest text-[10px] transition-colors"
-          >
-            ← Voltar ao painel
-          </button>
-        </div>
-      </PremiumBackground>
-    );
-  }
 
   return (
     <PremiumBackground>
