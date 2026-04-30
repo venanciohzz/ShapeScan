@@ -29,6 +29,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+      - name: Deploy stripe-checkout-guest
+        run: supabase functions deploy stripe-checkout-guest --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --no-verify-jwt --debug
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Deploy send-reset-password
         run: supabase functions deploy send-reset-password --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --no-verify-jwt --debug
         env:
